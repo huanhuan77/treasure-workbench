@@ -52,6 +52,7 @@ export function SamplesPage() {
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('大号')
   const [searchKeyword, setSearchKeyword] = useState('')
+  const [searchExpanded, setSearchExpanded] = useState(false)
 
   const sorted = useMemo(() => sortSamples(samples), [samples])
   const filtered = useMemo(() => {
@@ -120,14 +121,30 @@ export function SamplesPage() {
         })}
       </div>
 
-      {/* 搜索 */}
-      <div style={{ padding: '0 16px 10px' }}>
-        <input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)}
-          placeholder="🔍 搜索产品名称…"
-          style={{ width:'100%', boxSizing:'border-box', padding:'10px 14px', borderRadius:'14px',
-            border:'1px solid rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.45)',
-            fontSize:'13px', outline:'none', fontFamily:'inherit', color:'var(--text-main)' }}
-        />
+      {/* 搜索：收起态只显示🔍，点击展开输入框 */}
+      <div style={{ padding: '0 16px 10px', display: 'flex', alignItems: 'center', justifyContent: searchExpanded ? 'stretch' : 'flex-end', minHeight: '40px' }}>
+        {searchExpanded ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(244,114,182,0.3)', borderRadius: '18px', padding: '4px 10px' }}>
+            <span style={{ fontSize: '14px', color: 'var(--text-sub)', flexShrink: 0 }}>🔍</span>
+            <input
+              autoFocus
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onBlur={() => { if (!searchKeyword) setSearchExpanded(false) }}
+              placeholder="搜索产品名称…"
+              style={{ flex: 1, padding: '6px 0', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', fontFamily: 'inherit', color: 'var(--text-main)' }}
+            />
+            {searchKeyword && (
+              <button onClick={() => setSearchKeyword('')} style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '16px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>×</button>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => setSearchExpanded(true)}
+            aria-label="搜索"
+            style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(244,114,182,0.25)', background: 'rgba(255,255,255,0.5)', color: '#ec4899', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+          >🔍</button>
+        )}
       </div>
 
       <div style={{ padding: '4px 16px 16px' }}>
@@ -137,44 +154,44 @@ export function SamplesPage() {
             <p style={{ fontSize: '14px', margin: 0 }}>暂无样品记录</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {accountFiltered.map((s) => {
               const st = STATUS[s.status] || STATUS.unpublished
               const dl = deadlineDesc(s.deadline)
               const dlColor = dl && dl.includes('过期') ? '#fb7185' : dl && dl.includes('今天') ? '#fb923c' : 'var(--text-sub)'
               const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
               return (
-                <div key={s.id} style={{ ...glassStyle, padding: '14px 16px 12px 18px', position: 'relative', borderLeft: `4px solid ${st.stripe}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--text-main)' }}>{s.name}</h3>
-                        {s.account && (
-                          <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                            {ACCOUNT_NICK[s.account]}
-                          </span>
-                        )}
-                      </div>
+                <div key={s.id} style={{ ...glassStyle, padding: '10px 14px 8px 14px', position: 'relative', borderLeft: `3px solid ${st.stripe}` }}>
+                  {/* 头一行：名称 + 状态徽章 */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                      <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</h3>
+                      {s.account && (
+                        <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          {ACCOUNT_NICK[s.account]}
+                        </span>
+                      )}
                     </div>
-                    <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '3px 10px', borderRadius: '9px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {st.label}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--text-sub)', marginTop: '10px' }}>
-                    {s.receiveDate && <span>📅 收货 {formatDate(s.receiveDate)}</span>}
-                    {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor }}>⏰ 截止 {formatDate(s.deadline)} {dl && `· ${dl}`}</span>}
+                  {/* 二行：日期信息 + 编辑按钮 (合并一行) */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px', fontSize: '12px', color: 'var(--text-sub)' }}>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', minWidth: 0, overflow: 'hidden' }}>
+                      {s.receiveDate && <span style={{ whiteSpace: 'nowrap' }}>📅 {formatDate(s.receiveDate)}</span>}
+                      {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, whiteSpace: 'nowrap' }}>⏰ {formatDate(s.deadline)}{dl && ` · ${dl}`}</span>}
+                    </div>
+                    <button onClick={() => setEditing(s)} style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 500, background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, marginLeft: '8px' }}>编辑</button>
                   </div>
 
+                  {/* 备注（可选） */}
                   {s.remark && (
-                    <div style={{ fontSize: '13px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.55)', padding: '9px 12px', borderRadius: '10px', lineHeight: 1.5, marginTop: '10px', border: '1px solid rgba(255,255,255,0.5)' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.55)', padding: '6px 10px', borderRadius: '8px', lineHeight: 1.45, marginTop: '6px', border: '1px solid rgba(255,255,255,0.5)' }}>
                       {s.remark}
                     </div>
                   )}
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                    <button onClick={() => setEditing(s)} style={{ color: 'var(--primary)', fontSize: '13px', fontWeight: 500 }}>编辑</button>
-                  </div>
                 </div>
               )
             })}
