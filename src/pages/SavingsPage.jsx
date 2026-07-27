@@ -19,6 +19,7 @@ export function SavingsPage() {
   const records = sd.records || {}
   const navigate = useNavigate()
   const [editMonth, setEditMonth] = useState(null)
+  const [expandedMonth, setExpandedMonth] = useState(null)
   const [editAccounts, setEditAccounts] = useState(null)
   const [editTotal, setEditTotal] = useState('')
 
@@ -95,9 +96,10 @@ export function SavingsPage() {
           const d = a - t
           const p = t > 0 ? Math.min(100, Math.round((a/t)*100)) : 0
           const editing = editMonth === key
+          const expanded = expandedMonth === key || editing
           return (
             <div key={key} style={{ marginBottom:'8px', borderRadius:'12px', border:'1px solid rgba(251,191,36,0.2)', background:'#fff' }}>
-              <div style={{ display:'flex', alignItems:'center', padding:'10px 12px', gap:'8px' }}>
+              <div onClick={editing ? undefined : () => setExpandedMonth(expanded ? null : key)} style={{ display:'flex', alignItems:'center', padding:'10px 12px', gap:'8px', cursor: editing ? 'default' : 'pointer' }}>
                 <span style={{ fontSize:'14px', fontWeight:600, color:'#78350f', width:'36px' }}>{MONTH_LABELS[key]}</span>
                 <div style={{ flex:1 }}>
                   <div style={{ height:'6px', borderRadius:'3px', background:'rgba(251,191,36,0.15)', overflow:'hidden' }}>
@@ -123,6 +125,20 @@ export function SavingsPage() {
                       style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #f59e0b', fontSize:'15px', outline:'none', textAlign:'right', fontWeight:700, color:'#92400e' }} />
                   </div>
                   <button onClick={addAccount} style={{ marginTop:'12px', padding:'8px 12px', borderRadius:'10px', border:'1.5px dashed #d4a373', background:'transparent', color:'#92400e', fontSize:'13px', fontWeight:500, cursor:'pointer', width:'100%' }}>+ 添加账户</button>
+                </div>
+              ) : expanded ? (
+                <div style={{ padding:'4px 16px 12px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
+                  {Object.entries(r.details||{}).filter(([k])=>k!='_合计').map(([acct, amt]) => (
+                    <div key={acct} style={{ display:'flex', justifyContent:'space-between', padding:'3px 0', fontSize:'13px', color:'var(--text-sub)' }}>
+                      <span>{acct}</span>
+                      <span style={{ fontWeight:500 }}>{amt.toLocaleString()}</span>
+                    </div>
+                  ))}
+                  <div style={{ display:'flex', justifyContent:'space-between', padding:'6px 0 4px', fontSize:'13px', fontWeight:700, color:'#78350f', borderTop:'1px solid rgba(251,191,36,0.15)', marginTop:'4px' }}>
+                    <span>合计</span>
+                    <span>{(r.actual||0).toLocaleString()} / 目标 {(r.target||0).toLocaleString()}</span>
+                  </div>
+                  <button onClick={() => startEdit(key)} style={{ marginTop:'6px', padding:'4px 12px', borderRadius:'8px', border:'1px solid #e9d5ff', background:'#fef3c7', color:'#92400e', fontSize:'11px', cursor:'pointer' }}>✎ 编辑</button>
                 </div>
               ) : (
                 <div style={{ padding:'0 12px 10px', borderTop:'1px solid rgba(251,191,36,0.1)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
