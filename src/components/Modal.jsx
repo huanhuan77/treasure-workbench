@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 
 // 毛玻璃样式常量（核心复用）
 export const glassStyle = {
@@ -18,6 +18,17 @@ export const glassSoft = {
 
 export function Modal({ open, onClose, title, children, footer, center }) {
   const [kbHeight, setKbHeight] = useState(0)
+  const contentRef = useRef(null)
+
+  // 聚焦时滚动输入框到可见区（键盘弹出后、或切换输入框时）
+  const scrollActiveIntoView = useCallback(() => {
+    setTimeout(() => {
+      const active = document.activeElement
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      }
+    }, 350)  // 等待 iOS 键盘动画完成
+  }, [])
 
   useEffect(() => {
     if (open) {
@@ -28,26 +39,26 @@ export function Modal({ open, onClose, title, children, footer, center }) {
         if (vv) {
           const diff = window.innerHeight - vv.height
           setKbHeight(diff > 100 ? diff : 0)
-          // 键盘弹出时，把当前聚焦元素滚到可见区域
-          setTimeout(() => {
-            const active = document.activeElement
-            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
-              active.scrollIntoView({ block: 'center', behavior: 'smooth' })
-            }
-          }, 100)
+          scrollActiveIntoView()
         }
       }
       if (vv) {
         vv.addEventListener('resize', onResize)
         onResize()
       }
+      // 捕获所有输入框的聚焦事件（切换输入框时也生效）
+      const el = contentRef.current
+      if (el) {
+        el.addEventListener('focusin', scrollActiveIntoView)
+      }
       return () => {
         document.body.style.overflow = ''
         if (vv) vv.removeEventListener('resize', onResize)
+        if (el) el.removeEventListener('focusin', scrollActiveIntoView)
         setKbHeight(0)
       }
     }
-  }, [open])
+  }, [open, scrollActiveIntoView])
 
   if (!open) return null
 
@@ -106,7 +117,7 @@ export function Modal({ open, onClose, title, children, footer, center }) {
             }}
           >✕</button>
         </div>
-        <div style={{ flex: 1, overflow: 'auto', padding: '16px 22px' }}>
+        <div ref={contentRef} style={{ flex: 1, overflow: 'auto', padding: '16px 22px', WebkitOverflowScrolling: 'touch' }}>
           {children}
         </div>
         {footer && (
