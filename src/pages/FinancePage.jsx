@@ -146,37 +146,20 @@ export function FinancePage() {
           <FilterChip active={filterType === 'expense'} onClick={() => setFilterType('expense')}>支出</FilterChip>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {/* 账号筛选 */}
-        {/* 月份筛选 */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-          <select
-            value={filterMonth}
-            onChange={(e) => setFilterMonth(e.target.value)}
-            style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: '13px', background: 'rgba(255, 255, 255, 0.6)' }}
-          >
+        {/* 月份 + 账号 + 排序 同行对齐 */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'stretch' }}>
+          <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}
+            style={{ ...inputStyle, flex:1, padding:'8px 10px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
             <option value="all">全部月份</option>
             {months.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
-        </div>
-
           {accounts.length > 0 && (
-            <select
-              value={filterAccount}
-              onChange={(e) => setFilterAccount(e.target.value)}
-              style={{
-                ...inputStyle,
-                flex: 1,
-                padding: '8px 10px',
-                fontSize: '13px',
-                background: 'rgba(255, 255, 255, 0.6)',
-              }}
-            >
+            <select value={filterAccount} onChange={(e) => setFilterAccount(e.target.value)}
+              style={{ ...inputStyle, flex:1, padding:'8px 10px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
               <option value="all">全部账号</option>
               {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
           )}
-          {/* 排序 — 点击表头箭头切换升/降序 */}
           <SortButton label="日期" field="date" sortBy={sortBy} onClick={toggleSort} />
           <SortButton label="金额" field="amount" sortBy={sortBy} onClick={toggleSort} />
         </div>
