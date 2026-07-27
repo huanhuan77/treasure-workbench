@@ -97,12 +97,78 @@ const jiemaoSeed = [
 
 // olly女维：用户整理后内置文案（thumb-up=出单，check=用过；末 # 行为指定话题
 const ollySeed = [
-  { content: '露思的眼光还是太超前了\n也没人告诉我女维这么🐮啊\n这才几天\ncrush以为我住小韩', hasOrder: true, used: true, topics: [] },
-  { content: '没人懂吗\n人整体的光泽感\n才是最显贵的\n💇‍♀️👨‍🦲', hasOrder: false, used: true, topics: [] },
-  { content: '你一句"好美"\n我就知道跟着露思买对了\n随便吃吃\n我勒个逗\n闺蜜以为我背着她偷偷飞小韩', hasOrder: true, used: true, topics: [] },
-  { content: '没早睡没擦粉\n只是吃对东西了而已\n太快了呀', hasOrder: false, used: true, topics: [] },
-  { content: '你的一句"漂亮了"\n就知道我的坚持没有白费\n17合1成份巨顶\n美国原装进口之前挺贵\n现在活动一盒30粒才啥价啊', hasOrder: false, used: true, topics: [] },
-  { content: '你一句"老钱风"\n我就知道OLLY买对了\n老钱的精髓就是\n💇‍♀️💅👨‍', hasOrder: false, used: true, topics: ['#olly', '#olly女维', '#女性复合维生素', '#olly懂你漂亮做自', '#olly懂你好好养自'] },
+  {
+    "content": "露思的眼光还是太超前了\n也没人告诉我女维这么🐮啊\n这才几天\ncrush以为我住小韩了",
+    "hasOrder": true,
+    "used": true,
+    "topics": [
+      "#olly",
+      "#olly女维",
+      "#女性复合维生素",
+      "#olly懂你漂亮做自己",
+      "#olly懂你好好养自己"
+    ]
+  },
+  {
+    "content": "没人懂吗\n人整体的光泽感\n才是最显贵的\n💇‍♀️👨‍🦲💅",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#olly",
+      "#olly女维",
+      "#女性复合维生素",
+      "#olly懂你漂亮做自己",
+      "#olly懂你好好养自己"
+    ]
+  },
+  {
+    "content": "你一句\"好美\"\n我就知道跟着露思买对了\n随便吃吃\n我勒个逗\n闺蜜以为我背着她偷偷飞小韩了",
+    "hasOrder": true,
+    "used": true,
+    "topics": [
+      "#olly",
+      "#olly女维",
+      "#女性复合维生素",
+      "#olly懂你漂亮做自己",
+      "#olly懂你好好养自己"
+    ]
+  },
+  {
+    "content": "没早睡没擦粉\n只是吃对东西了而已\n太快了🥹",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#olly",
+      "#olly女维",
+      "#女性复合维生素",
+      "#olly懂你漂亮做自己",
+      "#olly懂你好好养自己"
+    ]
+  },
+  {
+    "content": "你的一句\"漂亮了\"\n就知道我的坚持没有白费\n17合1成份巨顶\n美国原装进口之前挺贵\n现在活动一瓶30粒才啥价啊",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#olly",
+      "#olly女维",
+      "#女性复合维生素",
+      "#olly懂你漂亮做自己",
+      "#olly懂你好好养自己"
+    ]
+  },
+  {
+    "content": "你一句\"老钱风\"\n我就知道OLLY买对了\n老钱的精髓就是\n💇‍♀️💅👩‍🦲",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#olly",
+      "#olly女维",
+      "#女性复合维生素",
+      "#olly懂你漂亮做自己",
+      "#olly懂你好好养自己"
+    ]
+  }
 ].map((c, i) => ({
   id: 'p_olly_c' + (i + 1),
   content: c.content,
