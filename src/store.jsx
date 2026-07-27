@@ -3073,9 +3073,9 @@ function loadData() {
       const [jbt] = productsFinal.splice(jbtIdx, 1)
       productsFinal.unshift(jbt)
     }
-    // v15 迁移：重置样品列表为干净种子（用户反馈样品乱了）
+    // v15 迁移：清空样品列表（用户要求从零开始重新导入）
     if (versionMismatch) {
-      old.samples = defaultData.samples.map((s) => ({ ...s }))
+      old.samples = []
     }
     return {
       products: productsFinal,
