@@ -163,7 +163,7 @@ export function SamplesPage() {
               const dlColor = dl && dl.includes('过期') ? '#fb7185' : dl && dl.includes('今天') ? '#fb923c' : 'var(--text-sub)'
               const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
               return (
-                <div key={s.id} style={{ ...glassStyle, padding: '10px 14px 8px 14px', position: 'relative', borderLeft: `3px solid ${st.stripe}` }}>
+                <div key={s.id} style={{ ...glassStyle, padding: '12px 14px 10px 14px', position: 'relative', borderLeft: `3px solid ${st.stripe}` }}>
                   {/* 头一行：名称 + 状态徽章 */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
