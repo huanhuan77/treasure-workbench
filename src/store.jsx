@@ -3072,7 +3072,14 @@ function loadData() {
       transactions: migrateTransactions(Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])),
       moodData: old.moodData || [],
       savingsData: (() => {
-        const sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
+        let sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
+        // 独立 key 回退：主数据无投资记录时尝试从独立 localStorage key 恢复
+        if (!sd.investments || sd.investments.length === 0) {
+          try {
+            const invRaw = localStorage.getItem('blogger_investments_v1')
+            if (invRaw) { const inv = JSON.parse(invRaw); if (Array.isArray(inv) && inv.length) { sd = { ...sd, investments: inv } } }
+          } catch(e) {}
+        }
         console.log('[loadData] old.savingsData.investments:', JSON.stringify(old.savingsData?.investments), '→ result:', JSON.stringify(sd.investments))
         return sd
       })(),
