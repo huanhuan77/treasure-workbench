@@ -23,42 +23,7 @@ export function SavingsPage() {
   const [editMonth, setEditMonth] = useState(null)
   const [expandedMonth, setExpandedMonth] = useState(null)
   const [editAccounts, setEditAccounts] = useState(null)
-    const [editTotal, setEditTotal] = useState('')
-  const [showInvest, setShowInvest] = useState(false)
-  const [showAddInv, setShowAddInv] = useState(false)
-  const [invCode, setInvCode] = useState('')
-  const [invName, setInvName] = useState('')
-  const [invCurrentPrice, setInvCurrentPrice] = useState(null)
-  const [invSellPrice, setInvSellPrice] = useState('')
-  const [invSellDate, setInvSellDate] = useState('')
-
-  const sd = getSavings()
-  const [investments, setInvestments] = useState(sd?.investments || [])
-  const saveInvestments = (list) => { setInvestments(list); setSavings({ investments: list }) }
-
-  const fetchAndAdd = async () => {
-    if (!invCode.trim()) return
-    try {
-      const { StockSDK } = await import('stock-sdk')
-      const sdk = new StockSDK()
-      const code = invCode.trim().replace(/\D/g, '')
-      if (code.length <= 6) {
-        const q = await sdk.quotes.fund([code])
-        if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].nav) }
-      } else {
-        const q = await sdk.quotes.cn([code])
-        if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].price) }
-      }
-    } catch(e) { alert('获取行情失败: ' + e.message) }
-  }
-  const confirmAddInv = () => {
-    if (!invName || !invSellPrice) return
-    const sp = parseFloat(invSellPrice)
-    const cp = invCurrentPrice
-    const change = cp && sp ? ((cp - sp) / sp * 100) : null
-    saveInvestments([...investments, { code:invCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, change }])
-    setShowAddInv(false); setInvCode(''); setInvName(''); setInvCurrentPrice(null); setInvSellPrice(''); setInvSellDate('')
-  }
+  const [editTotal, setEditTotal] = useState('')
 
   const monthsWithData = MONTH_KEYS.filter(k => records[k] && records[k].actual > 0)
   const currentMonth = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : '2026-01'

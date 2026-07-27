@@ -163,7 +163,7 @@ export function SamplesPage() {
 
                   <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--text-sub)', marginTop: '10px' }}>
                     {s.receiveDate && <span>📅 收货 {formatDate(s.receiveDate)}</span>}
-                    {s.deadline && <span style={{ color: dlColor }}>⏰ 截止 {formatDate(s.deadline)} {dl && `· ${dl}`}</span>}
+                    {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor }}>⏰ 截止 {formatDate(s.deadline)} {dl && `· ${dl}`}</span>}
                   </div>
 
                   {s.remark && (
