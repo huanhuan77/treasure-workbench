@@ -69,7 +69,8 @@ export function SavingsPage() {
     } catch(e) { alert('获取行情失败: ' + e.message) }
   }
   const confirmAddInv = () => {
-    if (!invName || !invSellPrice) return
+    if (!invName) { alert('请先填写代码并获取行情'); return }
+    if (!invSellPrice) { alert('请填写' + (invType==='buy' ? '买入价' : '卖出价')); return }
     const sp = parseFloat(invSellPrice)
     const cp = invCurrentPrice
     const change = cp && sp ? ((cp - sp) / sp * 100) : null
@@ -269,6 +270,9 @@ export function SavingsPage() {
                   <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入价' : '卖出价'} type='number' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center' }} />
                   <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} type='date' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center', color:'#4338ca' }} />
                 </div>
+                {invCurrentPrice && (
+                  <button type='button' onClick={() => { setInvSellPrice(String(invCurrentPrice)); if (!invSellDate) setInvSellDate(new Date().toISOString().slice(0, 10)) }} style={{ width:'100%', boxSizing:'border-box', padding:'8px', marginBottom:'10px', borderRadius:'8px', border:'1.5px dashed #6366f1', background:'transparent', color:'#6366f1', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>⚡ 用当前价 {invCurrentPrice} 填入</button>
+                )}
                 <button onClick={confirmAddInv} style={{ width:'100%', boxSizing:'border-box', padding:'12px', borderRadius:'8px', border:'none', background:'#10b981', color:'#fff', fontSize:'15px', fontWeight:700, cursor:'pointer' }}>保存</button>
                 <button onClick={() => { setShowAddInv(false); setInvType('buy') }} style={{ width:'100%', boxSizing:'border-box', padding:'8px', borderRadius:'8px', border:'none', background:'transparent', color:'#666', fontSize:'13px', cursor:'pointer', marginTop:'4px' }}>取消</button>
               </div>
