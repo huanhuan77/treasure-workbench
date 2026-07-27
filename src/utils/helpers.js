@@ -68,28 +68,63 @@ export function daysDiff(dateStr) {
 // 批量解析文案：按空行拆分；识别末尾标记与话题
 //   thumb-up(出单) / check(用过) 具体见 UI 导入说明
 //   结构：文案正文 + 末尾 👍/✅ 标记 + 可选 #话题 行（顺序任意，均自动剥离）
+// 抽末尾话题行：#a #b #c（1 个或多个 # 标签，空格分隔）。命中则剥掉该行并返回话题数组
+function takeTopicLine(content) {
+  const cl = content.split('\n')
+  const lastLine = cl[cl.length - 1].trim()
+  if (/^#\S+(\s+#\S+)*$/.test(lastLine)) {
+    cl.pop()
+    return { topics: lastLine.split(/\s+/), rest: cl.join('\n').trim() }
+  }
+  return { topics: [], rest: content }
+}
+
+// 判断一行是否像「产品名」表头：单行、无标记、非话题行、较短且无中英文标点
+function isProductNameHeader(line) {
+  const s = (line || '').trim()
+  if (!s) return false
+  if (s.includes('\n')) return false
+  if (/[\u2705\u{1F44D}](?:[\u{FE0F}\u{1F3FB}-\u{1F3FF}])?/u.test(s)) return false
+  if (/^#\S+(\s+#\S+)*$/.test(s)) return false
+  if (s.length > 15) return false
+  if (/[。！？，；：、.!?,;:]/.test(s)) return false
+  return true
+}
+
 export function parseBulkCopies(text) {
   if (!text) return []
+  // 首行若像产品名表头（如「洁比兔 湿巾」），去掉该行不入库
+  const _lines = text.split('\n')
+  if (_lines.length > 1 && isProductNameHeader(_lines[0])) {
+    text = _lines.slice(1).join('\n')
+  }
   const blocks = text.split(/\n\s*\n/)
+
+  // 末尾整块「仅剩一个话题行」（抽完话题+标记后内容为空）→ 视为全批共享话题
+  let globalTopics = []
+  if (blocks.length > 0) {
+    const lastRaw = (blocks[blocks.length - 1] || '').trim()
+    if (lastRaw) {
+      const { topics, rest } = takeTopicLine(lastRaw)
+      const stripped = rest.replace(/[\s]*[\u2705\u{1F44D}](?:[\u{FE0F}\u{1F3FB}-\u{1F3FF}])?\s*$/u, '').trim()
+      if (topics.length > 0 && stripped === '') {
+        globalTopics = topics
+        blocks.pop()
+      }
+    }
+  }
+
   const out = []
   for (const raw of blocks) {
     let content = (raw || '').trim()
     if (!content) continue
-    // 1) 先抽末尾话题行：#a #b #c（多个 # 标签，空格分隔）
-    let topics = []
-    const cl = content.split('\n')
-    const lastLine = cl[cl.length - 1].trim()
-    if (/^#\S+(\s+#\S+)+$/.test(lastLine)) {
-      topics = lastLine.split(/\s+/)
-      cl.pop()
-      content = cl.join('\n').trim()
-    }
-    // 2) 再抽末尾标记
-    const m = content.match(/[\s]*([\u2705\u{1F44D}])\s*$/u)
+    const { topics, rest } = takeTopicLine(content)
+    content = rest
+    const m = content.match(/[\s]*([\u2705\u{1F44D}])(?:[\u{FE0F}\u{1F3FB}-\u{1F3FF}])?\s*$/u)
     let hasOrder = false
     let used = false
     if (m) {
-      content = content.replace(/[\s]*[\u2705\u{1F44D}]\s*$/u, '').trim()
+      content = content.replace(/[\s]*[\u2705\u{1F44D}](?:[\u{FE0F}\u{1F3FB}-\u{1F3FF}])?\s*$/u, '').trim()
       if (m[1] === '\u2705') {
         used = true
       } else {
@@ -97,10 +132,21 @@ export function parseBulkCopies(text) {
         used = true
       }
     }
-    out.push({ content, hasOrder, used, topics })
+    const finalTopics = topics.length > 0 ? topics : globalTopics
+    // 内容为空的「孤立标记/话题行」（如标记单独成行）：合并到上一条文案，不单独成条
+    if (!content && out.length > 0) {
+      const prev = out[out.length - 1]
+      prev.hasOrder = prev.hasOrder || hasOrder
+      prev.used = prev.used || used
+      if (prev.topics.length === 0 && finalTopics.length > 0) prev.topics = finalTopics
+      continue
+    }
+    if (!content) continue
+    out.push({ content, hasOrder, used, topics: finalTopics })
   }
   return out
 }
+
 export function deadlineDesc(deadline) {
   const d = daysDiff(deadline)
   if (d === null) return ''

@@ -32,7 +32,7 @@ function displayTitle(p) {
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { products, addCopy, deleteCopy, updateCopy, addCopies, setProductTopics, sensitiveWords } = useStore()
+  const { products, addCopy, deleteCopy, updateCopy, addCopies, clearCopies, setProductTopics, sensitiveWords } = useStore()
   const { show } = useToast()
   const product = products.find((p) => p.id === id)
 
@@ -46,6 +46,7 @@ export function ProductDetailPage() {
 
   const [showImport, setShowImport] = useState(false)
   const [importText, setImportText] = useState('')
+  const [showClear, setShowClear] = useState(false)
 
   // 话题管理
   const [showTopics, setShowTopics] = useState(false)
@@ -74,10 +75,6 @@ export function ProductDetailPage() {
     if (!t) { setEditTopicIdx(null); return }
     if (!t.startsWith('#')) t = '#' + t
     const next = [...topicDraft]; next[editTopicIdx] = t; setTopicDraft(next); setEditTopicIdx(null)
-  }
-  const regenTopics = () => {
-    const newTopics = generateTopics(product.name + ' 爆款', product.name, product.brand, sensitiveWords)
-    setTopicDraft(newTopics); show('已重新生成 5 个话题', 'success')
   }
   const saveTopics = () => { setProductTopics(product.id, topicDraft); setShowTopics(false); show('话题已保存', 'success') }
 
@@ -182,13 +179,6 @@ export function ProductDetailPage() {
     if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
   }
 
-  const handleCopyTitleTopics = async (title, topics, copyId) => {
-    const text = buildTitleWithTopics(title, topics)
-    const ok = await copyText(text)
-    show(ok ? '标题+话题已复制' : '复制失败', ok ? 'success' : 'error')
-    if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
-  }
-
   const handleGenerateSimilar = (copyId, style) => {
     const copy = product.copies.find((c) => c.id === copyId)
     if (!copy) return
@@ -199,13 +189,12 @@ export function ProductDetailPage() {
     show(`已生成「${style}」风格文案`, 'success')
   }
 
-  // 重新生成某条文案的标题
-  const refreshTitle = (copyId) => {
-    const copy = product.copies.find((c) => c.id === copyId)
-    if (!copy) return
-    const newTitle = generateTitle(copy.content, product.name, product.brand, sensitiveWords)
-    updateCopy(id, copyId, { title: newTitle })
-    show('标题已重新生成', 'success')
+  // 复制话题（标题已不再展示，单独复制话题即可）
+  const handleCopyTopics = async (topics, copyId) => {
+    const text = (topics || []).join(' ')
+    const ok = await copyText(text)
+    show(ok ? '话题已复制' : '复制失败', ok ? 'success' : 'error')
+    if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
   }
 
   const toggleOrder = (copyId, current) => {
@@ -287,6 +276,19 @@ export function ProductDetailPage() {
                 cursor: 'pointer',
               }}
             >批量导入</button>
+            <button
+              onClick={() => setShowClear(true)}
+              style={{
+                background: '#fff',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
+                padding: '8px 14px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >清空文案</button>
           </div>
         </div>
 
@@ -342,10 +344,8 @@ export function ProductDetailPage() {
                 productName={product.name}
                 brand={product.brand}
                 onCopyContent={() => handleCopyContent(copy.content, copy.id)}
-                onCopyTitleTopics={() => handleCopyTitleTopics(copy.title, copy.topics, copy.id)}
-                onOpenGenModal={() => openGenModal(copy)}
+                onCopyTopics={() => handleCopyTopics(copy.topics, copy.id)}
                 onEdit={() => openEditCopy(copy)}
-                onRefreshTitle={() => refreshTitle(copy.id)}
                 onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder)}
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
                 onDelete={() => setDelCopyId(copy.id)}
@@ -370,14 +370,14 @@ export function ProductDetailPage() {
         <Field label="粘贴多条文案">
           <textarea
             style={{ ...inputStyle, minHeight: '200px', resize: 'vertical', lineHeight: 1.6 }}
-            placeholder="粘贴文案，可一条或多条（空行分隔）；末尾 👍 标记出单、✅ 标记用过（会自动识别并去掉）"
+            placeholder="格式：首行可写产品名（自动忽略）；每条文案空行分隔；最后一行 #话题 套用全部；👍=出单、✅=用过（标记会自动去掉）"
             value={importText}
             onChange={(ev) => setImportText(ev.target.value)}
             autoFocus
           />
         </Field>
         <p style={{ fontSize: '12px', color: 'var(--gray-400)', margin: 0 }}>
-          💡 可粘一条或多条；导入后自动生成标题和话题，👍=出单、✅=用过，标记不写进正文）
+          💡 首行产品名会自动忽略；末尾一行 #话题 套用到所有文案；👍=出单、✅=用过，标记不写进正文
         </p>
       </Modal>
 
@@ -433,12 +433,8 @@ export function ProductDetailPage() {
             </span>
           ))}
         </div>
-        <button
-          onClick={regenTopics}
-          style={{ width: '100%', padding: '10px', border: '1px dashed rgba(236, 72, 182, 0.4)', borderRadius: '12px', background: 'rgba(236, 72, 182, 0.05)', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
-        >🔄 重新生成 5 个热门话题</button>
         <p style={{ fontSize: '12px', color: 'var(--gray-400)', margin: '10px 0 0' }}>
-          💡 话题用于「复制标题+话题」，统一管理当前产品的所有话题）
+          💡 话题用于「复制话题」，统一管理当前产品的所有话题
         </p>
       </Modal>
 
@@ -486,6 +482,16 @@ export function ProductDetailPage() {
         title="删除文案"
         message="确定删除这条文案吗？"
         confirmText="删除"
+        danger
+      />
+
+      <ConfirmModal
+        open={showClear}
+        onClose={() => setShowClear(false)}
+        onConfirm={() => { clearCopies(id); setShowClear(false); show('已清空，可重新导入', 'success') }}
+        title="清空文案"
+        message="将删除该产品下的全部文案，导入前用于全量替换。确定继续吗？"
+        confirmText="清空"
         danger
       />
 
@@ -723,13 +729,21 @@ export function ProductDetailPage() {
 
 function CopyCard({
   copy, productName, brand,
-  onCopyContent, onCopyTitleTopics,
-  onOpenGenModal, onEdit, onRefreshTitle, onToggleOrder, onToggleUsed, onDelete,
+  onCopyContent, onCopyTopics,
+  onEdit, onToggleOrder, onToggleUsed, onDelete,
 }) {
+  const cardAccent = copy.hasOrder
+    ? { borderLeftColor: '#10b981' }
+    : copy.used
+      ? { borderLeftColor: '#06b6d4' }
+      : {}
+
   return (
     <div style={{
       ...glassStyle,
       padding: '14px',
+      borderLeft: '4px solid transparent',
+      ...cardAccent,
     }}>
       {/* 文案内容 */}
       <div style={{
@@ -744,23 +758,6 @@ function CopyCard({
         border: '1px solid rgba(255, 255, 255, 0.5)',
       }}>
         {copy.content}
-      </div>
-
-      {/* 标题 */}
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>📌 标题</div>
-          <button
-            onClick={onRefreshTitle}
-            title="重新生成标题"
-            style={{
-              border: '1px solid rgba(236, 72, 182, 0.35)', background: 'rgba(252, 231, 243, 0.9)', color: 'var(--primary)',
-              fontSize: '18px', cursor: 'pointer', padding: '4px 10px', borderRadius: '10px',
-              lineHeight: 1, display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700,
-            }}
-          >↻</button>
-        </div>
-        <div style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.4, color: 'var(--text-main)' }}>{copy.title}</div>
       </div>
 
       {/* 话题 */}
@@ -826,18 +823,18 @@ function CopyCard({
           }}
         >📋 复制文案</button>
         <button
-          onClick={onCopyTitleTopics}
+          onClick={onCopyTopics}
           style={{
             flex: 1,
             padding: '10px',
-            background: 'rgba(255, 255, 255, 0.6)',
-            color: 'var(--text-main)',
+            background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
+            color: '#fff',
             borderRadius: '12px',
             fontSize: '13px',
             fontWeight: 600,
-            border: '1px solid rgba(255, 255, 255, 0.7)',
+            boxShadow: '0 2px 8px rgba(139, 92, 246, 0.25)',
           }}
-        >📋 复制标题+话题</button>
+        >📋 复制话题</button>
       </div>
 
       {/* 操作按钮区 */}
@@ -846,15 +843,12 @@ function CopyCard({
           {copy.used ? '✓ 用过' : '标记用过'}
         </ActionBtn>
         <ActionBtn active={copy.hasOrder} onClick={onToggleOrder} activeColor="success">
-          {copy.hasOrder ? '🔥 出单' : '标记出单'}
+          {copy.hasOrder ? '取消出单' : '标记出单'}
         </ActionBtn>
-        <ActionBtn onClick={onOpenGenModal}>
-          ✨ 生成相似
-        </ActionBtn>
-        <ActionBtn onClick={onEdit}>
+        <ActionBtn onClick={onEdit} tone="neutral">
           ✎ 编辑
         </ActionBtn>
-        <ActionBtn onClick={onDelete} activeColor="danger">
+        <ActionBtn onClick={onDelete} tone="danger">
           删除
         </ActionBtn>
       </div>
@@ -863,25 +857,33 @@ function CopyCard({
   )
 }
 
-function ActionBtn({ children, onClick, active, activeColor = 'primary' }) {
+function ActionBtn({ children, onClick, active, activeColor = 'primary', tone }) {
   const colorMap = {
     primary: { bg: 'linear-gradient(135deg, #f472b6, #ec4899)', text: '#fff' },
     success: { bg: 'linear-gradient(135deg, #34d399, #10b981)', text: '#fff' },
     info: { bg: 'linear-gradient(135deg, #22d3ee, #06b6d4)', text: '#fff' },
     danger: { bg: 'linear-gradient(135deg, #fb7185, #f43f5e)', text: '#fff' },
   }
+  // tone：非激活时的静态样式（用于「编辑 / 删除」这类次要操作）
+  const toneMap = {
+    neutral: { bg: 'rgba(255, 255, 255, 0.45)', text: 'var(--text-sub)', border: '1px solid rgba(0, 0, 0, 0.08)' },
+    danger: { bg: 'rgba(254, 226, 226, 0.6)', text: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.28)' },
+  }
   const activeStyle = active ? colorMap[activeColor] : null
+  const t = tone ? toneMap[tone] : null
+  const base = activeStyle || t || { bg: 'rgba(255, 255, 255, 0.5)', text: 'var(--text-sub)', border: '1px solid rgba(255, 255, 255, 0.6)' }
   return (
     <button
       onClick={onClick}
       style={{
         padding: '7px 12px',
-        background: activeStyle ? activeStyle.bg : 'rgba(255, 255, 255, 0.5)',
-        color: activeStyle ? activeStyle.text : 'var(--text-sub)',
+        background: base.bg,
+        color: base.text,
         borderRadius: '10px',
         fontSize: '12px',
         fontWeight: 600,
-        border: activeStyle ? 'none' : '1px solid rgba(255, 255, 255, 0.6)',
+        border: base.border,
+        cursor: 'pointer',
       }}
     >{children}</button>
   )

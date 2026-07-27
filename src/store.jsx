@@ -440,22 +440,21 @@ const xiuhuaxiaoSeed = [
 }))
 
 const jiebiwetSeed = [
-  { content: "男朋友不知道~\n咱们心里也要有点数\n女生是不能用纸巾擦的\n真的建议所有女生都去\n让对象买这个洁比兔的\n蔓越莓益生菌清洁湿巾\n淡淡的蔓越莓香满满的\n精华99.9%的擦除率\n擦完可以放心倒头就睡", hasOrder: false, used: true, topics: [] },
-  { content: "男朋友问“喷的什么香水”\n我滴呀!什么都没喷\n洁比兔!你真行\n满满的精华\n淡淡的蔓越莓越闻越上头\n99.9%的擦除率擦完到头就睡", hasOrder: false, used: true, topics: [] },
-  { content: "男朋友不知道~\n咱们心里也要有点数\n女生日常可不能乱擦\n真的建议所有女生都去\n让对象入手\n洁比兔蔓越莓益生菌清洁湿巾\n淡淡蔓越莓清香超治愈\n满满精华柔软亲肤\n99.9%擦去率用完\n清清爽爽安心入睡😴", hasOrder: false, used: true, topics: [] },
-  { content: "能贴心考虑到清洁的男人\n远比只会买小雨伞的靠谱\n你得分清对他好和对你好的不同\n被认真对待和被敷衍\n从来都是两种结局\n爱你的人会自觉照顾你~", hasOrder: false, used: true, topics: [] },
-  { content: "🥰🥰突然发现\n女朋友一直在用的\n居然是洁比兔家的蔓越莓湿巾\n淡淡的蔓越莓清香\n女生是不能用普通干纸巾擦的\n真的建议所有女生都去用\n每次擦完都可以倒头就睡了", hasOrder: false, used: true, topics: [] },
-  { content: "别再被“对你好”的假象骗了\n只知道买小雨伞的是敷衍\n主动给你备私护湿巾的\n才是真的为你着想爱你的人\n连细节都在说爱你", hasOrder: false, used: true, topics: [] },
-  { content: "一句“你喷香水了'\n我就知道洁比兔的清洁湿巾\n用对了\n满满的精华和蔓越莓清香~\n真的建议所有女生都去用\n每次擦完都可以倒头就睡了", hasOrder: true, used: true, topics: [] },
-  { content: "记住!\n懂给你做清洁善后的男人\n比只买小雨伞的靠谱太多\n别混清对他好和对你好\n认真是真心，敷衍是应付\n爱你的人会自觉把你放心上照顾", hasOrder: false, used: true, topics: [] },
-  { content: "每次看到男朋友\n给我备的洁比兔清洁湿巾\n说不上来的感动\n淡淡的蔓越莓香很好闻\n99.9%的擦除率\n擦完可以倒头就睡\n他没有只给自己备小雨伞\n而是把我也照顾的很好\n他的爱永远拿得出去", hasOrder: false, used: true, topics: [] },
-  { content: "他给我准备的不只是小浪漫\n还有洁比兔清洁湿巾\n每次看到都会觉得\n原来被认真照顾\n是这种感觉啊", hasOrder: false, used: true, topics: [] },
-  { content: "", hasOrder: false, used: false, topics: ['#洁比', '#温和清洁', '#卫生湿巾', '#亲测分享', '#女生必备'] }
+  { content: `男朋友不知道~\n咱们心里也要有点数\n女生是不能用纸巾擦的\n真的建议所有女生都去\n让对象买这个洁比兔的\n蔓越莓益生菌清洁湿巾\n淡淡的蔓越莓香满满的\n精华99.9%的擦除率\n擦完可以放心倒头就睡`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `男朋友问“喷的什么香水”\n我滴妈!什么都没喷\n洁比兔!你真行\n满满的精华\n淡淡的蔓越莓越闻越上头\n99.9%的擦除率擦完到头就睡`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `男朋友不知道~\n咱们心里也要有点数\n女生日常可不能乱擦\n真的建议所有女生都去\n让对象入手\n洁比兔蔓越莓益生菌清洁湿巾\n淡淡蔓越莓清香超治愈\n满满精华柔软亲肤\n99.9%擦去率用完\n清清爽爽安心入睡😴`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `能贴心考虑到清洁的男人\n远比只会买小雨伞的靠谱\n你得分清对他好和对你好的不同\n被认真对待和被敷衍\n从来都是两种结局\n爱你的人会自觉照顾你~`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `🥰🥰突然发现\n女朋友一直在用的\n居然是洁比兔家的蔓越莓湿巾\n淡淡的蔓越莓清香\n女生是不能用普通干纸巾擦的\n真的建议所有女生都去用\n每次擦完都可以倒头就睡了💤`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `别再被"对你好"的假象骗了\n只知道买小雨伞的是敷衍\n主动给你备私护湿巾的\n才是真的为你着想爱你的人\n连细节都在说爱你`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `一句“你喷香水了’\n我就知道洁比兔的清洁湿巾\n用对了\n满满的精华和蔓越莓清香~\n真的建议所有女生都去用\n每次擦完都可以倒头就睡了💤`, hasOrder: true, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `记住了!\n懂给你做清洁善后的男人\n比只买小雨伞的靠谱太多\n别混清对他好和对你好\n认真是真心，敷衍是应付\n爱你的人会自觉把你放心上照顾`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `每次看到男朋友\n给我备的洁比兔清洁湿巾\n说不上来的感动\n淡淡的蔓越莓香很好闻\n99.9%的擦除率\n擦完可以倒头就睡\n他没有只给自己备小雨伞\n而是把我也照顾的很好\n他的爱永远拿得出手`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
+  { content: `他给我准备的不只是小浪漫\n还有洁比兔清洁湿巾\n每次看到都会觉得\n原来被认真照顾\n是这种感觉🥰`, hasOrder: false, used: true, topics: ["#洁比兔","#温和清洁","#卫生湿巾","#亲测分享","#女生必备"] },
 ].map((c, i) => ({
-  id: 'p_jiebiwet_c' + (i + 1),
+  id: 'p_jiebitudushijin_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '洁比兔湿厕纸', '洁比兔', DEFAULT_SENSITIVE_WORDS),
-  topics: c.topics.length ? c.topics : generateTopics(c.content, '洁比兔湿厕纸', '洁比兔', DEFAULT_SENSITIVE_WORDS),
+  title: generateTitle(c.content, '洁比兔 湿巾', '洁比兔', DEFAULT_SENSITIVE_WORDS),
+  topics: c.topics.length ? c.topics : generateTopics(c.content, '洁比兔 湿巾', '洁比兔', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
   usedDate: null,
@@ -465,7 +464,8 @@ const jiebiwetSeed = [
 
 const defaultData = {
   products: [
-    { id: 'p_jiebiwet', name: '洁比兔湿厕纸', brand: '洁比兔', category: '其他', createdAt: Date.now(), copies: jiebiwetSeed },
+    { id: 'p_jiebiwet', name: '洁比兔 湿巾', brand: '洁比兔', category: '其他', createdAt: Date.now(), copies: jiebiwetSeed },
+
     { id: 'p_xihu', name: '洁比兔洗护液', brand: '洁比兔', category: '洗护', createdAt: Date.now(), copies: xihuSeed },
     { id: 'p_weite', name: '维特健灵祛湿清', brand: '维特健灵', category: '保健品', createdAt: Date.now(), copies: weiteSeed },
     { id: 'p_coffee', name: 'PH地中海咖啡', brand: 'PH', category: '饮品', createdAt: Date.now(), copies: coffeeSeed },
@@ -539,7 +539,7 @@ const defaultData = {
   { id:'s_053', name:'生理盐水湿巾', account:'小号', receiveDate:'', deadline:'', remark:'', status:'hit' },
   { id:'s_054', name:'衣物香氛挂件', account:'小号', receiveDate:'', deadline:'', remark:'', status:'hit' },
   { id:'s_055', name:'祛湿轻', account:'小号', receiveDate:'2026-03-01', deadline:'', remark:'', status:'hit' },
-  { id:'s_056', name:'洁比兔湿厕纸', account:'小号', receiveDate:'2026-03-24', deadline:'', remark:'', status:'hit' },
+  { id:'s_056', name:'洁比兔 湿巾', account:'小号', receiveDate:'2026-03-24', deadline:'', remark:'', status:'hit' },
   { id:'s_057', name:'洁比兔益生菌洗液', account:'小号', receiveDate:'2026-03-24', deadline:'', remark:'', status:'hit' },
   { id:'s_058', name:'绵绵的羊', account:'小号', receiveDate:'2026-04-28', deadline:'', remark:'', status:'hit' },
   { id:'s_059', name:'宝玑米脱毛膏', account:'小号', receiveDate:'2026-04-28', deadline:'', remark:'', status:'hit' },
@@ -578,7 +578,7 @@ const defaultData = {
   { id:'s_092', name:'生理盐水湿巾', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_093', name:'衣物香氛挂件', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_094', name:'祛湿清', account:'小小号', receiveDate:'2026-03-01', deadline:'', remark:'', status:'published' },
-  { id:'s_095', name:'洁比兔湿厕纸', account:'小小号', receiveDate:'2026-03-24', deadline:'', remark:'', status:'hit' },
+  { id:'s_095', name:'洁比兔 湿巾', account:'小小号', receiveDate:'2026-03-24', deadline:'', remark:'', status:'hit' },
   { id:'s_096', name:'洁比兔益生菌洗液', account:'小小号', receiveDate:'2026-03-24', deadline:'', remark:'', status:'hit' },
   { id:'s_097', name:'绵绵的羊', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_098', name:'宝玑米脱毛膏', account:'小小号', receiveDate:'2026-04-28', deadline:'', remark:'', status:'published' },
@@ -861,6 +861,27 @@ function refreshAllTitles(products) {
   })
 }
 
+// 合并洁比兔湿巾/湿厕纸为同一产品：用户曾分两条导入，按名称归一，避免重复显示
+function consolidateJiebitudu(products) {
+  const isJbt = (p) => p && /洁比兔/.test(p.name) && /(湿巾|湿厕纸)/.test(p.name)
+  const out = []
+  let merged = null
+  for (const p of products) {
+    if (!isJbt(p)) { out.push(p); continue }
+    if (!merged) {
+      merged = { ...p, name: '洁比兔 湿巾', copies: [...(p.copies || [])] }
+    } else {
+      const seen = new Set(merged.copies.map((c) => (c.content || '').replace(/\s+/g, '')))
+      for (const c of (p.copies || [])) {
+        const key = (c.content || '').replace(/\s+/g, '')
+        if (!seen.has(key)) { merged.copies.push(c); seen.add(key) }
+      }
+    }
+  }
+  if (merged) out.push(merged)
+  return out
+}
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -944,6 +965,7 @@ function loadData() {
         return { ...p, copies }
       })
     }
+    productsFinal = consolidateJiebitudu(productsFinal)
     return {
       products: productsFinal,
       samples: (old.samples || []).map((s) => {
@@ -1104,6 +1126,16 @@ export function StoreProvider({ children }) {
     }))
   }, [])
 
+  // 清空某产品的全部文案（用于全量重新导入前，避免和旧文案重复）
+  const clearCopies = useCallback((productId) => {
+    setData((d) => ({
+      ...d,
+      products: d.products.map((p) =>
+        p.id === productId ? { ...p, copies: [] } : p
+      ),
+    }))
+  }, [])
+
   const updateCopy = useCallback((productId, copyId, patch) => {
     setData((d) => ({
       ...d,
@@ -1197,7 +1229,7 @@ export function StoreProvider({ children }) {
   const value = {
     ...data,
     addProduct, deleteProduct, updateProduct, reorderProducts, setProductTopics,
-    addCopy, deleteCopy, updateCopy, addCopies,
+    addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord, resetData,

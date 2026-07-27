@@ -164,8 +164,9 @@ function hashStr(str) {
   return h
 }
 
-export function generateTitle(content, productName, brand, sensitiveWords) {
-  if (!content) return ''
+// 构建标题候选池（与产品名、品牌、内容卖点相关，但尚不确定选哪条）
+function buildTitleCandidates(content, productName, brand) {
+  if (!content) return []
   const full = fullNameOf(productName, brand)
   const product = full || productName || '这款好物'
   const domain = inferDomain(productName, content)
@@ -195,9 +196,26 @@ export function generateTitle(content, productName, brand, sensitiveWords) {
     `把仪式感拉满的${product}，${fill.female ? '治愈每个平凡日常' : '治愈每个日常'}`,
     `温柔又自在的${product}，${femTail}`,
   ]
-  const candidates = [...chat, ...seed, ...mood]
+  return [...chat, ...seed, ...mood]
+}
+
+export function generateTitle(content, productName, brand, sensitiveWords) {
+  const candidates = buildTitleCandidates(content, productName, brand)
+  if (candidates.length === 0) return ''
+  // 基于内容+产品名稳定选一条（同一内容始终得到同一标题，便于导入/编辑时保持一致）
+  const product = fullNameOf(productName, brand) || productName || '这款好物'
   const title = candidates[hashStr((content || '') + '|' + product) % candidates.length]
   return sanitizeText(title, sensitiveWords).clean
+}
+
+// 重新生成标题：从同一候选池里随机挑一条，且尽量不同于当前标题（用于「↻ 重新生成标题」）
+export function regenerateTitle(content, productName, brand, sensitiveWords, currentTitle) {
+  const candidates = buildTitleCandidates(content, productName, brand)
+  if (candidates.length === 0) return ''
+  const pool = currentTitle ? candidates.filter((t) => t !== currentTitle) : candidates
+  const finalPool = pool.length > 0 ? pool : candidates
+  const pick = finalPool[Math.floor(Math.random() * finalPool.length)]
+  return sanitizeText(pick, sensitiveWords).clean
 }
 
 
