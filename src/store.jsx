@@ -1147,13 +1147,15 @@ function loadData() {
     const versionMismatch = savedVersion() !== CURRENT_VERSION
     // 非破坏性加载：完整保留用户已有的产品与全部文案、样品、收支；
     // 版本变更时仅刷新「卡审词库」为最新默认，并补充缺失的示例产品
-    const userById = new Map(old.products.map((pr) => [pr.id, pr]))
+    // 以用户保存的顺序为主：用 old.products 的顺序重建，种子仅用于刷新名称/品牌/分类/文案，并补齐缺失的新产品
+    const presetById = new Map(defaultData.products.map((pr) => [pr.id, pr]))
     const products = []
-    for (const preset of defaultData.products) {
-      const user = userById.get(preset.id)
-      if (user) {
-        // 按 id 匹配：用种子干净名称/品牌/分类覆盖乱码名，并用干净种子文案回填
-        // （按序对齐：种子文案为 clean 文本，继承用户已标的 used/hasOrder；用户额外新增文案原样保留，避免误删导入数据）
+    const seenIds = new Set()
+    for (const user of old.products) {
+      if (!user || !user.id) continue
+      seenIds.add(user.id)
+      const preset = presetById.get(user.id)
+      if (preset) {
         const seedCopies = preset.copies || []
         const userCopies = user.copies || []
         const filledCopies = seedCopies.map((sc, i) => {
@@ -1169,12 +1171,12 @@ function loadData() {
           copies: [...filledCopies, ...extraCopies],
         })
       } else {
-        products.push(preset)
+        products.push(user)
       }
     }
-    // 用户自定义且不在预设中的产品，原样保留
-    for (const pr of old.products) {
-      if (!defaultData.products.some((p) => p.id === pr.id)) products.push(pr)
+    // 种子中有、但用户尚未拥有的新产品，追加到末尾
+    for (const preset of defaultData.products) {
+      if (!seenIds.has(preset.id)) products.push(preset)
     }
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
     let productsFinal = versionMismatch ? refreshAllTitles(products) : products
