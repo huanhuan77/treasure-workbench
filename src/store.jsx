@@ -1113,6 +1113,18 @@ function consolidateJiebitudu(products) {
   if (merged) out.push(merged)
   return out
 }
+// 自愈：洁比兔湿巾/湿厕纸 产品若混入非洁比兔文案（如 DOBO噗噗通），重置回干净种子
+function sanitizeJiebitudu(products) {
+  const isJbt = (p) => p && /洁比兔/.test(p.name) && /(湿巾|湿厕纸)/.test(p.name)
+  const foreign = (c) => /(DOBO|噗噗通)/.test(c.content || '')
+  return products.map((p) => {
+    if (!isJbt(p)) return p
+    if ((p.copies || []).some((c) => foreign(c.content))) {
+      return { ...p, copies: jiebiwetSeed.map((c) => ({ ...c })) }
+    }
+    return p
+  })
+}
 
 function loadData() {
   try {
@@ -1198,6 +1210,7 @@ function loadData() {
       })
     }
     productsFinal = consolidateJiebitudu(productsFinal)
+    productsFinal = sanitizeJiebitudu(productsFinal)
     return {
       products: productsFinal,
       samples: (old.samples || []).map((s) => {
