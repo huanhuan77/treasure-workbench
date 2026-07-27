@@ -143,12 +143,6 @@ export function SavingsPage() {
 
       {/* 每月列表 */}
       <div style={{ padding:'0 16px' }}>
-        {editMonth && (
-          <div style={{ display:'flex', gap:'8px', marginBottom:'12px' }}>
-            <button onClick={saveEdit} style={{ flex:1, padding:'10px', borderRadius:'12px', border:'none', background:'#10b981', color:'#fff', fontSize:'14px', fontWeight:600 }}>保存编辑</button>
-            <button onClick={() => setEditMonth(null)} style={{ padding:'10px 16px', borderRadius:'12px', border:'1px solid #ccc', background:'#fff', color:'#666', fontSize:'14px' }}>取消</button>
-          </div>
-        )}
         {MONTH_KEYS.map(key => {
           const r = records[key] || {}
           const t = r.target || 0
@@ -281,6 +275,30 @@ export function SavingsPage() {
             )}
         </div>
         )}
+
+      {/* 底部固定保存/取消栏（仅编辑时显示） */}
+      {editMonth && (
+        <div style={{
+          position:'fixed',
+          left:'50%',
+          transform:'translateX(-50%)',
+          bottom:'calc(20px + var(--safe-bottom, 0px) + 60px)',
+          width:'calc(100% - 32px)',
+          maxWidth:'448px',
+          display:'flex',
+          gap:'10px',
+          padding:'10px 14px',
+          borderRadius:'16px',
+          background:'rgba(255,255,255,0.95)',
+          backdropFilter:'blur(20px)',
+          WebkitBackdropFilter:'blur(20px)',
+          boxShadow:'0 -4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(251,191,36,0.3)',
+          zIndex:90,
+        }}>
+          <button onClick={() => setEditMonth(null)} style={{ flex:1, padding:'12px', borderRadius:'12px', border:'1px solid #d4d4d8', background:'#fff', color:'#52525b', fontSize:'14px', fontWeight:600, cursor:'pointer' }}>取消</button>
+          <button onClick={saveEdit} style={{ flex:2, padding:'12px', borderRadius:'12px', border:'none', background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(16,185,129,0.3)' }}>保存编辑</button>
+        </div>
+      )}
     </div>
   )
 }
