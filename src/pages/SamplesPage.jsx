@@ -196,7 +196,7 @@ export function SamplesPage() {
                   </div>
                   {/* 第二行：佣金tag + 日期 + 编辑 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)' }}>
-                    {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}</span>}
+                    {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
                     {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
                     {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
                     <button onClick={() => setEditing(s)} style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, background: 'rgba(236,72,182,0.08)', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', flexShrink: 0 }}>编辑</button>
@@ -327,12 +327,12 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
         </div>
       </Field>
 
-      <Field label="佣金">
-        <select value={form.commission} onChange={(e) => setForm({ ...form, commission: parseInt(e.target.value) })}
-          style={{ ...inputStyle, paddingRight: '36px', appearance: 'none', WebkitAppearance: 'none' }}>
-          <option value={5}>5元（默认）</option>
-          <option value={10}>10元</option>
-        </select>
+      <Field label="佣金（%）">
+        <input type="number" value={form.commission === 5 ? '' : form.commission} onChange={(e) => {
+          const v = e.target.value === '' ? 5 : parseInt(e.target.value)
+          setForm({ ...form, commission: isNaN(v) ? 5 : v })
+        }} placeholder="5（默认不显示）"
+          style={{ ...inputStyle }} />
       </Field>
 
       <Field label="状态">
