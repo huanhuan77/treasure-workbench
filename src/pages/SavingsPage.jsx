@@ -106,6 +106,8 @@ export function SavingsPage() {
               } else {
                 alert('已填入 ' + target + ' 净值: ' + v)
               }
+            } else if (list.length === 0) {
+              alert('无法查询基金历史净值（接口需要东方财富域名访问）\n\n请打开查看历史净值：\nhttps://fundf10.eastmoney.com/jjjz_' + code + '.html\n\n查好后手动填入下方的价格框即可。')
             } else {
               alert('未找到 ' + target + ' 的净值（共查询到 ' + list.length + ' 条数据）')
             }
