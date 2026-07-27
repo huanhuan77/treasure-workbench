@@ -47,6 +47,11 @@ export function SavingsPage() {
     // 直接从独立 key 读取，完全绕过 store 的复杂合并逻辑
     const saved = loadInvestments()
     console.log('[投资] 初始化, 独立key数据:', saved ? saved.length + '条' : '无')
+    // 调试：读一下原始值
+    try {
+      const raw = localStorage.getItem('blogger_investments_v1')
+      console.log('[投资] 原始key内容:', raw ? raw.slice(0,200) : '空')
+    } catch(e) { console.warn('[投资] 读原始key失败:', e) }
     return saved || []
   })
   const saveInvestments = (list) => {
@@ -342,7 +347,11 @@ export function SavingsPage() {
         {activeTab === 'invest' && (
         <div style={{ marginTop:'24px', padding:'0 16px' }}>
           <h4 style={{ margin:'0 0 10px', fontSize:'14px', fontWeight:600, color:'#78350f' }}>📈 投资跟踪</h4>
-            {investments.length === 0 && <p style={{ fontSize:'13px', color:'var(--gray-300)', margin:'0 0 10px' }}>暂无记录</p>}
+            {investments.length === 0 && <p style={{ fontSize:'13px', color:'var(--gray-300)', margin:'0 0 10px' }}>暂无记录
+              <span style={{ fontSize:'10px', color:'#aaa', display:'block', marginTop:'4px' }}>
+                (调试: 独立key={(()=>{try{return localStorage.getItem('blogger_investments_v1')?'有数据':'空'}catch(e){return '读取出错'}})()})
+              </span>
+            </p>}
             {/* 按代码+买卖类型分组，只显示最新一条，点击展开查看历史 */}
             {(() => {
                             const groups = {}
