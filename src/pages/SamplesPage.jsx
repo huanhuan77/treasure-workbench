@@ -198,7 +198,7 @@ export function SamplesPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)' }}>
                     {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
                     {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
-                    <button onClick={() => setEditing(s)} style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '11px', fontWeight: 500, background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}>编辑</button>
+                    <button onClick={() => setEditing(s)} style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, background: 'rgba(236,72,182,0.08)', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', flexShrink: 0 }}>编辑</button>
                   </div>
 
                   {/* 备注（可选） */}
