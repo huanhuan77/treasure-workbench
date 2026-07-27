@@ -79,17 +79,35 @@ export function SavingsPage() {
       if (isFund) {
         // 基金：调用天天基金历史净值 JSONP
         const cb = 'fund_cb_' + Date.now()
-        const jsonpUrl = 'https://api.fund.eastmoney.com/f10/lsjz?callback=' + cb + '&fundCode=' + code + '&pageIndex=1&pageSize=90'
+        const jsonpUrl = 'https://api.fund.eastmoney.com/f10/lsjz?callback=' + cb + '&fundCode=' + code + '&pageIndex=1&pageSize=120'
         await new Promise((resolve, reject) => {
           window[cb] = (d) => {
             const list = d?.Data?.LSJZList || []
-            const found = list.find(x => x.FSRQ === invSellDate)
+            // 兼容多种日期格式：'2026-07-09' / '2026-07-09 ...' / '2026/07/09'
+            const norm = (s) => String(s || '').slice(0, 10).replace(/[\/]/g, '-')
+            const target = norm(invSellDate)
+            let found = list.find(x => norm(x.FSRQ) === target)
+            // 没找到且目标日期在最近 30 天内：找距离目标日期最近的工作日净值（向前）
+            if (!found) {
+              const sorted = list.filter(x => norm(x.FSRQ) <= target).sort((a, b) => norm(b.FSRQ).localeCompare(norm(a.FSRQ)))
+              if (sorted.length > 0) {
+                const targetTs = new Date(target).getTime()
+                const diffs = sorted.map(x => Math.abs(new Date(norm(x.FSRQ)).getTime() - targetTs)).filter(d => d <= 7 * 86400000)
+                if (diffs.length > 0 && diffs[0] <= 7 * 86400000) found = sorted[diffs.indexOf(diffs[0])]
+              }
+            }
+            console.log('[基金历史] 查询', invSellDate, '共', list.length, '条，找到:', found)
             if (found) {
               const v = parseFloat(found.DWJZ)
               setInvSellPrice(String(v))
-              alert('已填入 ' + invSellDate + ' 净值: ' + v)
+              const actualDate = norm(found.FSRQ)
+              if (actualDate !== target) {
+                alert('未找到 ' + target + ' 的净值（节假日），已填入最近工作日 ' + actualDate + ' 净值: ' + v)
+              } else {
+                alert('已填入 ' + target + ' 净值: ' + v)
+              }
             } else {
-              alert('未找到 ' + invSellDate + ' 的净值（基金净值通常工作日才更新）')
+              alert('未找到 ' + target + ' 的净值（共查询到 ' + list.length + ' 条数据）')
             }
             delete window[cb]; document.getElementById(cb)?.remove(); resolve()
           }
@@ -98,7 +116,7 @@ export function SavingsPage() {
           sc.src = jsonpUrl
           sc.onerror = () => { delete window[cb]; reject(new Error('jsonp error')) }
           document.body.appendChild(sc)
-          setTimeout(() => { if (window[cb]) { delete window[cb]; reject(new Error('timeout')) } }, 8000)
+          setTimeout(() => { if (window[cb]) { delete window[cb]; reject(new Error('timeout')) } }, 10000)
         })
       } else {
         // 股票：调用 sdk.kline.cn 获取历史 K 线
