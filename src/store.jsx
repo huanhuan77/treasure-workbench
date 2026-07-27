@@ -637,8 +637,8 @@ const doboSeed = [
 ].map((c, i) => ({
   id: 'p_dobo_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, 'DOBO噗噗通', 'DOBO', DEFAULT_SENSITIVE_WORDS),
-  topics: c.topics.length ? c.topics : generateTopics(c.content, 'DOBO噗噗通', 'DOBO', DEFAULT_SENSITIVE_WORDS),
+  title: generateTitle(c.content, 'DOBO噗噗片', 'DOBO', DEFAULT_SENSITIVE_WORDS),
+  topics: c.topics.length ? c.topics : generateTopics(c.content, 'DOBO噗噗片', 'DOBO', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
   usedDate: null,
@@ -710,7 +710,7 @@ const defaultData = {
     { id: 'p_shanguang', name: '珀芙研闪光棒', brand: '珀芙研', category: '护肤', createdAt: Date.now(), copies: shanguangSeed },
     { id: 'p_tuimel', name: '褪黑素', brand: '', category: '保健品', createdAt: Date.now(), copies: tuimelSeed },
     { id: 'p_qingqing', name: '百草园清清片', brand: '百草园', category: '保健品', createdAt: Date.now(), copies: qingqingSeed },
-    { id: 'p_dobo', name: 'DOBO噗噗通', brand: 'DOBO', category: '保健品', createdAt: Date.now(), copies: doboSeed },
+    { id: 'p_dobo', name: 'DOBO噗噗片', brand: 'DOBO', category: '保健品', createdAt: Date.now(), copies: doboSeed },
     { id: 'p_youmin', name: '珀芙研油敏霜', brand: '珀芙研', category: '护肤', createdAt: Date.now(), copies: youminSeed },
     { id: 'p_runhou', name: '益美滋润喉糖', brand: '益美滋', category: '食品', createdAt: Date.now(), copies: runhouSeed },
     { id: 'p_olly', name: 'olly女维', brand: 'OLLY', category: '保健品', createdAt: Date.now(), copies: ollySeed }
@@ -1113,10 +1113,10 @@ function consolidateJiebitudu(products) {
   if (merged) out.push(merged)
   return out
 }
-// 自愈：洁比兔湿巾/湿厕纸 产品若混入非洁比兔文案（如 DOBO噗噗通），重置回干净种子
+// 自愈：洁比兔湿巾/湿厕纸 产品若混入非洁比兔文案（如 DOBO噗噗片），重置回干净种子
 function sanitizeJiebitudu(products) {
   const isJbt = (p) => p && /洁比兔/.test(p.name) && /(湿巾|湿厕纸)/.test(p.name)
-  const foreign = (c) => /(DOBO|噗噗通)/.test(c.content || '')
+  const foreign = (c) => /(DOBO|噗噗通|噗噗片)/.test(c.content || '')
   return products.map((p) => {
     if (!isJbt(p)) return p
     if ((p.copies || []).some((c) => foreign(c.content))) {
