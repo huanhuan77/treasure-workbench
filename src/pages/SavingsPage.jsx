@@ -129,6 +129,7 @@ export function SavingsPage() {
                       </select>
                       <input value={val} onChange={e => setEditAccounts(p=>({...p,[acct]:e.target.value}))} placeholder="0"
                         style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #e9d5ff', fontSize:'15px', outline:'none', textAlign:'right' }} />
+                      <button type="button" onClick={() => setEditAccounts(p => { const n = {...p}; delete n[acct]; return n })} style={{ width:'32px', height:'32px', borderRadius:'50%', border:'1px solid #fca5a5', background:'#fef2f2', color:'#dc2626', fontSize:'18px', cursor:'pointer', padding:0, display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1 }}>×</button>
                     </div>
                   ))}
                   {/* 合计 */}
