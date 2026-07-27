@@ -6,7 +6,7 @@ const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '18'
+const CURRENT_VERSION = '19'
 
 
 // 植研加睫毛胶水：用户整理后内置文案（thumb-up=出单，check=用过；末 # 行为指定话题
@@ -3067,10 +3067,7 @@ function loadData() {
     if (versionMismatch && (!old.samples || old.samples.length === 0)) {
       old.samples = defaultData.samples.map((s) => ({ ...s }))
     }
-    // v18 迁移：清掉旧的 savingsData（5/6 月目标按旧版 5000 递增，合并时覆盖新目标）
-    if (versionMismatch && old.savingsData) {
-      old.savingsData = null
-    }
+    // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     return {
       products: productsFinal,
       samples: (old.samples || []).map((s) => {
