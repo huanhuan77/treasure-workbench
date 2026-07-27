@@ -2,10 +2,6 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { useNavigate } from 'react-router-dom'
 
-const MONTH_KEYS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09','2026-10','2026-11','2026-12']
-const MONTH_LABELS = {}
-MONTH_KEYS.forEach(k => { MONTH_LABELS[k] = parseInt(k.split('-')[1]) + '月' })
-
 const ACCOUNT_OPTIONS = ['支付宝1','支付宝2','博时','同花顺','华泰','东方','卡','中信','工行','微信','其他']
 
 function formatNum(n) {
@@ -27,6 +23,10 @@ export function SavingsPage() {
   const [showAddInv, setShowAddInv] = useState(false)
   const [activeTab, setActiveTab] = useState('save')
   const [expandedInv, setExpandedInv] = useState(null)  // 展开查看历史记录的分组key
+  const [year, setYear] = useState('2026')  // 攒钱计划年份
+  // 根据年份生成月份键
+  const MONTH_KEYS = Array.from({length:12}, (_,i) => year + '-' + String(i+1).padStart(2,'0'))
+  const MONTH_LABELS = Object.fromEntries(MONTH_KEYS.map(k => [k, parseInt(k.split('-')[1]) + '月']))
   const [invCode, setInvCode] = useState('')
   const [invName, setInvName] = useState('')
   const [invCurrentPrice, setInvCurrentPrice] = useState(null)
@@ -147,16 +147,16 @@ export function SavingsPage() {
     const sp = parseFloat(invSellPrice)
     const cp = invCurrentPrice
     const change = cp && sp ? ((cp - sp) / sp * 100) : null
-    // 允许同一代码多次记录（列表只显示最新，点开查看历史）
     const normCode = invCode.trim()
-    saveInvestments([...investments, { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }])
-    // 清理所有输入状态（表单保持打开，方便继续添加）
+    // 先清空输入，再保存（确保表单清空）
+    const newItem = { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }
     setInvCode('')
     setInvName('')
     setInvCurrentPrice(null)
     setInvSellPrice('')
     setInvSellDate('')
     setInvType('buy')
+    setTimeout(() => saveInvestments([...investments, newItem]), 0)
   }
 
   const monthsWithData = MONTH_KEYS.filter(k => records[k] && records[k].actual > 0)
@@ -197,6 +197,12 @@ export function SavingsPage() {
       <header style={{ padding: 'calc(20px + var(--safe-top)) 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.5)' }}>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:700, color:'var(--text-main)' }}>攒钱计划</h1>
         <p style={{ margin:'6px 0 0', fontSize:'13px', color:'var(--text-sub)' }}>每月努力存 6 千 💪</p>
+        {/* 年份切换 */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', marginTop:'8px' }}>
+          <button onClick={() => setYear(String(parseInt(year)-1))} style={{ width:'32px', height:'32px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
+          <span style={{ fontSize:'18px', fontWeight:700, color:'#78350f', minWidth:'60px', textAlign:'center' }}>{year} 年</span>
+          <button onClick={() => setYear(String(parseInt(year)+1))} style={{ width:'32px', height:'32px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
+        </div>
       </header>
 
       {/* Tab 切换 */}
