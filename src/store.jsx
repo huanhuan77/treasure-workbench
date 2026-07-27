@@ -2854,6 +2854,7 @@ const defaultData = {
   ],
   moodData: [],
   savingsData: {
+    investments: [],
     monthlyGoal: 6000,
     records: {
       '2026-01': { target: 204000, actual: 204100, details: { '支付宝1': 98500, '支付宝2': 3000, '博时': 12000, '同花顺': 25500, '华泰': 47300, '东方': 9800, '卡': 8000 } },
@@ -3188,6 +3189,13 @@ export function StoreProvider({ children }) {
       records[monthKey] = { ...old, ...patch }
       return { ...d, savingsData: { ...oldData, records } }
     })
+  }, [])
+
+  const setSavings = useCallback((patch) => {
+    setData((d) => ({
+      ...d,
+      savingsData: { ...(d.savingsData || defaultData.savingsData), ...patch },
+    }))
   }, [])
 
   const reorderProducts = useCallback((orderedIds) => {
