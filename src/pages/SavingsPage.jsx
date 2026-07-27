@@ -26,6 +26,7 @@ export function SavingsPage() {
   const [showInvest, setShowInvest] = useState(false)
   const [showAddInv, setShowAddInv] = useState(false)
   const [activeTab, setActiveTab] = useState('save')
+  const [expandedInv, setExpandedInv] = useState(null)  // 展开查看历史记录的分组key
   const [invCode, setInvCode] = useState('')
   const [invName, setInvName] = useState('')
   const [invCurrentPrice, setInvCurrentPrice] = useState(null)
@@ -146,18 +147,9 @@ export function SavingsPage() {
     const sp = parseFloat(invSellPrice)
     const cp = invCurrentPrice
     const change = cp && sp ? ((cp - sp) / sp * 100) : null
-    // 去重：相同代码（与买入/卖出类型）已存在时，提示用户覆盖或取消
+    // 允许同一代码多次记录（列表只显示最新，点开查看历史）
     const normCode = invCode.trim()
-    const existingIdx = investments.findIndex(x => (x.code || '').trim() === normCode && (x.type || 'buy') === invType)
-    if (existingIdx >= 0) {
-      const ok = confirm('代码 ' + normCode + '（' + (invType==='buy' ? '买入' : '卖出') + '）已存在，是否覆盖原记录？\n\n确定 = 覆盖更新\n取消 = 不保存')
-      if (!ok) return
-      const next = [...investments]
-      next[existingIdx] = { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }
-      saveInvestments(next)
-    } else {
-      saveInvestments([...investments, { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }])
-    }
+    saveInvestments([...investments, { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }])
     // 清理所有输入状态 + 关闭表单
     setShowAddInv(false)
     setInvCode('')
@@ -324,26 +316,59 @@ export function SavingsPage() {
         <div style={{ marginTop:'24px', padding:'0 16px' }}>
           <h4 style={{ margin:'0 0 10px', fontSize:'14px', fontWeight:600, color:'#78350f' }}>📈 投资跟踪</h4>
             {investments.length === 0 && <p style={{ fontSize:'13px', color:'var(--gray-300)', margin:'0 0 10px' }}>暂无记录</p>}
-            {investments.map((inv, idx) => (
-              <div key={idx} style={{ padding:'10px 12px', borderRadius:'12px', border:'1px solid rgba(99,102,241,0.2)', background:'rgba(238,242,255,0.4)', marginBottom:'8px' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <span style={{ fontSize:'14px', fontWeight:600, color:'#4338ca' }}>
-                    {inv.name}
-                    <span style={{ fontSize:'10px', marginLeft:'6px', padding:'2px 6px', borderRadius:'6px', background: inv.type==='sell' ? '#fee2e2' : '#d1fae5', color: inv.type==='sell' ? '#e11d48' : '#059669', fontWeight:700 }}>{inv.type==='sell' ? '卖出' : '买入'}</span>
-                    <span style={{ fontSize:'11px', color:'var(--gray-300)', marginLeft:'6px' }}>{inv.code}</span>
-                  </span>
-                  <button onClick={() => saveInvestments(investments.filter((_,i) => i !== idx))} style={{ background:'none', border:'none', color:'#e11d48', fontSize:'16px', cursor:'pointer' }}>×</button>
-                </div>
-                <div style={{ display:'flex', gap:'12px', marginTop:'6px', fontSize:'12px', flexWrap:'wrap' }}>
-                  <span>{inv.type==='sell' ? '卖出' : '买入'}: <b>{inv.sellPrice}</b></span>
-                  <span>当前: <b style={{ color:'#4338ca' }}>{inv.currentPrice ?? '--'}</b></span>
-                  <span style={{ color: (inv.change ?? 0) >= 0 ? '#dc2626' : '#059669', fontWeight:600 }}>
-                    {(inv.change ?? 0) >= 0 ? '📈' : '📉'} {inv.change != null ? (inv.change >= 0 ? '+' : '') + inv.change.toFixed(2) + '%' : '--'}
-                  </span>
-                </div>
-                {inv.sellDate && <div style={{ fontSize:'11px', color:'var(--gray-300)', marginTop:'4px' }}>{inv.type==='sell' ? '卖出日' : '买入日'}: {inv.sellDate}</div>}
-              </div>
-            ))}
+            {/* 按代码+买卖类型分组，只显示最新一条，点击展开查看历史 */}
+            {(() => {
+              const groups = {}
+              investments.forEach((inv, idx) => {
+                const key = (inv.code || '').trim() + '_' + (inv.type || 'buy')
+                if (!groups[key]) groups[key] = []
+                groups[key].push({ ...inv, _idx: idx })
+              })
+              // 每组按日期排序（最新在前），每组取第一条作为摘要
+              return Object.entries(groups).map(([key, items]) => {
+                items.sort((a, b) => (b.sellDate || '').localeCompare(a.sellDate || ''))
+                const latest = items[0]
+                const expanded = expandedInv === key
+                const delItem = (delIdx) => saveInvestments(investments.filter((_, i) => i !== delIdx))
+                return (
+                  <div key={key} style={{ marginBottom:'8px', borderRadius:'12px', border:'1px solid rgba(99,102,241,0.2)', background:'rgba(238,242,255,0.4)', overflow:'hidden' }}>
+                    {/* 顶部摘要卡片 */}
+                    <div onClick={() => setExpandedInv(expanded ? null : key)} style={{ padding:'10px 12px', cursor:'pointer' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                        <span style={{ fontSize:'14px', fontWeight:600, color:'#4338ca' }}>
+                          {latest.name}
+                          <span style={{ fontSize:'10px', marginLeft:'6px', padding:'2px 6px', borderRadius:'6px', background: latest.type==='sell' ? '#fee2e2' : '#d1fae5', color: latest.type==='sell' ? '#e11d48' : '#059669', fontWeight:700 }}>{latest.type==='sell' ? '卖出' : '买入'}</span>
+                          <span style={{ fontSize:'11px', color:'var(--gray-300)', marginLeft:'6px' }}>{latest.code}</span>
+                        </span>
+                        <span style={{ fontSize:'11px', color:'var(--gray-300)' }}>{items.length} 条历史 {expanded ? '🔼' : '🔽'}</span>
+                      </div>
+                      <div style={{ display:'flex', gap:'12px', marginTop:'6px', fontSize:'12px', flexWrap:'wrap' }}>
+                        <span>{latest.type==='sell' ? '卖出' : '买入'}: <b>{latest.sellPrice}</b></span>
+                        <span>当前: <b style={{ color:'#4338ca' }}>{latest.currentPrice ?? '--'}</b></span>
+                        <span style={{ color: (latest.change ?? 0) >= 0 ? '#dc2626' : '#059669', fontWeight:600 }}>
+                          {(latest.change ?? 0) >= 0 ? '📈' : '📉'} {latest.change != null ? (latest.change >= 0 ? '+' : '') + latest.change.toFixed(2) + '%' : '--'}
+                        </span>
+                      </div>
+                      {latest.sellDate && <div style={{ fontSize:'11px', color:'var(--gray-300)', marginTop:'4px' }}>最新: {latest.type==='sell' ? '卖出日' : '买入日'} {latest.sellDate}</div>}
+                    </div>
+                    {/* 展开历史记录 */}
+                    {expanded && (
+                      <div style={{ borderTop:'1px solid rgba(99,102,241,0.1)', padding:'6px 12px 10px' }}>
+                        <div style={{ fontSize:'11px', fontWeight:600, color:'#6366f1', marginBottom:'6px' }}>📋 历史记录（按日期倒序）</div>
+                        {items.map((inv, i) => (
+                          <div key={i} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'6px 0', borderBottom: i<items.length-1 ? '1px solid rgba(99,102,241,0.06)' : 'none' }}>
+                            <span style={{ fontSize:'11px', color:'#6366f1', fontWeight:600, minWidth:'20px' }}>#{items.length - i}</span>
+                            <span style={{ flex:1, fontSize:'12px', color:'#4338ca', fontWeight:500 }}>{inv.sellPrice}</span>
+                            {inv.sellDate && <span style={{ fontSize:'11px', color:'var(--gray-300)' }}>{inv.sellDate}</span>}
+                            <button onClick={(e) => { e.stopPropagation(); delItem(inv._idx) }} style={{ background:'none', border:'none', color:'#e11d48', fontSize:'14px', cursor:'pointer', padding:'2px 4px', lineHeight:1 }}>×</button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            })()}
             {!showAddInv ? (
               <button onClick={() => setShowAddInv(true)} style={{ marginTop:'4px', padding:'8px 14px', borderRadius:'10px', border:'1.5px dashed #6366f1', background:'transparent', color:'#4338ca', fontSize:'13px', cursor:'pointer', width:'100%' }}>+ 添加</button>
             ) : (
