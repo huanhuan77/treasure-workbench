@@ -2,18 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { useNavigate } from 'react-router-dom'
 
-const INV_STORAGE_KEY = 'blogger_investments_v1'  // 独立 localStorage key（双重保障）
-
-// 从独立 key 读取投资数据
-function loadInvestments() {
-  try {
-    const raw = localStorage.getItem(INV_STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
-  } catch(e) {}
-  return null
-}
-
-const ACCOUNT_OPTIONS = ['支付�?1','支付�?2','博时','同花�?','华泰','东方','�?','中信','工行','微信','其他']
+const ACCOUNT_OPTIONS = ['支付宝1','支付宝2','博时','同花顺','华泰','东方','卡','中信','工行','微信','其他']
 
 function formatNum(n) {
   if (!n && n !== 0) return ''
@@ -35,24 +24,17 @@ export function SavingsPage() {
   const [activeTab, setActiveTab] = useState('save')
   const [expandedInv, setExpandedInv] = useState(null)  // 展开查看历史记录的分组key
   const [year, setYear] = useState('2026')  // 攒钱计划年份
-  // 根据年份生成月份�?
+  // 根据年份生成月份键
   const MONTH_KEYS = Array.from({length:12}, (_,i) => year + '-' + String(i+1).padStart(2,'0'))
-  const MONTH_LABELS = Object.fromEntries(MONTH_KEYS.map(k => [k, parseInt(k.split('-')[1]) + '�?']))
+  const MONTH_LABELS = Object.fromEntries(MONTH_KEYS.map(k => [k, parseInt(k.split('-')[1]) + '月']))
   const [invCode, setInvCode] = useState('')
   const [invName, setInvName] = useState('')
   const [invCurrentPrice, setInvCurrentPrice] = useState(null)
   const [invSellPrice, setInvSellPrice] = useState('')
   const [invSellDate, setInvSellDate] = useState('')
   const [invType, setInvType] = useState('buy')  // 'buy' 买入 | 'sell' 卖出
-  const [investments, setInvestments] = useState(
-    (getSavings()?.investments) || loadInvestments() || []
-  )
-  const saveInvestments = (list) => {
-    setInvestments(list)
-    setSavings({ investments: list })
-    // ���� key д�루˫�ر��ϣ�
-    try { localStorage.setItem(INV_STORAGE_KEY, JSON.stringify(list)) } catch(e) {}
-  }
+  const [investments, setInvestments] = useState((getSavings()?.investments) || [])
+  const saveInvestments = (list) => { setInvestments(list); setSavings({ investments: list }) }
   const fetchAndAdd = async () => {
     if (!invCode.trim()) return
     try {
@@ -60,11 +42,11 @@ export function SavingsPage() {
       const sdk = new StockSDK()
       const code = invCode.trim().replace(/\D/g, '')
       const isFund = code.length <= 6
-      // 获取当前�?
+      // 获取当前价
       if (isFund) {
         const q = await sdk.quotes.fund([code])
         if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].nav) }
-        // 有卖出日则查历史净�?
+        // 有卖出日则查历史净值
         if (invSellDate) {
           try {
             const cb = 'fund_cb_' + Date.now()
@@ -78,7 +60,7 @@ export function SavingsPage() {
             sc.src = jsonpUrl
             document.body.appendChild(sc)
             setTimeout(() => { if (window[cb]) { delete window[cb] } }, 8000)
-          } catch(e) { /* 静默失败，用户可手动�? */ }
+          } catch(e) { /* 静默失败，用户可手动填 */ }
         }
       } else {
         const q = await sdk.quotes.cn([code])
@@ -89,24 +71,24 @@ export function SavingsPage() {
   }
   const fetchHistoricalPrice = async () => {
     if (!invCode.trim()) { alert('请先填写代码'); return }
-    if (!invSellDate) { alert('请先选择' + (invType==='buy' ? '买入�?' : '卖出�?')); return }
+    if (!invSellDate) { alert('请先选择' + (invType==='buy' ? '买入日' : '卖出日')); return }
     const code = invCode.trim().replace(/\D/g, '')
     const isFund = code.length <= 6
     try {
       const { StockSDK } = await import('stock-sdk')
       const sdk = new StockSDK()
       if (isFund) {
-        // 基金：调用天天基金历史净�? JSONP
+        // 基金：调用天天基金历史净值 JSONP
         const cb = 'fund_cb_' + Date.now()
         const jsonpUrl = 'https://api.fund.eastmoney.com/f10/lsjz?callback=' + cb + '&fundCode=' + code + '&pageIndex=1&pageSize=120'
         await new Promise((resolve, reject) => {
           window[cb] = (d) => {
             const list = d?.Data?.LSJZList || []
-            // 兼容多种日期格式�?'2026-07-09' / '2026-07-09 ...' / '2026/07/09'
+            // 兼容多种日期格式：'2026-07-09' / '2026-07-09 ...' / '2026/07/09'
             const norm = (s) => String(s || '').slice(0, 10).replace(/[\/]/g, '-')
             const target = norm(invSellDate)
             let found = list.find(x => norm(x.FSRQ) === target)
-            // 没找到且目标日期在最�? 30 天内：找距离目标日期最近的工作日净值（向前�?
+            // 没找到且目标日期在最近 30 天内：找距离目标日期最近的工作日净值（向前）
             if (!found) {
               const sorted = list.filter(x => norm(x.FSRQ) <= target).sort((a, b) => norm(b.FSRQ).localeCompare(norm(a.FSRQ)))
               if (sorted.length > 0) {
@@ -115,20 +97,20 @@ export function SavingsPage() {
                 if (diffs.length > 0 && diffs[0] <= 7 * 86400000) found = sorted[diffs.indexOf(diffs[0])]
               }
             }
-            console.log('[基金历史] 查询', invSellDate, '�?', list.length, '条，找到:', found)
+            console.log('[基金历史] 查询', invSellDate, '共', list.length, '条，找到:', found)
             if (found) {
               const v = parseFloat(found.DWJZ)
               setInvSellPrice(String(v))
               const actualDate = norm(found.FSRQ)
               if (actualDate !== target) {
-                alert('未找�? ' + target + ' 的净值（节假日），已填入最近工作日 ' + actualDate + ' 净�?: ' + v)
+                alert('未找到 ' + target + ' 的净值（节假日），已填入最近工作日 ' + actualDate + ' 净值: ' + v)
               } else {
-                alert('已填�? ' + target + ' 净�?: ' + v)
+                alert('已填入 ' + target + ' 净值: ' + v)
               }
             } else if (list.length === 0) {
-              alert('无法查询基金历史净值（接口需要东方财富域名访问）\n\n请打开查看历史净值：\nhttps://fundf10.eastmoney.com/jjjz_' + code + '.html\n\n查好后手动填入下方的价格框即可�?')
+              alert('无法查询基金历史净值（接口需要东方财富域名访问）\n\n请打开查看历史净值：\nhttps://fundf10.eastmoney.com/jjjz_' + code + '.html\n\n查好后手动填入下方的价格框即可。')
             } else {
-              alert('未找�? ' + target + ' 的净值（共查询到 ' + list.length + ' 条数据）')
+              alert('未找到 ' + target + ' 的净值（共查询到 ' + list.length + ' 条数据）')
             }
             delete window[cb]; document.getElementById(cb)?.remove(); resolve()
           }
@@ -140,7 +122,7 @@ export function SavingsPage() {
           setTimeout(() => { if (window[cb]) { delete window[cb]; reject(new Error('timeout')) } }, 10000)
         })
       } else {
-        // 股票：调�? sdk.kline.cn 获取历史 K �?
+        // 股票：调用 sdk.kline.cn 获取历史 K 线
         const kl = await sdk.kline.cn(code, { klt: 101, fq: 'qfq', lmt: 60 })
         const arr = Array.isArray(kl) ? kl : (kl?.data || [])
         const fmt = (ts) => {
@@ -152,21 +134,21 @@ export function SavingsPage() {
         if (found) {
           const v = parseFloat(found.c ?? found.close ?? found.price)
           setInvSellPrice(String(v))
-          alert('已填�? ' + invSellDate + ' 收盘�?: ' + v)
+          alert('已填入 ' + invSellDate + ' 收盘价: ' + v)
         } else {
-          alert('未找�? ' + invSellDate + ' 的行情（周末/节假日无数据�?')
+          alert('未找到 ' + invSellDate + ' 的行情（周末/节假日无数据）')
         }
       }
-    } catch(e) { alert('查询历史价失�?: ' + e.message) }
+    } catch(e) { alert('查询历史价失败: ' + e.message) }
   }
   const confirmAddInv = () => {
-    if (!invName) { alert('请先填写代码并获取行�?'); return }
-    if (!invSellPrice) { alert('请填�?' + (invType==='buy' ? '买入�?' : '卖出�?')); return }
+    if (!invName) { alert('请先填写代码并获取行情'); return }
+    if (!invSellPrice) { alert('请填写' + (invType==='buy' ? '买入价' : '卖出价')); return }
     const sp = parseFloat(invSellPrice)
     const cp = invCurrentPrice
     const change = cp && sp ? ((cp - sp) / sp * 100) : null
     const normCode = invCode.trim()
-    // 先清空输入，再保存（确保表单清空�?
+    // 先清空输入，再保存（确保表单清空）
     const newItem = { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }
     setInvCode('')
     setInvName('')
@@ -178,7 +160,7 @@ export function SavingsPage() {
   }
 
   const monthsWithData = MONTH_KEYS.filter(k => records[k] && records[k].actual > 0)
-  const currentMonth = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : (year + '-01')  // 没数据时显示当前年份1月
+  const currentMonth = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : '2026-01'
   const current = records[currentMonth] || {}
   const currentTarget = current.target || 0
   const currentActual = current.actual || 0
@@ -206,7 +188,7 @@ export function SavingsPage() {
     setEditMonth(null)
   }
   const addAccount = () => {
-    const label = prompt('输入账户名称�?')
+    const label = prompt('输入账户名称：')
     if (label && label.trim()) setEditAccounts(prev => ({ ...prev, [label.trim()]: 0 }))
   }
 
@@ -214,7 +196,13 @@ export function SavingsPage() {
     <div className="app-container" style={{ paddingBottom: '80px' }}>
       <header style={{ padding: 'calc(20px + var(--safe-top)) 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.5)' }}>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:700, color:'var(--text-main)' }}>攒钱计划</h1>
-        <p style={{ margin:'6px 0 0', fontSize:'13px', color:'var(--text-sub)' }}>每月努力�? 6 �? 💪</p>
+        <p style={{ margin:'6px 0 0', fontSize:'13px', color:'var(--text-sub)' }}>每月努力存 6 千 💪</p>
+        {/* 年份切换 */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', marginTop:'8px' }}>
+          <button onClick={() => setYear(String(parseInt(year)-1))} style={{ width:'32px', height:'32px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
+          <span style={{ fontSize:'18px', fontWeight:700, color:'#78350f', minWidth:'60px', textAlign:'center' }}>{year} 年</span>
+          <button onClick={() => setYear(String(parseInt(year)+1))} style={{ width:'32px', height:'32px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
+        </div>
       </header>
 
       {/* Tab 切换 */}
@@ -224,12 +212,6 @@ export function SavingsPage() {
       </div>
 
       {activeTab === 'save' && (<>
-      {/* 年份切换 */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', padding:'16px 16px 0' }}>
-        <button onClick={() => setYear(String(parseInt(year)-1))} style={{ width:'36px', height:'36px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>�?</button>
-        <span style={{ fontSize:'20px', fontWeight:700, color:'#78350f', minWidth:'70px', textAlign:'center' }}>{year} �?</span>
-        <button onClick={() => setYear(String(parseInt(year)+1))} style={{ width:'36px', height:'36px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>�?</button>
-      </div>
       {/* 进度卡片 */}
       <div style={{ padding:'16px' }}>
         <div style={{ borderRadius:'16px', padding:'16px', background:'linear-gradient(135deg,#fef3c7,#fde68a)' }}>
@@ -270,7 +252,7 @@ export function SavingsPage() {
               </div>
               {editing ? (
                 <div style={{ padding:'12px 16px 14px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
-                  {/* 各账�? */}
+                  {/* 各账户 */}
                   {Object.entries(editAccounts).map(([acct, val], idx) => (
                     <div key={acct} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'5px 0' }}>
                       <select value={acct} onChange={e => {
@@ -320,14 +302,14 @@ export function SavingsPage() {
                     <span>合计</span>
                     <span>{(r.actual||0).toLocaleString()} / 目标 {(r.target||0).toLocaleString()}</span>
                   </div>
-                  <button onClick={() => startEdit(key)} style={{ marginTop:'6px', padding:'4px 12px', borderRadius:'8px', border:'1px solid #e9d5ff', background:'#fef3c7', color:'#92400e', fontSize:'11px', cursor:'pointer' }}>�? 编辑</button>
+                  <button onClick={() => startEdit(key)} style={{ marginTop:'6px', padding:'4px 12px', borderRadius:'8px', border:'1px solid #e9d5ff', background:'#fef3c7', color:'#92400e', fontSize:'11px', cursor:'pointer' }}>✎ 编辑</button>
                 </div>
               ) : (
                 <div style={{ padding:'0 12px 10px', borderTop:'1px solid rgba(251,191,36,0.1)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                   <span style={{ fontSize:'11px', color:'var(--gray-300)' }}>
-                    {Object.keys(r.details||{}).filter(k=>k!='_合计').length || 0} 个账�?
+                    {Object.keys(r.details||{}).filter(k=>k!='_合计').length || 0} 个账户
                   </span>
-                  <button onClick={() => startEdit(key)} style={{ padding:'4px 10px', borderRadius:'8px', border:'1px solid #e9d5ff', background:'#fef3c7', color:'#92400e', fontSize:'11px', cursor:'pointer' }}>�? 编辑</button>
+                  <button onClick={() => startEdit(key)} style={{ padding:'4px 10px', borderRadius:'8px', border:'1px solid #e9d5ff', background:'#fef3c7', color:'#92400e', fontSize:'11px', cursor:'pointer' }}>✎ 编辑</button>
                 </div>
               )}
             </div>
@@ -339,7 +321,7 @@ export function SavingsPage() {
         <div style={{ marginTop:'24px', padding:'0 16px' }}>
           <h4 style={{ margin:'0 0 10px', fontSize:'14px', fontWeight:600, color:'#78350f' }}>📈 投资跟踪</h4>
             {investments.length === 0 && <p style={{ fontSize:'13px', color:'var(--gray-300)', margin:'0 0 10px' }}>暂无记录</p>}
-            {/* 按代�?+买卖类型分组，只显示最新一条，点击展开查看历史 */}
+            {/* 按代码+买卖类型分组，只显示最新一条，点击展开查看历史 */}
             {(() => {
                             const groups = {}
               investments.forEach((inv, idx) => {
@@ -347,7 +329,7 @@ export function SavingsPage() {
                 if (!groups[key]) groups[key] = []
                 groups[key].push({ ...inv, _idx: idx })
               })
-              // 每组按日期排序（最新在前），每组取第一条作为摘�?
+              // 每组按日期排序（最新在前），每组取第一条作为摘要
               return Object.entries(groups).map(([key, items]) => {
                 items.sort((a, b) => (b.sellDate || '').localeCompare(a.sellDate || ''))
                 const latest = items[0]
@@ -363,7 +345,7 @@ export function SavingsPage() {
                           <span style={{ fontSize:'10px', marginLeft:'6px', padding:'2px 6px', borderRadius:'6px', background: latest.type==='sell' ? '#fee2e2' : '#d1fae5', color: latest.type==='sell' ? '#e11d48' : '#059669', fontWeight:700 }}>{latest.type==='sell' ? '卖出' : '买入'}</span>
                           <span style={{ fontSize:'11px', color:'var(--gray-300)', marginLeft:'6px' }}>{latest.code}</span>
                         </span>
-                        <span style={{ fontSize:'11px', color:'#6366f1', fontWeight:600 }}>{items.length} 条记�? {expanded ? '🔼' : '🔽'}</span>
+                        <span style={{ fontSize:'11px', color:'#6366f1', fontWeight:600 }}>{items.length} 条记录 {expanded ? '🔼' : '🔽'}</span>
                       </div>
                       <div style={{ display:'flex', gap:'12px', marginTop:'6px', fontSize:'12px', flexWrap:'wrap' }}>
                         <span style={{ fontSize:'13px' }}>{latest.type==='sell' ? '卖出' : '买入'}: <b style={{ color:'#1f2937', fontSize:'15px' }}>{latest.sellPrice}</b></span>
@@ -372,12 +354,12 @@ export function SavingsPage() {
                           {(latest.change ?? 0) >= 0 ? '📈' : '📉'} {latest.change != null ? (latest.change >= 0 ? '+' : '') + latest.change.toFixed(2) + '%' : '--'}
                         </span>
                       </div>
-                      {latest.sellDate && <div style={{ fontSize:'11px', color:'#6b7280', marginTop:'4px' }}>📅 {latest.type==='sell' ? '卖出�?' : '买入�?'}: {latest.sellDate}</div>}
+                      {latest.sellDate && <div style={{ fontSize:'11px', color:'#6b7280', marginTop:'4px' }}>📅 {latest.type==='sell' ? '卖出日' : '买入日'}: {latest.sellDate}</div>}
                     </div>
                     {/* 展开历史记录 */}
                     {expanded && (
                       <div style={{ borderTop:'1px solid rgba(99,102,241,0.1)', padding:'6px 12px 10px' }}>
-                        <div style={{ fontSize:'11px', fontWeight:600, color:'#6366f1', marginBottom:'6px' }}>📋 历史记录（按日期倒序�?</div>
+                        <div style={{ fontSize:'11px', fontWeight:600, color:'#6366f1', marginBottom:'6px' }}>📋 历史记录（按日期倒序）</div>
                         {items.map((inv, i) => (
                           <div key={i} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'6px 0', borderBottom: i<items.length-1 ? '1px solid rgba(99,102,241,0.06)' : 'none' }}>
                             <span style={{ fontSize:'11px', color:'#6366f1', fontWeight:600, minWidth:'20px' }}>#{items.length - i}</span>
@@ -396,7 +378,7 @@ export function SavingsPage() {
               <button onClick={() => setShowAddInv(true)} style={{ marginTop:'4px', padding:'8px 14px', borderRadius:'10px', border:'1.5px dashed #6366f1', background:'transparent', color:'#4338ca', fontSize:'13px', cursor:'pointer', width:'100%' }}>+ 添加</button>
             ) : (
               <div style={{ marginTop:'8px', padding:'12px', borderRadius:'12px', border:'1.5px solid #6366f1', background:'rgba(238,242,255,0.3)', boxSizing:'border-box' }}>
-                <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder='代码 �?600519' style={{ width:'100%', boxSizing:'border-box', padding:'11px 12px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', marginBottom:'10px', minWidth:0 }} />
+                <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder='代码 如600519' style={{ width:'100%', boxSizing:'border-box', padding:'11px 12px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', marginBottom:'10px', minWidth:0 }} />
                 {/* 买入/卖出 切换 */}
                 <div style={{ display:'flex', gap:'8px', marginBottom:'10px' }}>
                   <button type='button' onClick={() => setInvType('buy')} style={{ flex:1, minWidth:0, padding:'11px 0', borderRadius:'8px', border: invType==='buy' ? '1.5px solid #10b981' : '1px solid #c7d2fe', background: invType==='buy' ? '#10b981' : '#fff', color: invType==='buy' ? '#fff' : '#666', fontSize:'14px', fontWeight:700, cursor:'pointer' }}>买入</button>
@@ -405,11 +387,11 @@ export function SavingsPage() {
                 <button onClick={fetchAndAdd} style={{ width:'100%', boxSizing:'border-box', padding:'12px', borderRadius:'8px', border:'none', background:'#6366f1', color:'#fff', fontSize:'14px', fontWeight:600, cursor:'pointer', marginBottom:'10px' }}>获取实时行情</button>
                 {invName && <p style={{ margin:'0 0 10px', fontSize:'14px', color:'#4338ca', fontWeight:700 }}>📌 {invName}  当前: {invCurrentPrice}</p>}
                 <div style={{ display:'flex', gap:'8px', marginBottom:'10px' }}>
-                  <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入�?' : '卖出�?'} type='number' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center' }} />
+                  <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入价' : '卖出价'} type='number' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center' }} />
                   <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} type='date' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center', color:'#4338ca' }} />
                 </div>
                 {invCurrentPrice && (
-                  <button type='button' onClick={fetchHistoricalPrice} style={{ width:'100%', boxSizing:'border-box', padding:'8px', marginBottom:'10px', borderRadius:'8px', border:'1.5px dashed #6366f1', background:'transparent', color:'#6366f1', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>📅 �? {invSellDate || '选定�?'} 的价格填�?</button>
+                  <button type='button' onClick={fetchHistoricalPrice} style={{ width:'100%', boxSizing:'border-box', padding:'8px', marginBottom:'10px', borderRadius:'8px', border:'1.5px dashed #6366f1', background:'transparent', color:'#6366f1', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>📅 用 {invSellDate || '选定日'} 的价格填入</button>
                 )}
                 <button onClick={confirmAddInv} style={{ width:'100%', boxSizing:'border-box', padding:'12px', borderRadius:'8px', border:'none', background:'#10b981', color:'#fff', fontSize:'15px', fontWeight:700, cursor:'pointer' }}>保存</button>
                 <button onClick={() => { setShowAddInv(false); setInvType('buy') }} style={{ width:'100%', boxSizing:'border-box', padding:'8px', borderRadius:'8px', border:'none', background:'transparent', color:'#666', fontSize:'13px', cursor:'pointer', marginTop:'4px' }}>取消</button>
@@ -418,7 +400,7 @@ export function SavingsPage() {
         </div>
         )}
 
-      {/* 底部固定保存/取消栏（仅编辑时显示�? */}
+      {/* 底部固定保存/取消栏（仅编辑时显示） */}
       {editMonth && (
         <div style={{
           position:'fixed',
@@ -437,8 +419,8 @@ export function SavingsPage() {
           boxShadow:'0 -4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(251,191,36,0.3)',
           zIndex:90,
         }}>
-          <button onClick={saveEdit} style={{ flex:1, padding:'12px', borderRadius:'12px', border:'none', background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(16,185,129,0.3)' }}>保存编辑</button>
-          <button onClick={() => setEditMonth(null)} style={{ flex:1, padding:'12px', borderRadius:'12px', border:'1.5px solid #fca5a5', background:'#fef2f2', color:'#dc2626', fontSize:'14px', fontWeight:700, cursor:'pointer' }}>取消</button>
+          <button onClick={saveEdit} style={{ flex:2, padding:'12px', borderRadius:'12px', border:'none', background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(16,185,129,0.3)' }}>保存编辑</button>
+          <button onClick={() => setEditMonth(null)} style={{ flex:1, padding:'12px', borderRadius:'12px', border:'1px solid #d4d4d8', background:'#fff', color:'#52525b', fontSize:'14px', fontWeight:600, cursor:'pointer' }}>取消</button>
         </div>
       )}
     </div>
