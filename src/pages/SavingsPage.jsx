@@ -256,21 +256,21 @@ export function SavingsPage() {
             {!showAddInv ? (
               <button onClick={() => setShowAddInv(true)} style={{ marginTop:'4px', padding:'8px 14px', borderRadius:'10px', border:'1.5px dashed #6366f1', background:'transparent', color:'#4338ca', fontSize:'13px', cursor:'pointer', width:'100%' }}>+ 添加</button>
             ) : (
-              <div style={{ marginTop:'6px', padding:'12px', borderRadius:'12px', border:'1.5px solid #6366f1', background:'rgba(238,242,255,0.3)' }}>
-                <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder='代码 如600519' style={{ width:'100%', boxSizing:'border-box', padding:'8px 10px', borderRadius:'8px', border:'1px solid #c7d2fe', fontSize:'12px', outline:'none', marginBottom:'8px' }} />
+              <div style={{ marginTop:'6px', padding:'14px', borderRadius:'14px', border:'1.5px solid #6366f1', background:'rgba(238,242,255,0.3)' }}>
+                <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder='代码 如600519' style={{ width:'100%', boxSizing:'border-box', padding:'14px 14px', borderRadius:'10px', border:'1.5px solid #c7d2fe', fontSize:'15px', outline:'none', marginBottom:'12px' }} />
                 {/* 买入/卖出 切换 */}
-                <div style={{ display:'flex', gap:'6px', marginBottom:'8px' }}>
-                  <button type='button' onClick={() => setInvType('buy')} style={{ flex:1, padding:'7px 0', borderRadius:'8px', border: invType==='buy' ? '1.5px solid #10b981' : '1px solid #c7d2fe', background: invType==='buy' ? '#10b981' : '#fff', color: invType==='buy' ? '#fff' : '#666', fontSize:'12px', fontWeight:600, cursor:'pointer' }}>买入</button>
-                  <button type='button' onClick={() => setInvType('sell')} style={{ flex:1, padding:'7px 0', borderRadius:'8px', border: invType==='sell' ? '1.5px solid #e11d48' : '1px solid #c7d2fe', background: invType==='sell' ? '#e11d48' : '#fff', color: invType==='sell' ? '#fff' : '#666', fontSize:'12px', fontWeight:600, cursor:'pointer' }}>卖出</button>
+                <div style={{ display:'flex', gap:'8px', marginBottom:'12px' }}>
+                  <button type='button' onClick={() => setInvType('buy')} style={{ flex:1, padding:'13px 0', borderRadius:'10px', border: invType==='buy' ? '1.5px solid #10b981' : '1px solid #c7d2fe', background: invType==='buy' ? '#10b981' : '#fff', color: invType==='buy' ? '#fff' : '#666', fontSize:'15px', fontWeight:700, cursor:'pointer' }}>买入</button>
+                  <button type='button' onClick={() => setInvType('sell')} style={{ flex:1, padding:'13px 0', borderRadius:'10px', border: invType==='sell' ? '1.5px solid #e11d48' : '1px solid #c7d2fe', background: invType==='sell' ? '#e11d48' : '#fff', color: invType==='sell' ? '#fff' : '#666', fontSize:'15px', fontWeight:700, cursor:'pointer' }}>卖出</button>
                 </div>
-                <button onClick={fetchAndAdd} style={{ width:'100%', padding:'8px', borderRadius:'8px', border:'none', background:'#6366f1', color:'#fff', fontSize:'12px', cursor:'pointer', marginBottom:'8px' }}>获取实时行情</button>
-                {invName && <p style={{ margin:'0 0 8px', fontSize:'13px', color:'#4338ca', fontWeight:600 }}>📌 {invName}  当前: {invCurrentPrice}</p>}
-                <div style={{ display:'flex', gap:'8px', marginBottom:'8px' }}>
-                  <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入价' : '卖出价'} type='number' style={{ flex:1, padding:'8px 10px', borderRadius:'8px', border:'1px solid #c7d2fe', fontSize:'12px', outline:'none' }} />
-                  <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} placeholder={invType==='buy' ? '买入日' : '卖出日'} style={{ flex:1, padding:'8px 10px', borderRadius:'8px', border:'1px solid #c7d2fe', fontSize:'12px', outline:'none' }} />
+                <button onClick={fetchAndAdd} style={{ width:'100%', padding:'14px', borderRadius:'10px', border:'none', background:'#6366f1', color:'#fff', fontSize:'15px', fontWeight:600, cursor:'pointer', marginBottom:'12px' }}>获取实时行情</button>
+                {invName && <p style={{ margin:'0 0 12px', fontSize:'14px', color:'#4338ca', fontWeight:700 }}>📌 {invName}  当前: {invCurrentPrice}</p>}
+                <div style={{ display:'flex', gap:'10px', marginBottom:'12px' }}>
+                  <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入价' : '卖出价'} type='number' style={{ flex:1, padding:'14px 12px', borderRadius:'10px', border:'1.5px solid #c7d2fe', fontSize:'15px', outline:'none' }} />
+                  <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} placeholder={invType==='buy' ? '买入日' : '卖出日'} style={{ flex:1, padding:'14px 12px', borderRadius:'10px', border:'1.5px solid #c7d2fe', fontSize:'15px', outline:'none' }} />
                 </div>
-                <button onClick={confirmAddInv} style={{ width:'100%', padding:'8px', borderRadius:'8px', border:'none', background:'#10b981', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer' }}>保存</button>
-                <button onClick={() => { setShowAddInv(false); setInvType('buy') }} style={{ width:'100%', padding:'6px', borderRadius:'8px', border:'none', background:'transparent', color:'#666', fontSize:'12px', cursor:'pointer', marginTop:'6px' }}>取消</button>
+                <button onClick={confirmAddInv} style={{ width:'100%', padding:'14px', borderRadius:'10px', border:'none', background:'#10b981', color:'#fff', fontSize:'16px', fontWeight:700, cursor:'pointer' }}>保存</button>
+                <button onClick={() => { setShowAddInv(false); setInvType('buy') }} style={{ width:'100%', padding:'10px', borderRadius:'10px', border:'none', background:'transparent', color:'#666', fontSize:'14px', cursor:'pointer', marginTop:'6px' }}>取消</button>
               </div>
             )}
         </div>
