@@ -438,7 +438,7 @@ export function SavingsPage() {
           zIndex:90,
         }}>
           <button onClick={saveEdit} style={{ flex:1, padding:'12px', borderRadius:'12px', border:'none', background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer', boxShadow:'0 4px 12px rgba(16,185,129,0.3)' }}>保存编辑</button>
-          <button onClick={() => setEditMonth(null)} style={{ flex:1, padding:'12px', borderRadius:'12px', border:'1.5px solid #d4d4d8', background:'#fff', color:'#52525b', fontSize:'14px', fontWeight:700, cursor:'pointer' }}>取消</button>
+          <button onClick={() => setEditMonth(null)} style={{ flex:1, padding:'12px', borderRadius:'12px', border:'1.5px solid #fca5a5', background:'#fef2f2', color:'#dc2626', fontSize:'14px', fontWeight:700, cursor:'pointer' }}>取消</button>
         </div>
       )}
     </div>
