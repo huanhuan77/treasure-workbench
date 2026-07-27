@@ -186,28 +186,23 @@ export function SamplesPage() {
               const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
               return (
                 <div key={s.id} style={{ ...glassStyle, padding: '12px 14px 10px 14px', position: 'relative', borderLeft: `3px solid ${st.stripe}` }}>
-                  {/* 头一行：名称 + 状态徽章 */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                      <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</h3>
+                  {/* 头一行：名称 + 账号 + 日期 + 状态徽章（一行不换行） */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden' }}>
+                      <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flexShrink: 1 }}>{s.name}</h3>
                       {s.account && (
-                        <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                          {ACCOUNT_NICK[s.account]}
-                        </span>
+                        <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>
                       )}
+                      {s.receiveDate && <span style={{ fontSize: '11px', color: 'var(--text-sub)', whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
                     </div>
-                    <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {st.label}
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                      {s.deadline && s.status === 'unpublished' && <span style={{ fontSize: '11px', color: dlColor, whiteSpace: 'nowrap' }}>⏰ {formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
+                      <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap' }}>{st.label}</span>
+                    </div>
                   </div>
-
-                  {/* 二行：日期信息 + 编辑按钮 (合并一行) */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '5px', fontSize: '12px', color: 'var(--text-sub)' }}>
-                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', minWidth: 0, overflow: 'hidden' }}>
-                      {s.receiveDate && <span style={{ whiteSpace: 'nowrap' }}>📅 {formatDate(s.receiveDate)}</span>}
-                      {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, whiteSpace: 'nowrap' }}>⏰ {formatDate(s.deadline)}{dl && ` · ${dl}`}</span>}
-                    </div>
-                    <button onClick={() => setEditing(s)} style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: 500, background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0, marginLeft: '8px' }}>编辑</button>
+                  {/* 编辑按钮在右上角紧凑贴边 */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                    <button onClick={() => setEditing(s)} style={{ color: 'var(--primary)', fontSize: '11px', fontWeight: 500, background: 'none', border: 'none', padding: 0, cursor: 'pointer', lineHeight: 1 }}>编辑</button>
                   </div>
 
                   {/* 备注（可选） */}
