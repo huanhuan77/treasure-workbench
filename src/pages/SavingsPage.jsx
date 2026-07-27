@@ -44,6 +44,22 @@ export function SavingsPage() {
       if (isFund) {
         const q = await sdk.quotes.fund([code])
         if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].nav) }
+        // 有卖出日则查历史净值
+        if (invSellDate) {
+          try {
+            const cb = 'fund_cb_' + Date.now()
+            const jsonpUrl = 'https://api.fund.eastmoney.com/f10/lsjz?callback=' + cb + '&fundCode=' + code + '&pageIndex=1&pageSize=90'
+            window[cb] = (d) => {
+              const found = d?.Data?.LSJZList?.find(x => x.FSRQ === invSellDate)
+              if (found) setInvSellPrice(String(parseFloat(found.DWJZ)))
+              delete window[cb]
+            }
+            const sc = document.createElement('script')
+            sc.src = jsonpUrl
+            document.body.appendChild(sc)
+            setTimeout(() => { if (window[cb]) { delete window[cb] } }, 8000)
+          } catch(e) { /* 静默失败，用户可手动填 */ }
+        }
       } else {
         const q = await sdk.quotes.cn([code])
         if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].price) }
