@@ -21,6 +21,7 @@ export function SavingsPage() {
   const [editMonth, setEditMonth] = useState(null)
   const [editAccounts, setEditAccounts] = useState(null)
   const [editTotal, setEditTotal] = useState('')
+  const [editTarget, setEditTarget] = useState('')
 
   const monthsWithData = MONTH_KEYS.filter(k => records[k] && records[k].actual > 0)
   const currentMonth = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : '2026-01'
@@ -35,6 +36,7 @@ export function SavingsPage() {
     setEditMonth(key)
     setEditAccounts({ ...(r.details || {}) })
     setEditTotal(String(r.actual || 0))
+    setEditTarget(String(r.target || 0))
   }
   const saveEdit = () => {
     if (!editMonth) return
@@ -45,7 +47,11 @@ export function SavingsPage() {
       if (n > 0) { details[acct] = n; total += n }
     })
     const manualTotal = toNum(editTotal)
-    updateSavings(editMonth, { actual: manualTotal > 0 ? manualTotal : total, details })
+    updateSavings(editMonth, {
+      target: toNum(editTarget) || records[editMonth]?.target || 0,
+      actual: manualTotal > 0 ? manualTotal : total,
+      details,
+    })
     setEditMonth(null)
   }
   const addAccount = () => {
@@ -104,20 +110,28 @@ export function SavingsPage() {
                 <span style={{ fontSize:'12px', fontWeight:600, color:d>=0?'#059669':'#dc2626', textAlign:'right', minWidth:'80px' }}>{formatNum(a)} / {formatNum(t)}</span>
               </div>
               {editing ? (
-                <div style={{ padding:'4px 12px 12px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
+                <div style={{ padding:'12px 16px 14px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
+                  {/* 目标 */}
+                  <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'6px 0 10px', borderBottom:'1px solid rgba(251,191,36,0.15)' }}>
+                    <span style={{ fontSize:'14px', fontWeight:600, color:'#78350f', minWidth:'64px' }}>🎯 目标</span>
+                    <input value={editTarget} onChange={e => setEditTarget(e.target.value)} placeholder="目标金额"
+                      style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #fbbf24', fontSize:'15px', outline:'none', textAlign:'right', fontWeight:600, color:'#92400e' }} />
+                  </div>
+                  {/* 各账户 */}
                   {Object.entries(editAccounts).map(([acct, val]) => (
-                    <div key={acct} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'3px 0' }}>
-                      <span style={{ fontSize:'12px', color:'#78350f', minWidth:'60px' }}>{acct}</span>
-                      <input value={val} onChange={e => setEditAccounts(p=>({...p,[acct]:e.target.value}))}
-                        style={{ flex:1, padding:'4px 8px', borderRadius:'8px', border:'1px solid #e9d5ff', fontSize:'12px', outline:'none', textAlign:'right' }} />
+                    <div key={acct} style={{ display:'flex', alignItems:'center', gap:'8px', padding:'6px 0' }}>
+                      <span style={{ fontSize:'14px', color:'#78350f', minWidth:'64px' }}>{acct}</span>
+                      <input value={val} onChange={e => setEditAccounts(p=>({...p,[acct]:e.target.value}))} placeholder="0"
+                        style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #e9d5ff', fontSize:'15px', outline:'none', textAlign:'right' }} />
                     </div>
                   ))}
-                  <div style={{ display:'flex', alignItems:'center', gap:'6px', padding:'6px 0 0', borderTop:'1px solid rgba(251,191,36,0.15)', marginTop:'4px' }}>
-                    <span style={{ fontSize:'12px', fontWeight:700, color:'#78350f', minWidth:'60px' }}>合计</span>
-                    <input value={editTotal} onChange={e => setEditTotal(e.target.value)} placeholder="自动或手动"
-                      style={{ flex:1, padding:'4px 8px', borderRadius:'8px', border:'1px solid #e9d5ff', fontSize:'12px', outline:'none', textAlign:'right', fontWeight:600 }} />
+                  {/* 合计 */}
+                  <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'10px 0 0', borderTop:'1.5px solid #fcd34d', marginTop:'6px' }}>
+                    <span style={{ fontSize:'14px', fontWeight:700, color:'#92400e', minWidth:'64px' }}>💰 合计</span>
+                    <input value={editTotal} onChange={e => setEditTotal(e.target.value)} placeholder="留空按账户累加"
+                      style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #f59e0b', fontSize:'15px', outline:'none', textAlign:'right', fontWeight:700, color:'#92400e' }} />
                   </div>
-                  <button onClick={addAccount} style={{ marginTop:'8px', padding:'4px 12px', borderRadius:'8px', border:'1px dashed #d4a373', background:'transparent', color:'#92400e', fontSize:'11px', cursor:'pointer', width:'100%' }}>+ 添加账户</button>
+                  <button onClick={addAccount} style={{ marginTop:'12px', padding:'8px 12px', borderRadius:'10px', border:'1.5px dashed #d4a373', background:'transparent', color:'#92400e', fontSize:'13px', fontWeight:500, cursor:'pointer', width:'100%' }}>+ 添加账户</button>
                 </div>
               ) : (
                 <div style={{ padding:'0 12px 10px', borderTop:'1px solid rgba(251,191,36,0.1)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
