@@ -3,7 +3,6 @@ import { NavLink } from 'react-router-dom'
 const tabs = [
   { to: '/', label: '产品', icon: '📦', end: true },
   { to: '/samples', label: '样品', icon: '🏷️' },
-  { to: '/mood', label: '心情', icon: '😊' },
   { to: '/finance', label: '收支', icon: '💰' },
   { to: '/sensitive', label: '词库', icon: '📚' },
 ]
