@@ -3023,10 +3023,10 @@ function loadData() {
       if (!seenIds.has(preset.id)) products.push(preset)
     }
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
-    let productsFinal = versionMismatch ? refreshAllTitles(products) : products
+    let productsFinal = products  // 不再因版本升级刷新标题，用户手动编辑的标题永久保留
 
     // v14 迁移：用户指定的清清片爆单文案——缺失则新增并标记 hasOrder
-    if (versionMismatch || savedVersion() === '13') {
+    if (savedVersion() === '13') {  // 仅 v13→v14 执行一次，后续版本升级不再重复
       const BOMB_COPIES = [
         { label: '清清片离谱/穷爆', pattern: /离谱|没钱吃|穷爆/, content: '清清片你别太离谱\n我别以为我没钱吃了\n真的穷爆了!!!' },
         { label: '清清片断货/降价', pattern: /断货|白费|成分.*降价|努力.*白费/, content: '你一句是不是断货了?!\n就知道道的努力方有白费\n全金的成分\n你看看现在才降价啊' },
@@ -3063,24 +3063,15 @@ function loadData() {
       const [jbt] = productsFinal.splice(jbtIdx, 1)
       productsFinal.unshift(jbt)
     }
-    // 自愈：若样品被清空（含 v15 迁移误清），从种子重新填充
-    if (versionMismatch && (!old.samples || old.samples.length === 0)) {
-      old.samples = defaultData.samples.map((s) => ({ ...s }))
-    }
+    // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     return {
       products: productsFinal,
-      samples: (old.samples || []).map((s) => {
-        const m = migrateSample(s)
-        // 对所有种子样本，按 id 强制回填干净名称（覆盖任意历史乱码形态：GBK 乱码 /  损坏），保留状态/日期/账号/备注
-        const seed = m && m.id ? SEED_SAMPLE_BY_ID[m.id] : null
-        if (seed) return { ...m, name: seed.name, account: seed.account }
-        return m
-      }),
+      samples: (old.samples || []).map((s) => migrateSample(s)),
       transactions: migrateTransactions(Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])),
       moodData: old.moodData || [],
       savingsData: old.savingsData ? { ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData,
-      sensitiveWords: versionMismatch ? DEFAULT_SENSITIVE_WORDS : (old.sensitiveWords || DEFAULT_SENSITIVE_WORDS),
+      sensitiveWords: old.sensitiveWords || DEFAULT_SENSITIVE_WORDS,  // 版本升级不再替换用户自定义词库
     }
   } catch (e) {
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
