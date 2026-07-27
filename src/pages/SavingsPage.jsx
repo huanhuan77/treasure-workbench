@@ -21,7 +21,6 @@ export function SavingsPage() {
   const [editMonth, setEditMonth] = useState(null)
   const [editAccounts, setEditAccounts] = useState(null)
   const [editTotal, setEditTotal] = useState('')
-  const [editTarget, setEditTarget] = useState('')
 
   const monthsWithData = MONTH_KEYS.filter(k => records[k] && records[k].actual > 0)
   const currentMonth = monthsWithData.length > 0 ? monthsWithData[monthsWithData.length - 1] : '2026-01'
@@ -36,7 +35,6 @@ export function SavingsPage() {
     setEditMonth(key)
     setEditAccounts({ ...(r.details || {}) })
     setEditTotal(String(r.actual || 0))
-    setEditTarget(String(r.target || 0))
   }
   const saveEdit = () => {
     if (!editMonth) return
@@ -48,7 +46,6 @@ export function SavingsPage() {
     })
     const manualTotal = toNum(editTotal)
     updateSavings(editMonth, {
-      target: toNum(editTarget) || records[editMonth]?.target || 0,
       actual: manualTotal > 0 ? manualTotal : total,
       details,
     })
@@ -111,12 +108,6 @@ export function SavingsPage() {
               </div>
               {editing ? (
                 <div style={{ padding:'12px 16px 14px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
-                  {/* 目标 */}
-                  <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'6px 0 10px', borderBottom:'1px solid rgba(251,191,36,0.15)' }}>
-                    <span style={{ fontSize:'14px', fontWeight:600, color:'#78350f', minWidth:'64px' }}>🎯 目标</span>
-                    <input value={editTarget} onChange={e => setEditTarget(e.target.value)} placeholder="目标金额"
-                      style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #fbbf24', fontSize:'15px', outline:'none', textAlign:'right', fontWeight:600, color:'#92400e' }} />
-                  </div>
                   {/* 各账户 */}
                   {Object.entries(editAccounts).map(([acct, val]) => (
                     <div key={acct} style={{ display:'flex', alignItems:'center', gap:'8px', padding:'6px 0' }}>
