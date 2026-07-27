@@ -3070,7 +3070,7 @@ function loadData() {
       samples: (old.samples || []).map((s) => migrateSample(s)),
       transactions: migrateTransactions(Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])),
       moodData: old.moodData || [],
-      savingsData: old.savingsData ? { ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData,
+      savingsData: old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData,
       sensitiveWords: old.sensitiveWords || DEFAULT_SENSITIVE_WORDS,  // 版本升级不再替换用户自定义词库
     }
   } catch (e) {

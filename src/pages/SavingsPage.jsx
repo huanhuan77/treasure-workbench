@@ -317,8 +317,7 @@ export function SavingsPage() {
             {investments.length === 0 && <p style={{ fontSize:'13px', color:'var(--gray-300)', margin:'0 0 10px' }}>暂无记录</p>}
             {/* 按代码+买卖类型分组，只显示最新一条，点击展开查看历史 */}
             {(() => {
-              console.log('[投资列表] investments:', JSON.stringify(investments))
-              const groups = {}
+                            const groups = {}
               investments.forEach((inv, idx) => {
                 const key = (inv.code || '').trim() + '_' + (inv.type || 'buy')
                 if (!groups[key]) groups[key] = []
