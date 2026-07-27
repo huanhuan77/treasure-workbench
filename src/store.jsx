@@ -1211,6 +1211,12 @@ function loadData() {
     }
     productsFinal = consolidateJiebitudu(productsFinal)
     productsFinal = sanitizeJiebitudu(productsFinal)
+    // 洁比兔湿巾/湿厕纸 固定排第一
+    const jbtIdx = productsFinal.findIndex((p) => p && /洁比兔/.test(p.name) && /(湿巾|湿厕纸)/.test(p.name))
+    if (jbtIdx > 0) {
+      const [jbt] = productsFinal.splice(jbtIdx, 1)
+      productsFinal.unshift(jbt)
+    }
     return {
       products: productsFinal,
       samples: (old.samples || []).map((s) => {
