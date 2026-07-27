@@ -6,7 +6,7 @@ const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '16'
+const CURRENT_VERSION = '17'
 
 
 // 植研加睫毛胶水：用户整理后内置文案（thumb-up=出单，check=用过；末 # 行为指定话题
@@ -3141,9 +3141,9 @@ function loadData() {
       const [jbt] = productsFinal.splice(jbtIdx, 1)
       productsFinal.unshift(jbt)
     }
-    // v15 迁移：清空样品列表（用户要求从零开始重新导入）
-    if (versionMismatch) {
-      old.samples = []
+    // 自愈：若样品被清空（含 v15 迁移误清），从种子重新填充
+    if (versionMismatch && (!old.samples || old.samples.length === 0)) {
+      old.samples = defaultData.samples.map((s) => ({ ...s }))
     }
     return {
       products: productsFinal,
