@@ -227,49 +227,43 @@ export function SavingsPage() {
           )
         })}      </div>
 
-        {/* 投资跟踪 */}
-        <div style={{ marginTop:"24px", padding:"0 16px" }}>
-          <div onClick={() => setShowInvest(!showInvest)} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", cursor:"pointer", marginBottom:"10px" }}>
-            <h4 style={{ margin:0, fontSize:"14px", fontWeight:600, color:"#78350f" }}>📈 投资跟踪</h4>
-            <span style={{ fontSize:"12px", color:"var(--gray-400)" }}>{showInvest ? "▲" : "▼"}</span>
-          </div>
-          {showInvest && (
-            <>
-              {investments.length === 0 && <p style={{ fontSize:"13px", color:"var(--gray-300)", margin:"0 0 10px" }}>暂无记录</p>}
-              {investments.map((inv, idx) => (
-                <div key={idx} style={{ padding:"10px 12px", borderRadius:"12px", border:"1px solid rgba(99,102,241,0.2)", background:"rgba(238,242,255,0.4)", marginBottom:"8px" }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span style={{ fontSize:"14px", fontWeight:600, color:"#4338ca" }}>{inv.name} <span style={{ fontSize:"11px", color:"var(--gray-300)" }}>{inv.code}</span></span>
-                    <button onClick={() => saveInvestments(investments.filter((_,i) => i !== idx))} style={{ background:"none", border:"none", color:"#e11d48", fontSize:"16px", cursor:"pointer" }}>×</button>
-                  </div>
-                  <div style={{ display:"flex", gap:"12px", marginTop:"6px", fontSize:"12px", flexWrap:"wrap" }}>
-                    <span>卖出: <b>{inv.sellPrice}</b></span>
-                    <span>当前: <b style={{ color:"#4338ca" }}>{inv.currentPrice ?? "--"}</b></span>
-                    <span style={{ color: (inv.change ?? 0) >= 0 ? "#dc2626" : "#059669", fontWeight:600 }}>
-                      {(inv.change ?? 0) >= 0 ? "📈" : "📉"} {inv.change != null ? (inv.change >= 0 ? "+" : "") + inv.change.toFixed(2) + "%" : "--"}
-                    </span>
-                  </div>
-                  {inv.sellDate && <div style={{ fontSize:"11px", color:"var(--gray-300)", marginTop:"4px" }}>卖出日: {inv.sellDate}</div>}
+        {activeTab === 'invest' && (
+        <div style={{ marginTop:'24px', padding:'0 16px' }}>
+          <h4 style={{ margin:'0 0 10px', fontSize:'14px', fontWeight:600, color:'#78350f' }}>📈 投资跟踪</h4>
+            {investments.length === 0 && <p style={{ fontSize:'13px', color:'var(--gray-300)', margin:'0 0 10px' }}>暂无记录</p>}
+            {investments.map((inv, idx) => (
+              <div key={idx} style={{ padding:'10px 12px', borderRadius:'12px', border:'1px solid rgba(99,102,241,0.2)', background:'rgba(238,242,255,0.4)', marginBottom:'8px' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                  <span style={{ fontSize:'14px', fontWeight:600, color:'#4338ca' }}>{inv.name} <span style={{ fontSize:'11px', color:'var(--gray-300)' }}>{inv.code}</span></span>
+                  <button onClick={() => saveInvestments(investments.filter((_,i) => i !== idx))} style={{ background:'none', border:'none', color:'#e11d48', fontSize:'16px', cursor:'pointer' }}>×</button>
                 </div>
-              ))}
-              {!showAddInv ? (
-                <button onClick={() => setShowAddInv(true)} style={{ marginTop:"4px", padding:"8px 14px", borderRadius:"10px", border:"1.5px dashed #6366f1", background:"transparent", color:"#4338ca", fontSize:"13px", cursor:"pointer", width:"100%" }}>+ 添加</button>
-              ) : (
-                <div style={{ marginTop:"6px", padding:"12px", borderRadius:"12px", border:"1.5px solid #6366f1", background:"rgba(238,242,255,0.3)" }}>
-                  <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder="代码 如600519" style={{ width:"100%", boxSizing:"border-box", padding:"8px 10px", borderRadius:"8px", border:"1px solid #c7d2fe", fontSize:"12px", outline:"none", marginBottom:"8px" }} />
-                  <button onClick={fetchAndAdd} style={{ width:"100%", padding:"8px", borderRadius:"8px", border:"none", background:"#6366f1", color:"#fff", fontSize:"12px", cursor:"pointer", marginBottom:"8px" }}>获取实时行情</button>
-                  {invName && <p style={{ margin:"0 0 8px", fontSize:"13px", color:"#4338ca", fontWeight:600 }}>📌 {invName}  当前: {invCurrentPrice}</p>}
-                  <div style={{ display:"flex", gap:"8px", marginBottom:"8px" }}>
-                    <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder="卖出价" type="number" style={{ flex:1, padding:"8px 10px", borderRadius:"8px", border:"1px solid #c7d2fe", fontSize:"12px", outline:"none" }} />
-                    <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} placeholder="卖出日" style={{ flex:1, padding:"8px 10px", borderRadius:"8px", border:"1px solid #c7d2fe", fontSize:"12px", outline:"none" }} />
-                  </div>
-                  <button onClick={confirmAddInv} style={{ width:"100%", padding:"8px", borderRadius:"8px", border:"none", background:"#10b981", color:"#fff", fontSize:"12px", fontWeight:600, cursor:"pointer" }}>保存</button>
-                  <button onClick={() => setShowAddInv(false)} style={{ width:"100%", padding:"6px", borderRadius:"8px", border:"none", background:"transparent", color:"#666", fontSize:"12px", cursor:"pointer", marginTop:"6px" }}>取消</button>
+                <div style={{ display:'flex', gap:'12px', marginTop:'6px', fontSize:'12px', flexWrap:'wrap' }}>
+                  <span>卖出: <b>{inv.sellPrice}</b></span>
+                  <span>当前: <b style={{ color:'#4338ca' }}>{inv.currentPrice ?? '--'}</b></span>
+                  <span style={{ color: (inv.change ?? 0) >= 0 ? '#dc2626' : '#059669', fontWeight:600 }}>
+                    {(inv.change ?? 0) >= 0 ? '📈' : '📉'} {inv.change != null ? (inv.change >= 0 ? '+' : '') + inv.change.toFixed(2) + '%' : '--'}
+                  </span>
                 </div>
-              )}
-            </>
-          )}
+                {inv.sellDate && <div style={{ fontSize:'11px', color:'var(--gray-300)', marginTop:'4px' }}>卖出日: {inv.sellDate}</div>}
+              </div>
+            ))}
+            {!showAddInv ? (
+              <button onClick={() => setShowAddInv(true)} style={{ marginTop:'4px', padding:'8px 14px', borderRadius:'10px', border:'1.5px dashed #6366f1', background:'transparent', color:'#4338ca', fontSize:'13px', cursor:'pointer', width:'100%' }}>+ 添加</button>
+            ) : (
+              <div style={{ marginTop:'6px', padding:'12px', borderRadius:'12px', border:'1.5px solid #6366f1', background:'rgba(238,242,255,0.3)' }}>
+                <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder='代码 如600519' style={{ width:'100%', boxSizing:'border-box', padding:'8px 10px', borderRadius:'8px', border:'1px solid #c7d2fe', fontSize:'12px', outline:'none', marginBottom:'8px' }} />
+                <button onClick={fetchAndAdd} style={{ width:'100%', padding:'8px', borderRadius:'8px', border:'none', background:'#6366f1', color:'#fff', fontSize:'12px', cursor:'pointer', marginBottom:'8px' }}>获取实时行情</button>
+                {invName && <p style={{ margin:'0 0 8px', fontSize:'13px', color:'#4338ca', fontWeight:600 }}>📌 {invName}  当前: {invCurrentPrice}</p>}
+                <div style={{ display:'flex', gap:'8px', marginBottom:'8px' }}>
+                  <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder='卖出价' type='number' style={{ flex:1, padding:'8px 10px', borderRadius:'8px', border:'1px solid #c7d2fe', fontSize:'12px', outline:'none' }} />
+                  <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} placeholder='卖出日' style={{ flex:1, padding:'8px 10px', borderRadius:'8px', border:'1px solid #c7d2fe', fontSize:'12px', outline:'none' }} />
+                </div>
+                <button onClick={confirmAddInv} style={{ width:'100%', padding:'8px', borderRadius:'8px', border:'none', background:'#10b981', color:'#fff', fontSize:'12px', fontWeight:600, cursor:'pointer' }}>保存</button>
+                <button onClick={() => setShowAddInv(false)} style={{ width:'100%', padding:'6px', borderRadius:'8px', border:'none', background:'transparent', color:'#666', fontSize:'12px', cursor:'pointer', marginTop:'6px' }}>取消</button>
+              </div>
+            )}
         </div>
+        )}
     </div>
   )
 }
