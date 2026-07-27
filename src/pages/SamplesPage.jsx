@@ -132,7 +132,7 @@ export function SamplesPage() {
         />
       </div>
 
-      <div style={{ padding: '4px 16px 16px' }}>
+      <div style={{ padding: '4px 16px calc(90px + var(--safe-bottom, 0px))' }}>
         {accountFiltered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏷️</div>
