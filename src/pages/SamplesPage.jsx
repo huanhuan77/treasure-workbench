@@ -75,9 +75,11 @@ export function SamplesPage() {
   const statusStats = useMemo(() => {
     const stats = {}
     for (const k of STATUS_ORDER) stats[k] = 0
-    samples.forEach((s) => { if (STATUS[s.status]) stats[s.status]++ })
+    // 只统计当前所选账号的数据
+    const ss = accountFilter === 'all' ? samples : samples.filter((s) => s.account === accountFilter)
+    ss.forEach((s) => { if (STATUS[s.status]) stats[s.status]++ })
     return stats
-  }, [samples])
+  }, [samples, accountFilter])
 
   const total = samples.length
 
@@ -86,7 +88,7 @@ export function SamplesPage() {
       <header style={{ padding: 'calc(20px + var(--safe-top)) 20px 12px' }}>
         <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>样品记录</h1>
         <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
-          共 {total} 个样品
+          共 {accountFilter === 'all' ? total : acctStats[accountFilter] || 0} 个样品
           {' · '}{STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.emoji}${statusStats[s.key]}`).join('  ')}
         </p>
       </header>
