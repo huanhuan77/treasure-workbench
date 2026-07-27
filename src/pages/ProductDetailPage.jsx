@@ -1,0 +1,888 @@
+import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useStore } from '../store'
+import { useToast } from '../components/Toast'
+import { Modal, Field, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
+import { copyText, formatDate, todayStr, parseBulkCopies, daysDiff } from '../utils/helpers'
+import {
+  generateTitle, generateTopics, generateSimilarCopy,
+  getStyles, buildTitleWithTopics,
+} from '../utils/copyGenerator'
+
+// 风格选项（带 emoji 和颜色，参考图二）
+const STYLE_OPTIONS = [
+  { key: '全部', label: '全部风格', emoji: '🌈', color: '#8b5cf6' },
+  { key: '种草', label: '对比反差', emoji: '😏', color: '#ec4899' },
+  { key: '开箱', label: '故事引入', emoji: '📖', color: '#3b82f6' },
+  { key: '避坑', label: '夸张崇拜', emoji: '👑', color: '#f59e0b' },
+  { key: '清单', label: '圈层认同', emoji: '👯', color: '#10b981' },
+  { key: '情绪', label: '情绪爆发', emoji: '💥', color: '#ef4444' },
+  { key: '测评', label: '人群标签', emoji: '📋', color: '#f97316' },
+]
+
+// 品牌名 + 产品名 拼接显示（避免品牌重复，如「珀芙研冷膜」）
+function displayTitle(p) {
+  const brand = (p.brand || '').trim()
+  const name = (p.name || '').trim()
+  if (!brand) return name
+  if (name && name.startsWith(brand)) return name
+  return `${brand} ${name}`
+}
+
+export function ProductDetailPage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { products, addCopy, deleteCopy, updateCopy, addCopies, setProductTopics, sensitiveWords } = useStore()
+  const { show } = useToast()
+  const product = products.find((p) => p.id === id)
+
+  const [delCopyId, setDelCopyId] = useState(null)
+  // 生成相似弹窗
+  const [genModal, setGenModal] = useState({ open: false, copy: null })
+  const [selectedStyles, setSelectedStyles] = useState(['全部'])
+  const [genResults, setGenResults] = useState([])
+  const [genLoading, setGenLoading] = useState(false)
+  const [copyFilter, setCopyFilter] = useState('全部')
+
+  const [showImport, setShowImport] = useState(false)
+  const [importText, setImportText] = useState('')
+
+  // 话题管理
+  const [showTopics, setShowTopics] = useState(false)
+  const [topicDraft, setTopicDraft] = useState([])
+  const [newTopic, setNewTopic] = useState('')
+  const [editTopicIdx, setEditTopicIdx] = useState(null)
+  const [editTopicVal, setEditTopicVal] = useState('')
+
+  const openTopics = () => {
+    setTopicDraft([...(product.topics || [])])
+    setNewTopic('')
+    setEditTopicIdx(null)
+    setShowTopics(true)
+  }
+  const addTopic = () => {
+    let t = newTopic.trim()
+    if (!t) return
+    if (!t.startsWith('#')) t = '#' + t
+    if (topicDraft.includes(t)) { show('该话题已存在', 'error'); return }
+    setTopicDraft([...topicDraft, t]); setNewTopic('')
+  }
+  const removeTopic = (t) => setTopicDraft(topicDraft.filter((x) => x !== t))
+  const startEditTopic = (i) => { setEditTopicIdx(i); setEditTopicVal(topicDraft[i]) }
+  const saveEditTopic = () => {
+    let t = editTopicVal.trim()
+    if (!t) { setEditTopicIdx(null); return }
+    if (!t.startsWith('#')) t = '#' + t
+    const next = [...topicDraft]; next[editTopicIdx] = t; setTopicDraft(next); setEditTopicIdx(null)
+  }
+  const regenTopics = () => {
+    const newTopics = generateTopics(product.name + ' 爆款', product.name, product.brand, sensitiveWords)
+    setTopicDraft(newTopics); show('已重新生成 5 个话题', 'success')
+  }
+  const saveTopics = () => { setProductTopics(product.id, topicDraft); setShowTopics(false); show('话题已保存', 'success') }
+
+  // 文案编辑
+  const [editCopy, setEditCopy] = useState(null) // { id, content, title, topics }
+  const openEditCopy = (c) => setEditCopy({ id: c.id, content: c.content, title: c.title || '', topics: [...(c.topics || [])] })
+  const saveEditCopy = () => {
+    if (!editCopy) return
+    if (!editCopy.content.trim()) { show('文案内容不能为空', 'error'); return }
+    updateCopy(product.id, editCopy.id, { content: editCopy.content, title: editCopy.title, topics: editCopy.topics })
+    setEditCopy(null); show('文案已更新', 'success')
+  }
+
+  const handleImport = () => {
+    const list = parseBulkCopies(importText)
+    if (list.length === 0) { show('没有解析到文案', 'error'); return }
+    const enriched = list.map((item) => ({
+      content: item.content,
+      title: generateTitle(item.content, product.name, product.brand, sensitiveWords),
+      topics: (item.topics && item.topics.length)
+        ? item.topics
+        : (product.topics && product.topics.length
+          ? product.topics
+          : generateTopics(item.content, product.name, product.brand, sensitiveWords)),
+      hasOrder: item.hasOrder,
+    }))
+    addCopies(product.id, enriched)
+    setShowImport(false)
+    setImportText('')
+    show(`已导入 ${enriched.length} 条文案`, 'success')
+  }
+
+  if (!product) {
+    return (
+      <div className="app-container">
+        <div style={{ textAlign: 'center', padding: '60px' }}>
+          <p>产品不存在</p>
+          <button onClick={() => navigate('/')} style={{ color: 'var(--primary)' }}>返回首页</button>
+        </div>
+      </div>
+    )
+  }
+
+  // 文案筛选 + 出单优先排序
+  const displayedCopies = (() => {
+    let list = product.copies
+    if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
+    else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder)
+    else if (copyFilter === '未用过') list = list.filter((c) => !c.used)
+    return [...list].sort((a, b) => (b.hasOrder ? 1 : 0) - (a.hasOrder ? 1 : 0))
+  })()
+
+  // 打开生成相似弹窗（从某条文案触发）
+  const openGenModal = (copy) => {
+    setGenModal({ open: true, copy })
+    setSelectedStyles(['全部'])
+    setGenResults([])
+  }
+
+  // 执行生成（多风格，结果不入库）
+  const handleGenerate = () => {
+    if (!genModal.copy) return
+    setGenLoading(true)
+    // 模拟异步生成体验
+    setTimeout(() => {
+      const stylesToUse = selectedStyles.includes('全部')
+        ? getStyles()
+        : selectedStyles.filter((s) => s !== '全部')
+
+      const results = stylesToUse.map((styleKey) => ({
+        id: Date.now() + Math.random(),
+        style: styleKey,
+        content: generateSimilarCopy(genModal.copy.content, product.name, product.brand, styleKey, sensitiveWords),
+        title: generateTitle(genModal.copy.content, product.name, product.brand, sensitiveWords),
+        topics: generateTopics(genModal.copy.content, product.name, product.brand, sensitiveWords),
+        collected: false,
+      }))
+
+      setGenResults(results)
+      setGenLoading(false)
+      show(`已生成 ${results.length} 条相似文案`, 'success')
+    }, 600)
+  }
+
+  // 收藏单条结果到文案库
+  const handleCollectResult = (result) => {
+    addCopy(id, {
+      content: result.content,
+      title: result.title,
+      topics: result.topics,
+      style: result.style,
+    })
+    setGenResults(genResults.map((r) =>
+      r.id === result.id ? { ...r, collected: true } : r
+    ))
+    show('已收藏到文案库', 'success')
+  }
+
+  const handleCopyContent = async (content, copyId) => {
+    const ok = await copyText(content)
+    show(ok ? '文案已复制' : '复制失败', ok ? 'success' : 'error')
+    if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
+  }
+
+  const handleCopyTitleTopics = async (title, topics, copyId) => {
+    const text = buildTitleWithTopics(title, topics)
+    const ok = await copyText(text)
+    show(ok ? '标题+话题已复制' : '复制失败', ok ? 'success' : 'error')
+    if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
+  }
+
+  const handleGenerateSimilar = (copyId, style) => {
+    const copy = product.copies.find((c) => c.id === copyId)
+    if (!copy) return
+    const newContent = generateSimilarCopy(copy.content, product.name, product.brand, style, sensitiveWords)
+    const title = generateTitle(newContent, product.name, product.brand, sensitiveWords)
+    const topics = generateTopics(newContent, product.name, product.brand, sensitiveWords)
+    addCopy(id, { content: newContent, title, topics, style })
+    show(`已生成「${style}」风格文案`, 'success')
+  }
+
+  // 重新生成某条文案的标题
+  const refreshTitle = (copyId) => {
+    const copy = product.copies.find((c) => c.id === copyId)
+    if (!copy) return
+    const newTitle = generateTitle(copy.content, product.name, product.brand, sensitiveWords)
+    updateCopy(id, copyId, { title: newTitle })
+    show('标题已重新生成', 'success')
+  }
+
+  const toggleOrder = (copyId, current) => {
+    updateCopy(id, copyId, {
+      hasOrder: !current,
+      used: true,
+      usedDate: !current ? todayStr() : null,
+    })
+    show(!current ? '已标记「出单」' : '已取消标记', 'success')
+  }
+
+  // 标记/取消「用过」：用过是出单的前提，出单必用过；取消用过则一并取消出单
+  const toggleUsed = (copyId, current) => {
+    if (current) {
+      updateCopy(id, copyId, { used: false, usedDate: null, hasOrder: false })
+      show('已取消「用过」', 'success')
+    } else {
+      updateCopy(id, copyId, { used: true, usedDate: todayStr() })
+      show('已标记「用过」', 'success')
+    }
+  }
+
+  return (
+    <div className="app-container">
+      {/* 顶部 · 毛玻璃浅色 */}
+      <header style={{
+        padding: 'calc(16px + var(--safe-top)) 16px 14px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+      }}>
+        <button
+          onClick={() => navigate('/')}
+          style={{
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.6)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            color: 'var(--text-main)',
+            fontSize: '20px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >‹</button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayTitle(product)}</h1>
+        </div>
+      </header>
+
+      <div style={{ padding: '8px 16px 12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+          <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-sub)' }}>
+            爆款文案 <span style={{ color: 'var(--gray-300)', fontWeight: 400 }}>({product.copies.length})</span>
+          </h2>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={openTopics}
+              style={{
+                background: '#fff',
+                color: 'var(--text-sub)',
+                border: '1px solid rgba(0,0,0,0.10)',
+                padding: '8px 14px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            ># 话题</button>
+            <button
+              onClick={() => setShowImport(true)}
+              style={{
+                background: '#fff',
+                color: 'var(--primary)',
+                border: '1px solid rgba(236, 72, 182, 0.35)',
+                padding: '8px 14px',
+                borderRadius: '12px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >批量导入</button>
+          </div>
+        </div>
+
+        {/* 文案筛选：全部 / 出单 / 未出单 */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+          {[
+            { key: '全部', label: '全部' },
+            { key: '出单', label: '出单文案' },
+            { key: '未出单', label: '未出单文案' },
+            { key: '未用过', label: '未用过文案' },
+          ].map((f) => {
+            const active = copyFilter === f.key
+            return (
+              <button
+                key={f.key}
+                onClick={() => setCopyFilter(f.key)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '999px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  border: active ? 'none' : '1px solid rgba(0,0,0,0.10)',
+                  background: active ? 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)' : '#fff',
+                  color: active ? '#fff' : 'var(--text-sub)',
+                  cursor: 'pointer',
+                }}
+              >{f.label}</button>
+            )
+          })}
+        </div>
+
+        {product.copies.length === 0 ? (
+          <div style={{
+            ...glassStyle,
+            textAlign: 'center',
+            padding: '40px 20px',
+            color: 'var(--text-sub)',
+          }}>
+            <div style={{ fontSize: '36px', marginBottom: '8px' }}>📝</div>
+            <p style={{ fontSize: '14px', margin: 0 }}>还没有文案，点击「批量导入」添加你的爆款文案</p>
+          </div>
+        ) : displayedCopies.length === 0 ? (
+          <div style={{ ...glassStyle, textAlign: 'center', padding: '30px 20px', color: 'var(--text-sub)' }}>
+            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔍</div>
+            <p style={{ fontSize: '14px', margin: 0 }}>当前筛选下没有文案</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {displayedCopies.map((copy) => (
+              <CopyCard
+                key={copy.id}
+                copy={copy}
+                productName={product.name}
+                brand={product.brand}
+                onCopyContent={() => handleCopyContent(copy.content, copy.id)}
+                onCopyTitleTopics={() => handleCopyTitleTopics(copy.title, copy.topics, copy.id)}
+                onOpenGenModal={() => openGenModal(copy)}
+                onEdit={() => openEditCopy(copy)}
+                onRefreshTitle={() => refreshTitle(copy.id)}
+                onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder)}
+                onToggleUsed={() => toggleUsed(copy.id, copy.used)}
+                onDelete={() => setDelCopyId(copy.id)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 批量导入弹窗 */}
+      <Modal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        title="批量导入文案"
+        footer={
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button style={btnGhost} onClick={() => setShowImport(false)}>取消</button>
+            <button style={{ ...btnPrimary, flex: 1 }} onClick={handleImport}>导入</button>
+          </div>
+        }
+      >
+        <Field label="粘贴多条文案">
+          <textarea
+            style={{ ...inputStyle, minHeight: '200px', resize: 'vertical', lineHeight: 1.6 }}
+            placeholder="粘贴文案，可一条或多条（空行分隔）；末尾 👍 标记出单、✅ 标记用过（会自动识别并去掉）"
+            value={importText}
+            onChange={(ev) => setImportText(ev.target.value)}
+            autoFocus
+          />
+        </Field>
+        <p style={{ fontSize: '12px', color: 'var(--gray-400)', margin: 0 }}>
+          💡 可粘一条或多条；导入后自动生成标题和话题，👍=出单、✅=用过，标记不写进正文）
+        </p>
+      </Modal>
+
+      {/* 话题管理弹窗 */}
+      <Modal
+        open={showTopics}
+        onClose={() => setShowTopics(false)}
+        title="话题管理"
+        footer={
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button style={btnGhost} onClick={() => setShowTopics(false)}>取消</button>
+            <button style={{ ...btnPrimary, flex: 1 }} onClick={saveTopics}>保存</button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          <input
+            style={{ ...inputStyle, flex: 1 }}
+            placeholder="输入话题，回车添加（可不带 #）"
+            value={newTopic}
+            onChange={(ev) => setNewTopic(ev.target.value)}
+            onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); addTopic() } }}
+          />
+          <button style={{ ...btnPrimary, padding: '0 16px' }} onClick={addTopic}>添加</button>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', minHeight: '40px' }}>
+          {topicDraft.length === 0 ? (
+            <span style={{ fontSize: '13px', color: 'var(--gray-400)' }}>暂无话题</span>
+          ) : topicDraft.map((t, i) => (
+            <span key={i} style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              fontSize: '12px', color: 'var(--primary-dark)', background: 'rgba(252, 231, 243, 0.7)',
+              padding: '4px 8px 4px 10px', borderRadius: '8px', fontWeight: 500,
+            }}>
+              {editTopicIdx === i ? (
+                <>
+                  <input
+                    style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '12px', color: 'var(--primary-dark)', width: '90px', fontWeight: 600, padding: 0 }}
+                    value={editTopicVal}
+                    onChange={(ev) => setEditTopicVal(ev.target.value)}
+                    onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); saveEditTopic() } }}
+                    autoFocus
+                  />
+                  <button onClick={saveEditTopic} style={{ border: 'none', background: 'transparent', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', padding: 0 }}>✓</button>
+                </>
+              ) : (
+                <>
+                  {t}
+                  <button onClick={() => startEditTopic(i)} style={{ border: 'none', background: 'transparent', color: 'var(--text-sub)', fontSize: '11px', cursor: 'pointer', padding: 0 }}>✎</button>
+                  <button onClick={() => removeTopic(t)} style={{ border: 'none', background: 'transparent', color: '#e11d48', fontSize: '13px', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+                </>
+              )}
+            </span>
+          ))}
+        </div>
+        <button
+          onClick={regenTopics}
+          style={{ width: '100%', padding: '10px', border: '1px dashed rgba(236, 72, 182, 0.4)', borderRadius: '12px', background: 'rgba(236, 72, 182, 0.05)', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+        >🔄 重新生成 5 个热门话题</button>
+        <p style={{ fontSize: '12px', color: 'var(--gray-400)', margin: '10px 0 0' }}>
+          💡 话题用于「复制标题+话题」，统一管理当前产品的所有话题）
+        </p>
+      </Modal>
+
+      {/* 文案编辑弹窗 */}
+      <Modal
+        open={!!editCopy}
+        onClose={() => setEditCopy(null)}
+        title="编辑文案"
+        footer={
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button style={btnGhost} onClick={() => setEditCopy(null)}>取消</button>
+            <button style={{ ...btnPrimary, flex: 1 }} onClick={saveEditCopy}>保存</button>
+          </div>
+        }
+      >
+        <Field label="标题">
+          <input
+            style={inputStyle}
+            value={editCopy?.title || ''}
+            onChange={(ev) => setEditCopy({ ...editCopy, title: ev.target.value })}
+            placeholder="文案标题"
+          />
+        </Field>
+        <Field label="文案内容" required>
+          <textarea
+            style={{ ...inputStyle, minHeight: '160px', resize: 'vertical', lineHeight: 1.6 }}
+            value={editCopy?.content || ''}
+            onChange={(ev) => setEditCopy({ ...editCopy, content: ev.target.value })}
+          />
+        </Field>
+        <Field label="话题（每行一个）">
+          <textarea
+            style={{ ...inputStyle, minHeight: '80px', resize: 'vertical', lineHeight: 1.6 }}
+            value={(editCopy?.topics || []).join('\n')}
+            onChange={(ev) => setEditCopy({ ...editCopy, topics: ev.target.value.split('\n').map((x) => x.trim()).filter(Boolean) })}
+            placeholder={'#话题1\n#话题2'}
+          />
+        </Field>
+      </Modal>
+
+      <ConfirmModal
+        open={!!delCopyId}
+        onClose={() => setDelCopyId(null)}
+        onConfirm={() => { deleteCopy(id, delCopyId); show('文案已删除', 'success') }}
+        title="删除文案"
+        message="确定删除这条文案吗？"
+        confirmText="删除"
+        danger
+      />
+
+      {/* 生成相似弹窗（参考图二） */}
+      {genModal.open && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: '#f5f0f3',
+            zIndex: 2000,
+            display: 'flex',
+            flexDirection: 'column',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          {/* 顶部导航栏 */}
+          <div style={{
+            padding: 'calc(12px + var(--safe-top)) 16px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: '#fff',
+            borderBottom: '1px solid rgba(0,0,0,0.06)',
+            flexShrink: 0,
+          }}>
+            <button
+              onClick={() => setGenModal({ open: false, copy: null })}
+              style={{
+                width: '36px', height: '36px', borderRadius: '50%',
+                border: 'none', background: 'rgba(0,0,0,0.05)',
+                fontSize: '18px', color: 'var(--text-main)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >‹</button>
+            <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 600, flex: 1, color: 'var(--text-main)' }}>
+              生成相似
+            </h2>
+            <span style={{ fontSize: '12px', color: 'var(--text-sub)', background: 'rgba(0,0,0,0.05)', padding: '4px 10px', borderRadius: '8px' }}>
+              抖音文案生成器
+            </span>
+          </div>
+
+          {/* 可滚动内容区 */}
+          <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+            {/* 风格选择区 */}
+            <div style={{
+              ...glassStyle,
+              padding: '16px',
+              marginBottom: '14px',
+            }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px', color: 'var(--text-main)' }}>
+                文案风格 <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-sub)' }}>可多选</span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {STYLE_OPTIONS.map((opt) => {
+                  const selected = selectedStyles.includes(opt.key)
+                  return (
+                    <button
+                      key={opt.key}
+                      onClick={() => {
+                        if (opt.key === '全部') {
+                          setSelectedStyles(selectedStyles.includes('全部') ? [] : ['全部'])
+                        } else {
+                          const next = selectedStyles.filter((s) => s !== '全部')
+                          if (selected) {
+                            setSelectedStyles(next.filter((s) => s !== opt.key))
+                          } else {
+                            setSelectedStyles([...next, opt.key])
+                          }
+                        }
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '9px 14px',
+                        borderRadius: '999px',
+                        border: `1.5px solid ${selected ? opt.color : 'rgba(0,0,0,0.08)'}`,
+                        background: selected ? `${opt.color}12` : '#fff',
+                        color: selected ? opt.color : 'var(--text-sub)',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      <span>{opt.emoji}</span> {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 一键生成按钮 */}
+            <button
+              onClick={handleGenerate}
+              disabled={genLoading || !genModal.copy}
+              style={{
+                width: '100%',
+                padding: '14px',
+                borderRadius: '14px',
+                border: 'none',
+                background: genLoading
+                  ? 'linear-gradient(135deg, #c4b5fd, #a78bfa)'
+                  : 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 50%, #6d28d9 100%)',
+                color: '#fff',
+                fontSize: '16px',
+                fontWeight: 700,
+                boxShadow: '0 4px 20px rgba(124, 58, 237, 0.35)',
+                cursor: genLoading ? 'not-allowed' : 'pointer',
+                opacity: genLoading ? 0.85 : 1,
+                marginBottom: '16px',
+              }}
+            >
+              {genLoading ? '⏳ 生成中...' : '✨ 一键生成文案'}
+            </button>
+
+            {/* 生成结果区 */}
+            {genResults.length > 0 && (
+              <div>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '12px',
+                }}>
+                  <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  ✨ 生成结果
+                  </h3>
+                  <span style={{
+                    fontSize: '12px', color: 'var(--primary)',
+                    background: 'rgba(236, 72, 182, 0.08)',
+                    padding: '3px 10px', borderRadius: '8px',
+                  }}>{genResults.length} 条</span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {genResults.map((result) => (
+                    <div key={result.id} style={{
+                      ...glassStyle,
+                      padding: '14px',
+                      borderLeft: `4px solid ${STYLE_OPTIONS.find(s => s.key === result.style)?.color || '#a78bfa'}`,
+                    }}>
+                      {/* 风格标签 */}
+                      <div style={{ marginBottom: '8px' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          color: STYLE_OPTIONS.find(s => s.key === result.style)?.color || '#a78bfa',
+                          background: `${(STYLE_OPTIONS.find(s => s.key === result.style)?.color || '#a78bfa')}12`,
+                          padding: '3px 10px',
+                          borderRadius: '8px',
+                          fontWeight: 600,
+                        }}>
+                          {STYLE_OPTIONS.find(s => s.key === result.style)?.emoji || '📝'} {result.style}
+                        </span>
+                      </div>
+
+                      {/* 标题 */}
+                      <div style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.4, color: 'var(--text-main)', marginBottom: '6px' }}>
+                        {result.title}
+                      </div>
+
+                      {/* 热门话题 */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '10px' }}>
+                        {result.topics.map((t, i) => (
+                          <span key={i} style={{
+                            fontSize: '11px',
+                            color: 'var(--primary-dark)',
+                            background: 'rgba(252, 231, 243, 0.7)',
+                            padding: '2px 8px',
+                            borderRadius: '7px',
+                            fontWeight: 500,
+                          }}>{t}</span>
+                        ))}
+                      </div>
+
+                      {/* 文案内容 */}
+                      <div style={{
+                        fontSize: '14px',
+                        lineHeight: 1.75,
+                        color: 'var(--text-main)',
+                        whiteSpace: 'pre-wrap',
+                        marginBottom: '12px',
+                      }}>
+                        {result.content}
+                      </div>
+
+                      {/* 操作按钮 */}
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => handleCopyContent(buildTitleWithTopics(result.title, result.topics) + '\n\n' + result.content)}
+                          style={{
+                            flex: 1,
+                            padding: '9px',
+                            borderRadius: '10px',
+                            border: '1.5px solid rgba(167, 139, 250, 0.3)',
+                            background: '#fff',
+                            color: '#7c3aed',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >📋 复制文案</button>
+                        <button
+                          onClick={() => handleCollectResult(result)}
+                          disabled={result.collected}
+                          style={{
+                            flex: 1,
+                            padding: '9px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            background: result.collected
+                              ? 'linear-gradient(135deg, #34d399, #10b981)'
+                              : 'rgba(255,255,255,0.7)',
+                            color: result.collected ? '#fff' : 'var(--text-main)',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            cursor: result.collected ? 'default' : 'pointer',
+                            opacity: result.collected ? 0.9 : 1,
+                          }}
+                        >{result.collected ? '✅ 已收藏' : '📥 收藏'}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CopyCard({
+  copy, productName, brand,
+  onCopyContent, onCopyTitleTopics,
+  onOpenGenModal, onEdit, onRefreshTitle, onToggleOrder, onToggleUsed, onDelete,
+}) {
+  return (
+    <div style={{
+      ...glassStyle,
+      padding: '14px',
+    }}>
+      {/* 文案内容 */}
+      <div style={{
+        background: 'rgba(255, 255, 255, 0.5)',
+        borderRadius: '12px',
+        padding: '12px 14px',
+        fontSize: '14px',
+        lineHeight: 1.7,
+        color: 'var(--text-main)',
+        whiteSpace: 'pre-wrap',
+        marginBottom: '8px',
+        border: '1px solid rgba(255, 255, 255, 0.5)',
+      }}>
+        {copy.content}
+      </div>
+
+      {/* 标题 */}
+      <div style={{ marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>📌 标题</div>
+          <button
+            onClick={onRefreshTitle}
+            title="重新生成标题"
+            style={{
+              border: '1px solid rgba(236, 72, 182, 0.35)', background: 'rgba(252, 231, 243, 0.9)', color: 'var(--primary)',
+              fontSize: '18px', cursor: 'pointer', padding: '4px 10px', borderRadius: '10px',
+              lineHeight: 1, display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700,
+            }}
+          >↻</button>
+        </div>
+        <div style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.4, color: 'var(--text-main)' }}>{copy.title}</div>
+      </div>
+
+      {/* 话题 */}
+      <div style={{ marginBottom: '8px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '4px', fontWeight: 500 }}># 热门话题</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {copy.topics.map((t, i) => (
+            <span key={i} style={{
+              fontSize: '12px',
+              color: 'var(--primary-dark)',
+              background: 'rgba(252, 231, 243, 0.7)',
+              padding: '3px 9px',
+              borderRadius: '8px',
+              fontWeight: 500,
+            }}>{t}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* 状态标签 */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+        {copy.used && (() => {
+          const d = copy.usedDate ? daysDiff(copy.usedDate) : null
+          const desc = d === null ? '' : d < 0 ? `${-d}天前用过` : d === 0 ? '今天用过' : `${d}天前用过`
+          return (
+            <span style={{
+              fontSize: '11px', color: '#0891b2', background: 'rgba(207, 250, 254, 0.8)',
+              padding: '3px 9px', borderRadius: '8px', fontWeight: 500,
+            }}>✓ 用过{desc ? ` · ${desc}` : ''}</span>
+          )
+        })()}
+        {copy.hasOrder && (() => {
+          const d = copy.usedDate ? daysDiff(copy.usedDate) : null
+          const desc = d === null ? '' : d < 0 ? `${-d}天前出单` : d === 0 ? '今天出单' : `${d}天前出单`
+          return (
+            <span style={{
+              fontSize: '11px', color: '#059669', background: 'rgba(209, 250, 229, 0.8)',
+              padding: '3px 9px', borderRadius: '8px', fontWeight: 500,
+            }}>🔥 出单{desc ? ` · ${desc}` : ''}</span>
+          )
+        })()}
+        {copy.style && (
+          <span style={{
+            fontSize: '11px', color: '#c2410c', background: 'rgba(255, 237, 213, 0.8)',
+            padding: '3px 9px', borderRadius: '8px', fontWeight: 500,
+          }}>风格：{copy.style}</span>
+        )}
+      </div>
+
+      {/* 复制按钮区 */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
+        <button
+          onClick={onCopyContent}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)',
+            color: '#fff',
+            borderRadius: '12px',
+            fontSize: '13px',
+            fontWeight: 600,
+            boxShadow: '0 2px 8px rgba(244, 114, 182, 0.25)',
+          }}
+        >📋 复制文案</button>
+        <button
+          onClick={onCopyTitleTopics}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: 'rgba(255, 255, 255, 0.6)',
+            color: 'var(--text-main)',
+            borderRadius: '12px',
+            fontSize: '13px',
+            fontWeight: 600,
+            border: '1px solid rgba(255, 255, 255, 0.7)',
+          }}
+        >📋 复制标题+话题</button>
+      </div>
+
+      {/* 操作按钮区 */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <ActionBtn active={copy.used} onClick={onToggleUsed} activeColor="info">
+          {copy.used ? '✓ 用过' : '标记用过'}
+        </ActionBtn>
+        <ActionBtn active={copy.hasOrder} onClick={onToggleOrder} activeColor="success">
+          {copy.hasOrder ? '🔥 出单' : '标记出单'}
+        </ActionBtn>
+        <ActionBtn onClick={onOpenGenModal}>
+          ✨ 生成相似
+        </ActionBtn>
+        <ActionBtn onClick={onEdit}>
+          ✎ 编辑
+        </ActionBtn>
+        <ActionBtn onClick={onDelete} activeColor="danger">
+          删除
+        </ActionBtn>
+      </div>
+
+    </div>
+  )
+}
+
+function ActionBtn({ children, onClick, active, activeColor = 'primary' }) {
+  const colorMap = {
+    primary: { bg: 'linear-gradient(135deg, #f472b6, #ec4899)', text: '#fff' },
+    success: { bg: 'linear-gradient(135deg, #34d399, #10b981)', text: '#fff' },
+    info: { bg: 'linear-gradient(135deg, #22d3ee, #06b6d4)', text: '#fff' },
+    danger: { bg: 'linear-gradient(135deg, #fb7185, #f43f5e)', text: '#fff' },
+  }
+  const activeStyle = active ? colorMap[activeColor] : null
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '7px 12px',
+        background: activeStyle ? activeStyle.bg : 'rgba(255, 255, 255, 0.5)',
+        color: activeStyle ? activeStyle.text : 'var(--text-sub)',
+        borderRadius: '10px',
+        fontSize: '12px',
+        fontWeight: 600,
+        border: activeStyle ? 'none' : '1px solid rgba(255, 255, 255, 0.6)',
+      }}
+    >{children}</button>
+  )
+}

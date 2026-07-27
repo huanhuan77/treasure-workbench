@@ -1,0 +1,17 @@
+# 依赖
+node_modules
+
+# 构建产物（由 CI 构建，不入库）
+dist
+dist-single
+blogger-workbench
+
+# 本地/缓存
+*.local
+.DS_Store
+npm-debug.log*
+.pnpm-store
+
+# 编辑器
+.vscode
+.idea

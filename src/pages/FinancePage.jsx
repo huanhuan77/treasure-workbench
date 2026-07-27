@@ -1,0 +1,438 @@
+import { useState, useMemo } from 'react'
+import { useStore } from '../store'
+import { useToast } from '../components/Toast'
+import { Modal, Field, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
+import { formatDate } from '../utils/helpers'
+
+const CATEGORIES = {
+  // 收入类
+  commission: { label: '佣金收入', type: 'income', color: '#059669', bg: 'rgba(209, 250, 229, 0.8)' },
+  manuscript: { label: '稿费收入', type: 'income', color: '#7c3aed', bg: 'rgba(237, 233, 254, 0.8)' },
+  sample: { label: '样品收入', type: 'income', color: '#0d9488', bg: 'rgba(204, 251, 241, 0.8)' },
+  haitao: { label: '海淘', type: 'income', color: '#0284c7', bg: 'rgba(224, 242, 254, 0.8)' },
+  xingchuan: { label: '星川', type: 'income', color: '#c2410c', bg: 'rgba(255, 237, 213, 0.8)' },
+  withdraw: { label: '钱包提现', type: 'income', color: '#7c3aed', bg: 'rgba(237, 233, 254, 0.8)' },
+  // 支出类
+  prop: { label: '拍摄道具', type: 'expense', color: '#e11d48', bg: 'rgba(254, 226, 226, 0.8)' },
+  other_expense: { label: '其他支出', type: 'expense', color: '#c2410c', bg: 'rgba(255, 237, 213, 0.8)' },
+  ad: { label: '投流推广', type: 'expense', color: '#be123c', bg: 'rgba(255, 228, 230, 0.8)' },
+}
+
+export function FinancePage() {
+  const { transactions, addTransaction, deleteTransaction } = useStore()
+  const { show } = useToast()
+  const [showAdd, setShowAdd] = useState(false)
+  const [delId, setDelId] = useState(null)
+  const [filterCategory, setFilterCategory] = useState('all')
+  const [filterAccount, setFilterAccount] = useState('all')
+  const [filterType, setFilterType] = useState('all')
+  const [filterMonth, setFilterMonth] = useState('all')
+  const [sortBy, setSortBy] = useState('date_desc')
+
+  // 点击表头箭头切换排序（再次点击同一字段则反序）
+  const toggleSort = (field) => {
+    setSortBy((prev) => {
+      if (!prev.startsWith(field)) return field + '_desc'
+      return prev === field + '_desc' ? field + '_asc' : field + '_desc'
+    })
+  }
+
+  // 提取所有账号
+  const accounts = useMemo(() => {
+    const set = new Set()
+    transactions.forEach((t) => { if (t.account) set.add(t.account) })
+    return [...set]
+  }, [transactions])
+
+  // 筛选+排序
+  // 提取所有有数据的月份（YYYY-MM）
+  const months = useMemo(() => {
+    const set = new Set()
+    transactions.forEach((t) => { const m = (t.date || '').slice(0, 7); if (m) set.add(m) })
+    return [...set].sort().reverse()
+  }, [transactions])
+
+  const filtered = useMemo(() => {
+    let result = [...transactions]
+    if (filterType !== 'all') result = result.filter((t) => t.type === filterType)
+    if (filterCategory !== 'all') result = result.filter((t) => t.category === filterCategory)
+    if (filterAccount !== 'all') result = result.filter((t) => t.account === filterAccount)
+    if (filterMonth !== 'all') result = result.filter((t) => (t.date || '').slice(0, 7) === filterMonth)
+
+    switch (sortBy) {
+      case 'date_desc': result.sort((a, b) => b.date.localeCompare(a.date)); break
+      case 'date_asc': result.sort((a, b) => a.date.localeCompare(b.date)); break
+      case 'amount_desc': result.sort((a, b) => b.amount - a.amount); break
+      case 'amount_asc': result.sort((a, b) => a.amount - b.amount); break
+    }
+    return result
+  }, [transactions, filterType, filterCategory, filterAccount, filterMonth, sortBy])
+
+  // 合计
+  const totals = useMemo(() => {
+    let income = 0, expense = 0
+    filtered.forEach((t) => {
+      if (t.type === 'income') income += t.amount
+      else expense += t.amount
+    })
+    return { income, expense, net: income - expense, count: filtered.length }
+  }, [filtered])
+
+  return (
+    <div className="app-container">
+      <header style={{
+        padding: 'calc(20px + var(--safe-top)) 20px 16px',
+      }}>
+        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>收支明细</h1>
+        <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
+          共 {totals.count} 笔记录
+        </p>
+      </header>
+
+      {/* 合计卡片 — 毛玻璃 */}
+      <div style={{ padding: '4px 16px 16px' }}>
+        <div style={{
+          ...glassStyle,
+          padding: '18px 16px',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '12px',
+          textAlign: 'center',
+        }}>
+          <div>
+            <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>收入合计</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#e11d48', marginTop: '4px' }}>
+              +¥{totals.income.toFixed(2)}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>支出合计</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#059669', marginTop: '4px' }}>
+              -¥{totals.expense.toFixed(2)}
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>净收支</div>
+            <div style={{
+              fontSize: '18px', fontWeight: 700, marginTop: '4px',
+              color: totals.net >= 0 ? '#e11d48' : '#059669',
+            }}>
+              {totals.net >= 0 ? '+' : ''}¥{totals.net.toFixed(2)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 筛选区 */}
+      <div style={{ padding: '0 16px 12px' }}>
+        {/* 分类筛选 */}
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '8px' }}>
+          <FilterChip active={filterCategory === 'all'} onClick={() => setFilterCategory('all')}>全部</FilterChip>
+          {Object.entries(CATEGORIES)
+            .filter(([_, cat]) => filterType === 'all' || cat.type === filterType)
+            .map(([key, cat]) => (
+            <FilterChip
+              key={key}
+              active={filterCategory === key}
+              onClick={() => setFilterCategory(key)}
+            >{cat.label}</FilterChip>
+          ))}
+        </div>
+
+        {/* 收/支 筛选 */}
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '8px' }}>
+          <FilterChip active={filterType === 'all'} onClick={() => setFilterType('all')}>全部</FilterChip>
+          <FilterChip active={filterType === 'income'} onClick={() => setFilterType('income')}>收入</FilterChip>
+          <FilterChip active={filterType === 'expense'} onClick={() => setFilterType('expense')}>支出</FilterChip>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {/* 账号筛选 */}
+        {/* 月份筛选 */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            style={{ ...inputStyle, flex: 1, padding: '8px 10px', fontSize: '13px', background: 'rgba(255, 255, 255, 0.6)' }}
+          >
+            <option value="all">全部月份</option>
+            {months.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+
+          {accounts.length > 0 && (
+            <select
+              value={filterAccount}
+              onChange={(e) => setFilterAccount(e.target.value)}
+              style={{
+                ...inputStyle,
+                flex: 1,
+                padding: '8px 10px',
+                fontSize: '13px',
+                background: 'rgba(255, 255, 255, 0.6)',
+              }}
+            >
+              <option value="all">全部账号</option>
+              {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
+            </select>
+          )}
+          {/* 排序 — 点击表头箭头切换升/降序 */}
+          <SortButton label="日期" field="date" sortBy={sortBy} onClick={toggleSort} />
+          <SortButton label="金额" field="amount" sortBy={sortBy} onClick={toggleSort} />
+        </div>
+      </div>
+
+      {/* 列表 */}
+      <div style={{ padding: '0 16px 16px' }}>
+        {filtered.length === 0 ? (
+          <div style={{ ...glassStyle, textAlign: 'center', padding: '40px', color: 'var(--text-sub)' }}>
+            <div style={{ fontSize: '40px', marginBottom: '8px' }}>💰</div>
+            <p style={{ fontSize: '14px', margin: 0 }}>暂无收支记录</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {filtered.map((t, idx) => {
+              const cat = CATEGORIES[t.category] || { label: t.category, color: 'var(--text-sub)', bg: 'rgba(255,255,255,0.5)', type: t.type }
+              return (
+                <div key={t.id} style={{
+                  ...glassStyle,
+                  padding: '14px 16px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <span style={{
+                        fontSize: '11px',
+                        padding: '3px 9px',
+                        borderRadius: '8px',
+                        background: cat.bg,
+                        color: cat.color,
+                        fontWeight: 600,
+                      }}>{cat.label}</span>
+                      {t.account && (
+                        <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>@{t.account}</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '5px' }}>
+                      {formatDate(t.date)}
+                    </div>
+                    {t.remark && (
+                      <div style={{ fontSize: '13px', color: 'var(--text-main)', marginTop: '4px' }}>{t.remark}</div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{
+                      fontSize: '16px',
+                      fontWeight: 700,
+                      color: t.type === 'income' ? '#e11d48' : '#059669',
+                    }}>
+                      {t.type === 'income' ? '+' : '-'}¥{t.amount.toFixed(2)}
+                    </span>
+                    <button
+                      onClick={() => setDelId(t.id)}
+                      style={{
+                        color: 'var(--text-sub)', fontSize: '14px', padding: '6px 10px',
+                        background: 'rgba(254, 226, 226, 0.5)', borderRadius: '8px',
+                      }}
+                    >✕</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* 添加按钮 — 毛玻璃悬浮 */}
+      <button
+        onClick={() => setShowAdd(true)}
+        style={{
+          position: 'fixed',
+          bottom: 'calc(92px + var(--safe-bottom))',
+          right: '20px',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
+          color: '#fff',
+          fontSize: '30px',
+          fontWeight: 300,
+          lineHeight: 1,
+          boxShadow: '0 8px 24px rgba(52, 211, 153, 0.4)',
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          animation: 'float 3s ease-in-out infinite',
+        }}
+      >+</button>
+
+      {showAdd && (
+        <TransactionForm
+          onClose={() => setShowAdd(false)}
+          onSave={(data) => { addTransaction(data); setShowAdd(false); show('已添加', 'success') }}
+        />
+      )}
+
+      <ConfirmModal
+        open={!!delId}
+        onClose={() => setDelId(null)}
+        onConfirm={() => { deleteTransaction(delId); show('已删除', 'success') }}
+        title="删除记录"
+        message="确定删除这条收支记录吗？"
+        confirmText="删除"
+        danger
+      />
+    </div>
+  )
+}
+
+function FilterChip({ active, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '7px 14px',
+        borderRadius: '20px',
+        fontSize: '13px',
+        fontWeight: 600,
+        whiteSpace: 'nowrap',
+        background: active ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255, 255, 255, 0.55)',
+        backdropFilter: active ? 'none' : 'blur(12px)',
+        WebkitBackdropFilter: active ? 'none' : 'blur(12px)',
+        color: active ? '#fff' : 'var(--text-sub)',
+        border: active ? 'none' : '1px solid rgba(255, 255, 255, 0.6)',
+        boxShadow: active ? '0 4px 12px rgba(244, 114, 182, 0.3)' : 'none',
+      }}
+    >{children}</button>
+  )
+}
+
+function SortButton({ label, field, sortBy, onClick }) {
+  const active = sortBy.startsWith(field)
+  const arrow = active ? (sortBy === field + '_desc' ? '↓' : '↑') : ''
+  return (
+    <button
+      onClick={() => onClick(field)}
+      style={{
+        flex: 1,
+        padding: '8px 10px',
+        fontSize: '13px',
+        fontWeight: 600,
+        borderRadius: '10px',
+        background: active ? 'linear-gradient(135deg, #a78bfa, #8b5cf6)' : 'rgba(255, 255, 255, 0.55)',
+        color: active ? '#fff' : 'var(--text-sub)',
+        border: active ? 'none' : '1px solid rgba(255, 255, 255, 0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '4px',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        boxShadow: active ? '0 4px 12px rgba(139, 92, 246, 0.3)' : 'none',
+      }}
+    >{label} <span style={{ fontSize: '14px', lineHeight: 1 }}>{arrow}</span></button>
+  )
+}
+
+function TransactionForm({ onClose, onSave }) {
+  const [form, setForm] = useState({
+    type: 'income',
+    category: 'commission',
+    account: '',
+    amount: '',
+    date: new Date().toISOString().slice(0, 10),
+    remark: '',
+  })
+
+  const incomeCats = Object.entries(CATEGORIES).filter(([_, c]) => c.type === 'income')
+  const expenseCats = Object.entries(CATEGORIES).filter(([_, c]) => c.type === 'expense')
+  const currentCats = form.type === 'income' ? incomeCats : expenseCats
+
+  const handleTypeChange = (type) => {
+    const cats = type === 'income' ? incomeCats : expenseCats
+    setForm({ ...form, type, category: cats[0][0] })
+  }
+
+  const handleSave = () => {
+    if (!form.amount || Number(form.amount) <= 0) return
+    onSave(form)
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="添加收支"
+      footer={
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={btnGhost} onClick={onClose}>取消</button>
+          <button style={{ ...btnPrimary, flex: 1 }} onClick={handleSave}>保存</button>
+        </div>
+      }
+    >
+      <Field label="类型">
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={() => handleTypeChange('income')}
+            style={{
+              flex: 1, padding: '11px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+              background: form.type === 'income' ? 'linear-gradient(135deg, #34d399, #10b981)' : 'rgba(255, 255, 255, 0.5)',
+              color: form.type === 'income' ? '#fff' : 'var(--text-sub)',
+              border: form.type === 'income' ? 'none' : '1px solid rgba(255, 255, 255, 0.6)',
+              boxShadow: form.type === 'income' ? '0 4px 12px rgba(52, 211, 153, 0.3)' : 'none',
+            }}
+          >💰 收入</button>
+          <button
+            onClick={() => handleTypeChange('expense')}
+            style={{
+              flex: 1, padding: '11px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+              background: form.type === 'expense' ? 'linear-gradient(135deg, #fb7185, #f43f5e)' : 'rgba(255, 255, 255, 0.5)',
+              color: form.type === 'expense' ? '#fff' : 'var(--text-sub)',
+              border: form.type === 'expense' ? 'none' : '1px solid rgba(255, 255, 255, 0.6)',
+              boxShadow: form.type === 'expense' ? '0 4px 12px rgba(251, 113, 133, 0.3)' : 'none',
+            }}
+          >💸 支出</button>
+        </div>
+      </Field>
+
+      <Field label="分类">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {currentCats.map(([key, cat]) => (
+            <button
+              key={key}
+              onClick={() => setForm({ ...form, category: key })}
+              style={{
+                padding: '7px 14px',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: 600,
+                background: form.category === key ? cat.bg : 'rgba(255, 255, 255, 0.5)',
+                color: form.category === key ? cat.color : 'var(--text-sub)',
+                border: form.category === key ? `1px solid ${cat.color}33` : '1px solid rgba(255, 255, 255, 0.6)',
+              }}
+            >{cat.label}</button>
+          ))}
+        </div>
+      </Field>
+
+      <Field label="账号（选填）">
+        <input style={inputStyle} placeholder="例如：抖音号A / 小红书号B" value={form.account} onChange={(e) => setForm({ ...form, account: e.target.value })} />
+      </Field>
+
+      <Field label="金额" required>
+        <input type="number" style={inputStyle} placeholder="0.00" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} autoFocus />
+      </Field>
+
+      <Field label="日期">
+        <input type="date" style={inputStyle} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+      </Field>
+
+      <Field label="备注（选填）">
+        <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="备注" value={form.remark} onChange={(e) => setForm({ ...form, remark: e.target.value })} />
+      </Field>
+    </Modal>
+  )
+}
