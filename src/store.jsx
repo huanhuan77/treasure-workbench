@@ -3154,6 +3154,20 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
+  const getSavings = useCallback(() => {
+    return data.savingsData || { monthlyGoal: 5000, records: {} }
+  }, [data.savingsData])
+
+  const updateSavings = useCallback((monthKey, patch) => {
+    setData((d) => {
+      const oldData = d.savingsData || { monthlyGoal: 5000, records: {} }
+      const records = { ...oldData.records }
+      const old = records[monthKey] || {}
+      records[monthKey] = { ...old, ...patch }
+      return { ...d, savingsData: { ...oldData, records } }
+    })
+  }, [])
+
   const reorderProducts = useCallback((orderedIds) => {
     setData((d) => {
       const map = new Map(d.products.map((p) => [p.id, p]))
