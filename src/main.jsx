@@ -9,7 +9,9 @@ const BUILD_ID_KEY = 'app_build_id'
 // force=true 时即使版本一致也提示用户结果（供「检查更新」按钮调用）
 export async function checkForUpdate(force = false) {
   try {
-    const res = await fetch('/version.json?_=' + Date.now())
+    // 用相对路径，兼容 GitHub Pages 子路径部署（BASE_URL 随 vite base 配置）
+    const url = import.meta.env.BASE_URL + 'version.json?_=' + Date.now()
+    const res = await fetch(url)
     const data = await res.json()
     const saved = localStorage.getItem(BUILD_ID_KEY)
     if (saved && saved !== data.buildId) {
