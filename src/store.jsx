@@ -2576,7 +2576,7 @@ const defaultData = {
   { id:'s_004', name:'柳丝木洁颜油', account:'大号', receiveDate:'2026/5/20', deadline:'', remark:'', status:'unpublished' },
   { id:'s_005', name:'雾犀牙膏', account:'大号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
   { id:'s_006', name:'植研加睫毛胶水新', account:'大号', receiveDate:'', deadline:'', remark:'3条', status:'published' },
-  { id:'s_007', name:'造物者小美', account:'大号', receiveDate:'2026/5/13', deadline:'', remark:'3条', status:'published' },
+  { id:'s_007', name:'造物者 小美', account:'大号', receiveDate:'2026/5/13', deadline:'', remark:'3条', status:'published' },
   { id:'s_008', name:'一次性内裤', account:'大号', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_009', name:'珀芙研等渗面膜', account:'大号', receiveDate:'', deadline:'', remark:'', status:'hit' },
   { id:'s_010', name:'珀芙研蛋白胶原面膜', account:'大号', receiveDate:'2026/5/3', deadline:'', remark:'', status:'published' },
@@ -2694,6 +2694,11 @@ const defaultData = {
   { id:'s_122', name:'腿腿丸', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_123', name:'复合维B', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
   { id:'s_124', name:'洛神月褪黑素', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_125', name:'重颜纪面膜', account:'小号', receiveDate:'2026/6/26', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_126', name:'珀芙研油敏霜', account:'小号', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_127', name:'洁比兔湿厕纸', account:'小号', receiveDate:'2026/3/24', deadline:'', remark:'', status:'hit' },
+  { id:'s_128', name:'南瓜茶', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_129', name:'香蕉饮', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' }
 ],
   transactions: [
     { id: 'seed_tx_e001', type: 'expense', category: 'other_expense', account: '', amount: 3.85, date: '', remark: '玻璃杯', createdAt: 0 },
