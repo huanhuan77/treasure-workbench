@@ -3022,7 +3022,6 @@ function loadData() {
     for (const preset of defaultData.products) {
       if (!seenIds.has(preset.id)) products.push(preset)
     }
-    localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
     let productsFinal = products  // 不再因版本升级刷新标题，用户手动编辑的标题永久保留
 
     // v14 迁移：用户指定的清清片爆单文案——缺失则新增并标记 hasOrder
@@ -3055,8 +3054,9 @@ function loadData() {
         return { ...p, copies }
       })
     }
-    productsFinal = consolidateJiebitudu(productsFinal)
-    productsFinal = sanitizeJiebitudu(productsFinal)
+    // 逐个保护，单个处理失败不影响其他数据
+    try { productsFinal = consolidateJiebitudu(productsFinal) } catch(e) { console.warn('[loadData] consolidateJiebitudu失败:', e) }
+    try { productsFinal = sanitizeJiebitudu(productsFinal) } catch(e) { console.warn('[loadData] sanitizeJiebitudu失败:', e) }
     // 洁比兔湿巾/湿厕纸 固定排第一
     const jbtIdx = productsFinal.findIndex((p) => p && /洁比兔/.test(p.name) && /(湿巾|湿厕纸)/.test(p.name))
     if (jbtIdx > 0) {
@@ -3065,6 +3065,7 @@ function loadData() {
     }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
+    localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
     return {
       products: productsFinal,
       samples: (old.samples || []).map((s) => migrateSample(s)),
@@ -3074,7 +3075,7 @@ function loadData() {
       sensitiveWords: old.sensitiveWords || DEFAULT_SENSITIVE_WORDS,  // 版本升级不再替换用户自定义词库
     }
   } catch (e) {
-    localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
+    console.warn('[loadData] 加载数据异常，使用默认值:', e)
     return defaultData
   }
 }

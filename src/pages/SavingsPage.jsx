@@ -197,12 +197,6 @@ export function SavingsPage() {
       <header style={{ padding: 'calc(20px + var(--safe-top)) 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.5)' }}>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:700, color:'var(--text-main)' }}>攒钱计划</h1>
         <p style={{ margin:'6px 0 0', fontSize:'13px', color:'var(--text-sub)' }}>每月努力存 6 千 💪</p>
-        {/* 年份切换 */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', marginTop:'8px' }}>
-          <button onClick={() => setYear(String(parseInt(year)-1))} style={{ width:'32px', height:'32px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
-          <span style={{ fontSize:'18px', fontWeight:700, color:'#78350f', minWidth:'60px', textAlign:'center' }}>{year} 年</span>
-          <button onClick={() => setYear(String(parseInt(year)+1))} style={{ width:'32px', height:'32px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
-        </div>
       </header>
 
       {/* Tab 切换 */}
@@ -212,6 +206,12 @@ export function SavingsPage() {
       </div>
 
       {activeTab === 'save' && (<>
+      {/* 年份切换 */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'12px', padding:'16px 16px 0' }}>
+        <button onClick={() => setYear(String(parseInt(year)-1))} style={{ width:'36px', height:'36px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>‹</button>
+        <span style={{ fontSize:'20px', fontWeight:700, color:'#78350f', minWidth:'70px', textAlign:'center' }}>{year} 年</span>
+        <button onClick={() => setYear(String(parseInt(year)+1))} style={{ width:'36px', height:'36px', borderRadius:'50%', border:'1px solid rgba(251,191,36,0.3)', background:'#fef3c7', color:'#92400e', fontSize:'18px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>›</button>
+      </div>
       {/* 进度卡片 */}
       <div style={{ padding:'16px' }}>
         <div style={{ borderRadius:'16px', padding:'16px', background:'linear-gradient(135deg,#fef3c7,#fde68a)' }}>
