@@ -51,6 +51,7 @@ export function SamplesPage() {
   const [editing, setEditing] = useState(null)
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('大号')
+  const [searchKeyword, setSearchKeyword] = useState('')
 
   const sorted = useMemo(() => sortSamples(samples), [samples])
   const filtered = useMemo(() => {
@@ -58,9 +59,11 @@ export function SamplesPage() {
     return sorted.filter((s) => s.status === filter)
   }, [sorted, filter])
   const accountFiltered = useMemo(() => {
-    if (accountFilter === 'all') return filtered
-    return filtered.filter((s) => s.account === accountFilter)
-  }, [filtered, accountFilter])
+    let r = filtered
+    if (accountFilter !== 'all') r = r.filter((s) => s.account === accountFilter)
+    if (searchKeyword.trim()) r = r.filter((s) => s.name.toLowerCase().includes(searchKeyword.trim().toLowerCase()))
+    return r
+  }, [filtered, accountFilter, searchKeyword])
 
   const acctStats = useMemo(() => {
     const stats = {}
