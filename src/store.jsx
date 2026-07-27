@@ -2658,7 +2658,7 @@ const defaultData = {
   { id:'s_119', name:'西梅软糖', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_120', name:'红花贴', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_121', name:'巧尼芙', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
-  { id:'s_123', name:'复合维B', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_123', name:'健美生复合维B', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
   { id:'s_124', name:'洛神月褪黑素', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_125', name:'重颜纪面膜', account:'小号', receiveDate:'2026/6/26', deadline:'', remark:'', status:'unpublished' },
   { id:'s_126', name:'珀芙研油敏霜', account:'小号', receiveDate:'', deadline:'', remark:'', status:'published' },
