@@ -2,8 +2,8 @@ import { NavLink } from 'react-router-dom'
 
 const tabs = [
   { to: '/', label: '产品', icon: '📦', end: true },
-  { to: '/savings', label: '攒钱', icon: '💰' },
   { to: '/samples', label: '样品', icon: '🏷️' },
+  { to: '/savings', label: '攒钱', icon: '💰' },
   { to: '/finance', label: '收支', icon: '💰' },
   { to: '/sensitive', label: '词库', icon: '📚' },
 ]
