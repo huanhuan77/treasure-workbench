@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
@@ -81,6 +81,45 @@ export function SamplesPage() {
   }, [samples, accountFilter])
 
   const total = samples.length
+
+  // 悬浮+按钮可拖动
+  const [fabPos, setFabPos] = useState(() => {
+    try { const d = localStorage.getItem('sampleFabPos'); if (d) return JSON.parse(d) } catch(e) {}
+    return { x: 0, y: 0 }
+  })
+  const fabPosRef = useRef(fabPos)
+  const fabRef = useRef(null)
+  const dragInfo = useRef(null)
+  const [fabDragging, setFabDragging] = useState(false)
+
+  const onFabPDown = (e) => {
+    e.stopPropagation()
+    const r = fabRef.current.getBoundingClientRect()
+    dragInfo.current = { sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top, moved: false }
+    setFabDragging(true)
+  }
+  const onFabPMove = (e) => {
+    if (!dragInfo.current) return
+    const dx = e.clientX - dragInfo.current.sx
+    const dy = e.clientY - dragInfo.current.sy
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dragInfo.current.moved = true
+    const sz = 56
+    let x = Math.max(8, Math.min(window.innerWidth - sz - 8, dragInfo.current.ox + dx))
+    let y = Math.max(8, Math.min(window.innerHeight - sz - 8, dragInfo.current.oy + dy))
+    fabPosRef.current = { x, y }
+    setFabPos({ x, y })
+  }
+  const endFabDrag = (tap) => {
+    if (!dragInfo.current) return
+    const m = dragInfo.current.moved
+    dragInfo.current = null
+    setFabDragging(false)
+    if (m) {
+      try { localStorage.setItem('sampleFabPos', JSON.stringify(fabPosRef.current)) } catch(e) {}
+    } else if (tap) {
+      setShowAdd(true)
+    }
+  }
 
   return (
     <div className="app-container">
@@ -184,13 +223,17 @@ export function SamplesPage() {
         )}
       </div>
 
-      {/* 添加按钮 — 毛玻璃悬浮 */}
+      {/* 添加按钮 — 可拖动悬浮 */}
       <button
-        onClick={() => setShowAdd(true)}
+        ref={fabRef}
+        onPointerDown={onFabPDown}
+        onPointerMove={onFabPMove}
+        onPointerUp={() => endFabDrag(true)}
+        onPointerCancel={() => endFabDrag(true)}
         style={{
           position: 'fixed',
-          bottom: 'calc(92px + var(--safe-bottom))',
-          right: '20px',
+          left: (fabPos.x || window.innerWidth - 76) + 'px',
+          top: (fabPos.y || window.innerHeight - 148) + 'px',
           width: '56px',
           height: '56px',
           borderRadius: '50%',
@@ -199,12 +242,16 @@ export function SamplesPage() {
           fontSize: '30px',
           fontWeight: 300,
           lineHeight: 1,
-          boxShadow: '0 8px 24px rgba(244, 114, 182, 0.4)',
+          boxShadow: fabDragging ? '0 12px 32px rgba(244,114,182,0.5)' : '0 8px 24px rgba(244,114,182,0.4)',
           zIndex: 50,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          animation: 'float 3s ease-in-out infinite',
+          touchAction: 'none',
+          cursor: fabDragging ? 'grabbing' : 'grab',
+          transition: fabDragging ? 'none' : 'box-shadow 0.2s',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
         }}
       >+</button>
 
