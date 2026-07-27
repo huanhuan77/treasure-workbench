@@ -2,6 +2,16 @@ import { useState } from 'react'
 import { useStore } from '../store'
 import { useNavigate } from 'react-router-dom'
 
+const INV_STORAGE_KEY = 'blogger_investments_v1'
+// 从独立 key 读取投资数据
+function loadInvestments() {
+  try {
+    const raw = localStorage.getItem(INV_STORAGE_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch(e) {}
+  return null
+}
+
 const ACCOUNT_OPTIONS = ['支付宝1','支付宝2','博时','同花顺','华泰','东方','卡','中信','工行','微信','其他']
 
 function formatNum(n) {
@@ -33,8 +43,12 @@ export function SavingsPage() {
   const [invSellPrice, setInvSellPrice] = useState('')
   const [invSellDate, setInvSellDate] = useState('')
   const [invType, setInvType] = useState('buy')  // 'buy' 买入 | 'sell' 卖出
-  const [investments, setInvestments] = useState((getSavings()?.investments) || [])
-  const saveInvestments = (list) => { setInvestments(list); setSavings({ investments: list }) }
+  const [investments, setInvestments] = useState((getSavings()?.investments) || loadInvestments() || [])
+  const saveInvestments = (list) => {
+    setInvestments(list)
+    setSavings({ investments: list })
+    try { localStorage.setItem(INV_STORAGE_KEY, JSON.stringify(list)) } catch(e) {}
+  }
   const fetchAndAdd = async () => {
     if (!invCode.trim()) return
     try {
