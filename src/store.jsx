@@ -2852,6 +2852,7 @@ const defaultData = {
     { id: 'seed_tx_e097', type: 'expense', category: 'other_expense', account: '', amount: 36.0, date: '', remark: 'icloud', createdAt: 0 },
     { id: 'seed_tx_e098', type: 'expense', category: 'ad', account: '', amount: 193.33, date: '', remark: '清清片大号投流', createdAt: 0 },
   ],
+  moodData: [],
   sensitiveWords: DEFAULT_SENSITIVE_WORDS,
 }
 
@@ -3058,6 +3059,7 @@ function loadData() {
         return m
       }),
       transactions: migrateTransactions(Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])),
+      moodData: old.moodData || [],
       sensitiveWords: versionMismatch ? DEFAULT_SENSITIVE_WORDS : (old.sensitiveWords || DEFAULT_SENSITIVE_WORDS),
     }
   } catch (e) {
@@ -3133,6 +3135,23 @@ export function StoreProvider({ children }) {
       ...d,
       products: d.products.map((p) => (p.id === productId ? { ...p, topics } : p)),
     }))
+  }, [])
+
+  const getMood = useCallback((date) => {
+    return data.moodData.find((m) => m.date === date) || null
+  }, [data.moodData])
+
+  const setMood = useCallback((date, mood, quote) => {
+    setData((d) => {
+      const idx = d.moodData.findIndex((m) => m.date === date)
+      const entry = { date, mood: mood || '', quote: quote || '' }
+      if (idx >= 0) {
+        const next = [...d.moodData]
+        next[idx] = entry
+        return { ...d, moodData: next }
+      }
+      return { ...d, moodData: [entry, ...d.moodData] }
+    })
   }, [])
 
   const reorderProducts = useCallback((orderedIds) => {
@@ -3315,6 +3334,7 @@ export function StoreProvider({ children }) {
     addSample, deleteSample, updateSample,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord, resetData,
+    getMood, setMood,
   }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
