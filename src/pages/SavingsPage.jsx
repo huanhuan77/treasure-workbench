@@ -6,6 +6,8 @@ const MONTH_KEYS = ['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06',
 const MONTH_LABELS = {}
 MONTH_KEYS.forEach(k => { MONTH_LABELS[k] = parseInt(k.split('-')[1]) + '月' })
 
+const ACCOUNT_OPTIONS = ['支付宝1','支付宝2','博时','同花顺','华泰','东方','卡','中信','工行','微信','其他']
+
 function formatNum(n) {
   if (!n && n !== 0) return ''
   if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
@@ -111,9 +113,20 @@ export function SavingsPage() {
               {editing ? (
                 <div style={{ padding:'12px 16px 14px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
                   {/* 各账户 */}
-                  {Object.entries(editAccounts).map(([acct, val]) => (
-                    <div key={acct} style={{ display:'flex', alignItems:'center', gap:'8px', padding:'6px 0' }}>
-                      <span style={{ fontSize:'14px', color:'#78350f', minWidth:'64px' }}>{acct}</span>
+                  {Object.entries(editAccounts).map(([acct, val], idx) => (
+                    <div key={acct} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'5px 0' }}>
+                      <select value={acct} onChange={e => {
+                        const next = {}; const keys = Object.keys(editAccounts)
+                        for (let i=0; i<keys.length; i++) {
+                          next[e.target.value === keys[i] ? (i===idx?keys[i]:e.target.value) : keys[i]] = editAccounts[keys[i]]
+                        }
+                        delete next[acct]
+                        if (e.target.value !== acct) next[e.target.value] = editAccounts[acct]
+                        setEditAccounts(next)
+                      }}
+                        style={{ padding:'8px', borderRadius:'8px', border:'1.5px solid #e9d5ff', fontSize:'13px', outline:'none', background:'#fff', color:'#78350f', fontWeight:500, minWidth:'76px' }}>
+                        {ACCOUNT_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
                       <input value={val} onChange={e => setEditAccounts(p=>({...p,[acct]:e.target.value}))} placeholder="0"
                         style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #e9d5ff', fontSize:'15px', outline:'none', textAlign:'right' }} />
                     </div>
@@ -124,7 +137,16 @@ export function SavingsPage() {
                     <input value={editTotal} onChange={e => setEditTotal(e.target.value)} placeholder="留空按账户累加"
                       style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #f59e0b', fontSize:'15px', outline:'none', textAlign:'right', fontWeight:700, color:'#92400e' }} />
                   </div>
-                  <button onClick={addAccount} style={{ marginTop:'12px', padding:'8px 12px', borderRadius:'10px', border:'1.5px dashed #d4a373', background:'transparent', color:'#92400e', fontSize:'13px', fontWeight:500, cursor:'pointer', width:'100%' }}>+ 添加账户</button>
+                  <div style={{ marginTop:'10px', display:'flex', gap:'6px' }}>
+                    <select id="new-acct-select" style={{ flex:1, padding:'8px 12px', borderRadius:'10px', border:'1.5px dashed #d4a373', background:'transparent', fontSize:'13px', outline:'none', color:'#92400e' }}>
+                      {ACCOUNT_OPTIONS.filter(o => !Object.keys(editAccounts).includes(o)).map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    <button onClick={() => {
+                      const sel = document.getElementById('new-acct-select')
+                      const v = sel?.value
+                      if (v && !Object.keys(editAccounts).includes(v)) setEditAccounts(p=>({...p,[v]:''}))
+                    }} style={{ padding:'8px 14px', borderRadius:'10px', border:'1.5px dashed #d4a373', background:'transparent', color:'#92400e', fontSize:'13px', cursor:'pointer', whiteSpace:'nowrap' }}>+ 添加</button>
+                  </div>
                 </div>
               ) : expanded ? (
                 <div style={{ padding:'4px 16px 12px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
