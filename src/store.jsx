@@ -2854,7 +2854,7 @@ const defaultData = {
   ],
   moodData: [],
   savingsData: {
-    monthlyGoal: 5000,
+    monthlyGoal: 6000,
     records: {
       '2026-01': { target: 204000, actual: 204100, details: { '支付宝1': 98500, '支付宝2': 3000, '博时': 12000, '同花顺': 25500, '华泰': 47300, '东方': 9800, '卡': 8000 } },
       '2026-02': { target: 209000, actual: 207290, details: { '支付宝1': 98600, '支付宝2': 2590, '博时': 12000, '同花顺': 25500, '华泰': 46700, '东方': 9000, '卡': 12900 } },
@@ -2862,6 +2862,12 @@ const defaultData = {
       '2026-04': { target: 219000, actual: 209240, details: { '支付宝1': 99700, '支付宝2': 3660, '博时': 11880, '同花顺': 24000, '华泰': 45700, '东方': 8300, '卡': 6000, '中信': 10000 } },
       '2026-05': { target: 224000, actual: 223100, details: { '支付宝1': 111400, '支付宝2': 1200, '博时': 12700, '同花顺': 24300, '华泰': 49500, '东方': 8000, '中信': 16000 } },
       '2026-06': { target: 229000, actual: 229400, details: { '支付宝1': 110600, '支付宝2': 3400, '博时': 12500, '同花顺': 22900, '华泰': 50000, '东方': 8000, '中信': 16000, '工行': 6000 } },
+      '2026-07': { target: 235000, actual: 0, details: {} },
+      '2026-08': { target: 241000, actual: 0, details: {} },
+      '2026-09': { target: 247000, actual: 0, details: {} },
+      '2026-10': { target: 253000, actual: 0, details: {} },
+      '2026-11': { target: 259000, actual: 0, details: {} },
+      '2026-12': { target: 265000, actual: 0, details: {} },
     }
   },
   sensitiveWords: DEFAULT_SENSITIVE_WORDS,
@@ -3167,7 +3173,7 @@ export function StoreProvider({ children }) {
   }, [])
 
   const getSavings = useCallback(() => {
-    return data.savingsData || { monthlyGoal: 5000, records: {} }
+    return data.savingsData || { monthlyGoal: 6000, records: {} }
   }, [data.savingsData])
 
   const updateSavings = useCallback((monthKey, patch) => {
