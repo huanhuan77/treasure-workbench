@@ -71,29 +71,7 @@ export function SavingsPage() {
     setEditAccounts({ ...(r.details || {}) })
     setEditTotal(String(r.actual || 0))
   }
-  const fetchAndAdd = async () => {
-    if (!invCode.trim()) return
-    try {
-      const { StockSDK } = await import('stock-sdk')
-      const sdk = new StockSDK()
-      const code = invCode.trim()
-      if (code.replace(/\D/g,'').length <= 6) {  // 基金
-        const q = await sdk.quotes.fund([code.replace(/\D/g,'')])
-        if (q && q[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].nav) }
-      } else {  // 股票
-        const q = await sdk.quotes.cn([code])
-        if (q && q[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].price) }
-      }
-    } catch(e) { alert('获取行情失败: ' + e.message) }
-  }
-  const confirmAddInv = () => {
-    if (!invName || !invSellPrice) return
-    const sp = parseFloat(invSellPrice)
-    const cp = invCurrentPrice
-    const change = cp && sp ? ((cp - sp) / sp * 100) : null
-    setInvestments(p => [...p, { code:invCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, change }])
-    setShowAddInv(false); setInvCode(''); setInvName(''); setInvCurrentPrice(null); setInvSellPrice(''); setInvSellDate('')
-  }
+
   const saveEdit = () => {
     if (!editMonth) return
     const details = {}
