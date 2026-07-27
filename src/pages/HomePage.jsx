@@ -311,14 +311,14 @@ export function HomePage() {
       <div style={{ padding: '8px 16px 4px' }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px', background: '#fff',
-          borderRadius: '14px', padding: '10px 14px', boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)',
+          borderRadius: '14px', padding: '6px 8px 6px 14px', boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)',
         }}>
           <span style={{ fontSize: '16px', opacity: 0.6 }}>🔍</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索产品 / 品牌"
-            style={{ flex: 1, border: 'none', outline: 'none', fontSize: '15px', color: 'var(--text-main)', background: 'transparent' }}
+            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', fontSize: '15px', color: 'var(--text-main)', background: 'transparent' }}
           />
           {search && (
             <button
@@ -326,23 +326,24 @@ export function HomePage() {
               style={{ border: 'none', background: 'rgba(0,0,0,0.06)', color: 'var(--text-sub)', width: '20px', height: '20px', borderRadius: '50%', fontSize: '12px', lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}
             >×</button>
           )}
-        </div>
-        <div style={{ position: 'relative', marginTop: '8px' }}>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            style={{
-              width: '100%', appearance: 'none', WebkitAppearance: 'none',
-              background: '#fff', borderRadius: '14px', border: 'none',
-              padding: '10px 36px 10px 14px', fontSize: '14px',
-              color: categoryFilter ? 'var(--text-main)' : 'var(--text-sub)',
-              boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)', outline: 'none',
-            }}
-          >
-            <option value="">全部分类</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
+          <span style={{ width: '1px', height: '20px', background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              style={{
+                appearance: 'none', WebkitAppearance: 'none',
+                background: 'transparent', border: 'none', outline: 'none',
+                padding: '8px 22px 8px 8px', fontSize: '14px', fontWeight: 500,
+                color: categoryFilter ? 'var(--text-main)' : 'var(--text-sub)',
+                maxWidth: '108px',
+              }}
+            >
+              <option value="">全部分类</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <span style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '11px' }}>▾</span>
+          </div>
         </div>
       </div>
 
