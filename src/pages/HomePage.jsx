@@ -169,6 +169,7 @@ export function HomePage() {
   const [editBrand, setEditBrand] = useState('')
   const [editOpen, setEditOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
 
   const openEdit = (p) => {
     setEditId(p.id); setEditName(p.name); setEditBrand(p.brand || ''); setEditCategory(p.category || '')
@@ -181,13 +182,14 @@ export function HomePage() {
     setEditOpen(false); show('产品信息已更新', 'success')
   }
 
-  // 搜索过滤：匹配产品名 / 品牌 / 分类
+  // 搜索过滤：匹配产品名 / 品牌；分类由独立下拉框筛选
   const keyword = search.trim().toLowerCase()
-  const filtered = keyword
-    ? products.filter((p) =>
-        [p.name, p.category, p.brand].filter(Boolean).some((f) => f.toLowerCase().includes(keyword))
-      )
-    : products
+  const filtered = products.filter((p) => {
+    const matchKw = !keyword || [p.name, p.brand].filter(Boolean).some((f) => f.toLowerCase().includes(keyword))
+    const matchCat = !categoryFilter || p.category === categoryFilter
+    return matchKw && matchCat
+  })
+  const active = keyword || categoryFilter
 
   // 拖拽排序
   const sensors = useSensors(
@@ -315,7 +317,7 @@ export function HomePage() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="搜索产品 / 品牌 / 分类"
+            placeholder="搜索产品 / 品牌"
             style={{ flex: 1, border: 'none', outline: 'none', fontSize: '15px', color: 'var(--text-main)', background: 'transparent' }}
           />
           {search && (
@@ -325,10 +327,27 @@ export function HomePage() {
             >×</button>
           )}
         </div>
+        <div style={{ position: 'relative', marginTop: '8px' }}>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={{
+              width: '100%', appearance: 'none', WebkitAppearance: 'none',
+              background: '#fff', borderRadius: '14px', border: 'none',
+              padding: '10px 36px 10px 14px', fontSize: '14px',
+              color: categoryFilter ? 'var(--text-main)' : 'var(--text-sub)',
+              boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)', outline: 'none',
+            }}
+          >
+            <option value="">全部分类</option>
+            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
+        </div>
       </div>
 
       <div style={{ padding: '8px 16px 16px' }}>
-        {!keyword ? (
+        {!active ? (
           products.length === 0 ? (
             emptyGlass('📭', '还没有产品', '点击下方 + 添加你的第一个产品')
           ) : (
@@ -343,7 +362,7 @@ export function HomePage() {
             </DndContext>
           )
         ) : filtered.length === 0 ? (
-          emptyGlass('🔍', `没有找到「${search.trim()}」`, '换个关键词试试')
+          emptyGlass('🔍', keyword ? `没有找到「${search.trim()}」` : `「${categoryFilter}」分类下暂无产品`, '换个筛选条件试试')
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {filtered.map((p) => (
