@@ -28,6 +28,7 @@ export function FinancePage() {
   const [filterType, setFilterType] = useState('all')
   const [filterMonth, setFilterMonth] = useState('2026-07')
   const [sortBy, setSortBy] = useState('date_desc')
+  const [showMoreCat, setShowMoreCat] = useState(false)
 
   // 点击表头箭头切换排序（再次点击同一字段则反序）
   const toggleSort = (field) => {

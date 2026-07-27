@@ -52,7 +52,6 @@ export function SamplesPage() {
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('大号')
   const [searchKeyword, setSearchKeyword] = useState('')
-  const [searchExpanded, setSearchExpanded] = useState(false)
 
   const sorted = useMemo(() => sortSamples(samples), [samples])
   const filtered = useMemo(() => {
@@ -123,30 +122,14 @@ export function SamplesPage() {
         })}
       </div>
 
-      {/* 搜索：收起态只显示🔍，点击展开输入框 */}
-      <div style={{ padding: '0 16px 10px', display: 'flex', alignItems: 'center', justifyContent: searchExpanded ? 'stretch' : 'flex-end', minHeight: '40px' }}>
-        {searchExpanded ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(244,114,182,0.3)', borderRadius: '18px', padding: '4px 10px' }}>
-            <span style={{ fontSize: '14px', color: 'var(--text-sub)', flexShrink: 0 }}>🔍</span>
-            <input
-              autoFocus
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              onBlur={() => { if (!searchKeyword) setSearchExpanded(false) }}
-              placeholder="搜索产品名称…"
-              style={{ flex: 1, padding: '6px 0', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', fontFamily: 'inherit', color: 'var(--text-main)' }}
-            />
-            {searchKeyword && (
-              <button onClick={() => setSearchKeyword('')} style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '16px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>×</button>
-            )}
-          </div>
-        ) : (
-          <button
-            onClick={() => setSearchExpanded(true)}
-            aria-label="搜索"
-            style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(244,114,182,0.25)', background: 'rgba(255,255,255,0.5)', color: '#ec4899', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
-          >🔍</button>
-        )}
+      {/* 搜索 */}
+      <div style={{ padding: '0 16px 10px' }}>
+        <input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)}
+          placeholder="🔍 搜索产品名称…"
+          style={{ width:'100%', boxSizing:'border-box', padding:'10px 14px', borderRadius:'14px',
+            border:'1px solid rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.45)',
+            fontSize:'13px', outline:'none', fontFamily:'inherit', color:'var(--text-main)' }}
+        />
       </div>
 
       <div style={{ padding: '4px 16px 16px' }}>
