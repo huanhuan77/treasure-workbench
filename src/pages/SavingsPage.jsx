@@ -43,11 +43,19 @@ export function SavingsPage() {
   const [invSellPrice, setInvSellPrice] = useState('')
   const [invSellDate, setInvSellDate] = useState('')
   const [invType, setInvType] = useState('buy')  // 'buy' 买入 | 'sell' 卖出
-  const [investments, setInvestments] = useState((getSavings()?.investments) || loadInvestments() || [])
+  const [investments, setInvestments] = useState(() => {
+    // 直接从独立 key 读取，完全绕过 store 的复杂合并逻辑
+    const saved = loadInvestments()
+    console.log('[投资] 初始化, 独立key数据:', saved ? saved.length + '条' : '无')
+    return saved || []
+  })
   const saveInvestments = (list) => {
     setInvestments(list)
-    setSavings({ investments: list })
-    try { localStorage.setItem(INV_STORAGE_KEY, JSON.stringify(list)) } catch(e) {}
+    setSavings({ investments: list })  // 同步到 store
+    try {
+      localStorage.setItem(INV_STORAGE_KEY, JSON.stringify(list))
+      console.log('[投资] 已保存', list.length, '条到独立key')
+    } catch(e) { console.warn('[投资] 保存失败:', e) }
   }
   const fetchAndAdd = async () => {
     if (!invCode.trim()) return
