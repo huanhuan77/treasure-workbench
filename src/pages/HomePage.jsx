@@ -69,7 +69,7 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
   const orders = (p.copies || []).filter((c) => c.hasOrder).length
 
   return (
-    <div ref={outerRef} style={{ position: 'relative', borderRadius: '0px', ...outerStyle }}>
+    <div ref={outerRef} style={{ position: 'relative', borderRadius: '8px', ...outerStyle }}>
       <div
         style={{
           ...glassStyle, position: 'relative', padding: '11px 12px', cursor: 'pointer',
@@ -312,7 +312,7 @@ export function HomePage() {
       <div style={{ padding: '8px 16px 4px' }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px', background: '#fff',
-          borderRadius: '0px', padding: '6px 8px 6px 14px', boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)',
+          borderRadius: '8px', padding: '6px 8px 6px 14px', boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)',
         }}>
           <span style={{ fontSize: '16px', opacity: 0.6 }}>🔍</span>
           <input

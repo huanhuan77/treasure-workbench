@@ -186,14 +186,16 @@ export function SamplesPage() {
               const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
               return (
                 <div key={s.id} style={{ ...glassStyle, padding: '12px 14px 10px 14px', position: 'relative', borderLeft: `3px solid ${st.stripe}` }}>
-                  {/* 第一行：产品名 + 状态徽章（产品名不被挤压） */}
+                  {/* 第一行：产品名 + 账号 + 状态徽章 */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                    <h3 style={{ flex: 1, margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</h3>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                      <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
+                      {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
+                    </div>
                     <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>
                   </div>
-                  {/* 第二行：账号 + 日期 + 编辑（一行不换行） */}
+                  {/* 第二行：日期 + 编辑 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)' }}>
-                    {s.account && <span style={{ padding: '1px 6px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', borderRadius: '5px', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
                     {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
                     {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
                     <button onClick={() => setEditing(s)} style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '11px', fontWeight: 500, background: 'none', border: 'none', padding: 0, cursor: 'pointer', flexShrink: 0 }}>编辑</button>

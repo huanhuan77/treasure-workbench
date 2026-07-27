@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 // 毛玻璃样式常量（核心复用）
 export const glassStyle = {
   background: '#fff',
-  borderRadius: '0px',
+  borderRadius: '8px',
   boxShadow: '0 4px 20px rgba(244, 114, 182, 0.08), 0 1px 3px rgba(0,0,0,0.04)',
 }
 
