@@ -68,6 +68,58 @@ export function SavingsPage() {
 
     } catch(e) { alert('获取行情失败: ' + e.message) }
   }
+  const fetchHistoricalPrice = async () => {
+    if (!invCode.trim()) { alert('请先填写代码'); return }
+    if (!invSellDate) { alert('请先选择' + (invType==='buy' ? '买入日' : '卖出日')); return }
+    const code = invCode.trim().replace(/\D/g, '')
+    const isFund = code.length <= 6
+    try {
+      const { StockSDK } = await import('stock-sdk')
+      const sdk = new StockSDK()
+      if (isFund) {
+        // 基金：调用天天基金历史净值 JSONP
+        const cb = 'fund_cb_' + Date.now()
+        const jsonpUrl = 'https://api.fund.eastmoney.com/f10/lsjz?callback=' + cb + '&fundCode=' + code + '&pageIndex=1&pageSize=90'
+        await new Promise((resolve, reject) => {
+          window[cb] = (d) => {
+            const list = d?.Data?.LSJZList || []
+            const found = list.find(x => x.FSRQ === invSellDate)
+            if (found) {
+              const v = parseFloat(found.DWJZ)
+              setInvSellPrice(String(v))
+              alert('已填入 ' + invSellDate + ' 净值: ' + v)
+            } else {
+              alert('未找到 ' + invSellDate + ' 的净值（基金净值通常工作日才更新）')
+            }
+            delete window[cb]; document.getElementById(cb)?.remove(); resolve()
+          }
+          const sc = document.createElement('script')
+          sc.id = cb
+          sc.src = jsonpUrl
+          sc.onerror = () => { delete window[cb]; reject(new Error('jsonp error')) }
+          document.body.appendChild(sc)
+          setTimeout(() => { if (window[cb]) { delete window[cb]; reject(new Error('timeout')) } }, 8000)
+        })
+      } else {
+        // 股票：调用 sdk.kline.cn 获取历史 K 线
+        const kl = await sdk.kline.cn(code, { klt: 101, fq: 'qfq', lmt: 60 })
+        const arr = Array.isArray(kl) ? kl : (kl?.data || [])
+        const fmt = (ts) => {
+          const d = new Date(typeof ts === 'number' ? ts * 1000 : ts)
+          const y = d.getFullYear(); const m = String(d.getMonth()+1).padStart(2,'0'); const day = String(d.getDate()).padStart(2,'0')
+          return `${y}-${m}-${day}`
+        }
+        const found = arr.find(x => fmt(x.t || x.time || x.day) === invSellDate)
+        if (found) {
+          const v = parseFloat(found.c ?? found.close ?? found.price)
+          setInvSellPrice(String(v))
+          alert('已填入 ' + invSellDate + ' 收盘价: ' + v)
+        } else {
+          alert('未找到 ' + invSellDate + ' 的行情（周末/节假日无数据）')
+        }
+      }
+    } catch(e) { alert('查询历史价失败: ' + e.message) }
+  }
   const confirmAddInv = () => {
     if (!invName) { alert('请先填写代码并获取行情'); return }
     if (!invSellPrice) { alert('请填写' + (invType==='buy' ? '买入价' : '卖出价')); return }
@@ -271,7 +323,7 @@ export function SavingsPage() {
                   <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} type='date' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center', color:'#4338ca' }} />
                 </div>
                 {invCurrentPrice && (
-                  <button type='button' onClick={() => { setInvSellPrice(String(invCurrentPrice)); if (!invSellDate) setInvSellDate(new Date().toISOString().slice(0, 10)) }} style={{ width:'100%', boxSizing:'border-box', padding:'8px', marginBottom:'10px', borderRadius:'8px', border:'1.5px dashed #6366f1', background:'transparent', color:'#6366f1', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>⚡ 用当前价 {invCurrentPrice} 填入</button>
+                  <button type='button' onClick={fetchHistoricalPrice} style={{ width:'100%', boxSizing:'border-box', padding:'8px', marginBottom:'10px', borderRadius:'8px', border:'1.5px dashed #6366f1', background:'transparent', color:'#6366f1', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>📅 用 {invSellDate || '选定日'} 的价格填入</button>
                 )}
                 <button onClick={confirmAddInv} style={{ width:'100%', boxSizing:'border-box', padding:'12px', borderRadius:'8px', border:'none', background:'#10b981', color:'#fff', fontSize:'15px', fontWeight:700, cursor:'pointer' }}>保存</button>
                 <button onClick={() => { setShowAddInv(false); setInvType('buy') }} style={{ width:'100%', boxSizing:'border-box', padding:'8px', borderRadius:'8px', border:'none', background:'transparent', color:'#666', fontSize:'13px', cursor:'pointer', marginTop:'4px' }}>取消</button>
