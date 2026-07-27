@@ -11,21 +11,23 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>宝藏工作台</title>
-    <!-- 中文字体（打包到项目内，从 GitHub Pages 自家服务） -->
+    <!-- 中文字体（Noto Sans SC 完整字形，含全部简体中文字） -->
     <style>
       @font-face {
         font-family: 'NotoSansSC';
         font-weight: 400;
         font-style: normal;
         font-display: swap;
-        src: url('./fonts/NotoSansSC.woff2') format('woff2');
+        src: url('./fonts/NotoSansSC.otf?v=2') format('opentype'),
+             url('./fonts/NotoSansSC.woff2?v=2') format('woff2');
       }
       @font-face {
         font-family: 'NotoSansSC';
         font-weight: 700;
         font-style: normal;
         font-display: swap;
-        src: url('./fonts/NotoSansSC-Bold.woff2') format('woff2');
+        src: url('./fonts/NotoSansSC-Bold.otf?v=2') format('opentype'),
+             url('./fonts/NotoSansSC-Bold.woff2?v=2') format('woff2');
       }
       html, body, button, input, select, textarea, span, div, p, h1, h2, h3, h4 {
         font-family: 'NotoSansSC', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Heiti SC', sans-serif !important;
