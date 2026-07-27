@@ -39,12 +39,23 @@ export function SavingsPage() {
       const { StockSDK } = await import('stock-sdk')
       const sdk = new StockSDK()
       const code = invCode.trim().replace(/\D/g, '')
-      if (code.length <= 6) {
+      const isFund = code.length <= 6
+      // 获取当前价
+      if (isFund) {
         const q = await sdk.quotes.fund([code])
         if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].nav) }
       } else {
         const q = await sdk.quotes.cn([code])
         if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].price) }
+      }
+      // 股票填了卖出日则自动查历史收盘价
+      if (invSellDate && !isFund) {
+        const days = Math.ceil((Date.now() - new Date(invSellDate).getTime()) / 86400000) + 10
+        if (days > 0 && days < 500) {
+          const k = await sdk.kline.cn(code, { count: Math.min(days, 365) })
+          const m = k.find(x => x.date === invSellDate)
+          if (m) setInvSellPrice(String(m.close))
+        }
       }
     } catch(e) { alert('获取行情失败: ' + e.message) }
   }
