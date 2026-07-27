@@ -364,11 +364,14 @@ export function SavingsPage() {
         {activeTab === 'invest' && (
         <div style={{ marginTop:'24px', padding:'0 16px' }}>
           <h4 style={{ margin:'0 0 10px', fontSize:'14px', fontWeight:600, color:'#78350f' }}>📈 投资跟踪</h4>
-            {investments.length === 0 && <p style={{ fontSize:'13px', color:'var(--gray-300)', margin:'0 0 10px' }}>暂无记录
-              <span style={{ fontSize:'10px', color:'#aaa', display:'block', marginTop:'4px' }}>
-                (调试: 独立key={(()=>{try{return localStorage.getItem('blogger_investments_v1')?'有数据':'空'}catch(e){return '读取出错'}})()})
-              </span>
-            </p>}
+            {investments.length === 0 && <div>
+              <p style={{ fontSize:'13px', color:'var(--gray-300)', margin:'0 0 10px' }}>暂无记录</p>
+              <div style={{ fontSize:'10px', color:'#888', background:'#fef2f2', padding:'8px 10px', borderRadius:'6px', marginBottom:'10px', lineHeight:1.6 }}>
+                <b>🔍 调试信息</b><br/>
+                独立key: {(()=>{try{const d=localStorage.getItem('blogger_investments_v1');return d?'✅ 有数据('+d.length+'字节)':'❌ 空'}catch(e){return '读取错误'}})()}<br/>
+                mainKey(前50): {(()=>{try{const d=localStorage.getItem('blogger_workbench_data_v1');const s=d?d.slice(0,50):'空';return d && d.includes('investments')?'✅ 含investments ':'❌ 无investments '+s}catch(e){return '读取错误'}})()}<br/>
+              </div>
+            </div>}
             {/* 按代码+买卖类型分组，只显示最新一条，点击展开查看历史 */}
             {(() => {
                             const groups = {}
@@ -423,7 +426,14 @@ export function SavingsPage() {
               })
             })()}
             {!showAddInv ? (
-              <button onClick={() => setShowAddInv(true)} style={{ marginTop:'4px', padding:'8px 14px', borderRadius:'10px', border:'1.5px dashed #6366f1', background:'transparent', color:'#4338ca', fontSize:'13px', cursor:'pointer', width:'100%' }}>+ 添加</button>
+              <button onClick={() => {
+                setShowAddInv(true)
+                // 点添加按钮时打印调试到页面上
+                try {
+                  const d = localStorage.getItem('blogger_investments_v1')
+                  alert('[投资调试]\n独立key内容: ' + (d ? d.slice(0,200) : '空'))
+                } catch(e) { alert('localStorage不可用: ' + e.message) }
+              }} style={{ marginTop:'4px', padding:'8px 14px', borderRadius:'10px', border:'1.5px dashed #6366f1', background:'transparent', color:'#4338ca', fontSize:'13px', cursor:'pointer', width:'100%' }}>+ 添加</button>
             ) : (
               <div style={{ marginTop:'8px', padding:'12px', borderRadius:'12px', border:'1.5px solid #6366f1', background:'rgba(238,242,255,0.3)', boxSizing:'border-box' }}>
                 <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder='代码 如600519' style={{ width:'100%', boxSizing:'border-box', padding:'11px 12px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', marginBottom:'10px', minWidth:0 }} />
