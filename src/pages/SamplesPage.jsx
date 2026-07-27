@@ -49,7 +49,7 @@ export function SamplesPage() {
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState('大号')
   const [accountFilter, setAccountFilter] = useState('all')
 
   const sorted = useMemo(() => sortSamples(samples), [samples])
