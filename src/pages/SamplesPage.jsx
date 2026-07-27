@@ -117,6 +117,16 @@ export function SamplesPage() {
         })}
       </div>
 
+      {/* 搜索 */}
+      <div style={{ padding: '0 16px 10px' }}>
+        <input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)}
+          placeholder="🔍 搜索产品名称…"
+          style={{ width:'100%', boxSizing:'border-box', padding:'10px 14px', borderRadius:'14px',
+            border:'1px solid rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.45)',
+            fontSize:'13px', outline:'none', fontFamily:'inherit', color:'var(--text-main)' }}
+        />
+      </div>
+
       <div style={{ padding: '4px 16px 16px' }}>
         {accountFiltered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>

@@ -26,7 +26,7 @@ export function FinancePage() {
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterAccount, setFilterAccount] = useState('all')
   const [filterType, setFilterType] = useState('all')
-  const [filterMonth, setFilterMonth] = useState('all')
+  const [filterMonth, setFilterMonth] = useState('2026-07')
   const [sortBy, setSortBy] = useState('date_desc')
 
   // 点击表头箭头切换排序（再次点击同一字段则反序）
@@ -431,7 +431,7 @@ function TransactionForm({ onClose, onSave }) {
       </Field>
 
       <Field label="备注（选填）">
-        <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="备注" value={form.remark} onChange={(e) => setForm({ ...form, remark: e.target.value })} />
+        <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="备注" value={form.remark} onChange={(e) => { const v=e.target.value; setForm({...form, remark:v, category:v.includes("海淘提现")?"haitao":form.category}) }} />
       </Field>
     </Modal>
   )
