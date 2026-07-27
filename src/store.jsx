@@ -274,21 +274,171 @@ const tuimelSeed = [
 
 // PH地中海咖啡：用户整理后内置文案（thumb-up=出单，check=用过；仅末尾标记生效，行内表情保留；末尾 # 行为指定话题
 const coffeeSeed = [
-  { content: "这个世界什么都是假的\n只有PH咖啡的权威是真的吗", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "\"忍住，我把美食忍住\"\n加油，老天爷", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "拜见PH地中海黑咖！\n马上40度☀️\n小女子能不能穿上\n漂亮👗👙📷就靠您了🙏", hasOrder: false, used: false, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "本来以为是智商税…\n被闺蜜按头安利的PH地中海咖啡\n喝了才知道\n明星私藏的懒人好物是真的香！\n自律入✅\n代餐入✅\n爱出片入✅\n太快了呀", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "别再一天天的纠结\n他爱不爱你\n下个月就 30 度了\n给我做💪硬气的女人\n姐先冲了", hasOrder: true, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "PH 你小子真有点东西\n这速度真的绝！\n难怪大半个娱乐圈都在喝\n1 杯等于 1/8 个苹果\n便捷包装，随时随地喝", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "虽然夏日☀️的较量\n已经开始了\n但我一点也不慌张\n我有它给我兜底", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "我的老天\n ph 地中海咖啡\n真有点东西\n太快了\n妈妈以为我一个人\n没有好好吃了", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "算了\n跟你们这帮 2 位数的人\n说不清楚\n我先干为敬了\n这个夏天我也要赢", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "真抱一丝啊\n下个月就 30 度了\n我得争口气\n做朋友圈最装的女人", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "咖啡机跟着我也是倒霉\nph 地中海黑咖的权威\n我真的后知后觉！\n下个周就 35 度了\n接下来我要狠狠冲", hasOrder: false, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "你永远可以相信\n大馋丫头们的选品能力\n只要它不停产我就一直回购\n马上夏天了\n我要把之前输的都赢回来‼️", hasOrder: true, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "第一批受害者出现了\n太太太筷了\n我妈都以为我\n在外吃不上饭", hasOrder: true, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  { content: "对不起了PH咖啡\n5折券我抢到了\n这个夏天我要惊艳所有人", hasOrder: true, used: true, topics: ['#PH地中海咖', '#咖啡', '#黑咖', '#好喝不贵'] },
-  
+  {
+    "content": "这个世界什么都是假的\n只有PH咖啡的权威是真的！",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "\"忍住，我把美食忍住\"\n加油，老己！",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "拜见PH地中海黑咖！\n马上40度☀️\n小女子能不能穿上\n漂亮👗👙📷就靠您了🙏",
+    "hasOrder": false,
+    "used": false,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "本来以为是智商税…\n被闺蜜按头安利的PH地中海咖啡\n喝了才知道\n明星私藏的懒人好物是真的香！",
+    "hasOrder": false,
+    "used": false,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "自律入✅\n代餐入✅\n爱出片入✅\n太快了🥹",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "别再一天天的纠结\n他爱不爱你\n下个月就 30 度了\n给我做💪硬气的女人\n姐先冲了",
+    "hasOrder": true,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "PH 你小子真有点东西\n这速度真的绝！\n难怪大半个娱乐圈都在喝\n1 杯等于 1/8 个苹果\n便捷包装，随时随地喝",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "虽然夏日☀️的较量\n已经开始了\n但我一点也不慌张\n我有它给我兜底",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "我的老天\n这 ph 地中海咖啡\n真有点东西\n太快了\n妈妈以为我一个人\n没有好好吃🍚",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "算了\n跟你们这些 2 位数的人\n说不清楚\n我先干为敬了\n这个夏天我也要赢",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "真抱一丝啊\n下个月就 30 度了\n我得争口气\n做朋友圈坠装的女人",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "咖啡机跟着我也是倒霉\nph 地中海黑咖的权威\n我真的后知后觉！\n下个周就 35 度了\n接下来我要狠狠📷",
+    "hasOrder": false,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "你永远可以相信\n大馋丫头们的选品能力\n只要它不停产我就一直回购\n马上夏天了\n我要把之前输的都赢回来‼️",
+    "hasOrder": true,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "第一批受害者出现了\n太太太筷了\n我妈都以为我\n在外吃不上🍚",
+    "hasOrder": true,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  },
+  {
+    "content": "对不起了PH咖啡\n5折券我抢到了\n这个夏天我要惊艳所有人",
+    "hasOrder": true,
+    "used": true,
+    "topics": [
+      "#PH地中海咖啡",
+      "#咖啡",
+      "#黑咖啡",
+      "#好喝不贵"
+    ]
+  }
 ].map((c, i) => ({
   id: 'p_coffee_c' + (i + 1),
   content: c.content,
