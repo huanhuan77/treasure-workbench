@@ -28,6 +28,13 @@ export function Modal({ open, onClose, title, children, footer, center }) {
         if (vv) {
           const diff = window.innerHeight - vv.height
           setKbHeight(diff > 100 ? diff : 0)
+          // 键盘弹出时，把当前聚焦元素滚到可见区域
+          setTimeout(() => {
+            const active = document.activeElement
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
+              active.scrollIntoView({ block: 'center', behavior: 'smooth' })
+            }
+          }, 100)
         }
       }
       if (vv) {
