@@ -211,6 +211,10 @@ export function HomePage() {
     else if (result === 'error') show('检查更新失败，请重试', 'error')
   }
 
+  // 主屏幕应用（无地址栏）没有刷新入口，提供应用内重载按钮
+  const handleReload = () => { location.reload(true) }
+
+
   const handleAdd = () => {
     if (!form.name.trim()) { show('请输入产品名称', 'error'); return }
     addProduct(form)
@@ -285,6 +289,17 @@ export function HomePage() {
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.3px' }}>宝藏工作台</h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{products.length}个产品 · {(products || []).reduce((s, p) => s + (p.copies?.length || 0), 0)}条文案</p>
         </div>
+        <button
+          onClick={handleReload}
+          title="重新加载页面（主屏幕应用可点此刷新）"
+          style={{
+            flexShrink: 0, marginLeft: '8px', padding: '8px 10px', border: 'none',
+            borderRadius: '999px', fontSize: '14px', color: '#6366f1',
+            background: 'rgba(99, 102, 241, 0.10)', cursor: 'pointer',
+          }}
+        >
+          ↻
+        </button>
         <button
           onClick={handleCheckUpdate}
           disabled={checking}
