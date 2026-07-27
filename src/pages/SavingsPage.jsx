@@ -150,8 +150,7 @@ export function SavingsPage() {
     // 允许同一代码多次记录（列表只显示最新，点开查看历史）
     const normCode = invCode.trim()
     saveInvestments([...investments, { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }])
-    // 清理所有输入状态 + 关闭表单
-    setShowAddInv(false)
+    // 清理所有输入状态（表单保持打开，方便继续添加）
     setInvCode('')
     setInvName('')
     setInvCurrentPrice(null)
@@ -340,16 +339,16 @@ export function SavingsPage() {
                           <span style={{ fontSize:'10px', marginLeft:'6px', padding:'2px 6px', borderRadius:'6px', background: latest.type==='sell' ? '#fee2e2' : '#d1fae5', color: latest.type==='sell' ? '#e11d48' : '#059669', fontWeight:700 }}>{latest.type==='sell' ? '卖出' : '买入'}</span>
                           <span style={{ fontSize:'11px', color:'var(--gray-300)', marginLeft:'6px' }}>{latest.code}</span>
                         </span>
-                        <span style={{ fontSize:'11px', color:'var(--gray-300)' }}>{items.length} 条历史 {expanded ? '🔼' : '🔽'}</span>
+                        <span style={{ fontSize:'11px', color:'#6366f1', fontWeight:600 }}>{items.length} 条记录 {expanded ? '🔼' : '🔽'}</span>
                       </div>
                       <div style={{ display:'flex', gap:'12px', marginTop:'6px', fontSize:'12px', flexWrap:'wrap' }}>
-                        <span>{latest.type==='sell' ? '卖出' : '买入'}: <b>{latest.sellPrice}</b></span>
-                        <span>当前: <b style={{ color:'#4338ca' }}>{latest.currentPrice ?? '--'}</b></span>
+                        <span style={{ fontSize:'13px' }}>{latest.type==='sell' ? '卖出' : '买入'}: <b style={{ color:'#1f2937', fontSize:'15px' }}>{latest.sellPrice}</b></span>
+                        <span style={{ fontSize:'13px' }}>当前: <b style={{ color:'#4f46e5', fontSize:'15px' }}>{latest.currentPrice ?? '--'}</b></span>
                         <span style={{ color: (latest.change ?? 0) >= 0 ? '#dc2626' : '#059669', fontWeight:600 }}>
                           {(latest.change ?? 0) >= 0 ? '📈' : '📉'} {latest.change != null ? (latest.change >= 0 ? '+' : '') + latest.change.toFixed(2) + '%' : '--'}
                         </span>
                       </div>
-                      {latest.sellDate && <div style={{ fontSize:'11px', color:'var(--gray-300)', marginTop:'4px' }}>最新: {latest.type==='sell' ? '卖出日' : '买入日'} {latest.sellDate}</div>}
+                      {latest.sellDate && <div style={{ fontSize:'11px', color:'#6b7280', marginTop:'4px' }}>📅 {latest.type==='sell' ? '卖出日' : '买入日'}: {latest.sellDate}</div>}
                     </div>
                     {/* 展开历史记录 */}
                     {expanded && (
@@ -358,8 +357,8 @@ export function SavingsPage() {
                         {items.map((inv, i) => (
                           <div key={i} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'6px 0', borderBottom: i<items.length-1 ? '1px solid rgba(99,102,241,0.06)' : 'none' }}>
                             <span style={{ fontSize:'11px', color:'#6366f1', fontWeight:600, minWidth:'20px' }}>#{items.length - i}</span>
-                            <span style={{ flex:1, fontSize:'12px', color:'#4338ca', fontWeight:500 }}>{inv.sellPrice}</span>
-                            {inv.sellDate && <span style={{ fontSize:'11px', color:'var(--gray-300)' }}>{inv.sellDate}</span>}
+                            <span style={{ flex:1, fontSize:'13px', color:'#1f2937', fontWeight:700 }}>{inv.sellPrice}</span>
+                            {inv.sellDate && <span style={{ fontSize:'11px', color:'#6b7280' }}>{inv.sellDate}</span>}
                             <button onClick={(e) => { e.stopPropagation(); delItem(inv._idx) }} style={{ background:'none', border:'none', color:'#e11d48', fontSize:'14px', cursor:'pointer', padding:'2px 4px', lineHeight:1 }}>×</button>
                           </div>
                         ))}
