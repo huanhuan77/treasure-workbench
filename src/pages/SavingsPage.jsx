@@ -55,11 +55,28 @@ export function SavingsPage() {
     return saved || []
   })
   const saveInvestments = (list) => {
+    console.log('[投资] saveInvestments被调用, 共', list.length, '条')
+    console.log('[投资] list内容:', JSON.stringify(list))
     setInvestments(list)
-    setSavings({ investments: list })  // 同步到 store
+    setSavings({ investments: list })
+    // 测试 localStorage 是否可用
     try {
-      localStorage.setItem(INV_STORAGE_KEY, JSON.stringify(list))
-      console.log('[投资] 已保存', list.length, '条到独立key')
+      localStorage.setItem('__test_save', '1')
+      const t = localStorage.getItem('__test_save')
+      console.log('[投资] localStorage可用性测试:', t === '1' ? 'OK' : 'FAIL')
+      localStorage.removeItem('__test_save')
+    } catch(e) {
+      console.warn('[投资] localStorage完全不可用:', e)
+      return
+    }
+    // 实际写入
+    try {
+      const json = JSON.stringify(list)
+      console.log('[投资] 准备写入, JSON长度:', json.length, '字节')
+      localStorage.setItem(INV_STORAGE_KEY, json)
+      // 立即验证
+      const verify = localStorage.getItem(INV_STORAGE_KEY)
+      console.log('[投资] 写入后立即读取:', verify ? 'OK ('+verify.length+'字节)' : '空')
     } catch(e) { console.warn('[投资] 保存失败:', e) }
   }
   const fetchAndAdd = async () => {
