@@ -194,8 +194,9 @@ export function SamplesPage() {
                     </div>
                     <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>
                   </div>
-                  {/* 第二行：日期 + 编辑 */}
+                  {/* 第二行：佣金tag + 日期 + 编辑 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)' }}>
+                    {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}</span>}
                     {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
                     {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
                     <button onClick={() => setEditing(s)} style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, background: 'rgba(236,72,182,0.08)', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', flexShrink: 0 }}>编辑</button>
@@ -276,6 +277,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
     receiveDate: sample?.receiveDate || todayStr(),
     deadline: sample?.deadline || (sample ? '' : addDays(todayStr(), 15)),
     remark: sample?.remark || '',
+    commission: sample?.commission || 5,
   })
   // 截止时间是否被用户手动改过（未手动改时，随收货时间自动 +15 天）
   const [deadlineTouched, setDeadlineTouched] = useState(!!sample?.deadline)
@@ -323,6 +325,14 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
           </select>
           <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
         </div>
+      </Field>
+
+      <Field label="佣金">
+        <select value={form.commission} onChange={(e) => setForm({ ...form, commission: parseInt(e.target.value) })}
+          style={{ ...inputStyle, paddingRight: '36px', appearance: 'none', WebkitAppearance: 'none' }}>
+          <option value={5}>5元（默认）</option>
+          <option value={10}>10元</option>
+        </select>
       </Field>
 
       <Field label="状态">
