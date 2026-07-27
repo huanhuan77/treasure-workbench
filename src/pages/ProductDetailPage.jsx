@@ -56,7 +56,11 @@ export function ProductDetailPage() {
   const [editTopicVal, setEditTopicVal] = useState('')
 
   const openTopics = () => {
-    setTopicDraft([...(product.topics || [])])
+    // 合并产品级话题和所有文案的话题（去重），让编辑器显示完整的已有话题
+    const allTopics = new Set()
+    ;(product.topics || []).forEach((t) => allTopics.add(t))
+    ;(product.copies || []).forEach((c) => (c.topics || []).forEach((t) => allTopics.add(t)))
+    setTopicDraft([...allTopics])
     setNewTopic('')
     setEditTopicIdx(null)
     setShowTopics(true)
