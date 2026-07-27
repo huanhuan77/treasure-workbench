@@ -3335,6 +3335,7 @@ export function StoreProvider({ children }) {
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord, resetData,
     getMood, setMood,
+    getSavings, updateSavings,
   }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
