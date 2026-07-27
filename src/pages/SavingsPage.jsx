@@ -146,8 +146,26 @@ export function SavingsPage() {
     const sp = parseFloat(invSellPrice)
     const cp = invCurrentPrice
     const change = cp && sp ? ((cp - sp) / sp * 100) : null
-    saveInvestments([...investments, { code:invCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }])
-    setShowAddInv(false); setInvCode(''); setInvName(''); setInvCurrentPrice(null); setInvSellPrice(''); setInvSellDate(''); setInvType('buy')
+    // 去重：相同代码（与买入/卖出类型）已存在时，提示用户覆盖或取消
+    const normCode = invCode.trim()
+    const existingIdx = investments.findIndex(x => (x.code || '').trim() === normCode && (x.type || 'buy') === invType)
+    if (existingIdx >= 0) {
+      const ok = confirm('代码 ' + normCode + '（' + (invType==='buy' ? '买入' : '卖出') + '）已存在，是否覆盖原记录？\n\n确定 = 覆盖更新\n取消 = 不保存')
+      if (!ok) return
+      const next = [...investments]
+      next[existingIdx] = { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }
+      saveInvestments(next)
+    } else {
+      saveInvestments([...investments, { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }])
+    }
+    // 清理所有输入状态 + 关闭表单
+    setShowAddInv(false)
+    setInvCode('')
+    setInvName('')
+    setInvCurrentPrice(null)
+    setInvSellPrice('')
+    setInvSellDate('')
+    setInvType('buy')
   }
 
   const monthsWithData = MONTH_KEYS.filter(k => records[k] && records[k].actual > 0)
