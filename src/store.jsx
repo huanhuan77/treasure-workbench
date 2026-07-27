@@ -2749,7 +2749,19 @@ const defaultData = {
   { id:'s_177', name:'珀芙研蛋白胶原面膜', account:'小号', receiveDate:'2026/5/3', deadline:'', remark:'', status:'hit' },
   { id:'s_178', name:'纯耕六味地黄丸', account:'小号', receiveDate:'2026/4/23', deadline:'', remark:'', status:'published' },
   { id:'s_179', name:'纯耕黄精人参', account:'小号', receiveDate:'2026/4/23', deadline:'', remark:'', status:'published' },
-  { id:'s_180', name:'珀芙研等渗面膜', account:'小号', receiveDate:'', deadline:'', remark:'', status:'published' }
+  { id:'s_180', name:'珀芙研等渗面膜', account:'小号', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_181', name:'祛湿清', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_182', name:'南瓜茶', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_183', name:'巧尼芙', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_184', name:'健美生复合维B', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_185', name:'香蕉饮', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_186', name:'西梅软糖', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_187', name:'红花贴', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_188', name:'香体糖', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_189', name:'洛神月褪黑素', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_190', name:'olly女维', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'hit' },
+  { id:'s_191', name:'无糖清凉糖', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'hit' },
+  { id:'s_192', name:'olly褪黑素', account:'小小号', receiveDate:'', deadline:'', remark:'', status:'published' }
 ],
   transactions: [
     { id: 'seed_tx_e001', type: 'expense', category: 'other_expense', account: '', amount: 3.85, date: '', remark: '玻璃杯', createdAt: 0 },
