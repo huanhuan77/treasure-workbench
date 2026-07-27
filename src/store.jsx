@@ -2942,8 +2942,11 @@ function consolidateJiebitudu(products) {
   const isJbt = (p) => p && /洁比兔/.test(p.name) && /(湿巾|湿厕纸)/.test(p.name)
   const out = []
   let merged = null
-  for (const p of products) {
+  let insertAt = -1  // 记录第一个洁比兔的位置，合并后放在原位
+  for (let i = 0; i < products.length; i++) {
+    const p = products[i]
     if (!isJbt(p)) { out.push(p); continue }
+    if (insertAt < 0) insertAt = i  // 第一个洁比兔的位置
     if (!merged) {
       merged = { ...p, name: '洁比兔 湿巾', copies: [...(p.copies || [])] }
     } else {
@@ -2954,7 +2957,13 @@ function consolidateJiebitudu(products) {
       }
     }
   }
-  if (merged) out.push(merged)
+  if (merged) {
+    if (insertAt >= 0 && insertAt < out.length) {
+      out.splice(insertAt, 0, merged)  // 放到原洁比兔所在位置，保留用户排序
+    } else {
+      out.push(merged)
+    }
+  }
   return out
 }
 // 自愈：洁比兔湿巾/湿厕纸 产品若混入非洁比兔文案（如 DOBO噗噗片），重置回干净种子
@@ -3057,12 +3066,6 @@ function loadData() {
     // 逐个保护，单个处理失败不影响其他数据
     try { productsFinal = consolidateJiebitudu(productsFinal) } catch(e) { console.warn('[loadData] consolidateJiebitudu失败:', e) }
     try { productsFinal = sanitizeJiebitudu(productsFinal) } catch(e) { console.warn('[loadData] sanitizeJiebitudu失败:', e) }
-    // 洁比兔湿巾/湿厕纸 固定排第一
-    const jbtIdx = productsFinal.findIndex((p) => p && /洁比兔/.test(p.name) && /(湿巾|湿厕纸)/.test(p.name))
-    if (jbtIdx > 0) {
-      const [jbt] = productsFinal.splice(jbtIdx, 1)
-      productsFinal.unshift(jbt)
-    }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
