@@ -193,8 +193,8 @@ export function SavingsPage() {
   }
 
   return (
-    <div className="app-container" style={{ paddingBottom: '80px' }}>
-      <header style={{ padding: 'calc(20px + var(--safe-top)) 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.5)' }}>
+    <div className="app-container" style={{ paddingBottom: editMonth ? '140px' : '100px' }}>
+      <header style={{ padding: 'calc(12px + var(--safe-top)) 20px 12px', borderBottom: '1px solid rgba(255,255,255,0.5)' }}>
         <h1 style={{ margin:0, fontSize:'20px', fontWeight:700, color:'var(--text-main)' }}>攒钱计划</h1>
         <p style={{ margin:'6px 0 0', fontSize:'13px', color:'var(--text-sub)' }}>每月努力存 6 千 💪</p>
         {/* 年份切换 */}
