@@ -3181,10 +3181,12 @@ export function StoreProvider({ children }) {
   }, [])
 
   const setSavings = useCallback((patch) => {
-    setData((d) => ({
-      ...d,
-      savingsData: { ...(d.savingsData || defaultData.savingsData), ...patch },
-    }))
+    setData((d) => {
+      const next = { ...d, savingsData: { ...(d.savingsData || defaultData.savingsData), ...patch } }
+      // 即时写入 localStorage（不依赖 useEffect 的延迟写入）
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch(e) {}
+      return next
+    })
   }, [])
 
   const reorderProducts = useCallback((orderedIds) => {
