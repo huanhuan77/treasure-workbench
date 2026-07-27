@@ -23,7 +23,6 @@ export function SavingsPage() {
   const [editMonth, setEditMonth] = useState(null)
   const [expandedMonth, setExpandedMonth] = useState(null)
   const [editAccounts, setEditAccounts] = useState(null)
-  const [editTotal, setEditTotal] = useState('')
   const [showInvest, setShowInvest] = useState(false)
   const [showAddInv, setShowAddInv] = useState(false)
   const [activeTab, setActiveTab] = useState('save')
@@ -90,7 +89,6 @@ export function SavingsPage() {
     const r = records[key] || { details: {} }
     setEditMonth(key)
     setEditAccounts({ ...(r.details || {}) })
-    setEditTotal(String(r.actual || 0))
   }
 
   const saveEdit = () => {
@@ -101,9 +99,8 @@ export function SavingsPage() {
       const n = toNum(val)
       if (n > 0) { details[acct] = n; total += n }
     })
-    const manualTotal = toNum(editTotal)
     updateSavings(editMonth, {
-      actual: manualTotal > 0 ? manualTotal : total,
+      actual: total,
       details,
     })
     setEditMonth(null)
@@ -193,11 +190,12 @@ export function SavingsPage() {
                       <button type="button" onClick={() => setEditAccounts(p => { const n = {...p}; delete n[acct]; return n })} style={{ width:'32px', height:'32px', borderRadius:'50%', border:'1px solid #fca5a5', background:'#fef2f2', color:'#dc2626', fontSize:'18px', cursor:'pointer', padding:0, display:'flex', alignItems:'center', justifyContent:'center', lineHeight:1 }}>×</button>
                     </div>
                   ))}
-                  {/* 合计 */}
+                  {/* 合计（自动计算） */}
                   <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'10px 0 0', borderTop:'1.5px solid #fcd34d', marginTop:'6px' }}>
                     <span style={{ fontSize:'14px', fontWeight:700, color:'#92400e', minWidth:'64px' }}>💰 合计</span>
-                    <input value={editTotal} onChange={e => setEditTotal(e.target.value)} placeholder="留空按账户累加"
-                      style={{ flex:1, padding:'10px 12px', borderRadius:'10px', border:'1.5px solid #f59e0b', fontSize:'15px', outline:'none', textAlign:'right', fontWeight:700, color:'#92400e' }} />
+                    <span style={{ flex:1, textAlign:'right', fontSize:'18px', fontWeight:800, color:'#92400e' }}>
+                      {Object.values(editAccounts).reduce((sum, v) => sum + (parseInt(String(v).replace(/,/g,'')) || 0), 0).toLocaleString()}
+                    </span>
                   </div>
                   <div style={{ marginTop:'10px', display:'flex', gap:'6px' }}>
                     <select id="new-acct-select" style={{ flex:1, padding:'8px 12px', borderRadius:'10px', border:'1.5px dashed #d4a373', background:'transparent', fontSize:'13px', outline:'none', color:'#92400e' }}>
