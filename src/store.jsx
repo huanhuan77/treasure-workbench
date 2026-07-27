@@ -3071,7 +3071,11 @@ function loadData() {
       samples: (old.samples || []).map((s) => migrateSample(s)),
       transactions: migrateTransactions(Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])),
       moodData: old.moodData || [],
-      savingsData: old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData,
+      savingsData: (() => {
+        const sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
+        console.log('[loadData] old.savingsData.investments:', JSON.stringify(old.savingsData?.investments), '→ result:', JSON.stringify(sd.investments))
+        return sd
+      })(),
       sensitiveWords: old.sensitiveWords || DEFAULT_SENSITIVE_WORDS,  // 版本升级不再替换用户自定义词库
     }
   } catch (e) {
@@ -3184,7 +3188,11 @@ export function StoreProvider({ children }) {
     setData((d) => {
       const next = { ...d, savingsData: { ...(d.savingsData || defaultData.savingsData), ...patch } }
       // 即时写入 localStorage（不依赖 useEffect 的延迟写入）
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch(e) {}
+      try {
+        console.log('[setSavings] patch:', JSON.stringify(patch))
+        console.log('[setSavings] savingsData.investments:', JSON.stringify(next.savingsData.investments))
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      } catch(e) { console.warn('[setSavings] save error:', e) }
       return next
     })
   }, [])
