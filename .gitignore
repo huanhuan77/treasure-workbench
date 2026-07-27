@@ -18,3 +18,10 @@ npm-debug.log*
 
 # 本地部署凭证（不入库）
 .deploy_token
+
+# 开发临时脚本（不入库）
+gen_*.mjs
+fix_merge.py
+merge_jiebitudu.py
+test_merge.mjs
+tmp_v3.mjs
