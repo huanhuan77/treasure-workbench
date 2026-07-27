@@ -26,6 +26,7 @@ export function SavingsPage() {
   const [editTotal, setEditTotal] = useState('')
   const [showInvest, setShowInvest] = useState(false)
   const [showAddInv, setShowAddInv] = useState(false)
+  const [activeTab, setActiveTab] = useState('save')
   const [invCode, setInvCode] = useState('')
   const [invName, setInvName] = useState('')
   const [invCurrentPrice, setInvCurrentPrice] = useState(null)
@@ -118,6 +119,13 @@ export function SavingsPage() {
         <p style={{ margin:'6px 0 0', fontSize:'13px', color:'var(--text-sub)' }}>每月努力存 6 千 💪</p>
       </header>
 
+      {/* Tab 切换 */}
+      <div style={{ display:'flex', margin:'12px 16px 0', borderRadius:'12px', border:'1px solid rgba(251,191,36,0.2)', overflow:'hidden' }}>
+        <button onClick={() => setActiveTab('save')} style={{ flex:1, padding:'10px 0', fontSize:'14px', fontWeight:600, border:'none', cursor:'pointer', background: activeTab==='save' ? 'linear-gradient(135deg,#fef3c7,#fde68a)' : 'transparent', color: activeTab==='save' ? '#78350f' : 'var(--gray-300)' }}>💰 攒钱计划</button>
+        <button onClick={() => setActiveTab('invest')} style={{ flex:1, padding:'10px 0', fontSize:'14px', fontWeight:600, border:'none', cursor:'pointer', background: activeTab==='invest' ? 'linear-gradient(135deg,#e0e7ff,#c7d2fe)' : 'transparent', color: activeTab==='invest' ? '#4338ca' : 'var(--gray-300)' }}>📈 投资跟踪</button>
+      </div>
+
+      {activeTab === 'save' && (<>
       {/* 进度卡片 */}
       <div style={{ padding:'16px' }}>
         <div style={{ borderRadius:'16px', padding:'16px', background:'linear-gradient(135deg,#fef3c7,#fde68a)' }}>
@@ -227,6 +235,7 @@ export function SavingsPage() {
           )
         })}      </div>
 
+        </>)}
         {activeTab === 'invest' && (
         <div style={{ marginTop:'24px', padding:'0 16px' }}>
           <h4 style={{ margin:'0 0 10px', fontSize:'14px', fontWeight:600, color:'#78350f' }}>📈 投资跟踪</h4>

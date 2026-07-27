@@ -29,6 +29,9 @@ importers:
       react-router-dom:
         specifier: ^7.18.1
         version: 7.18.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      stock-sdk:
+        specifier: ^2.4.0
+        version: 2.4.0
     devDependencies:
       '@types/react':
         specifier: ^19.2.17
@@ -507,6 +510,11 @@ packages:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
+  stock-sdk@2.4.0:
+    resolution: {integrity: sha512-4pVdLKQ8x3iGYt9edasQoa4tT3/5xCK0EebLhuvFoVYyLYKP5Y8Eld/W3B0LZi2+LBgcOxeDUKd+jYxrOeCd5Q==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
@@ -885,6 +893,8 @@ snapshots:
   set-cookie-parser@2.7.2: {}
 
   source-map-js@1.2.1: {}
+
+  stock-sdk@2.4.0: {}
 
   tinyglobby@0.2.17:
     dependencies:
