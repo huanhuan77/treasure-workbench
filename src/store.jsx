@@ -3077,7 +3077,7 @@ function loadData() {
       }),
       transactions: migrateTransactions(Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])),
       moodData: old.moodData || [],
-      savingsData: old.savingsData || defaultData.savingsData,
+      savingsData: old.savingsData ? { ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData,
       sensitiveWords: versionMismatch ? DEFAULT_SENSITIVE_WORDS : (old.sensitiveWords || DEFAULT_SENSITIVE_WORDS),
     }
   } catch (e) {
