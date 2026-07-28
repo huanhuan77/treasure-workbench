@@ -114,6 +114,28 @@ def handle_remove_watermark():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/download-video', methods=['POST'])
+def handle_download_video():
+    """直接下载视频，返回原始文件"""
+    data = request.get_json()
+    if not data or not data.get('url'):
+        return jsonify({'error': '请提供视频链接'}), 400
+
+    url = data['url'].strip()
+    try:
+        input_path = download_video(url)
+        out_name = 'video_' + uuid.uuid4().hex + '.mp4'
+        output_path = os.path.join(OUTPUT_DIR, out_name)
+        # 直接移动，不做任何处理
+        os.rename(input_path, output_path)
+        return jsonify({
+            'url': f'/api/download/{out_name}',
+            'message': '下载成功',
+            'filename': out_name,
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/download/<filename>')
 def download_file(filename):
     filepath = os.path.join(OUTPUT_DIR, filename)
