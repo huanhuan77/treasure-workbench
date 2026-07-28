@@ -253,6 +253,7 @@ export function FinancePage() {
 
       {showAdd && (
         <TransactionForm
+          accounts={accounts}
           onClose={() => setShowAdd(false)}
           onSave={(data) => { addTransaction(data); setShowAdd(false); show('已添加', 'success') }}
         />
@@ -319,7 +320,7 @@ function SortButton({ label, field, sortBy, onClick }) {
   )
 }
 
-function TransactionForm({ onClose, onSave }) {
+function TransactionForm({ accounts = [], onClose, onSave }) {
   const [form, setForm] = useState({
     type: 'income',
     category: 'sample',
