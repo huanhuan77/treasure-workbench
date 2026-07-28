@@ -50,6 +50,7 @@ export function CalendarDetailPage() {
     data[date] = { mood, weather, note: note.trim() }
     saveData(data)
     show('已保存', 'success')
+    navigate('/calendar')
   }
 
   const handleDelete = () => {
