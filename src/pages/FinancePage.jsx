@@ -322,7 +322,7 @@ function SortButton({ label, field, sortBy, onClick }) {
 function TransactionForm({ onClose, onSave }) {
   const [form, setForm] = useState({
     type: 'income',
-    category: 'commission',
+    category: 'sample',
     account: '',
     amount: '',
     date: new Date().toISOString().slice(0, 10),
