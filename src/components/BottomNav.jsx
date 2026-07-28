@@ -157,7 +157,7 @@ export function BottomNav() {
         </div>
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
           {sideTabs.map((tab) => {
-            const isActive = location.hash.includes(tab.to)
+            const isActive = location.hash === `#${tab.to}` || location.hash.startsWith(`#${tab.to}?`)
             return (
               <button
                 key={tab.to}
