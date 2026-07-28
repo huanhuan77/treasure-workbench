@@ -42,12 +42,16 @@ export function NewProductPage() {
           <input style={inputStyle} placeholder="例如：珀芙研 / 洁比兔" value={brand} onChange={e => setBrand(e.target.value)} />
         </Field>
         <Field label="分类（选填）">
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {CATEGORIES.map(c => (
               <button key={c} onClick={() => setCategory(c)} style={{
-                padding: '7px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: category === c ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.5)',
-                color: category === c ? '#fff' : 'var(--text-sub)' }}>{c}</button>
+                padding: '10px 16px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: '2px solid',
+                borderColor: category === c ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                background: category === c ? 'rgba(244,114,182,0.08)' : '#fff',
+                color: category === c ? 'var(--primary)' : 'var(--text-sub)',
+                boxShadow: category === c ? '0 4px 12px rgba(244,114,182,0.2)' : 'none',
+                transition: 'all 0.15s',
+              }}>{c}</button>
             ))}
           </div>
         </Field>
@@ -108,12 +112,16 @@ export function EditProductPage() {
           <input style={inputStyle} value={brand} onChange={e => setBrand(e.target.value)} />
         </Field>
         <Field label="分类（选填）">
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {CATEGORIES.map(c => (
               <button key={c} onClick={() => setCategory(c)} style={{
-                padding: '7px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: category === c ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.5)',
-                color: category === c ? '#fff' : 'var(--text-sub)' }}>{c}</button>
+                padding: '10px 16px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: '2px solid',
+                borderColor: category === c ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                background: category === c ? 'rgba(244,114,182,0.08)' : '#fff',
+                color: category === c ? 'var(--primary)' : 'var(--text-sub)',
+                boxShadow: category === c ? '0 4px 12px rgba(244,114,182,0.2)' : 'none',
+                transition: 'all 0.15s',
+              }}>{c}</button>
             ))}
           </div>
         </Field>
