@@ -5,6 +5,7 @@ const tabs = [
   { to: '/samples', label: '样品', icon: '🏷️' },
   { to: '/savings', label: '攒钱', icon: '💰' },
   { to: '/finance', label: '收支', icon: '💰' },
+  { to: '/mood', label: '心情', icon: '😊' },
   { to: '/sensitive', label: '词库', icon: '📚' },
 ]
 
