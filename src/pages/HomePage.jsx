@@ -173,8 +173,7 @@ export function HomePage() {
   const [categoryFilter, setCategoryFilter] = useState('')
 
   const openEdit = (p) => {
-    setEditId(p.id); setEditName(p.name); setEditBrand(p.brand || ''); setEditCategory(p.category || '')
-    setEditOpen(true)
+    navigate(`/product/${p.id}/edit`)
   }
 
   const handleSaveEdit = () => {
@@ -274,7 +273,7 @@ export function HomePage() {
       justDraggedRef.current = true
       try { localStorage.setItem('fabPos', JSON.stringify(fabPosRef.current)) } catch (e) {}
     } else if (openIfTap) {
-      setForm({ name: '', brand: '', category: '' }); setShowAdd(true)
+      navigate('/product/new')
     }
   }
 

@@ -229,7 +229,7 @@ export function FinancePage() {
 
       {/* 添加按钮 — 毛玻璃悬浮 */}
       <button
-        onClick={() => setShowAdd(true)}
+        onClick={() => navigate('/finance/new')}
         style={{
           position: 'fixed',
           bottom: 'calc(92px + var(--safe-bottom))',

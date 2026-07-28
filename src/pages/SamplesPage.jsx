@@ -117,7 +117,7 @@ export function SamplesPage() {
     if (m) {
       try { localStorage.setItem('sampleFabPos', JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else if (tap) {
-      setShowAdd(true)
+      navigate('/samples/new')
     }
   }
 
@@ -199,7 +199,7 @@ export function SamplesPage() {
                     {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
                     {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
                     {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
-                    <button onClick={() => setEditing(s)} style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, background: 'rgba(236,72,182,0.08)', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', flexShrink: 0 }}>编辑</button>
+                    <button onClick={() => navigate(`/samples/${s.id}/edit`)} style={{ marginLeft: 'auto', color: 'var(--primary)', fontSize: '13px', fontWeight: 600, background: 'rgba(236,72,182,0.08)', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', flexShrink: 0 }}>编辑</button>
                   </div>
 
                   {/* 备注（可选） */}
