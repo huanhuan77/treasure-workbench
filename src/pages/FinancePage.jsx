@@ -23,6 +23,7 @@ export function FinancePage() {
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)
   const [delId, setDelId] = useState(null)
+  const [swipedTxId, setSwipedTxId] = useState(null)
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterAccount, setFilterAccount] = useState('all')
   const [filterType, setFilterType] = useState('all')
@@ -177,14 +178,23 @@ export function FinancePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {filtered.map((t, idx) => {
               const cat = CATEGORIES[t.category] || { label: t.category, color: 'var(--text-sub)', bg: 'rgba(255,255,255,0.5)', type: t.type }
+              const isSwiped = swipedTxId === t.id
               return (
-                <div key={t.id} style={{
-                  ...glassStyle,
-                  padding: '14px 16px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
+                <div key={t.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
+                  {/* 左滑操作按钮 */}
+                  <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
+                    <button onClick={() => { setSwipedTxId(null); setDelId(t.id) }} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
+                  </div>
+                  <div
+                    onTouchStart={(e) => { const ct = e.touches[0]; e.currentTarget.dataset.swipeStart = `${ct.clientX},${ct.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
+                    onTouchMove={(e) => { const ct = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = ct.clientX - start[0]; const dy = ct.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
+                    onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedTxId(prev => prev === t.id ? null : t.id) } }}
+                    style={{
+                      ...glassStyle, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-80px)' : 'translateX(0)',
+                      position: 'relative', zIndex: 1,
+                    }}
+                  >
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       <span style={{
@@ -214,14 +224,8 @@ export function FinancePage() {
                     }}>
                       {t.type === 'income' ? '+' : '-'}¥{t.amount.toFixed(2)}
                     </span>
-                    <button
-                      onClick={() => setDelId(t.id)}
-                      style={{
-                        color: 'var(--text-sub)', fontSize: '14px', padding: '6px 10px',
-                        background: 'rgba(254, 226, 226, 0.5)', borderRadius: '8px',
-                      }}
-                    >✕</button>
                   </div>
+                </div>
                 </div>
               )
             })}

@@ -62,20 +62,31 @@ function displayTitle(p) {
   return `${brand} ${core}`
 }
 
-// 产品卡片视觉层：编辑/删除按钮 + 可选拖拽手柄
-function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, handle }) {
+// 产品卡片视觉层：左滑编辑/删除
+function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, handle, swipedId, setSwipedId }) {
   const iconInfo = getIconInfo(p.name)
   const copies = p.copies?.length || 0
   const orders = (p.copies || []).filter((c) => c.hasOrder).length
+  const isSwiped = swipedId === p.id
 
   return (
-    <div ref={outerRef} style={{ position: 'relative', borderRadius: '8px', ...outerStyle }}>
+    <div ref={outerRef} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', ...outerStyle }}>
+      {/* 左滑操作按钮 */}
+      <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
+        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); openEdit(p) }} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
+        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); onDelete(p.id) }} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
+      </div>
       <div
+        onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
+        onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
+        onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === p.id ? null : p.id) } }}
+        onClick={() => { if (!isSwiped) navigate(`/product/${p.id}`) }}
         style={{
           ...glassStyle, position: 'relative', padding: '11px 12px', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: '9px',
+          transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
+          zIndex: 1,
         }}
-        onClick={() => navigate(`/product/${p.id}`)}
       >
         {/* 拖拽手柄 */}
         {handle}
@@ -102,29 +113,8 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
           </div>
         </div>
 
-        {/* 右侧操作按钮：编辑 + 删除 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexShrink: 0 }}>
-          <button
-            onClick={(e) => { e.stopPropagation(); openEdit(p) }}
-            aria-label="编辑"
-            style={{
-              width: '28px', height: '28px', borderRadius: '50%', border: 'none',
-              background: 'rgba(236, 72, 182, 0.12)', color: 'var(--primary)', fontSize: '13px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            }}
-          >✎</button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onDelete(p.id) }}
-            aria-label="删除"
-            style={{
-              width: '28px', height: '28px', borderRadius: '50%', border: 'none',
-              background: 'rgba(244, 63, 94, 0.10)', color: '#e11d48', fontSize: '13px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-            }}
-          >✗</button>
         </div>
       </div>
-    </div>
   )
 }
 
@@ -163,6 +153,7 @@ export function HomePage() {
   const [checking, setChecking] = useState(false)
   const [editId, setEditId] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [swipedId, setSwipedId] = useState(null)
   const [delId, setDelId] = useState(null)
   const [search, setSearch] = useState('')
 
@@ -339,7 +330,7 @@ export function HomePage() {
               <SortableContext items={products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {products.map((p) => (
-                    <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} />
+                    <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
                   ))}
                 </div>
               </SortableContext>
@@ -350,7 +341,7 @@ export function HomePage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {filtered.map((p) => (
-              <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} />
+              <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
             ))}
           </div>
         )}
