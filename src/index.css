@@ -81,6 +81,7 @@ input::placeholder, textarea::placeholder {
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(244,114,182,0.15);
 }
 
 ::-webkit-scrollbar {
