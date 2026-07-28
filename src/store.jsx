@@ -3017,9 +3017,10 @@ function loadData() {
         const extraCopies = userCopies.slice(seedCopies.length)
         products.push({
           ...user,
-          name: preset.name,
-          brand: preset.brand,
-          category: preset.category,
+          // 保留用户已编辑的 name/brand/category，不再被种子数据覆盖
+          name: user.name || preset.name,
+          brand: user.brand || preset.brand,
+          category: user.category || preset.category,
           copies: [...filledCopies, ...extraCopies],
         })
       } else {
