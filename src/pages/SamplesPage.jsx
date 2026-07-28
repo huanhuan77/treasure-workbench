@@ -135,7 +135,7 @@ export function SamplesPage() {
 
       {/* 状态筛选 */}
       <div style={{ display: 'flex', gap: '8px', padding: '8px 16px 6px', overflowX: 'auto' }}>
-        {[{ key: 'all', label: '全部', emoji: '📋' }, ...STATUS_LIST].map((f) => (
+        {[{ key: 'all', label: '全部' }, ...STATUS_LIST].map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
@@ -146,7 +146,7 @@ export function SamplesPage() {
               border: filter === f.key ? 'none' : '1px solid rgba(255,255,255,0.6)',
               boxShadow: filter === f.key ? '0 4px 12px rgba(244,114,182,0.25)' : 'none',
             }}
-          >{f.emoji} {f.label}{f.key !== 'all' ? ` ${statusStats[f.key] || 0}` : ` ${total}`}</button>
+          >{f.label}{f.key !== 'all' ? ` ${statusStats[f.key] || 0}` : ` ${total}`}</button>
         ))}
       </div>
 
