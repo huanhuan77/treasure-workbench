@@ -1,18 +1,18 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
-// 底部主 tab（4 个核心功能）
+// 底部主 tab（5 个核心功能）
 const mainTabs = [
   { to: '/', label: '产品', icon: '📦', end: true },
   { to: '/samples', label: '样品', icon: '🏷️' },
   { to: '/savings', label: '攒钱', icon: '💰' },
   { to: '/finance', label: '收支', icon: '💰' },
+  { to: '/extract', label: '提取', icon: '📝' },
 ]
 
 // 侧边栏次要 tab
 const sideTabs = [
   { to: '/sensitive', label: '词库', icon: '📚' },
-  { to: '/extract', label: '文案提取', icon: '📝' },
 ]
 
 function TabItem({ to, label, icon, end, onClick }) {
