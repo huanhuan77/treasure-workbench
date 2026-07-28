@@ -160,7 +160,6 @@ export function HomePage() {
   const { products, addProduct, deleteProduct, updateProduct, reorderProducts } = useStore()
   const { show } = useToast()
   const navigate = useNavigate()
-  const [showAdd, setShowAdd] = useState(false)
   const [checking, setChecking] = useState(false)
   const [editId, setEditId] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -209,12 +208,6 @@ export function HomePage() {
     } else if (result === 'error') show('检查更新失败，请重试', 'error')
   }
 
-  const handleAdd = () => {
-    if (!form.name.trim()) { show('请输入产品名称', 'error'); return }
-    addProduct(form)
-    setForm({ name: '', brand: '', category: '' })
-    setShowAdd(false); show('产品已添加', 'success')
-  }
 
   // 悬浮 + 按钮可拖动
   const [fabPos, setFabPos] = useState(() => {
