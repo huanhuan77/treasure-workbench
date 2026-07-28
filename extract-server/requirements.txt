@@ -1,0 +1,8 @@
+fastapi>=0.115.0
+uvicorn>=0.30.0
+python-multipart>=0.0.12
+openai-whisper>=20240930
+requests>=2.32.0
+imageio[ffmpeg]>=2.35.0
+# playwright（可选）：抖音视频捕获需要，无头服务器可安装 chromium
+# playwright>=1.48.0

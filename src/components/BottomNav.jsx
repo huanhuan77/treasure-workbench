@@ -6,6 +6,7 @@ const tabs = [
   { to: '/savings', label: '攒钱', icon: '💰' },
   { to: '/finance', label: '收支', icon: '💰' },
   { to: '/sensitive', label: '词库', icon: '📚' },
+  { to: '/extract', label: '提取', icon: '📝' },
 ]
 
 export function BottomNav() {
