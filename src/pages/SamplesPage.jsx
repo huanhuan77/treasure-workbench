@@ -198,7 +198,7 @@ export function SamplesPage() {
                   <div
                     onClick={() => { if (isSwiped) { setSwipedId(null) } else { /* tap to view */ } }}
                     onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
-                    onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; if (Math.abs(dx) > 10) e.currentTarget.dataset.swiping = 'true' }}
+                    onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
                     onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
                     style={{
                       ...glassStyle, padding: '12px 14px 10px 14px', borderLeft: `3px solid ${st.stripe}`,
