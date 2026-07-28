@@ -76,7 +76,10 @@ export function CalendarPage() {
                     color: 'var(--text-main)',
                   }}>{day}</div>
                   {entry?.mood ? (
-                    <span style={{ fontSize: '14px', lineHeight: 1.2 }}>{entry.mood}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1px', lineHeight: 1.1 }}>
+                      <span style={{ fontSize: '13px' }}>{entry.mood}</span>
+                      {entry.weather && <span style={{ fontSize: '10px' }}>{entry.weather}</span>}
+                    </div>
                   ) : <span style={{ height: '16px' }} />}
                 </div>
               )
