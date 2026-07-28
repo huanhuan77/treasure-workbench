@@ -401,7 +401,18 @@ function TransactionForm({ onClose, onSave }) {
       </Field>
 
       <Field label="账号（选填）">
-        <input style={inputStyle} placeholder="例如：抖音号A / 小红书号B" value={form.account} onChange={(e) => setForm({ ...form, account: e.target.value })} />
+        <div style={{ position: 'relative' }}>
+          <select value={form.account} onChange={(e) => setForm({ ...form, account: e.target.value })}
+            style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: '36px', color: form.account ? 'var(--text-main)' : 'var(--text-sub)' }}>
+            <option value="">请选择账号</option>
+            {accounts.map((a) => (<option key={a} value={a}>{a}</option>))}
+            <option value="__custom__">✏️ 自定义输入</option>
+          </select>
+          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
+        </div>
+        {form.account === '__custom__' && (
+          <input style={{ ...inputStyle, marginTop: '6px' }} placeholder="输入新账号" value={form.customAccount || ''} onChange={(e) => setForm({ ...form, customAccount: e.target.value, account: e.target.value })} autoFocus />
+        )}
       </Field>
 
       <Field label="金额" required>
