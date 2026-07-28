@@ -12,6 +12,7 @@ import { SensitiveWordsPage } from './pages/SensitiveWordsPage'
 import { SensitiveCheckPage } from './pages/SensitiveCheckPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { CalendarDetailPage } from './pages/CalendarDetailPage'
+import { BackupPage } from './pages/BackupPage'
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/sensitive-check" element={<SensitiveCheckPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/calendar/:date" element={<CalendarDetailPage />} />
+            <Route path="/backup" element={<BackupPage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
           </Routes>
           <BottomNav />
