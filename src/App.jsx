@@ -24,7 +24,7 @@ function App() {
       if (!token) return
       const data = {}
       for (const key of KEYS) {
-        try { const r = localStorage.getItem(key); if (r) data[key] = JSON.parse(r) } catch {}
+        try { const r = localStorage.getItem(key); if (r) data[key] = JSON.parse(r) } catch (e){}
       }
       const gistId = localStorage.getItem(GIST_ID_KEY)
       const url = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists'
@@ -43,7 +43,7 @@ function App() {
           const result = await res.json()
           if (!gistId) localStorage.setItem(GIST_ID_KEY, result.id)
         }
-      } catch {}
+      } catch (e){}
     }
     const first = setTimeout(doBackup, 30000)
     const interval = setInterval(doBackup, 3 * 60 * 60 * 1000)

@@ -25,7 +25,7 @@ export function BackupPage() {
       try {
         const raw = localStorage.getItem(key)
         if (raw) backup[key] = JSON.parse(raw)
-      } catch {}
+      } catch (e){}
     }
     return backup
   }
@@ -131,6 +131,10 @@ export function BackupPage() {
     }
   }
 
+  const stats = {}
+  for (const key of KEYS) {
+    try {
+      const raw = localStorage.getItem(key)
       if (raw) {
         const d = JSON.parse(raw)
         if (key === 'blogger_workbench_data_v1') {
@@ -143,7 +147,7 @@ export function BackupPage() {
           stats['投资'] = Array.isArray(d) ? d.length : 0
         }
       }
-    } catch {}
+    } catch (e) {}
   }
 
   return (
