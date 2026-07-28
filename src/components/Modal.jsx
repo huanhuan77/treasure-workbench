@@ -33,6 +33,7 @@ export function Modal({ open, onClose, title, children, footer, center }) {
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
+      document.documentElement.style.overflow = 'hidden'
       // 监听 iOS 虚拟键盘，动态调整弹窗位置避免被遮挡
       const vv = window.visualViewport
       const onResize = () => {
@@ -53,6 +54,7 @@ export function Modal({ open, onClose, title, children, footer, center }) {
       }
       return () => {
         document.body.style.overflow = ''
+        document.documentElement.style.overflow = ''
         if (vv) vv.removeEventListener('resize', onResize)
         if (el) el.removeEventListener('focusin', scrollActiveIntoView)
         setKbHeight(0)
@@ -64,13 +66,10 @@ export function Modal({ open, onClose, title, children, footer, center }) {
 
   return (
     <div
+      onClick={onClose}
       style={{
-        position: kbHeight ? 'absolute' : 'fixed',
-        top: kbHeight ? `${window.visualViewport?.offsetTop || 0}px` : 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: kbHeight ? `${window.visualViewport?.height || window.innerHeight}px` : '100%',
+        position: 'fixed',
+        inset: 0,
         background: 'rgba(74, 44, 58, 0.25)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
@@ -79,10 +78,8 @@ export function Modal({ open, onClose, title, children, footer, center }) {
         alignItems: center ? 'center' : 'flex-end',
         justifyContent: 'center',
         padding: center ? '24px 16px' : undefined,
-        paddingBottom: kbHeight ? `${kbHeight}px` : undefined,
-        animation: 'fadeIn 0.2s ease',
+        transition: 'all 0.15s ease',
       }}
-      onClick={onClose}
     >
       <div
         style={{
@@ -91,12 +88,14 @@ export function Modal({ open, onClose, title, children, footer, center }) {
           WebkitBackdropFilter: 'blur(30px) saturate(180%)',
           width: '100%',
           maxWidth: '480px',
-          maxHeight: kbHeight ? `calc(${window.visualViewport?.height || window.innerHeight}px - 40px)` : '85vh',
+          maxHeight: '85vh',
+          transform: kbHeight ? `translateY(-${kbHeight}px)` : 'none',
           borderRadius: center ? '24px' : '28px 28px 0 0',
           display: 'flex',
           flexDirection: 'column',
           animation: center ? 'fadeIn 0.2s ease' : 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           boxShadow: center ? '0 12px 40px rgba(244, 114, 182, 0.20)' : '0 -8px 40px rgba(244, 114, 182, 0.15)',
+          transition: 'transform 0.2s ease',
         }}
         onClick={(e) => e.stopPropagation()}
       >
