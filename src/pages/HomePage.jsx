@@ -163,6 +163,8 @@ export function HomePage() {
   const [checking, setChecking] = useState(false)
   const [editId, setEditId] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [delId, setDelId] = useState(null)
+  const [search, setSearch] = useState('')
 
   const openEdit = (p) => {
     navigate(`/product/${p.id}/edit`)
