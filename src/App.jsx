@@ -11,6 +11,7 @@ import { ProductDetailPage } from './pages/ProductDetailPage'
 import { SensitiveWordsPage } from './pages/SensitiveWordsPage'
 import { SensitiveCheckPage } from './pages/SensitiveCheckPage'
 import { WatermarkRemovePage } from './pages/WatermarkRemovePage'
+import { CalendarPage } from './pages/CalendarPage'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/sensitive" element={<SensitiveWordsPage />} />
             <Route path="/sensitive-check" element={<SensitiveCheckPage />} />
             <Route path="/watermark" element={<WatermarkRemovePage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
           </Routes>
           <BottomNav />
