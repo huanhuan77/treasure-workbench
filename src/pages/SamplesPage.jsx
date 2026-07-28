@@ -311,7 +311,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
       }
     >
       <Field label="产品名称" required>
-        <input style={inputStyle} placeholder="样品名称" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
+        <input style={inputStyle} placeholder="样品名称" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
       </Field>
 
       <Field label="所属账号">
