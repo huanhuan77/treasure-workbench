@@ -1,15 +1,13 @@
 import { useState } from 'react'
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { StoreProvider } from './store'
 import { ToastProvider } from './components/Toast'
 import { BottomNav } from './components/BottomNav'
-import { HomePage } from './pages/HomePage'
 import { ProductDetailPage } from './pages/ProductDetailPage'
-import { SamplesPage } from './pages/SamplesPage'
-import { FinancePage } from './pages/FinancePage'
 import { SensitiveWordsPage } from './pages/SensitiveWordsPage'
-import { SavingsPage } from './pages/SavingsPage'
 import { CopyExtractorPage } from './pages/CopyExtractorPage'
+import { HomeShell } from './pages/HomeShell'
+import { FinanceShell } from './pages/FinanceShell'
 
 function App() {
   return (
@@ -17,13 +15,22 @@ function App() {
       <ToastProvider>
         <HashRouter>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/product/:id" element={<ProductDetailPage />} />
-            <Route path="/samples" element={<SamplesPage />} />
-            <Route path="/finance" element={<FinancePage />} />
+            {/* 首页（产品 + 样品） */}
+            <Route path="/" element={<HomeShell />} />
+
+            {/* 财务（攒钱 + 收支） */}
+            <Route path="/finance" element={<FinanceShell />} />
+
+            {/* 其他独立 tab */}
             <Route path="/sensitive" element={<SensitiveWordsPage />} />
-            <Route path="/savings" element={<SavingsPage />} />
             <Route path="/extract" element={<CopyExtractorPage />} />
+
+            {/* 产品详情 */}
+            <Route path="/product/:id" element={<ProductDetailPage />} />
+
+            {/* 旧路由兼容：单独访问时跳到对应的 shell + tab */}
+            <Route path="/samples" element={<Navigate to="/?tab=samples" replace />} />
+            <Route path="/savings" element={<Navigate to="/finance?tab=savings" replace />} />
           </Routes>
           <BottomNav />
         </HashRouter>
