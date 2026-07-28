@@ -97,7 +97,7 @@ export function NewTransactionPage() {
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="备注" value={remark} onChange={e => setRemark(e.target.value)} />
         </Field>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-          <button style={btnGhost} onClick={() => navigate('/finance')}>取消</button>
+          <button style={{ ...btnGhost, border: "1.5px solid rgba(0,0,0,0.08)", background: "#fff" }} onClick={() => navigate('/finance')}>取消</button>
           <button style={{ ...btnPrimary, flex: 1 }} onClick={handleSave}>保存</button>
         </div>
       </div>
