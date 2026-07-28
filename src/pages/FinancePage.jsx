@@ -20,7 +20,6 @@ const CATEGORIES = {
 export function FinancePage() {
   const { transactions, addTransaction, deleteTransaction } = useStore()
   const { show } = useToast()
-  const navigate = useNavigate()
   const [showAdd, setShowAdd] = useState(false)
   const [delId, setDelId] = useState(null)
   const [filterCategory, setFilterCategory] = useState('all')

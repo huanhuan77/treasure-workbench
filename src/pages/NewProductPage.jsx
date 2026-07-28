@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
+import { Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
 
 const CATEGORIES = ['保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
 
@@ -33,8 +33,7 @@ export function NewProductPage() {
   return (
     <div className="app-container">
       <PageHeader title="添加产品" onBack={() => navigate('/')} />
-      <div style={{ padding: '16px' }}><div style={{ ...glassStyle, padding: '16px' }}>
-        <div style={{ ...glassStyle, padding: '16px', marginBottom: '16px' }}>
+      <div style={{ padding: '16px' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} placeholder="例如：补水喷雾" value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
@@ -51,8 +50,7 @@ export function NewProductPage() {
             ))}
           </div>
         </Field>
-        </div>
-        <div style={{ display: flex, gap: 10px, marginTop: 8px }}>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
           <button style={btnGhost} onClick={() => navigate('/')}>取消</button>
           <button style={{ ...btnPrimary, flex: 1 }} onClick={handleSave}>保存</button>
         </div>
@@ -99,8 +97,7 @@ export function EditProductPage() {
   return (
     <div className="app-container">
       <PageHeader title="编辑产品" onBack={() => navigate(-1)} />
-      <div style={{ padding: '16px' }}><div style={{ ...glassStyle, padding: '16px' }}>
-        <div style={{ ...glassStyle, padding: '16px', marginBottom: '16px' }}>
+      <div style={{ padding: '16px' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
@@ -117,8 +114,7 @@ export function EditProductPage() {
             ))}
           </div>
         </Field>
-        </div>
-        <div style={{ display: flex, gap: 10px, marginTop: 8px }}>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
           <button style={{ ...btnGhost, color: '#fb7185' }} onClick={handleDelete}>删除</button>
           <button style={btnGhost} onClick={() => navigate(-1)}>取消</button>
           <button style={{ ...btnPrimary, flex: 1 }} onClick={handleSave}>保存</button>

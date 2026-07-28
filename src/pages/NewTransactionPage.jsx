@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
+import { Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
 
 const CATEGORIES = {
   sample: { label: '样品收入', type: 'income', color: '#0d9488', bg: 'rgba(204, 251, 241, 0.8)' },
@@ -50,7 +50,6 @@ export function NewTransactionPage() {
     <div className="app-container">
       <PageHeader title="添加收支" onBack={() => navigate('/finance')} />
       <div style={{ padding: '16px' }}>
-        <div style={{ ...glassStyle, padding: '16px', marginBottom: '16px' }}>
         <Field label="类型">
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => { setType('income'); setCategory('sample') }}
