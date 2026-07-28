@@ -9,7 +9,6 @@ import { SamplesPage } from './pages/SamplesPage'
 import { FinancePage } from './pages/FinancePage'
 import { SensitiveWordsPage } from './pages/SensitiveWordsPage'
 import { SavingsPage } from './pages/SavingsPage'
-import { MoodPage } from './pages/MoodPage'
 
 function App() {
   return (
@@ -23,7 +22,6 @@ function App() {
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/sensitive" element={<SensitiveWordsPage />} />
             <Route path="/savings" element={<SavingsPage />} />
-            <Route path="/mood" element={<MoodPage />} />
           </Routes>
           <BottomNav />
         </HashRouter>

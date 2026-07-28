@@ -2852,7 +2852,6 @@ const defaultData = {
     { id: 'seed_tx_e097', type: 'expense', category: 'other_expense', account: '', amount: 36.0, date: '', remark: 'icloud', createdAt: 0 },
     { id: 'seed_tx_e098', type: 'expense', category: 'ad', account: '', amount: 193.33, date: '', remark: '清清片大号投流', createdAt: 0 },
   ],
-  moodData: [],
   savingsData: {
     investments: [],
     monthlyGoal: 6000,
@@ -3073,7 +3072,6 @@ function loadData() {
       products: productsFinal,
       samples: (old.samples || []).map((s) => migrateSample(s)),
       transactions: migrateTransactions(Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])),
-      moodData: old.moodData || [],
       savingsData: (() => {
         let sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
         // 独立 key 回退：主数据无投资记录时尝试从独立 localStorage key 恢复
@@ -3160,23 +3158,6 @@ export function StoreProvider({ children }) {
       ...d,
       products: d.products.map((p) => (p.id === productId ? { ...p, topics } : p)),
     }))
-  }, [])
-
-  const getMood = useCallback((date) => {
-    return data.moodData.find((m) => m.date === date) || null
-  }, [data.moodData])
-
-  const setMood = useCallback((date, mood, quote) => {
-    setData((d) => {
-      const idx = d.moodData.findIndex((m) => m.date === date)
-      const entry = { date, mood: mood || '', quote: quote || '' }
-      if (idx >= 0) {
-        const next = [...d.moodData]
-        next[idx] = entry
-        return { ...d, moodData: next }
-      }
-      return { ...d, moodData: [entry, ...d.moodData] }
-    })
   }, [])
 
   const getSavings = useCallback(() => {
@@ -3386,7 +3367,6 @@ export function StoreProvider({ children }) {
     addSample, deleteSample, updateSample,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord, resetData,
-    getMood, setMood,
     getSavings, updateSavings, setSavings,
   }
 

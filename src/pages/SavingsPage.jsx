@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useStore } from '../store'
 import { useNavigate } from 'react-router-dom'
 
@@ -52,6 +52,51 @@ export function SavingsPage() {
     setSavings({ investments: list })
     try { localStorage.setItem(INV_STORAGE_KEY, JSON.stringify(list)) } catch(e) {}
   }
+
+  // 自动刷新所有投资的当前价（页面加载时静默执行）
+  const autoRefreshPrices = useCallback(async (list) => {
+    if (!list || list.length === 0) return
+    const { StockSDK } = await import('stock-sdk')
+    const sdk = new StockSDK()
+    let changed = false
+    const updated = await Promise.all(list.map(async (inv) => {
+      if (!inv.code) return inv
+      const code = inv.code.replace(/\D/g, '')
+      const isFund = code.length <= 6
+      try {
+        let newPrice = null
+        if (isFund) {
+          const q = await sdk.quotes.fund([code])
+          if (q?.[0]) newPrice = q[0].nav
+        } else {
+          const q = await sdk.quotes.cn([code])
+          if (q?.[0]) newPrice = q[0].price
+        }
+        if (newPrice != null && newPrice !== inv.currentPrice) {
+          changed = true
+          const sp = inv.sellPrice
+          const change = sp ? ((newPrice - sp) / sp * 100) : null
+          return { ...inv, currentPrice: newPrice, change }
+        }
+      } catch(e) { /* silent fail */ }
+      return inv
+    }))
+    if (changed) {
+      setInvestments(updated)
+      setSavings({ investments: updated })
+      try { localStorage.setItem(INV_STORAGE_KEY, JSON.stringify(updated)) } catch(e) {}
+    }
+  }, [setInvestments, setSavings])
+
+  const invRef = useRef(investments)
+  invRef.current = investments
+
+  // 页面加载后自动刷新一次，之后每 60 秒检查一次
+  useEffect(() => {
+    autoRefreshPrices(invRef.current)
+    const timer = setInterval(() => autoRefreshPrices(invRef.current), 60000)
+    return () => clearInterval(timer)
+  }, [])
   const fetchAndAdd = async () => {
     if (!invCode.trim()) return
     try {
