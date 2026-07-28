@@ -13,6 +13,7 @@ const mainTabs = [
 // 侧边栏次要 tab
 const sideTabs = [
   { to: '/sensitive', label: '词库', icon: '📚' },
+  { to: '/watermark', label: '去水印', icon: '🎬' },
 ]
 
 function TabItem({ to, label, icon, end, onClick }) {
