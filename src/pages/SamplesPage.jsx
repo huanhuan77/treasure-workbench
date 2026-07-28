@@ -46,6 +46,7 @@ function sortSamples(samples) {
 }
 
 export function SamplesPage() {
+  const navigate = useNavigate()
   const { samples, addSample, deleteSample, updateSample } = useStore()
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)

@@ -18,6 +18,7 @@ const CATEGORIES = {
 }
 
 export function FinancePage() {
+  const navigate = useNavigate()
   const { transactions, addTransaction, deleteTransaction } = useStore()
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)
