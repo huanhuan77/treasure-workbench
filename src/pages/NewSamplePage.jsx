@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
+import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 
 const STATUS = {
   unpublished: { label: '未发布', emoji: '⚪️' },
@@ -17,7 +17,7 @@ const ACCOUNT_NICK = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨',
 function PageHeader({ title, onBack }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-      <button onClick={onBack} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
+      <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
       <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>{title}</h1>
     </div>
   )
@@ -46,6 +46,7 @@ export function NewSamplePage() {
     <div className="app-container">
       <PageHeader title="添加样品" onBack={() => navigate('/samples')} />
       <div style={{ padding: '16px' }}>
+        <div style={{ ...glassStyle, padding: '16px', marginBottom: '16px' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} placeholder="例如：补水喷雾" value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>

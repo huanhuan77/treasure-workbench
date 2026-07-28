@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
+import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 
 const CATEGORIES = {
   sample: { label: '样品收入', type: 'income', color: '#0d9488', bg: 'rgba(204, 251, 241, 0.8)' },
@@ -20,7 +20,7 @@ const EXPENSE_TYPES = ['prop', 'other_expense', 'ad']
 function PageHeader({ title, onBack }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-      <button onClick={onBack} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
+      <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
       <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>{title}</h1>
     </div>
   )
@@ -50,6 +50,7 @@ export function NewTransactionPage() {
     <div className="app-container">
       <PageHeader title="添加收支" onBack={() => navigate('/finance')} />
       <div style={{ padding: '16px' }}>
+        <div style={{ ...glassStyle, padding: '16px', marginBottom: '16px' }}>
         <Field label="类型">
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => { setType('income'); setCategory('sample') }}
