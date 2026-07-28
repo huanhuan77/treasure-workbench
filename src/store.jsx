@@ -3012,7 +3012,17 @@ function loadData() {
         const userCopies = user.copies || []
         const filledCopies = seedCopies.map((sc, i) => {
           const uc = userCopies[i]
-          return uc ? { ...sc, used: uc.used, hasOrder: uc.hasOrder } : sc
+          if (!uc) return sc
+          // 保留用户编辑过的文案内容（content/title/topics 以用户修改为准）
+          return {
+            ...sc,
+            content: uc.content && uc.content !== sc.content ? uc.content : sc.content,
+            title: uc.title && uc.title !== sc.title ? uc.title : sc.title,
+            topics: uc.topics && JSON.stringify(uc.topics) !== JSON.stringify(sc.topics) ? uc.topics : sc.topics,
+            used: uc.used,
+            hasOrder: uc.hasOrder,
+            usedDate: uc.usedDate || sc.usedDate,
+          }
         })
         const extraCopies = userCopies.slice(seedCopies.length)
         products.push({
