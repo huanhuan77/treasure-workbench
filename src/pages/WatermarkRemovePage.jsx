@@ -8,9 +8,11 @@ export function WatermarkRemovePage() {
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState('')
   const [resultUrl, setResultUrl] = useState('')
-  const [mode, setMode] = useState('auto')
-  const [position, setPosition] = useState('bottom-right')
-  const videoRef = useRef(null)
+const [mode, setMode] = useState('auto')
+const [position, setPosition] = useState('bottom-right')
+const [serverUrl, setServerUrl] = useState(localStorage.getItem('watermark_server_url') || '')
+const [showConfig, setShowConfig] = useState(false)
+const videoRef = useRef(null)
 
   // 水印位置预设（抖音常见位置）
   const POSITIONS = {
@@ -27,8 +29,9 @@ export function WatermarkRemovePage() {
     setResultUrl('')
 
     try {
+      const baseUrl = serverUrl || ''
       const modeParam = mode === 'auto' ? 'auto' : position
-      const res = await fetch(`/api/remove-watermark`, {
+      const res = await fetch(`${baseUrl}/api/remove-watermark`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim(), position: modeParam }),
@@ -61,6 +64,25 @@ export function WatermarkRemovePage() {
       </header>
 
       <div style={{ padding: '0 16px' }}>
+        {/* 服务器地址配置 */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          <button onClick={() => setShowConfig(!showConfig)} style={{ border: 'none', background: 'transparent', color: 'var(--gray-400)', fontSize: '12px', cursor: 'pointer', padding: '4px 8px' }}>
+            {showConfig ? '收起' : '⚙️ 服务配置'}
+          </button>
+        </div>
+        {showConfig && (
+          <div style={{ ...glassStyle, padding: '12px', marginBottom: '10px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '4px', display: 'block' }}>
+              后端服务器地址
+            </label>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <input value={serverUrl} onChange={(e) => { setServerUrl(e.target.value); localStorage.setItem('watermark_server_url', e.target.value) }}
+                placeholder="如 http://localhost:5002" style={{ flex: 1, padding: '8px 10px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '13px', outline: 'none' }} />
+            </div>
+            <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--gray-400)' }}>留空使用同域地址，部署后可填完整 URL</p>
+          </div>
+        )}
+
         {/* 输入区域 */}
         <div style={{ ...glassStyle, padding: '16px' }}>
           <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px', display: 'block' }}>
