@@ -13,7 +13,6 @@ const mainTabs = [
 const sideTabs = [
   { to: '/sensitive', label: '词库', icon: '📚' },
   { to: '/sensitive-check', label: '违禁词检测', icon: '🚫' },
-  { to: '/extract', label: '文案提取', icon: '📝' },
   { to: '/watermark', label: '视频去水印', icon: '🎬' },
 ]
 
