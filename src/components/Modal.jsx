@@ -16,9 +16,24 @@ export const glassSoft = {
   borderRadius: '16px',
 }
 
-export function Modal({ open, onClose, title, children, footer, center }) {
+export function Modal({ open, onClose, title, children, footer, center, inline }) {
   const [kbHeight, setKbHeight] = useState(0)
   const contentRef = useRef(null)
+
+  // inline 模式：直接渲染，不弹窗（避免键盘问题）
+  if (inline) {
+    return (
+      <div style={{ padding: '0 16px 80px' }}>
+        {/* 行内头部 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.04)', marginBottom: '16px' }}>
+          <button onClick={onClose} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
+          <h2 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', flex: 1 }}>{title}</h2>
+        </div>
+        {children}
+        {footer && <div style={{ marginTop: '16px' }}>{footer}</div>}
+      </div>
+    )
+  }
 
   // 聚焦时滚动输入框到可见区（键盘弹出后、或切换输入框时）
   const scrollActiveIntoView = useCallback(() => {

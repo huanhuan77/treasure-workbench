@@ -349,6 +349,7 @@ function TransactionForm({ accounts = [], onClose, onSave }) {
       open
       onClose={onClose}
       title="添加收支"
+      inline
       footer={
         <div style={{ display: 'flex', gap: '10px' }}>
           <button style={btnGhost} onClick={onClose}>取消</button>

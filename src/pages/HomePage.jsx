@@ -415,6 +415,7 @@ export function HomePage() {
         open={showAdd}
         onClose={() => setShowAdd(false)}
         title="添加产品"
+        inline
         footer={
           <div style={{ display: 'flex', gap: '10px' }}>
             <button style={btnGhost} onClick={() => setShowAdd(false)}>取消</button>
@@ -458,6 +459,7 @@ export function HomePage() {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         title="编辑产品"
+        inline
         footer={
           <div style={{ display: 'flex', gap: '10px' }}>
             <button style={btnGhost} onClick={() => setEditOpen(false)}>取消</button>

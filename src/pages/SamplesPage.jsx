@@ -300,6 +300,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
       open
       onClose={onClose}
       title={sample ? '编辑样品' : '添加样品'}
+      inline
       footer={
         <div style={{ display: 'flex', gap: '10px' }}>
           {onDelete && (
