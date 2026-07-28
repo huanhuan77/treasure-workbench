@@ -101,6 +101,7 @@ export function EditSamplePage() {
         <Field label="备注">
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={remark} onChange={e => setRemark(e.target.value)} />
         </Field>
+        </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
           <button style={{ ...btnGhost, color: '#fb7185' }} onClick={handleDelete}>删除</button>
           <button style={{ ...btnGhost, border: "1.5px solid rgba(0,0,0,0.1)", background: "#f9fafb" }} onClick={() => navigate('/samples')}>取消</button>

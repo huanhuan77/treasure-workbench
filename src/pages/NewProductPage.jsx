@@ -51,6 +51,7 @@ export function NewProductPage() {
             ))}
           </div>
         </Field>
+        </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
           <button style={{ ...btnGhost, border: "1.5px solid rgba(0,0,0,0.1)", background: "#f9fafb" }} onClick={() => navigate('/')}>取消</button>
           <button style={{ ...btnPrimary, flex: 1 }} onClick={handleSave}>保存</button>
@@ -116,6 +117,7 @@ export function EditProductPage() {
             ))}
           </div>
         </Field>
+        </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
           <button style={{ ...btnGhost, color: '#fb7185' }} onClick={handleDelete}>删除</button>
           <button style={{ ...btnGhost, border: "1.5px solid rgba(0,0,0,0.1)", background: "#f9fafb" }} onClick={() => navigate(-1)}>取消</button>
