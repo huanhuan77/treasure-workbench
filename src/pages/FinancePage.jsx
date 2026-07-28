@@ -148,15 +148,15 @@ export function FinancePage() {
         </div>
 
         {/* 月份 + 账号 + 排序 同行对齐 */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'stretch' }}>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'stretch', overflowX: 'auto' }}>
           <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}
-            style={{ ...inputStyle, flex:'0 1 auto', padding:'8px 10px', fontSize:'13px', background:'rgba(255,255,255,0.6)', maxWidth:'140px' }}>
+            style={{ ...inputStyle, flex:'0 0 110px', padding:'8px 8px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
             <option value="all">全部月份</option>
             {months.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
           {accounts.length > 0 && (
             <select value={filterAccount} onChange={(e) => setFilterAccount(e.target.value)}
-              style={{ ...inputStyle, flex:1, padding:'8px 10px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
+              style={{ ...inputStyle, flex:'1 1 0', minWidth: '80px', padding:'8px 8px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
               <option value="all">全部账号</option>
               {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
