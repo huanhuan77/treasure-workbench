@@ -28,7 +28,7 @@ function PageHeader({ title, onBack }) {
 
 export function NewTransactionPage() {
   const navigate = useNavigate()
-  const { addTransaction } = useStore()
+  const { transactions, addTransaction } = useStore()
   const { show } = useToast()
   const [type, setType] = useState('income')
   const [category, setCategory] = useState('sample')
@@ -38,6 +38,7 @@ export function NewTransactionPage() {
   const [remark, setRemark] = useState('')
 
   const types = type === 'income' ? INCOME_TYPES : EXPENSE_TYPES
+  const accounts = [...new Set(transactions.filter(t => t.account).map(t => t.account))]
 
   const handleSave = () => {
     if (!amount || Number(amount) <= 0) { show('请输入金额', 'error'); return }
@@ -77,7 +78,14 @@ export function NewTransactionPage() {
           </div>
         </Field>
         <Field label="账号">
-          <input style={inputStyle} placeholder="例如：抖音号A" value={account} onChange={e => setAccount(e.target.value)} />
+          <div style={{ position: 'relative' }}>
+            <select value={account} onChange={e => setAccount(e.target.value)}
+              style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: '36px', color: account ? 'var(--text-main)' : 'var(--text-sub)' }}>
+              <option value="">请选择账号</option>
+              {accounts.map(a => <option key={a} value={a}>{a}</option>)}
+            </select>
+            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
+          </div>
         </Field>
         <Field label="金额" required>
           <input type="number" step="any" style={inputStyle} placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} autoFocus />
