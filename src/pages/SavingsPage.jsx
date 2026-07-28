@@ -43,6 +43,7 @@ export function SavingsPage() {
   const [invSellPrice, setInvSellPrice] = useState('')
   const [invSellDate, setInvSellDate] = useState('')
   const [invType, setInvType] = useState('buy')  // 'buy' 买入 | 'sell' 卖出
+  const [invShares, setInvShares] = useState('')  // 份额
   const [investments, setInvestments] = useState(() => {
     const saved = loadInvestments()
     return saved || (getSavings()?.investments) || []
@@ -210,14 +211,17 @@ export function SavingsPage() {
     const cp = invCurrentPrice
     const change = cp && sp ? ((cp - sp) / sp * 100) : null
     const normCode = invCode.trim()
+    const shares = parseFloat(invShares) || 0
+    const amount = shares * sp
     // 先清空输入，再保存（确保表单清空）
-    const newItem = { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change }
+    const newItem = { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change, shares, amount }
     setInvCode('')
     setInvName('')
     setInvCurrentPrice(null)
     setInvSellPrice('')
     setInvSellDate('')
     setInvType('buy')
+    setInvShares('')
     setTimeout(() => saveInvestments([...investments, newItem]), 0)
   }
 
@@ -411,6 +415,8 @@ export function SavingsPage() {
                       </div>
                       <div style={{ display:'flex', gap:'12px', marginTop:'6px', fontSize:'12px', flexWrap:'wrap' }}>
                         <span style={{ fontSize:'13px' }}>{latest.type==='sell' ? '卖出' : '买入'}: <b style={{ color:'#1f2937', fontSize:'15px' }}>{latest.sellPrice}</b></span>
+                        {latest.shares ? <span style={{ fontSize:'13px' }}>份额: <b style={{ color:'#7c3aed', fontSize:'15px' }}>{latest.shares}</b></span> : null}
+                        {latest.amount ? <span style={{ fontSize:'13px' }}>金额: <b style={{ color:'#059669', fontSize:'15px' }}>¥{latest.amount.toFixed(2)}</b></span> : null}
                         <span style={{ fontSize:'13px' }}>当前: <b style={{ color:'#4f46e5', fontSize:'15px' }}>{latest.currentPrice ?? '--'}</b></span>
                         <span style={{ color: (latest.change ?? 0) >= 0 ? '#dc2626' : '#059669', fontWeight:600 }}>
                           {(latest.change ?? 0) >= 0 ? '📈' : '📉'} {latest.change != null ? (latest.change >= 0 ? '+' : '') + latest.change.toFixed(2) + '%' : '--'}
@@ -426,6 +432,8 @@ export function SavingsPage() {
                           <div key={i} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'6px 0', borderBottom: i<items.length-1 ? '1px solid rgba(99,102,241,0.06)' : 'none' }}>
                             <span style={{ fontSize:'11px', color:'#6366f1', fontWeight:600, minWidth:'20px' }}>#{items.length - i}</span>
                             <span style={{ flex:1, fontSize:'13px', color:'#1f2937', fontWeight:700 }}>{inv.sellPrice}</span>
+                            {inv.shares ? <span style={{ fontSize:'11px', color:'#7c3aed' }}>{inv.shares}份</span> : null}
+                            {inv.amount ? <span style={{ fontSize:'11px', color:'#059669' }}>¥{inv.amount.toFixed(2)}</span> : null}
                             {inv.sellDate && <span style={{ fontSize:'11px', color:'#6b7280' }}>{inv.sellDate}</span>}
                             <button onClick={(e) => { e.stopPropagation(); delItem(inv._idx) }} style={{ background:'none', border:'none', color:'#e11d48', fontSize:'14px', cursor:'pointer', padding:'2px 4px', lineHeight:1 }}>×</button>
                           </div>
@@ -449,7 +457,16 @@ export function SavingsPage() {
                 <button onClick={fetchAndAdd} style={{ width:'100%', boxSizing:'border-box', padding:'12px', borderRadius:'8px', border:'none', background:'#6366f1', color:'#fff', fontSize:'14px', fontWeight:600, cursor:'pointer', marginBottom:'10px' }}>获取实时行情</button>
                 {invName && <p style={{ margin:'0 0 10px', fontSize:'14px', color:'#4338ca', fontWeight:700 }}>📌 {invName}  当前: {invCurrentPrice}</p>}
                 <div style={{ display:'flex', gap:'8px', marginBottom:'10px' }}>
-                  <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入价' : '卖出价'} type='number' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center' }} />
+                  <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入价' : '卖出价'} type='number' step='any' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center' }} />
+                  <input value={invShares} onChange={e => setInvShares(e.target.value)} placeholder='份额' type='number' step='any' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center' }} />
+                </div>
+                {/* 自动计算金额 */}
+                {invSellPrice && invShares && (
+                  <p style={{ margin:'0 0 10px', fontSize:'14px', color:'#059669', fontWeight:700, textAlign:'center' }}>
+                    💰 金额: {(parseFloat(invSellPrice) * parseFloat(invShares)).toFixed(2)}
+                  </p>
+                )}
+                <div style={{ display:'flex', gap:'8px', marginBottom:'10px' }}>
                   <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} type='date' style={{ flex:1, minWidth:0, boxSizing:'border-box', padding:'11px 10px', borderRadius:'8px', border:'1.5px solid #c7d2fe', fontSize:'14px', outline:'none', textAlign:'center', color:'#4338ca' }} />
                 </div>
                 {invCurrentPrice && (
