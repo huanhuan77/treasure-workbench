@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os, sys, json, subprocess, tempfile, uuid, re, requests
 from flask import Flask, request, jsonify, send_file, after_this_request
 from flask_cors import CORS
@@ -17,14 +18,20 @@ POSITIONS = {
 }
 
 def download_video(url):
-    """下载视频，返回本地路径"""
+    """下载视频，返回本地路径。url 可以是纯链接或抖音分享文本（自动提取 URL）"""
+    # 从分享文本中提取 URL（跳过中文/标点）
+    m = re.search(r'https?://[^\s\u4e00-\u9fff]+', url)
+    if m:
+        url = m.group(0)
+    # 去除末尾标点
+    url = url.rstrip('。.,;!?')
     name = uuid.uuid4().hex + '.mp4'
     tmp = os.path.join(tempfile.gettempdir(), name)
     headers = {
         'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15',
         'Referer': 'https://www.douyin.com/',
     }
-    r = requests.get(url, headers=headers, stream=True, timeout=30)
+    r = requests.get(url, headers=headers, stream=True, timeout=30, allow_redirects=True)
     r.raise_for_status()
     with open(tmp, 'wb') as f:
         for chunk in r.iter_content(8192):
@@ -46,7 +53,6 @@ def get_video_size(video_path):
 def remove_watermark(input_path, output_path, position='auto'):
     """使用 FFmpeg delogo 去水印"""
     if position == 'auto':
-        # 智能模式：识别水印位置（简化版 - 检测右下角固定区域）
         w, h = get_video_size(input_path)
         pos = {
             'x': str(w - 160),
@@ -57,10 +63,8 @@ def remove_watermark(input_path, output_path, position='auto'):
     else:
         pos = POSITIONS.get(position, POSITIONS['bottom-right'])
 
-    # delogo 滤镜
     filter_str = f"delogo=x={pos['x']}:y={pos['y']}:w={pos['w']}:h={pos['h']}:show=0"
 
-    # 先用 libx264 编码尝试，如果失败回退到更兼容的方式
     cmd = [
         'ffmpeg', '-i', input_path,
         '-vf', filter_str,
@@ -71,7 +75,6 @@ def remove_watermark(input_path, output_path, position='auto'):
     try:
         subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=120)
     except subprocess.CalledProcessError as e:
-        # 尝试无编码器指定
         cmd2 = [
             'ffmpeg', '-i', input_path,
             '-vf', filter_str,
@@ -82,37 +85,6 @@ def remove_watermark(input_path, output_path, position='auto'):
         subprocess.run(cmd2, check=True, capture_output=True, text=True, timeout=120)
 
     return output_path
-
-@app.route('/api/remove-watermark', methods=['POST'])
-def handle_remove_watermark():
-    data = request.get_json()
-    if not data or not data.get('url'):
-        return jsonify({'error': '请提供视频链接'}), 400
-
-    url = data['url'].strip()
-    position = data.get('position', 'auto')
-
-    try:
-        # 1. 下载视频
-        input_path = download_video(url)
-
-        # 2. 去水印
-        out_name = 'no_watermark_' + uuid.uuid4().hex + '.mp4'
-        output_path = os.path.join(OUTPUT_DIR, out_name)
-        remove_watermark(input_path, output_path, position)
-
-        # 3. 清理临时文件
-        try: os.remove(input_path)
-        except: pass
-
-        # 4. 返回下载 URL
-        return jsonify({
-            'url': f'/api/download/{out_name}',
-            'message': '处理成功',
-        })
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/download-video', methods=['POST'])
 def handle_download_video():
@@ -126,12 +98,34 @@ def handle_download_video():
         input_path = download_video(url)
         out_name = 'video_' + uuid.uuid4().hex + '.mp4'
         output_path = os.path.join(OUTPUT_DIR, out_name)
-        # 直接移动，不做任何处理
         os.rename(input_path, output_path)
         return jsonify({
             'url': f'/api/download/{out_name}',
             'message': '下载成功',
             'filename': out_name,
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/remove-watermark', methods=['POST'])
+def handle_remove_watermark():
+    data = request.get_json()
+    if not data or not data.get('url'):
+        return jsonify({'error': '请提供视频链接'}), 400
+
+    url = data['url'].strip()
+    position = data.get('position', 'auto')
+
+    try:
+        input_path = download_video(url)
+        out_name = 'no_watermark_' + uuid.uuid4().hex + '.mp4'
+        output_path = os.path.join(OUTPUT_DIR, out_name)
+        remove_watermark(input_path, output_path, position)
+        try: os.remove(input_path)
+        except: pass
+        return jsonify({
+            'url': f'/api/download/{out_name}',
+            'message': '处理成功',
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -150,9 +144,13 @@ def download_file(filename):
             pass
         return resp
 
-    return send_file(filepath, mimetype='video/mp4', as_attachment=True, download_name='no_watermark.mp4')
+    return send_file(filepath, mimetype='video/mp4', as_attachment=True, download_name='video.mp4')
+
+@app.route('/api/health')
+def health():
+    return jsonify({'status': 'ok', 'ffmpeg': True})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5002))
-    print(f'🎬 视频去水印服务启动: http://localhost:{port}')
+    print(f'服务启动: http://localhost:{port}')
     app.run(host='0.0.0.0', port=port, debug=True)

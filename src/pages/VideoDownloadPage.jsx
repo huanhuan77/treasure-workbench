@@ -25,8 +25,7 @@ export function VideoDownloadPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim() }),
-      })
-      if (!res.ok) {
+      })      if (!res.ok) {
         const err = await res.json()
         throw new Error(err.error || '下载失败')
       }
@@ -82,13 +81,26 @@ export function VideoDownloadPage() {
         {/* 输入 */}
         <div style={{ ...glassStyle, padding: '20px' }}>
           <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px', display: 'block' }}>视频链接</label>
-          <input value={url} onChange={e => setUrl(e.target.value)}
-            placeholder="粘贴视频链接，如 https://v.douyin.com/xxx"
-            style={{
-              width: '100%', boxSizing: 'border-box', padding: '12px 14px',
-              borderRadius: '10px', border: '1.5px solid rgba(99,102,241,0.2)',
-              fontSize: '14px', outline: 'none', background: '#fff', marginBottom: '12px',
-            }} />
+          <div style={{ position: 'relative', marginBottom: '12px' }}>
+            <input value={url} onChange={e => setUrl(e.target.value)}
+              placeholder="粘贴视频链接，如 https://v.douyin.com/xxx"
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '12px 14px',
+                paddingRight: url ? '40px' : '14px',
+                borderRadius: '10px', border: '1.5px solid rgba(99,102,241,0.2)',
+                fontSize: '14px', outline: 'none', background: '#fff',
+              }} />
+            {url && (
+              <button onClick={() => { setUrl(''); setResultUrl(''); setProgress('') }}
+                style={{
+                  position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                  width: '28px', height: '28px', borderRadius: '50%', border: 'none',
+                  background: 'rgba(0,0,0,0.06)', color: '#6b7280', fontSize: '16px',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  lineHeight: 1,
+                }}>×</button>
+            )}
+          </div>
 
           <button onClick={handleDownload} disabled={loading}
             style={{
