@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { StoreProvider } from './store'
 import { ToastProvider } from './components/Toast'
@@ -15,6 +15,40 @@ import { CalendarDetailPage } from './pages/CalendarDetailPage'
 import { BackupPage } from './pages/BackupPage'
 
 function App() {
+  // 全局自动云备份：每 3 小时自动备份一次
+  useEffect(() => {
+    const KEYS = ['blogger_workbench_data_v1', 'blogger_investments_v1', 'blogger_calendar_v1']
+    const GIST_ID_KEY = 'backup_gist_id'
+    const doBackup = async () => {
+      const token = localStorage.getItem('backup_github_token')
+      if (!token) return
+      const data = {}
+      for (const key of KEYS) {
+        try { const r = localStorage.getItem(key); if (r) data[key] = JSON.parse(r) } catch {}
+      }
+      const gistId = localStorage.getItem(GIST_ID_KEY)
+      const url = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists'
+      try {
+        const res = await fetch(url, {
+          method: gistId ? 'PATCH' : 'POST',
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(gistId ? {
+            files: { 'treasure-workbench-backup.json': { content: JSON.stringify(data, null, 2) } },
+          } : {
+            description: '博主工作台数据备份', public: false,
+            files: { 'treasure-workbench-backup.json': { content: JSON.stringify(data, null, 2) } },
+          }),
+        })
+        if (res.ok) {
+          const result = await res.json()
+          if (!gistId) localStorage.setItem(GIST_ID_KEY, result.id)
+        }
+      } catch {}
+    }
+    const first = setTimeout(doBackup, 30000)
+    const interval = setInterval(doBackup, 3 * 60 * 60 * 1000)
+    return () => { clearTimeout(first); clearInterval(interval) }
+  }, [])
   return (
     <StoreProvider>
       <ToastProvider>

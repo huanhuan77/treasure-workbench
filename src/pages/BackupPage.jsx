@@ -131,10 +131,6 @@ export function BackupPage() {
     }
   }
 
-  const stats = {}
-  for (const key of KEYS) {
-    try {
-      const raw = localStorage.getItem(key)
       if (raw) {
         const d = JSON.parse(raw)
         if (key === 'blogger_workbench_data_v1') {
