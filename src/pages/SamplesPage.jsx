@@ -82,7 +82,6 @@ export function SamplesPage() {
     return stats
   }, [samples, accountFilter])
 
-  const total = samples.length
 
   // 悬浮+按钮可拖动
   const [fabPos, setFabPos] = useState(() => {
@@ -128,7 +127,7 @@ export function SamplesPage() {
       <header style={{ padding: 'calc(20px + var(--safe-top)) 20px 12px' }}>
         <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>样品记录</h1>
         <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
-          共 {accountFilter === 'all' ? total : acctStats[accountFilter] || 0} 个样品
+          共 {Object.values(statusStats).reduce((a,b) => a + b, 0)} 个样品
           {' · '}{STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.emoji}${statusStats[s.key]}`).join('  ')}
         </p>
       </header>
@@ -146,13 +145,13 @@ export function SamplesPage() {
               border: filter === f.key ? 'none' : '1px solid rgba(255,255,255,0.6)',
               boxShadow: filter === f.key ? '0 4px 12px rgba(244,114,182,0.25)' : 'none',
             }}
-          >{f.label}{f.key !== 'all' ? ` ${statusStats[f.key] || 0}` : ` ${total}`}</button>
+          >{f.label}{f.key !== 'all' ? ` ${statusStats[f.key] || 0}` : ` ${Object.values(statusStats).reduce((a,b) => a + b, 0)}`}</button>
         ))}
       </div>
 
       {/* 账号筛选 */}
       <div style={{ display: 'flex', gap: '8px', padding: '6px 16px 12px', overflowX: 'auto' }}>
-        <button onClick={() => setAccountFilter('all')} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899', 'rgba(244,114,182,0.16)')}>全部 {total}</button>
+        <button onClick={() => setAccountFilter('all')} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899', 'rgba(244,114,182,0.16)')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
         {ACCOUNTS.map((a) => {
           const col = ACCOUNT_COLOR[a]
           return (
