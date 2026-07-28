@@ -737,16 +737,16 @@ function CopyCard({
   onEdit, onToggleOrder, onToggleUsed, onDelete,
 }) {
   const cardAccent = copy.hasOrder
-    ? { borderLeftColor: '#10b981' }
+    ? { borderLeft: '4px solid #f59e0b', borderTop: '3px solid #fbbf24' }
     : copy.used
-      ? { borderLeftColor: '#06b6d4' }
+      ? { borderLeft: '4px solid #06b6d4' }
       : {}
 
   return (
     <div style={{
       ...glassStyle,
-      padding: '14px',
-      borderLeft: '4px solid transparent',
+      padding: '14px 14px 12px',
+      position: 'relative',
       ...cardAccent,
     }}>
       {/* 文案内容 */}
@@ -798,9 +798,10 @@ function CopyCard({
           const desc = d === null ? '' : d < 0 ? `${-d}天前出单` : d === 0 ? '今天出单' : `${d}天前出单`
           return (
             <span style={{
-              fontSize: '11px', color: '#059669', background: 'rgba(209, 250, 229, 0.8)',
-              padding: '3px 9px', borderRadius: '8px', fontWeight: 500,
-            }}>🔥 出单{desc ? ` · ${desc}` : ''}</span>
+              fontSize: '13px', color: '#dc2626', background: 'linear-gradient(135deg,#fef3c7,#fde68a)',
+              padding: '4px 12px', borderRadius: '8px', fontWeight: 700,
+              boxShadow: '0 2px 8px rgba(251,191,36,0.35)',
+            }}>🔥🔥 出单{desc ? ` · ${desc}` : ''} 🔥🔥</span>
           )
         })()}
         {copy.style && (
