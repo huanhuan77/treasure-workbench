@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom'
 
 const tabs = [
-  { to: '/', label: '首页', icon: '🏠', end: true },
-  { to: '/finance', label: '财务', icon: '💰' },
+  { to: '/', label: '产品', icon: '📦', end: true },
+  { to: '/samples', label: '样品', icon: '🏷️' },
+  { to: '/savings', label: '攒钱', icon: '💰' },
+  { to: '/finance', label: '收支', icon: '💰' },
   { to: '/sensitive', label: '词库', icon: '📚' },
   { to: '/extract', label: '提取', icon: '📝' },
 ]
