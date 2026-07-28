@@ -25,7 +25,8 @@ export function VideoDownloadPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url.trim() }),
-      })      if (!res.ok) {
+      })
+      if (!res.ok) {
         const err = await res.json()
         throw new Error(err.error || '下载失败')
       }
