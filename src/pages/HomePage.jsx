@@ -161,26 +161,14 @@ export function HomePage() {
   const { show } = useToast()
   const navigate = useNavigate()
   const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ name: '', brand: '', category: '' })
-  const [delId, setDelId] = useState(null)
   const [checking, setChecking] = useState(false)
   const [editId, setEditId] = useState(null)
-  const [editName, setEditName] = useState('')
-  const [editCategory, setEditCategory] = useState('')
-  const [editBrand, setEditBrand] = useState('')
-  const [editOpen, setEditOpen] = useState(false)
-  const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
 
   const openEdit = (p) => {
     navigate(`/product/${p.id}/edit`)
   }
 
-  const handleSaveEdit = () => {
-    if (!editName.trim()) { show('请输入产品名称', 'error'); return }
-    updateProduct(editId, { name: editName.trim(), brand: editBrand.trim(), category: editCategory })
-    setEditOpen(false); show('产品信息已更新', 'success')
-  }
 
   // 搜索过滤：匹配产品名 / 品牌；分类由独立下拉框筛选
   const keyword = search.trim().toLowerCase()
@@ -410,39 +398,6 @@ export function HomePage() {
         }}
       >+</button>
 
-      <Modal
-        open={showAdd}
-        onClose={() => setShowAdd(false)}
-        title="添加产品"
-        inline
-        footer={
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={btnGhost} onClick={() => setShowAdd(false)}>取消</button>
-            <button style={{ ...btnPrimary, flex: 1 }} onClick={handleAdd}>确认添加</button>
-          </div>
-        }
-      >
-        <Field label="产品名称" required>
-          <input style={inputStyle} placeholder="例如：补水喷雾" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        </Field>
-        <Field label="品牌名（选填）">
-          <input style={inputStyle} placeholder="例如：珀芙研 / 洁比兔" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
-        </Field>
-        <Field label="分类（选填）">
-          <div style={{ position: 'relative' }}>
-            <select
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: '36px', color: form.category ? 'var(--text-main)' : 'var(--text-sub)' }}
-            >
-              <option value="">请选择分类</option>
-              {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
-            </select>
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
-          </div>
-        </Field>
-      </Modal>
-
       <ConfirmModal
         open={!!delId}
         onClose={() => setDelId(null)}
@@ -453,39 +408,6 @@ export function HomePage() {
         danger
       />
 
-
-      <Modal
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        title="编辑产品"
-        inline
-        footer={
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={btnGhost} onClick={() => setEditOpen(false)}>取消</button>
-            <button style={{ ...btnPrimary, flex: 1 }} onClick={handleSaveEdit}>保存</button>
-          </div>
-        }
-      >
-        <Field label="产品名称" required>
-          <input style={inputStyle} placeholder="例如：补水喷雾" value={editName} onChange={(e) => setEditName(e.target.value)} />
-        </Field>
-        <Field label="品牌名（选填）">
-          <input style={inputStyle} placeholder="例如：珀芙研 / 洁比兔" value={editBrand} onChange={(e) => setEditBrand(e.target.value)} />
-        </Field>
-        <Field label="分类（选填）">
-          <div style={{ position: 'relative' }}>
-            <select
-              value={editCategory}
-              onChange={(e) => setEditCategory(e.target.value)}
-              style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: '36px', color: editCategory ? 'var(--text-main)' : 'var(--text-sub)' }}
-            >
-              <option value="">请选择分类</option>
-              {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
-            </select>
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
-          </div>
-        </Field>
-      </Modal>
     </div>
   )
 }
