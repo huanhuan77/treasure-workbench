@@ -3083,7 +3083,6 @@ function loadData() {
             if (invRaw) { const inv = JSON.parse(invRaw); if (Array.isArray(inv) && inv.length) { sd = { ...sd, investments: inv } } }
           } catch(e) {}
         }
-        console.log('[loadData] old.savingsData.investments:', JSON.stringify(old.savingsData?.investments), '→ result:', JSON.stringify(sd.investments))
         return sd
       })(),
       sensitiveWords: old.sensitiveWords || DEFAULT_SENSITIVE_WORDS,  // 版本升级不再替换用户自定义词库
@@ -3388,7 +3387,7 @@ export function StoreProvider({ children }) {
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord, resetData,
     getMood, setMood,
-    getSavings, updateSavings,
+    getSavings, updateSavings, setSavings,
   }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
