@@ -1,22 +1,19 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useToast } from '../components/Toast'
 import { glassStyle } from '../components/Modal'
 
 const STORAGE_KEY = 'blogger_calendar_v1'
 
 function loadData() {
   try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : {} }
-  catch { return {} }
+  catch (e) { return {} }
 }
 
 export function CalendarPage() {
   const navigate = useNavigate()
-  const { show } = useToast()
-  const [data, setData] = useState(loadData)
+  const [data] = useState(loadData)
   const [year, setYear] = useState(() => new Date().getFullYear())
   const [month, setMonth] = useState(() => new Date().getMonth() + 1)
-  const importRef = useRef(null)
 
   const weekDays = ['日', '一', '二', '三', '四', '五', '六']
   const daysInMonth = new Date(year, month, 0).getDate()
@@ -31,35 +28,6 @@ export function CalendarPage() {
   const goDate = (dateStr) => navigate(`/calendar/${dateStr}`)
   const goToday = () => goDate(today)
 
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `日历备份_${new Date().toISOString().slice(0,10)}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
-    show('已导出', 'success')
-  }
-
-  const handleImport = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      try {
-        const imported = JSON.parse(ev.target.result)
-        if (typeof imported !== 'object') throw new Error()
-        localStorage.setItem('blogger_calendar_v1', JSON.stringify(imported))
-        setData(imported)
-        show(`已导入 ${Object.keys(imported).length} 条记录`, 'success')
-      } catch {
-        show('文件格式错误', 'error')
-      }
-    }
-    reader.readAsText(file)
-    e.target.value = ''
-  }
-
   return (
     <div className="app-container">
       {/* 头部 */}
@@ -68,25 +36,12 @@ export function CalendarPage() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📅 日历</h1>
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          <button onClick={handleExport} style={{
-            padding: '8px 10px', borderRadius: '8px', border: 'none',
-            background: 'rgba(16,185,129,0.1)', color: '#059669',
-            fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-          }}>⬇ 导出</button>
-          <button onClick={() => importRef.current?.click()} style={{
-            padding: '8px 10px', borderRadius: '8px', border: 'none',
-            background: 'rgba(99,102,241,0.1)', color: '#4f46e5',
-            fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-          }}>⬆ 导入</button>
-          <input ref={importRef} type="file" accept=".json" onChange={handleImport} hidden />
-          <button onClick={goToday} style={{
-            width: '36px', height: '36px', borderRadius: '50%', border: 'none',
-            background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
-            fontSize: '20px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(244,114,182,0.35)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>+</button>
-        </div>
+        <button onClick={goToday} style={{
+          width: '36px', height: '36px', borderRadius: '50%', border: 'none',
+          background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+          fontSize: '20px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(244,114,182,0.35)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>+</button>
       </header>
 
       <div style={{ padding: '0 16px' }}>
