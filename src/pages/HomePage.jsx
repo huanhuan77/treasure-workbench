@@ -423,7 +423,7 @@ export function HomePage() {
         }
       >
         <Field label="产品名称" required>
-          <input style={inputStyle} placeholder="例如：补水喷雾" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
+          <input style={inputStyle} placeholder="例如：补水喷雾" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         </Field>
         <Field label="品牌名（选填）">
           <input style={inputStyle} placeholder="例如：珀芙研 / 洁比兔" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
@@ -466,7 +466,7 @@ export function HomePage() {
         }
       >
         <Field label="产品名称" required>
-          <input style={inputStyle} placeholder="例如：补水喷雾" value={editName} onChange={(e) => setEditName(e.target.value)} autoFocus />
+          <input style={inputStyle} placeholder="例如：补水喷雾" value={editName} onChange={(e) => setEditName(e.target.value)} />
         </Field>
         <Field label="品牌名（选填）">
           <input style={inputStyle} placeholder="例如：珀芙研 / 洁比兔" value={editBrand} onChange={(e) => setEditBrand(e.target.value)} />
