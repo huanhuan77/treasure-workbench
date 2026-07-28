@@ -10,9 +10,8 @@ import { SavingsPage } from './pages/SavingsPage'
 import { ProductDetailPage } from './pages/ProductDetailPage'
 import { SensitiveWordsPage } from './pages/SensitiveWordsPage'
 import { SensitiveCheckPage } from './pages/SensitiveCheckPage'
-import { WatermarkRemovePage } from './pages/WatermarkRemovePage'
 import { CalendarPage } from './pages/CalendarPage'
-import { VideoDownloadPage } from './pages/VideoDownloadPage'
+import { CalendarDetailPage } from './pages/CalendarDetailPage'
 
 function App() {
   return (
@@ -26,9 +25,8 @@ function App() {
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/sensitive" element={<SensitiveWordsPage />} />
             <Route path="/sensitive-check" element={<SensitiveCheckPage />} />
-            <Route path="/watermark" element={<WatermarkRemovePage />} />
             <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/download" element={<VideoDownloadPage />} />
+            <Route path="/calendar/:date" element={<CalendarDetailPage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
           </Routes>
           <BottomNav />
