@@ -8,12 +8,18 @@ const KEYS = [
   'blogger_calendar_v1',
 ]
 
+const GIST_ID_KEY = 'backup_gist_id'
+
 export function BackupPage() {
   const { show } = useToast()
   const [importing, setImporting] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [token, setToken] = useState(() => localStorage.getItem('backup_github_token') || '')
+  const [showToken, setShowToken] = useState(false)
   const importRef = useRef(null)
 
-  const handleExport = () => {
+  // 获取所有数据
+  const getAllData = () => {
     const backup = {}
     for (const key of KEYS) {
       try {
@@ -21,6 +27,11 @@ export function BackupPage() {
         if (raw) backup[key] = JSON.parse(raw)
       } catch {}
     }
+    return backup
+  }
+
+  const handleExport = () => {
+    const backup = getAllData()
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
@@ -53,6 +64,71 @@ export function BackupPage() {
     }
     reader.readAsText(file)
     e.target.value = ''
+  }
+
+  // 上传到 GitHub Gist
+  const uploadToGist = async () => {
+    if (!token.trim()) { show('请先填写 GitHub Token', 'error'); return }
+    setSyncing(true)
+    try {
+      const data = getAllData()
+      const gistId = localStorage.getItem(GIST_ID_KEY)
+      const url = gistId
+        ? `https://api.github.com/gists/${gistId}`
+        : 'https://api.github.com/gists'
+      const method = gistId ? 'PATCH' : 'POST'
+      const body = gistId ? {
+        files: { 'treasure-workbench-backup.json': { content: JSON.stringify(data, null, 2) } },
+      } : {
+        description: '博主工作台数据备份',
+        public: false,
+        files: { 'treasure-workbench-backup.json': { content: JSON.stringify(data, null, 2) } },
+      }
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token.trim()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const result = await res.json()
+      if (!gistId) localStorage.setItem(GIST_ID_KEY, result.id)
+      show('☁️ 已上传到 GitHub', 'success')
+    } catch (e) {
+      show('上传失败: ' + e.message, 'error')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  // 从 GitHub Gist 下载
+  const downloadFromGist = async () => {
+    if (!token.trim()) { show('请先填写 GitHub Token', 'error'); return }
+    const gistId = localStorage.getItem(GIST_ID_KEY)
+    if (!gistId) { show('还没有云端备份，请先上传', 'error'); return }
+    setSyncing(true)
+    try {
+      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: { 'Authorization': `Bearer ${token.trim()}` },
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const gist = await res.json()
+      const content = gist.files?.['treasure-workbench-backup.json']?.content
+      if (!content) throw new Error('备份文件不存在')
+      const backup = JSON.parse(content)
+      let count = 0
+      for (const [key, value] of Object.entries(backup)) {
+        localStorage.setItem(key, JSON.stringify(value))
+        count++
+      }
+      show(`已恢复 ${count} 个模块，刷新后生效`, 'success')
+    } catch (e) {
+      show('下载失败: ' + e.message, 'error')
+    } finally {
+      setSyncing(false)
+    }
   }
 
   const stats = {}
@@ -120,11 +196,48 @@ export function BackupPage() {
         </button>
         <input ref={importRef} type="file" accept=".json" onChange={handleImport} hidden />
 
+        <div style={{ margin: '20px 0 12px', height: '1px', background: 'rgba(0,0,0,0.06)' }} />
+        <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 10px' }}>☁️ 云备份（GitHub Gist）</h3>
+
+        <div style={{ ...glassStyle, padding: '14px', marginBottom: '12px' }}>
+          <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', display: 'block', marginBottom: '4px' }}>GitHub Token</label>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <input value={token} onChange={e => { setToken(e.target.value); localStorage.setItem('backup_github_token', e.target.value) }}
+              type={showToken ? 'text' : 'password'} placeholder="ghp_xxxxxxxxxxxx"
+              style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1.5px solid rgba(0,0,0,0.06)', fontSize: '14px', outline: 'none' }} />
+            <button onClick={() => setShowToken(!showToken)}
+              style={{ padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', background: '#fff', color: '#6b7280', fontSize: '13px', cursor: 'pointer' }}>
+              {showToken ? '隐藏' : '显示'}
+            </button>
+          </div>
+          <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--gray-400)' }}>
+            需要 repo 权限的 token，数据存储在私密 Gist 中
+          </p>
+        </div>
+
+        <button onClick={uploadToGist} disabled={syncing || !token} style={{
+          width: '100%', padding: '14px 0', borderRadius: '10px', border: 'none',
+          background: syncing ? '#9ca3af' : 'linear-gradient(135deg,#6366f1,#4f46e5)',
+          color: '#fff', fontSize: '14px', fontWeight: 700, cursor: syncing ? 'not-allowed' : 'pointer',
+          marginBottom: '8px',
+          boxShadow: syncing ? 'none' : '0 4px 14px rgba(99,102,241,0.3)',
+        }}>
+          {syncing ? '同步中...' : '☁️ 上传到云备份'}
+        </button>
+
+        <button onClick={downloadFromGist} disabled={syncing || !token} style={{
+          width: '100%', padding: '14px 0', borderRadius: '10px', border: '1.5px dashed #6366f1',
+          background: 'transparent', color: '#4f46e5', fontSize: '14px', fontWeight: 700,
+          cursor: syncing ? 'not-allowed' : 'pointer', marginBottom: '8px',
+        }}>
+          {syncing ? '同步中...' : '☁️ 从云备份恢复'}
+        </button>
+
         {/* 提示 */}
-        <div style={{ marginTop: '16px', padding: '12px', borderRadius: '10px', background: 'rgba(251,191,36,0.08)', fontSize: '12px', color: '#92400e', lineHeight: 1.7 }}>
-          💡 <b>建议定期导出</b>：数据存在浏览器本地，清除缓存或删除 PWA 会丢失。<br />
-          🔄 <b>导入后</b>：需要刷新页面才能生效。<br />
-          📦 备份文件包含：产品、样品、收支、攒钱、投资、日历等全部数据。
+        <div style={{ marginTop: '8px', padding: '12px', borderRadius: '10px', background: 'rgba(251,191,36,0.08)', fontSize: '12px', color: '#92400e', lineHeight: 1.7 }}>
+          💡 <b>云备份不会丢失</b>：数据存在 GitHub 私密 Gist，即使删掉 PWA 重装，点「从云备份恢复」即可。<br />
+          🔄 <b>恢复后</b>：需要刷新页面才能生效。<br />
+          📦 备份包含：产品、样品、收支、攒钱、投资、日历等全部数据。
         </div>
       </div>
     </div>
