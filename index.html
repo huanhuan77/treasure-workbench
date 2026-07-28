@@ -13,12 +13,11 @@
     <title>宝藏工作台</title>
     <!-- 闪屏样式 -->
     <style>
-      html, body { margin: 0; padding: 0; background: linear-gradient(160deg,#ffe4e6 0%,#fce7f3 40%,#fef3c7 100%) fixed; min-height: 100dvh; }
-      #root { min-height: 100dvh; display: flex; align-items: center; justify-content: center; }
-      .splash { text-align: center; animation: fadeIn 0.6s; }
+      html, body { margin: 0; padding: 0; background: linear-gradient(160deg,#ffe4e6 0%,#fce7f3 40%,#fef3c7 100%); min-height: 100dvh; }
+      .splash { text-align: center; padding: 40px 16px; animation: fadeIn 0.6s; }
       .splash-logo { font-size: 48px; margin-bottom: 12px; }
       .splash-title { font-size: 18px; color: #4a2c3a; font-weight: 700; }
-      .splash-loading { margin-top: 20px; width: 32px; height: 32px; border: 3px solid #fce7f3; border-top-color: #ec4899; border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite; }
+      .splash-loading { margin: 20px auto 0; width: 32px; height: 32px; border: 3px solid #fce7f3; border-top-color: #ec4899; border-radius: 50%; animation: spin 0.8s linear infinite; }
       @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -30,6 +29,7 @@
         <div class="splash-title">宝藏工作台</div>
         <div class="splash-loading"></div>
       </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
