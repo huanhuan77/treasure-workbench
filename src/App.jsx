@@ -9,6 +9,7 @@ import { FinancePage } from './pages/FinancePage'
 import { SavingsPage } from './pages/SavingsPage'
 import { ProductDetailPage } from './pages/ProductDetailPage'
 import { SensitiveWordsPage } from './pages/SensitiveWordsPage'
+import { SensitiveCheckPage } from './pages/SensitiveCheckPage'
 import { CopyExtractorPage } from './pages/CopyExtractorPage'
 import { WatermarkRemovePage } from './pages/WatermarkRemovePage'
 
@@ -24,6 +25,7 @@ function App() {
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/sensitive" element={<SensitiveWordsPage />} />
             <Route path="/extract" element={<CopyExtractorPage />} />
+            <Route path="/sensitive-check" element={<SensitiveCheckPage />} />
             <Route path="/watermark" element={<WatermarkRemovePage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
           </Routes>
