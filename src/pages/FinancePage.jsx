@@ -150,7 +150,7 @@ export function FinancePage() {
         {/* 月份 + 账号 + 排序 同行对齐 */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'stretch', overflowX: 'auto' }}>
           <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}
-            style={{ ...inputStyle, flex:'0 0 110px', padding:'8px 8px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
+            style={{ ...inputStyle, width: '88px', flex:'0 0 88px', padding:'8px 6px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
             <option value="all">全部月份</option>
             {months.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
