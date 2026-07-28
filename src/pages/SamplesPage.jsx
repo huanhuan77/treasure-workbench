@@ -8,7 +8,7 @@ import { formatDate, todayStr, deadlineDesc, addDays } from '../utils/helpers'
 const STATUS = {
   unpublished: { label: '未发布', emoji: '⚪️', color: '#64748b', bg: 'rgba(100,116,139,0.14)', stripe: '#cbd5e1' },
   published:    { label: '已发布', emoji: '🟢', color: '#059669', bg: 'rgba(16,185,129,0.14)', stripe: '#34d399' },
-  hit:          { label: '爆单', emoji: '🔥', color: '#e11d48', bg: 'rgba(244,63,94,0.13)', stripe: '#fb7185' },
+  hit:          { label: '🔥爆单', emoji: '🔥', color: '#e11d48', bg: 'rgba(244,63,94,0.13)', stripe: '#fb7185' },
   abandoned:    { label: '放弃', emoji: '🚫', color: '#94a3b8', bg: 'rgba(148,163,184,0.16)', stripe: '#94a3b8' },
 }
 const STATUS_ORDER = ['hit', 'published', 'unpublished', 'abandoned']
