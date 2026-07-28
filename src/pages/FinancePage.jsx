@@ -6,8 +6,6 @@ import { formatDate } from '../utils/helpers'
 
 const CATEGORIES = {
   // 收入类
-  commission: { label: '佣金收入', type: 'income', color: '#059669', bg: 'rgba(209, 250, 229, 0.8)' },
-  manuscript: { label: '稿费收入', type: 'income', color: '#7c3aed', bg: 'rgba(237, 233, 254, 0.8)' },
   sample: { label: '样品收入', type: 'income', color: '#0d9488', bg: 'rgba(204, 251, 241, 0.8)' },
   haitao: { label: '海淘', type: 'income', color: '#0284c7', bg: 'rgba(224, 242, 254, 0.8)' },
   xingchuan: { label: '星川', type: 'income', color: '#c2410c', bg: 'rgba(255, 237, 213, 0.8)' },

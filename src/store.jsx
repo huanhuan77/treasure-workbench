@@ -2909,7 +2909,6 @@ function migrateTransactions(txs) {
     }
     const rm = nt.remark || ''
     if (rm.includes('自然堂洗面奶')) nt.category = 'sample'
-    if (rm.includes('稿费')) nt.category = 'manuscript'
     return nt
   })
 }
