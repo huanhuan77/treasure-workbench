@@ -51,6 +51,7 @@ export function SamplesPage() {
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [swipedId, setSwipedId] = useState(null)
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('大号')
   const [searchKeyword, setSearchKeyword] = useState('')
@@ -185,8 +186,26 @@ export function SamplesPage() {
               const dl = deadlineDesc(s.deadline)
               const dlColor = dl && dl.includes('过期') ? '#fb7185' : dl && dl.includes('今天') ? '#fb923c' : 'var(--text-sub)'
               const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
+              const isSwiped = swipedId === s.id
               return (
-                <div key={s.id} style={{ ...glassStyle, padding: '12px 14px 10px 14px', position: 'relative', borderLeft: `3px solid ${st.stripe}` }}>
+                <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
+                  {/* 左滑操作按钮 */}
+                  <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
+                    <button onClick={() => { setSwipedId(null); navigate(`/samples/${s.id}/edit`) }} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
+                    <button onClick={() => { setSwipedId(null); if (confirm('删除该样品？')) { deleteSample(s.id); show('已删除', 'success') } }} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
+                  </div>
+                  {/* 可滑动内容 */}
+                  <div
+                    onClick={() => { if (isSwiped) { setSwipedId(null) } else { /* tap to view */ } }}
+                    onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
+                    onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; if (Math.abs(dx) > 10) e.currentTarget.dataset.swiping = 'true' }}
+                    onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
+                    style={{
+                      ...glassStyle, padding: '12px 14px 10px 14px', borderLeft: `3px solid ${st.stripe}`,
+                      transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
+                      position: 'relative', zIndex: 1, cursor: 'pointer',
+                    }}
+                  >
                   {/* 第一行：产品名 + 账号 + 状态徽章 */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
@@ -209,6 +228,7 @@ export function SamplesPage() {
                       {s.remark}
                     </div>
                   )}
+                </div>
                 </div>
               )
             })}
