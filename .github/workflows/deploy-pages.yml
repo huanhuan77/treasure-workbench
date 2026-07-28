@@ -46,6 +46,8 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          BASE_PATH: /treasure-workbench/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
