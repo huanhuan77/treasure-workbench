@@ -2947,7 +2947,7 @@ function consolidateJiebitudu(products) {
     if (!isJbt(p)) { out.push(p); continue }
     if (insertAt < 0) insertAt = i  // 第一个洁比兔的位置
     if (!merged) {
-      merged = { ...p, name: '洁比兔 湿巾', copies: [...(p.copies || [])] }
+      merged = { ...p, copies: [...(p.copies || [])] }  // 保留用户编辑的产品名
     } else {
       const seen = new Set(merged.copies.map((c) => (c.content || '').replace(/\s+/g, '')))
       for (const c of (p.copies || [])) {
@@ -2965,14 +2965,14 @@ function consolidateJiebitudu(products) {
   }
   return out
 }
-// 自愈：洁比兔湿巾/湿厕纸 产品若混入非洁比兔文案（如 DOBO噗噗片），重置回干净种子
+// 自愈：洁比兔湿巾/湿厕纸 产品若混入非洁比兔文案（如 DOBO噗噗片），过滤掉外来文案
 function sanitizeJiebitudu(products) {
   const isJbt = (p) => p && /洁比兔/.test(p.name) && /(湿巾|湿厕纸)/.test(p.name)
   const foreign = (c) => /(DOBO|噗噗通|噗噗片)/.test(c.content || '')
   return products.map((p) => {
     if (!isJbt(p)) return p
     if ((p.copies || []).some((c) => foreign(c.content))) {
-      return { ...p, copies: jiebiwetSeed.map((c) => ({ ...c })) }
+      return { ...p, copies: (p.copies || []).filter((c) => !foreign(c.content)) }
     }
     return p
   })
