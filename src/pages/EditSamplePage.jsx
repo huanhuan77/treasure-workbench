@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
+import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 
 const STATUS = {
   unpublished: { label: '未发布', emoji: '⚪️' },
@@ -65,6 +65,7 @@ export function EditSamplePage() {
     <div className="app-container">
       <PageHeader title="编辑样品" onBack={() => navigate('/samples')} />
       <div style={{ padding: '16px' }}>
+        <div style={{ ...glassStyle, padding: '16px' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
