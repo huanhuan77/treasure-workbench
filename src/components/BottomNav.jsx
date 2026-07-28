@@ -5,15 +5,16 @@ import { NavLink, useNavigate } from 'react-router-dom'
 const mainTabs = [
   { to: '/', label: '产品', icon: '📦', end: true },
   { to: '/samples', label: '样品', icon: '🏷️' },
-  { to: '/savings', label: '攒钱', icon: '💰' },
-  { to: '/finance', label: '收支', icon: '💰' },
-  { to: '/extract', label: '提取', icon: '📝' },
+  { to: '/savings', label: '攒钱', icon: '🐷' },
+  { to: '/finance', label: '收支', icon: '💳' },
 ]
 
-// 侧边栏次要 tab
+// 更多侧边栏 tab
 const sideTabs = [
   { to: '/sensitive', label: '词库', icon: '📚' },
-  { to: '/watermark', label: '去水印', icon: '🎬' },
+  { to: '/sensitive-check', label: '违禁词检测', icon: '🚫' },
+  { to: '/extract', label: '文案提取', icon: '📝' },
+  { to: '/watermark', label: '视频去水印', icon: '🎬' },
 ]
 
 function TabItem({ to, label, icon, end, onClick }) {

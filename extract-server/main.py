@@ -117,6 +117,21 @@ app.add_middleware(
 
 # ── API 端点 ─────────────────────────────────────────────────────────────
 
+@app.get("/")
+async def root():
+    """根路径返回 API 文档说明"""
+    return {
+        "name": "文案提取器 API",
+        "version": "1.0.0",
+        "endpoints": {
+            "GET  /health": "健康检查",
+            "POST /extract-link": "抖音视频链接 → 文案 (JSON: {url: '...'})",
+            "POST /extract-file": "本地上传视频/音频 → 文案 (multipart/form-data: file=...)",
+        },
+        "frontend": "https://huanhuan77.github.io/treasure-workbench/#/extract",
+    }
+
+
 @app.get("/health")
 async def health():
     # 检查 whisper 是否可用
