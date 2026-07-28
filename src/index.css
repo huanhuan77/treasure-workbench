@@ -38,8 +38,8 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  /* 淡绿渐变背景，固定不动 */
-  background: linear-gradient(160deg, #f0fdf4 0%, #dcfce7 40%, #fef9c3 100%);
+  /* 蜜桃粉系渐变背景 */
+  background: linear-gradient(160deg, #ffe4e6 0%, #fce7f3 40%, #fef3c7 100%);
   background-attachment: fixed;
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
