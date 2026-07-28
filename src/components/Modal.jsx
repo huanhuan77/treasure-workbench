@@ -65,8 +65,12 @@ export function Modal({ open, onClose, title, children, footer, center }) {
   return (
     <div
       style={{
-        position: 'fixed',
-        inset: 0,
+        position: kbHeight ? 'absolute' : 'fixed',
+        top: kbHeight ? `${window.visualViewport?.offsetTop || 0}px` : 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: kbHeight ? `${window.visualViewport?.height || window.innerHeight}px` : '100%',
         background: 'rgba(74, 44, 58, 0.25)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
@@ -77,7 +81,6 @@ export function Modal({ open, onClose, title, children, footer, center }) {
         padding: center ? '24px 16px' : undefined,
         paddingBottom: kbHeight ? `${kbHeight}px` : undefined,
         animation: 'fadeIn 0.2s ease',
-        transition: kbHeight ? 'padding-bottom 0.15s ease' : undefined,
       }}
       onClick={onClose}
     >
