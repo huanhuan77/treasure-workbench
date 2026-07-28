@@ -179,23 +179,6 @@ export function BackupPage() {
         </div>
 
         {/* 操作 */}
-        <button onClick={handleExport} style={{
-          width: '100%', padding: '16px 0', borderRadius: '10px', border: 'none',
-          background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff',
-          fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginBottom: '10px',
-          boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
-        }}>⬇️ 导出全部数据</button>
-
-        <button onClick={() => importRef.current?.click()} disabled={importing} style={{
-          width: '100%', padding: '16px 0', borderRadius: '10px', border: '1.5px dashed #6366f1',
-          background: importing ? '#f3f4f6' : 'transparent',
-          color: importing ? '#9ca3af' : '#4f46e5',
-          fontSize: '15px', fontWeight: 700, cursor: importing ? 'not-allowed' : 'pointer',
-        }}>
-          {importing ? '导入中...' : '⬆️ 导入恢复'}
-        </button>
-        <input ref={importRef} type="file" accept=".json" onChange={handleImport} hidden />
-
         <div style={{ margin: '20px 0 12px', height: '1px', background: 'rgba(0,0,0,0.06)' }} />
         <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', margin: '0 0 10px' }}>☁️ 云备份（GitHub Gist）</h3>
 
