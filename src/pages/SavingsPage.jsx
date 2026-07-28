@@ -55,29 +55,22 @@ export function SavingsPage() {
     return saved || []
   })
   const saveInvestments = (list) => {
-    console.log('[投资] saveInvestments被调用, 共', list.length, '条')
-    console.log('[投资] list内容:', JSON.stringify(list))
     setInvestments(list)
     setSavings({ investments: list })
-    // 测试 localStorage 是否可用
-    try {
-      localStorage.setItem('__test_save', '1')
-      const t = localStorage.getItem('__test_save')
-      console.log('[投资] localStorage可用性测试:', t === '1' ? 'OK' : 'FAIL')
-      localStorage.removeItem('__test_save')
-    } catch(e) {
-      console.warn('[投资] localStorage完全不可用:', e)
-      return
-    }
-    // 实际写入
-    try {
-      const json = JSON.stringify(list)
-      console.log('[投资] 准备写入, JSON长度:', json.length, '字节')
-      localStorage.setItem(INV_STORAGE_KEY, json)
-      // 立即验证
-      const verify = localStorage.getItem(INV_STORAGE_KEY)
-      console.log('[投资] 写入后立即读取:', verify ? 'OK ('+verify.length+'字节)' : '空')
-    } catch(e) { console.warn('[投资] 保存失败:', e) }
+    // 调试：立即写入并弹窗告知结果
+    setTimeout(() => {
+      try {
+        const json = JSON.stringify(list)
+        localStorage.setItem(INV_STORAGE_KEY, json)
+        const verify = localStorage.getItem(INV_STORAGE_KEY)
+        const verifyList = verify ? JSON.parse(verify) : null
+        alert('✅ 已保存 ' + list.length + ' 条\n' +
+              '独立key写入: ' + (verify ? 'OK ' + verify.length + '字节' : '失败') + '\n' +
+              '读回数量: ' + (Array.isArray(verifyList) ? verifyList.length : '不是数组'))
+      } catch(e) {
+        alert('❌ 保存失败: ' + e.message)
+      }
+    }, 100)
   }
   const fetchAndAdd = async () => {
     if (!invCode.trim()) return
