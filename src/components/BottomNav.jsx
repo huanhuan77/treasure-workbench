@@ -5,13 +5,13 @@ import { NavLink, useNavigate } from 'react-router-dom'
 const mainTabs = [
   { to: '/', label: '产品', icon: '📦', end: true },
   { to: '/samples', label: '样品', icon: '🏷️' },
-  { to: '/savings', label: '攒钱', icon: '🐷' },
+  { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/finance', label: '收支', icon: '💳' },
 ]
 
 // 更多侧边栏 tab
 const sideTabs = [
-  { to: '/daily', label: '每日计划', icon: '📋' },
+  { to: '/savings', label: '攒钱计划', icon: '🐷' },
   { to: '/investment', label: '投资跟踪', icon: '📈' },
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/backup', label: '数据备份', icon: '💾' },
