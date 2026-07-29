@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
-import { copyText, formatDate, todayStr, parseBulkCopies, daysDiff } from '../utils/helpers'
+import { copyText, formatDate, todayStr, daysDiff } from '../utils/helpers'
 import {
   generateTitle, generateTopics, generateSimilarCopy,
   getStyles, buildTitleWithTopics,
@@ -338,77 +338,6 @@ export function ProductDetailPage() {
           </div>
         )}
       </div>
-
-      {/* 批量导入弹窗 */}
-      <Modal
-        open={showImport}
-        onClose={() => setShowImport(false)}
-        title="批量导入文案"
-        center
-        footer={
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={btnGhost} onClick={() => setShowImport(false)}>取消</button>
-            <button style={{ ...btnPrimary, flex: 1 }} onClick={handleImport}>导入</button>
-          </div>
-        }
-      >
-        <Field label="粘贴多条文案">
-          <textarea
-            style={{ ...inputStyle, minHeight: '80px', resize: 'vertical', lineHeight: 1.6 }}
-            placeholder="格式：首行可写产品名（自动忽略）；每条文案空行分隔；最后一行 #话题 套用全部；👍=出单、✅=用过（标记会自动去掉）"
-            value={importText}
-            onChange={(ev) => setImportText(ev.target.value)}
-            autoFocus
-          />
-        </Field>
-
-        {/* 实时预览 */}
-        {(() => {
-          const list = parseBulkCopies(importText)
-          if (list.length === 0) {
-            return (
-              <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(156,163,175,0.08)', fontSize: '12px', color: 'var(--text-sub)' }}>
-                💡 解析提示：多条文案之间用 <b>空行</b> 分隔；末尾写一行 <code style={{ background: 'rgba(0,0,0,0.06)', padding: '0 4px', borderRadius: '3px' }}>#话题1 #话题2</code> 套用全部
-              </div>
-            )
-          }
-          const total = list.length
-          const ordered = list.filter(i => i.hasOrder).length
-          const used = list.filter(i => i.used).length
-          return (
-            <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(99,102,241,0.06)', fontSize: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>📊 解析预览</span>
-                <span style={{ color: 'var(--text-sub)' }}>共 <b style={{ color: '#6366f1' }}>{total}</b> 条</span>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                {ordered > 0 && <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#fee2e2', color: '#dc2626', fontWeight: 600 }}>🔥 出单 {ordered}</span>}
-                {used > 0 && <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#dcfce7', color: '#16a34a', fontWeight: 600 }}>✓ 用过 {used}</span>}
-                {ordered === 0 && used === 0 && <span style={{ color: 'var(--gray-400)' }}>未标记状态</span>}
-              </div>
-              <div style={{ borderTop: '1px dashed rgba(99,102,241,0.2)', paddingTop: '8px', maxHeight: '100px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {list.map((item, i) => (
-                  <div key={i} style={{
-                    padding: '6px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.6)',
-                    fontSize: '11px', color: 'var(--text-main)',
-                    display: 'flex', gap: '6px', alignItems: 'flex-start',
-                    borderLeft: `3px solid ${item.hasOrder ? '#dc2626' : item.used ? '#16a34a' : '#d1d5db'}`,
-                  }}>
-                    <span style={{ color: '#9ca3af', flexShrink: 0 }}>#{i + 1}</span>
-                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.content.slice(0, 60)}{item.content.length > 60 ? '…' : ''}
-                    </span>
-                    <span style={{ display: 'flex', gap: '2px', flexShrink: 0 }}>
-                      {item.hasOrder && <span style={{ padding: '1px 4px', borderRadius: '3px', background: '#fee2e2', color: '#dc2626', fontWeight: 700, fontSize: '10px' }}>🔥</span>}
-                      {item.used && <span style={{ padding: '1px 4px', borderRadius: '3px', background: '#dcfce7', color: '#16a34a', fontWeight: 700, fontSize: '10px' }}>✓</span>}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        })()}
-      </Modal>
 
       {/* 话题管理弹窗 */}
       <Modal
