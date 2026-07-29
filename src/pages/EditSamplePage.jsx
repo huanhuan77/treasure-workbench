@@ -38,8 +38,10 @@ export function EditSamplePage() {
   const [remark, setRemark] = useState(sample?.remark || '')
   const [commission, setCommission] = useState(sample?.commission || 5)
 
-  // 同名检测（排除当前编辑的，仅保存时检测）
-  const isDuplicate = (val) => val.trim() && sample && samples.some(s => s.id !== sample.id && s.name.toLowerCase() === val.trim().toLowerCase())
+  // 同名检测（排除当前编辑的，只判断同一账号，仅保存时）
+  const isDuplicate = (val, acct) => val.trim() && sample && samples.some(s =>
+    s.id !== sample.id && s.name.toLowerCase() === val.trim().toLowerCase() && s.account === (acct || account)
+  )
 
   if (!sample) {
     return (

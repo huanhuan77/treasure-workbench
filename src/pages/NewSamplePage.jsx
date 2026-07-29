@@ -39,8 +39,10 @@ export function NewSamplePage() {
   const [remark, setRemark] = useState('')
   const [commission, setCommission] = useState(5)
 
-  // 同名检测
-  const duplicateName = name.trim() && samples.some(s => s.name.toLowerCase() === name.trim().toLowerCase())
+  // 同名检测（只判断当前账号）
+  const duplicateName = name.trim() && account && samples.some(s =>
+    s.name.toLowerCase() === name.trim().toLowerCase() && s.account === account
+  )
 
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
