@@ -237,10 +237,12 @@ export function SamplesPage() {
                       ...glassStyle, padding: '12px 14px 10px 14px', borderLeft: `3px solid ${st.stripe}`,
                       transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
                       position: 'relative', zIndex: 1, cursor: 'pointer',
+                      display: 'flex', alignItems: 'flex-start', gap: '10px',
                     }}
                   >
-                  {/* 第一行：产品名 + 账号 + 状态徽章 */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                  {/* ↕ 排序指示 */}
+                  <span style={{ color: '#d1d5db', fontSize: '16px', marginTop: '2px', flexShrink: 0, userSelect: 'none' }}>↕</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
                       <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
                       {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
