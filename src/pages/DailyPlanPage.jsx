@@ -191,7 +191,17 @@ export function DailyPlanPage() {
         }
       >
         <Field label="任务内容">
-          <input style={inputStyle} placeholder="写点什么..." value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} autoFocus onKeyDown={e => e.key === 'Enter' && addTask()} />
+          <textarea
+            style={{ ...inputStyle, minHeight: '80px', resize: 'none', lineHeight: 1.6 }}
+            placeholder="写点什么..."
+            value={newTaskTitle}
+            onChange={e => setNewTaskTitle(e.target.value)}
+            autoFocus
+            onKeyDown={e => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addTask()
+            }}
+          />
+          <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--gray-400)', textAlign: 'right' }}>⌘+Enter 快速添加</p>
         </Field>
       </Modal>
 

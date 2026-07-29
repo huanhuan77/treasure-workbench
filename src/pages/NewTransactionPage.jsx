@@ -50,8 +50,8 @@ export function NewTransactionPage() {
   return (
     <div className="app-container">
       <PageHeader title="添加收支" onBack={() => navigate('/finance')} />
-      <div style={{ padding: '16px' }}>
-        <div style={{ ...glassStyle, padding: '16px' }}>
+      <div style={{ padding: '16px', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div style={{ ...glassStyle, padding: '16px', overflowX: 'hidden' }}>
         <Field label="类型">
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => { setType('income'); setCategory('sample') }}

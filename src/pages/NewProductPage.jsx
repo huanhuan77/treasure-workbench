@@ -33,8 +33,8 @@ export function NewProductPage() {
   return (
     <div className="app-container">
       <PageHeader title="添加产品" onBack={() => navigate('/')} />
-      <div style={{ padding: '16px' }}>
-        <div style={{ ...glassStyle, padding: '16px' }}>
+      <div style={{ padding: '16px', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div style={{ ...glassStyle, padding: '16px', overflowX: 'hidden' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} placeholder="例如：补水喷雾" value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
@@ -103,8 +103,8 @@ export function EditProductPage() {
   return (
     <div className="app-container">
       <PageHeader title="编辑产品" onBack={() => navigate(-1)} />
-      <div style={{ padding: '16px' }}>
-        <div style={{ ...glassStyle, padding: '16px' }}>
+      <div style={{ padding: '16px', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div style={{ ...glassStyle, padding: '16px', overflowX: 'hidden' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>

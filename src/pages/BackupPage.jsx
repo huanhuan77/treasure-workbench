@@ -258,17 +258,6 @@ export function BackupPage() {
             }}>
               {syncing ? '同步中...' : '☁️ 从云端恢复'}
             </button>
-          </div>
-
-          {gistId && (
-            <button onClick={() => setShowDeleteConfirm(true)} disabled={syncing} style={{
-              width: '100%', marginTop: '8px', padding: '10px 0', borderRadius: '10px',
-              border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.04)',
-              color: '#ef4444', fontSize: '13px', fontWeight: 600, cursor: syncing ? 'not-allowed' : 'pointer',
-            }}>
-              🗑️ 删除云备份
-            </button>
-          )}
         </div>
 
         {/* 自动同步提示 */}
@@ -277,6 +266,9 @@ export function BackupPage() {
           🔄 <b>自动同步</b>：每 3 小时自动备份一次，也可在此手动同步。<br />
           🔄 <b>恢复后</b>：需要刷新页面才能生效。<br />
           📦 备份包含：产品、样品、收支、攒钱、投资、日历、每日计划等全部数据。
+          {gistId && (<>
+            <br /><span style={{ color: '#d97706', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(217,119,6,0.3)' }} onClick={() => setShowDeleteConfirm(true)}>🗑️ 删除云备份</span>
+          </>)}
         </div>
       </div>
 
