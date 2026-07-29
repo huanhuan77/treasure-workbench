@@ -100,15 +100,23 @@ export function BackupPage() {
     }
   }
 
-  // 查找最新云端备份 gist
+  // 查找最新云端备份 gist（遍历多页）
   const findLatestGist = async (token) => {
-    const listRes = await fetch('https://api.github.com/gists?per_page=50', {
-      headers: { 'Authorization': `Bearer ${token}` },
-    })
-    if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`)
-    const gists = await listRes.json()
-    const found = gists.find(g => g.files?.['treasure-workbench-backup.json'])
-    if (!found) throw new Error('未找到云端备份，请先上传')
+    let page = 1
+    let found = null
+    while (!found && page <= 5) {
+      const listRes = await fetch(`https://api.github.com/gists?per_page=100&page=${page}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+      if (listRes.status === 401) throw new Error('Token 无效或已过期')
+      if (listRes.status === 403) throw new Error('GitHub API 请求次数超限，请稍后再试')
+      if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`)
+      const gists = await listRes.json()
+      if (!Array.isArray(gists) || gists.length === 0) break
+      found = gists.find(g => g.files?.['treasure-workbench-backup.json'])
+      page++
+    }
+    if (!found) throw new Error('未找到云端备份，请先在任意设备上传一次')
     return found
   }
 
