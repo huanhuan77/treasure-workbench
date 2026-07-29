@@ -256,8 +256,11 @@ export function DailyPlanPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
-            <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(viewDate)}</p>
-            <p style={{ margin: '1px 0 0', fontSize: '11px', color: '#9ca3af' }}>{viewDate}</p>
+            <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span>{getDateLabel(viewDate)}</span>
+              <span style={{ color: '#d1d5db' }}>·</span>
+              <span style={{ color: '#9ca3af' }}>{viewDate}</span>
+            </p>
           </div>
           <button onClick={() => setShowHistory(true)} style={{
             padding: '6px 12px', borderRadius: '10px',
