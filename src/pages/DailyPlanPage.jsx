@@ -90,6 +90,14 @@ export function DailyPlanPage() {
   const today = getToday()
   const tomorrow = addDays(today, 1)
   const [viewDate, setViewDate] = useState(today)
+  // 日期过零时自动切回今天
+  const prevTodayRef = useRef(today)
+  useEffect(() => {
+    if (prevTodayRef.current !== today) {
+      prevTodayRef.current = today
+      setViewDate(today)
+    }
+  }, [today])
   const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
   const [showModal, setShowModal] = useState(false)
