@@ -70,12 +70,12 @@ export function EditSamplePage() {
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
         <Field label="所属账号">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
             {ACCOUNTS.map(a => {
               const selected = account === a
               return (
                 <button key={a} onClick={() => setAccount(a)} style={{
-                  padding: '14px 12px', borderRadius: '999px',
+                  padding: '10px 10px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
                   background: selected
                     ? 'linear-gradient(135deg, #f472b6, #ec4899)'
@@ -83,19 +83,19 @@ export function EditSamplePage() {
                   cursor: 'pointer',
                   transition: 'all 0.15s',
                   boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-                  textAlign: 'center', minHeight: '44px',
+                  textAlign: 'center', minHeight: '38px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '4px',
+                  gap: '3px',
                 }}>
                   <span style={{
-                    fontSize: '14px', fontWeight: 600,
+                    fontSize: '13px', fontWeight: 600,
                     color: selected ? '#fff' : 'var(--text-main)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{ACCOUNT_NICK[a]}</span>
                   {selected && (
                     <span style={{
-                      color: '#fff', fontSize: '13px', fontWeight: 700, flexShrink: 0,
+                      color: '#fff', fontSize: '11px', fontWeight: 700, flexShrink: 0,
                     }}>✓</span>
                   )}
                 </button>
@@ -113,12 +113,18 @@ export function EditSamplePage() {
             ))}
           </div>
         </Field>
-        <Field label="收货日期">
-          <input type="date" style={inputStyle} value={receiveDate} onChange={e => setReceiveDate(e.target.value)} />
-        </Field>
-        <Field label="截止时间">
-          <input type="date" style={inputStyle} value={deadline} onChange={e => setDeadline(e.target.value)} />
-        </Field>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ flex: 1 }}>
+            <Field label="收货日期">
+              <input type="date" style={inputStyle} value={receiveDate} onChange={e => setReceiveDate(e.target.value)} />
+            </Field>
+          </div>
+          <div style={{ flex: 1 }}>
+            <Field label="截止时间">
+              <input type="date" style={inputStyle} value={deadline} onChange={e => setDeadline(e.target.value)} />
+            </Field>
+          </div>
+        </div>
         <Field label="佣金 %">
           <input type="number" style={inputStyle} value={commission} onChange={e => setCommission(e.target.value)} />
         </Field>
