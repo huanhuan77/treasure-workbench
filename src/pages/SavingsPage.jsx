@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useStore } from '../store'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const INV_STORAGE_KEY = 'blogger_investments_v1'
 // 从独立 key 读取投资数据
@@ -26,12 +26,13 @@ export function SavingsPage() {
   const sd = getSavings() || {}
   const records = sd.records || {}
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [editMonth, setEditMonth] = useState(null)
   const [expandedMonth, setExpandedMonth] = useState(null)
   const [editAccounts, setEditAccounts] = useState(null)
   const [showInvest, setShowInvest] = useState(false)
   const [showAddInv, setShowAddInv] = useState(false)
-  const [activeTab, setActiveTab] = useState('save')
+  const [activeTab, setActiveTab] = useState(() => params.get('tab') === 'invest' ? 'invest' : 'save')
   const [expandedInv, setExpandedInv] = useState(null)  // 展开查看历史记录的分组key
   const [year, setYear] = useState('2026')  // 攒钱计划年份
   // 根据年份生成月份键

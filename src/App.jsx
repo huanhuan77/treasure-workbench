@@ -13,7 +13,6 @@ import { SensitiveCheckPage } from './pages/SensitiveCheckPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { CalendarDetailPage } from './pages/CalendarDetailPage'
 import { BackupPage } from './pages/BackupPage'
-import { FundPage } from './pages/FundPage'
 import { NewTransactionPage } from './pages/NewTransactionPage'
 import { NewSamplePage } from './pages/NewSamplePage'
 import { EditSamplePage } from './pages/EditSamplePage'
@@ -24,7 +23,7 @@ import { DailyPlanPage } from './pages/DailyPlanPage'
 function AutoBackup() {
   const { show } = useToast()
   useEffect(() => {
-    const KEYS = ['blogger_workbench_data_v1', 'blogger_investments_v1', 'blogger_calendar_v1', 'daily_plan_v1', 'blogger_funds_v1']
+    const KEYS = ['blogger_workbench_data_v1', 'blogger_investments_v1', 'blogger_calendar_v1', 'daily_plan_v1']
     const GIST_ID_KEY = 'backup_gist_id'
     const LAST_SYNC_KEY = 'backup_last_sync_at'
     const doBackup = async () => {
@@ -79,7 +78,6 @@ function App() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/calendar/:date" element={<CalendarDetailPage />} />
             <Route path="/backup" element={<BackupPage />} />
-            <Route path="/fund" element={<FundPage />} />
             <Route path="/daily" element={<DailyPlanPage />} />
             <Route path="/product/new" element={<NewProductPage />} />
             <Route path="/product/:id/edit" element={<EditProductPage />} />
