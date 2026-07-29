@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { glassStyle } from '../components/Modal'
 
 const STORAGE_KEY = 'daily_plan_v1'
+const MAX_LEN = 100
 
 function loadData() {
   try {
@@ -23,7 +24,8 @@ export function DailyPlanPage() {
   const today = getToday()
   const plan = data[today] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
-  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [input, setInput] = useState('')
 
   const sync = (newTasks) => {
     const nd = { ...data, [today]: { tasks: newTasks } }
@@ -36,11 +38,12 @@ export function DailyPlanPage() {
   const progress = total > 0 ? Math.round((done / total) * 100) : 0
 
   const addTask = () => {
-    if (!newTaskTitle.trim()) return
-    const newTasks = [...tasks, { id: Date.now(), title: newTaskTitle.trim(), done: false }]
+    if (!input.trim()) return
+    const newTasks = [...tasks, { id: Date.now(), title: input.trim(), done: false }]
     setTasks(newTasks)
     sync(newTasks)
-    setNewTaskTitle('')
+    setInput('')
+    setShowModal(false)
   }
 
   const toggleTask = (id) => {
@@ -66,9 +69,17 @@ export function DailyPlanPage() {
   return (
     <div className="app-container">
       {/* 头部 */}
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
-        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
-        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
+        </div>
+        <button onClick={() => setShowModal(true)} style={{
+          width: '36px', height: '36px', borderRadius: '50%', border: 'none',
+          background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+          fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 14px rgba(244,114,182,0.3)',
+        }}>+</button>
       </header>
 
       <div style={{ padding: '0 16px' }}>
@@ -83,57 +94,15 @@ export function DailyPlanPage() {
           </div>
         </div>
 
-        {/* 添加任务输入框 */}
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '4px 4px 4px 14px',
-            background: 'rgba(255,255,255,0.6)',
-            border: '1.5px solid rgba(244,114,182,0.15)',
-            borderRadius: '16px',
-            boxShadow: '0 2px 8px rgba(244,114,182,0.04)',
-            transition: 'border-color 0.2s',
-          }}>
-            <input
-              type="text"
-              placeholder="今天想做什么..."
-              value={newTaskTitle}
-              onChange={e => setNewTaskTitle(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') addTask()
-              }}
-              style={{
-                flex: 1, height: '40px',
-                border: 'none', outline: 'none',
-                fontSize: '15px', background: 'transparent',
-                color: 'var(--text-main)',
-                fontFamily: 'inherit', padding: 0,
-              }}
-            />
-            <button onClick={addTask} disabled={!newTaskTitle.trim()} style={{
-              height: '32px', padding: '0 14px', borderRadius: '10px', border: 'none', flexShrink: 0,
-              background: newTaskTitle.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#f3f4f6',
-              color: newTaskTitle.trim() ? '#fff' : '#9ca3af',
-              fontSize: '13px', fontWeight: 600,
-              cursor: newTaskTitle.trim() ? 'pointer' : 'not-allowed',
-              transition: 'all 0.2s',
-            }}>添加</button>
-          </div>
-          <p style={{ margin: '6px 4px 0', fontSize: '11px', color: '#9ca3af' }}>
-            按 Enter 添加 · {newTaskTitle.length}/100
-          </p>
-        </div>
-
         {/* 任务列表 */}
         {tasks.length === 0 ? (
           <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务，点 + 添加</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {tasks.map(task => (
               <div key={task.id} style={{ ...glassStyle, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                {/* 勾选框 */}
                 <div
                   onClick={() => toggleTask(task.id)}
                   style={{
@@ -142,12 +111,10 @@ export function DailyPlanPage() {
                     background: task.done ? '#10b981' : '#fff',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-                    transition: 'all 0.2s',
                   }}
                 >
                   {task.done ? '✓' : ''}
                 </div>
-                {/* 任务名 */}
                 <div style={{
                   flex: 1, fontSize: '15px', fontWeight: 500,
                   color: task.done ? 'var(--text-sub)' : 'var(--text-main)',
@@ -155,7 +122,6 @@ export function DailyPlanPage() {
                 }}>
                   {task.title}
                 </div>
-                {/* 删除 */}
                 <button onClick={() => deleteTask(task.id)} style={{
                   width: '28px', height: '28px', borderRadius: '50%', border: 'none',
                   background: 'rgba(244,63,94,0.08)', color: '#e11d48', fontSize: '14px',
@@ -167,6 +133,64 @@ export function DailyPlanPage() {
         )}
       </div>
 
-      </div>
+      {/* 遮罩层 */}
+      {showModal && (
+        <div
+          onClick={() => { setShowModal(false); setInput('') }}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(74, 44, 58, 0.25)',
+            backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', zIndex: 1000,
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'rgba(255,255,255,0.92)',
+              backdropFilter: 'blur(30px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+              width: '100%', maxWidth: '480px',
+              borderRadius: '28px 28px 0 0',
+              padding: '24px 22px calc(16px + var(--safe-bottom))',
+              animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)',
+              boxShadow: '0 -8px 40px rgba(244,114,182,0.15)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: 'var(--text-main)' }}>添加任务</h3>
+              <button onClick={() => { setShowModal(false); setInput('') }} style={{
+                width: '32px', height: '32px', borderRadius: '50%', border: 'none',
+                background: 'rgba(252,231,243,0.7)', fontSize: '16px', color: 'var(--text-sub)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>✕</button>
+            </div>
+            <textarea
+              placeholder="今天要做什么？"
+              value={input}
+              onChange={e => setInput(e.target.value.slice(0, MAX_LEN))}
+              onKeyDown={e => { if (e.key === 'Enter') addTask() }}
+              autoFocus
+              rows={3}
+              style={{
+                width: '100%', padding: '14px 16px', border: '1.5px solid rgba(0,0,0,0.08)',
+                borderRadius: '14px', fontSize: '16px', outline: 'none', resize: 'none',
+                background: '#fff', color: 'var(--text-main)',
+                boxSizing: 'border-box', lineHeight: 1.5, fontFamily: 'inherit',
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{input.length}/{MAX_LEN}</span>
+              <button onClick={addTask} disabled={!input.trim()} style={{
+                padding: '10px 28px', borderRadius: '12px', border: 'none',
+                background: input.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#e5e7eb',
+                color: '#fff', fontSize: '15px', fontWeight: 600,
+                cursor: input.trim() ? 'pointer' : 'not-allowed',
+                boxShadow: input.trim() ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
+              }}>添加</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
