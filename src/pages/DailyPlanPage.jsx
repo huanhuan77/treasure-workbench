@@ -23,6 +23,12 @@ function getToday() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function addDays(dateStr, n) {
+  const d = new Date(dateStr)
+  d.setDate(d.getDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
 function SortableTaskRow({ task, onToggle, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
   const style = {
@@ -82,7 +88,9 @@ function SortableTaskRow({ task, onToggle, onDelete }) {
 export function DailyPlanPage() {
   const [data, setData] = useState(loadData)
   const today = getToday()
-  const plan = data[today] || { tasks: [] }
+  const tomorrow = addDays(today, 1)
+  const [viewDate, setViewDate] = useState(today)
+  const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
   const [showModal, setShowModal] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
@@ -115,10 +123,15 @@ export function DailyPlanPage() {
   }, [showModal])
 
   const sync = (newTasks) => {
-    const nd = { ...data, [today]: { tasks: newTasks } }
+    const nd = { ...data, [viewDate]: { tasks: newTasks } }
     setData(nd)
     saveData(nd)
   }
+
+  // 切换 viewDate 时同步任务列表
+  useEffect(() => {
+    setTasks((data[viewDate] || { tasks: [] }).tasks)
+  }, [viewDate, data])
 
   const total = tasks.length
   const done = tasks.filter(t => t.done).length
@@ -214,19 +227,48 @@ export function DailyPlanPage() {
 
   return (
     <div className="app-container">
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+          <div>
+            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
+            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(viewDate)}</p>
+          </div>
+          <button onClick={() => setShowHistory(true)} style={{
+            padding: '6px 12px', borderRadius: '10px',
+            border: '1.5px solid rgba(244,114,182,0.2)',
+            background: 'rgba(244,114,182,0.06)',
+            color: 'var(--primary)', fontSize: '13px', fontWeight: 600,
+            cursor: 'pointer', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: '4px',
+          }}>📅 历史</button>
         </div>
-        <button onClick={() => setShowHistory(true)} style={{
-          padding: '6px 12px', borderRadius: '10px',
-          border: '1.5px solid rgba(244,114,182,0.2)',
+
+        {/* 今日 / 明日 切换 */}
+        <div style={{
+          display: 'flex', gap: '6px',
+          padding: '3px', borderRadius: '12px',
           background: 'rgba(244,114,182,0.06)',
-          color: 'var(--primary)', fontSize: '13px', fontWeight: 600,
-          cursor: 'pointer', whiteSpace: 'nowrap',
-          display: 'flex', alignItems: 'center', gap: '4px',
-        }}>📅 历史</button>
+        }}>
+          {[
+            { key: 'today', label: '今日', date: today },
+            { key: 'tomorrow', label: '明日', date: tomorrow },
+          ].map(item => {
+            const selected = viewDate === item.date
+            return (
+              <button key={item.key} onClick={() => setViewDate(item.date)} style={{
+                flex: 1, padding: '9px 0', border: 'none', borderRadius: '9px',
+                fontSize: '14px', fontWeight: selected ? 600 : 500,
+                color: selected ? '#fff' : 'var(--text-sub)',
+                background: selected
+                  ? 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)'
+                  : 'transparent',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                boxShadow: selected ? '0 2px 8px rgba(236,72,153,0.25)' : 'none',
+              }}>{item.label}</button>
+            )
+          })}
+        </div>
       </header>
 
       <div style={{ padding: '0 16px' }}>
@@ -244,7 +286,9 @@ export function DailyPlanPage() {
         {/* 任务列表 */}
         {tasks.length === 0 ? (
           <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>
+              {viewDate === today ? '今天还没有任务' : '明天还没有计划'}
+            </p>
             <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>点右下角 + 添加</p>
           </div>
         ) : (
@@ -288,7 +332,8 @@ export function DailyPlanPage() {
       >+</button>
 
       {/* 添加任务弹窗 */}
-      <Modal open={showModal} onClose={() => { setShowModal(false); setInput('') }} title="添加任务"
+      <Modal open={showModal} onClose={() => { setShowModal(false); setInput('') }}
+        title={viewDate === today ? '添加今日任务' : '添加明日计划'}
         footer={
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{input.length}/{MAX_LEN}</span>
