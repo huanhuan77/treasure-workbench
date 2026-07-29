@@ -241,27 +241,29 @@ export function SamplesPage() {
                     }}
                   >
                   {/* ↕ 排序指示 */}
-                  <span style={{ color: '#d1d5db', fontSize: '16px', marginTop: '2px', flexShrink: 0, userSelect: 'none' }}>↕</span>
+                  <span style={{ color: '#d1d5db', fontSize: '14px', marginTop: '2px', flexShrink: 0, userSelect: 'none', lineHeight: 1.2 }}>↕</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                      <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
-                      {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
+                    {/* 第一行：产品名 + 账号 + 状态 */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
+                        {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>
                     </div>
-                    <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>
-                  </div>
-                  {/* 第二行：佣金tag + 日期 + 编辑 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)' }}>
-                    {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
-                    {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
-                    {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
-                  </div>
-
-                  {/* 备注（可选） */}
-                  {s.remark && (
-                    <div style={{ fontSize: '12px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.55)', padding: '6px 10px', borderRadius: '8px', lineHeight: 1.45, marginTop: '6px', border: '1px solid rgba(255,255,255,0.5)' }}>
-                      {s.remark}
+                    {/* 第二行：佣金 + 日期 + 截止 */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                      {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
+                      {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
+                      {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
                     </div>
-                  )}
+                    {/* 备注 */}
+                    {s.remark && (
+                      <div style={{ fontSize: '12px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.55)', padding: '6px 10px', borderRadius: '8px', lineHeight: 1.45, marginTop: '6px', border: '1px solid rgba(255,255,255,0.5)' }}>
+                        {s.remark}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 </div>
               )
