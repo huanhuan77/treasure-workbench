@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '../components/Toast'
-import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
+import { Modal, glassStyle } from '../components/Modal'
 
 const STORAGE_KEY = 'daily_plan_v1'
 
@@ -37,7 +37,6 @@ export function DailyPlanPage() {
   const plan = data[today] || { tasks: [], stars: 0 }
   const [tasks, setTasks] = useState(plan.tasks)
   const [stars, setStars] = useState(plan.stars || 0)
-  const [showAdd, setShowAdd] = useState(false)
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [showRewards, setShowRewards] = useState(false)
 
@@ -58,7 +57,6 @@ export function DailyPlanPage() {
     setTasks(newTasks)
     sync(newTasks, stars)
     setNewTaskTitle('')
-    setShowAdd(false)
   }
 
   const toggleTask = (id) => {
@@ -112,12 +110,6 @@ export function DailyPlanPage() {
           <button onClick={() => setShowRewards(true)} style={{ padding: '8px 12px', borderRadius: '10px', border: 'none', background: 'rgba(251,191,36,0.12)', color: '#d97706', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
             ⭐ {stars}
           </button>
-          <button onClick={() => setShowAdd(true)} style={{
-            width: '36px', height: '36px', borderRadius: '50%', border: 'none',
-            background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
-            fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(244,114,182,0.3)',
-          }}>+</button>
         </div>
       </header>
 
@@ -181,35 +173,62 @@ export function DailyPlanPage() {
         )}
       </div>
 
-      {/* 添加任务弹窗 */}
-      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="添加任务"
-        footer={
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={btnGhost} onClick={() => setShowAdd(false)}>取消</button>
-            <button style={{ ...btnPrimary, flex: 1 }} onClick={addTask}>添加</button>
-          </div>
-        }
-      >
-        <Field label="任务内容">
+      {/* 始终显示的输入框（页面底部固定位置） */}
+      <div style={{
+        position: 'fixed', left: 0, right: 0, bottom: 0,
+        padding: '12px 16px calc(16px + var(--safe-bottom))',
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        borderTop: '1px solid rgba(244,114,182,0.12)',
+        zIndex: 50,
+      }}>
+        <div style={{
+          display: 'flex', gap: '8px', alignItems: 'flex-end',
+        }}>
           <textarea
-            style={{ ...inputStyle, minHeight: '80px', resize: 'none', lineHeight: 1.6 }}
-            placeholder="写点什么..."
+            placeholder="今天想做什么..."
             value={newTaskTitle}
             onChange={e => setNewTaskTitle(e.target.value)}
-            autoFocus
             onKeyDown={e => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addTask()
             }}
+            rows={2}
+            style={{
+              flex: 1, minHeight: '72px', maxHeight: '160px',
+              padding: '12px 14px',
+              border: '1.5px solid rgba(0,0,0,0.08)',
+              borderRadius: '14px',
+              fontSize: '15px', outline: 'none', resize: 'none',
+              background: '#fff', color: 'var(--text-main)',
+              boxSizing: 'border-box',
+              boxShadow: '0 2px 8px rgba(244,114,182,0.06)',
+              lineHeight: 1.5,
+              fontFamily: 'inherit',
+            }}
           />
-          <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--gray-400)', textAlign: 'right' }}>⌘+Enter 快速添加</p>
-        </Field>
-      </Modal>
+          <button onClick={addTask} disabled={!newTaskTitle.trim()} style={{
+            height: '44px', padding: '0 20px', borderRadius: '14px', border: 'none', flexShrink: 0,
+            background: newTaskTitle.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#e5e7eb',
+            color: '#fff', fontSize: '15px', fontWeight: 700,
+            cursor: newTaskTitle.trim() ? 'pointer' : 'not-allowed',
+            boxShadow: newTaskTitle.trim() ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
+            whiteSpace: 'nowrap',
+          }}>添加</button>
+        </div>
+      </div>
+      {/* 底部留空避免内容被遮挡 */}
+      <div style={{ height: '120px' }} />
 
       {/* 奖励弹窗 */}
       <Modal open={showRewards} onClose={() => setShowRewards(false)} title="🎁 领取奖励"
         footer={
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-            <button style={btnGhost} onClick={() => setShowRewards(false)}>先不领</button>
+            <button onClick={() => setShowRewards(false)} style={{
+              flex: 1, padding: '12px', background: 'rgba(252, 231, 243, 0.6)',
+              color: 'var(--text-sub)', borderRadius: '14px', fontSize: '15px',
+              fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
+            }}>先不领</button>
           </div>
         }
       >

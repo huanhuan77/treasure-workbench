@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '../components/Toast'
-import { glassStyle, ConfirmModal } from '../components/Modal'
+import { glassStyle } from '../components/Modal'
 
 const KEYS = [
   'blogger_workbench_data_v1',
@@ -19,7 +19,6 @@ export function BackupPage() {
   const [showToken, setShowToken] = useState(false)
   const [lastSync, setLastSync] = useState(() => localStorage.getItem(LAST_SYNC_KEY) || '')
   const [gistId, setGistId] = useState(() => localStorage.getItem(GIST_ID_KEY) || '')
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     const handle = setInterval(() => {
@@ -131,30 +130,6 @@ export function BackupPage() {
     }
   }
 
-  // 删除云备份
-  const deleteCloudBackup = async () => {
-    const gistId = localStorage.getItem(GIST_ID_KEY)
-    if (!gistId) { show('没有云备份可删除', 'error'); return }
-    setSyncing(true)
-    try {
-      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token.trim()}` },
-      })
-      if (!res.ok && res.status !== 204 && res.status !== 404) throw new Error(`HTTP ${res.status}`)
-      localStorage.removeItem(GIST_ID_KEY)
-      localStorage.removeItem(LAST_SYNC_KEY)
-      setGistId('')
-      setLastSync('')
-      setShowDeleteConfirm(false)
-      show('☁️ 云备份已删除', 'success')
-    } catch (e) {
-      show('删除失败: ' + e.message, 'error')
-    } finally {
-      setSyncing(false)
-    }
-  }
-
   const stats = {}
   for (const key of KEYS) {
     try {
@@ -258,6 +233,7 @@ export function BackupPage() {
             }}>
               {syncing ? '同步中...' : '☁️ 从云端恢复'}
             </button>
+          </div>
         </div>
 
         {/* 自动同步提示 */}
@@ -266,23 +242,8 @@ export function BackupPage() {
           🔄 <b>自动同步</b>：每 3 小时自动备份一次，也可在此手动同步。<br />
           🔄 <b>恢复后</b>：需要刷新页面才能生效。<br />
           📦 备份包含：产品、样品、收支、攒钱、投资、日历、每日计划等全部数据。
-          {gistId && (<>
-            <br /><span style={{ color: '#d97706', cursor: 'pointer', textDecoration: 'underline', textDecorationColor: 'rgba(217,119,6,0.3)' }} onClick={() => setShowDeleteConfirm(true)}>🗑️ 删除云备份</span>
-          </>)}
         </div>
       </div>
-
-      {showDeleteConfirm && (
-        <ConfirmModal
-          open={showDeleteConfirm}
-          onClose={() => setShowDeleteConfirm(false)}
-          onConfirm={deleteCloudBackup}
-          title="删除云备份"
-          message="确定删除 GitHub Gist 中的云备份？删除后无法恢复。本地数据不会受影响。"
-          confirmText="确认删除"
-          danger
-        />
-      )}
     </div>
   )
 }
