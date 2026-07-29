@@ -70,12 +70,13 @@ export function EditSamplePage() {
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
         <Field label="所属账号">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             {ACCOUNTS.map(a => {
               const selected = account === a
               return (
                 <button key={a} onClick={() => setAccount(a)} style={{
-                  padding: '10px 10px', borderRadius: '999px',
+                  flex: 1, minWidth: 0,
+                  padding: '10px 8px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
                   background: selected
                     ? 'linear-gradient(135deg, #f472b6, #ec4899)'
@@ -85,10 +86,10 @@ export function EditSamplePage() {
                   boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
                   textAlign: 'center', minHeight: '38px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '3px',
+                  gap: '2px',
                 }}>
                   <span style={{
-                    fontSize: '13px', fontWeight: 600,
+                    fontSize: '12px', fontWeight: 600,
                     color: selected ? '#fff' : 'var(--text-main)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden', textOverflow: 'ellipsis',
