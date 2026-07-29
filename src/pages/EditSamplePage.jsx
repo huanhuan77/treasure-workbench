@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
+import { addDays } from '../utils/helpers'
 
 const STATUS = {
   unpublished: { label: '未发布', emoji: '⚪️' },
@@ -33,7 +34,7 @@ export function EditSamplePage() {
   const [account, setAccount] = useState(sample?.account || '大号')
   const [status, setStatus] = useState(sample?.status || 'unpublished')
   const [receiveDate, setReceiveDate] = useState(sample?.receiveDate || new Date().toISOString().slice(0,10))
-  const [deadline, setDeadline] = useState(sample?.deadline || '')
+  const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0,10), 15))
   const [remark, setRemark] = useState(sample?.remark || '')
   const [commission, setCommission] = useState(sample?.commission || 5)
 
@@ -117,7 +118,7 @@ export function EditSamplePage() {
         <div style={{ display: 'flex', gap: '10px' }}>
           <div style={{ flex: 1 }}>
             <Field label="收货日期">
-              <input type="date" style={inputStyle} value={receiveDate} onChange={e => setReceiveDate(e.target.value)} />
+              <input type="date" style={inputStyle} value={receiveDate} onChange={e => { setReceiveDate(e.target.value); setDeadline(addDays(e.target.value, 15)) }} />
             </Field>
           </div>
           <div style={{ flex: 1 }}>
