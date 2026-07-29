@@ -13,6 +13,7 @@ import { SensitiveCheckPage } from './pages/SensitiveCheckPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { CalendarDetailPage } from './pages/CalendarDetailPage'
 import { BackupPage } from './pages/BackupPage'
+import { InvestmentPage } from './pages/InvestmentPage'
 import { NewTransactionPage } from './pages/NewTransactionPage'
 import { NewSamplePage } from './pages/NewSamplePage'
 import { EditSamplePage } from './pages/EditSamplePage'
@@ -78,6 +79,7 @@ function App() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/calendar/:date" element={<CalendarDetailPage />} />
             <Route path="/backup" element={<BackupPage />} />
+            <Route path="/investment" element={<InvestmentPage />} />
             <Route path="/daily" element={<DailyPlanPage />} />
             <Route path="/product/new" element={<NewProductPage />} />
             <Route path="/product/:id/edit" element={<EditProductPage />} />
