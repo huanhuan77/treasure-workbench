@@ -126,6 +126,7 @@ export function DailyPlanPage() {
     const nd = { ...data, [viewDate]: { tasks: newTasks } }
     setData(nd)
     saveData(nd)
+    window.dispatchEvent(new Event('dailyPlanUpdated'))
   }
 
   // 切换 viewDate 时同步任务列表

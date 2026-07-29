@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
 // 底部主 tab（5 个核心功能）
 const mainTabs = [
   { to: '/', label: '文案', icon: '📝', end: true },
   { to: '/samples', label: '样品', icon: '🏷️' },
-  { to: '/daily', label: '每日计划', icon: '📋' },
+  { to: '/daily', label: '每日计划', icon: '📋', badgeKey: 'plan' },
   { to: '/finance', label: '收支', icon: '💳' },
 ]
 
@@ -19,7 +19,7 @@ const sideTabs = [
   { to: '/sensitive-check', label: '违禁词检测', icon: '🚫' },
 ]
 
-function TabItem({ to, label, icon, end, onClick }) {
+function TabItem({ to, label, icon, end, onClick, badge }) {
   return (
     <NavLink
       to={to}
@@ -41,14 +41,30 @@ function TabItem({ to, label, icon, end, onClick }) {
     >
       {({ isActive }) => (
         <>
-          <span style={{
-            fontSize: '22px',
-            transform: isActive ? 'scale(1.1)' : 'scale(1)',
-            transition: 'transform 0.2s',
-            display: 'block',
-          }}>{icon}</span>
+          <div style={{ position: 'relative', display: 'inline-block' }}>
+            <span style={{
+              fontSize: '22px',
+              transform: isActive ? 'scale(1.1)' : 'scale(1)',
+              transition: 'transform 0.2s',
+              display: 'block',
+            }}>{icon}</span>
+            {badge > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-4px', right: '-10px',
+                minWidth: '18px', height: '18px',
+                padding: '0 5px',
+                borderRadius: '9px',
+                background: '#ef4444', color: '#fff',
+                fontSize: '10px', fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 0 0 2px rgba(255,255,255,0.85)',
+                lineHeight: 1,
+              }}>{badge > 99 ? '99+' : badge}</span>
+            )}
+          </div>
           <span style={{ fontWeight: isActive ? 600 : 500 }}>{label}</span>
-          {isActive && (
+          {isActive && !badge && (
             <span style={{
               position: 'absolute',
               top: 4,
@@ -69,6 +85,29 @@ function TabItem({ to, label, icon, end, onClick }) {
 export function BottomNav() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
+
+  // 每日计划未完成数（实时同步）
+  const [planBadge, setPlanBadge] = useState(0)
+  useEffect(() => {
+    const calc = () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10)
+        const raw = localStorage.getItem('daily_plan_v1')
+        if (!raw) { setPlanBadge(0); return }
+        const data = JSON.parse(raw)
+        const tasks = data[today]?.tasks || []
+        const undone = tasks.filter(t => !t.done).length
+        setPlanBadge(undone)
+      } catch { setPlanBadge(0) }
+    }
+    calc()
+    window.addEventListener('dailyPlanUpdated', calc)
+    window.addEventListener('storage', calc)
+    return () => {
+      window.removeEventListener('dailyPlanUpdated', calc)
+      window.removeEventListener('storage', calc)
+    }
+  }, [])
 
   const handleSideNav = (to) => {
     navigate(to)
@@ -97,7 +136,7 @@ export function BottomNav() {
         }}
       >
         {mainTabs.map((tab) => (
-          <TabItem key={tab.to} {...tab} />
+          <TabItem key={tab.to} {...tab} badge={tab.badgeKey === 'plan' ? planBadge : 0} />
         ))}
         {/* 更多按钮 */}
         <button
