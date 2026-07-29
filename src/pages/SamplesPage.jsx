@@ -346,12 +346,15 @@ function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, fil
               onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
               aria-label="拖动排序"
               style={{
-                background: 'transparent', border: 'none', cursor: 'grab',
-                color: '#9ca3af', fontSize: '18px', padding: '0',
-                touchAction: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, lineHeight: 1,
+                background: 'rgba(244,114,182,0.08)', border: 'none',
+                color: 'var(--primary)',
+                fontSize: '14px', padding: '6px',
+                touchAction: 'none', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, lineHeight: 1, gap: '1px',
+                cursor: 'grab', borderRadius: '6px',
               }}
-            >⇕</button>
+            ><span style={{ fontSize: '10px', lineHeight: 1 }}>▲</span><span style={{ fontSize: '10px', lineHeight: 1 }}>▼</span></button>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
               <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
               {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
