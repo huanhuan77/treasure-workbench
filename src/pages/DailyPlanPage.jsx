@@ -85,6 +85,8 @@ export function DailyPlanPage() {
   const plan = data[today] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
   const [showModal, setShowModal] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
+  const [historyDate, setHistoryDate] = useState(null)
   const [input, setInput] = useState('')
 
   // FAB 拖动状态
@@ -141,6 +143,16 @@ export function DailyPlanPage() {
     const newTasks = tasks.filter(t => t.id !== id)
     setTasks(newTasks)
     sync(newTasks)
+  }
+
+  // 历史日期相关：仅查看，可切换完成状态（修改同步回历史）
+  const historyPlan = historyDate ? (data[historyDate] || { tasks: [] }) : null
+  const toggleHistoryTask = (id) => {
+    if (!historyDate) return
+    const newTasks = (historyPlan.tasks || []).map(t => t.id === id ? { ...t, done: !t.done } : t)
+    const nd = { ...data, [historyDate]: { ...historyPlan, tasks: newTasks } }
+    setData(nd)
+    saveData(nd)
   }
 
   const handleDragEnd = (event) => {
@@ -202,9 +214,19 @@ export function DailyPlanPage() {
 
   return (
     <div className="app-container">
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
-        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
-        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
+        </div>
+        <button onClick={() => setShowHistory(true)} style={{
+          padding: '6px 12px', borderRadius: '10px',
+          border: '1.5px solid rgba(244,114,182,0.2)',
+          background: 'rgba(244,114,182,0.06)',
+          color: 'var(--primary)', fontSize: '13px', fontWeight: 600,
+          cursor: 'pointer', whiteSpace: 'nowrap',
+          display: 'flex', alignItems: 'center', gap: '4px',
+        }}>📅 历史</button>
       </header>
 
       <div style={{ padding: '0 16px' }}>
@@ -297,6 +319,118 @@ export function DailyPlanPage() {
           }}
         />
       </Modal>
+
+      {/* 历史计划弹窗 */}
+      <Modal open={showHistory} onClose={() => { setShowHistory(false); setHistoryDate(null) }}
+        title={historyDate ? getDateLabel(historyDate) : '历史计划'}
+        center
+      >
+        {historyDate ? (
+          // 历史详情视图
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+              <button onClick={() => setHistoryDate(null)} style={{
+                padding: '6px 12px', borderRadius: '8px', border: '1.5px solid rgba(0,0,0,0.06)',
+                background: '#fff', fontSize: '13px', cursor: 'pointer', color: 'var(--text-sub)',
+              }}>‹ 返回</button>
+              <span style={{ fontSize: '13px', color: 'var(--text-sub)' }}>
+                {(historyPlan.tasks || []).filter(t => t.done).length}/{(historyPlan.tasks || []).length} 完成
+              </span>
+            </div>
+            {(!historyPlan.tasks || historyPlan.tasks.length === 0) ? (
+              <p style={{ textAlign: 'center', color: 'var(--text-sub)', padding: '20px 0', fontSize: '14px' }}>这一天没有任务</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '60vh', overflowY: 'auto' }}>
+                {(historyPlan.tasks || []).map(task => (
+                  <div key={task.id} style={{
+                    padding: '12px 14px', borderRadius: '12px',
+                    background: 'rgba(255,255,255,0.7)',
+                    border: '1.5px solid rgba(0,0,0,0.04)',
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                  }}>
+                    <div onClick={() => toggleHistoryTask(task.id)} style={{
+                      width: '24px', height: '24px', borderRadius: '50%', flexShrink: 0,
+                      border: `2.5px solid ${task.done ? '#10b981' : '#d1d5db'}`,
+                      background: task.done ? '#10b981' : '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                    }}>
+                      {task.done ? '✓' : ''}
+                    </div>
+                    <div style={{
+                      flex: 1, fontSize: '14px', fontWeight: 500,
+                      color: task.done ? 'var(--text-sub)' : 'var(--text-main)',
+                      textDecoration: task.done ? 'line-through' : 'none',
+                    }}>
+                      {task.title}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          // 历史列表视图
+          <HistoryList
+            data={data}
+            today={today}
+            getDateLabel={getDateLabel}
+            onOpen={setHistoryDate}
+          />
+        )}
+      </Modal>
+    </div>
+  )
+}
+
+// 历史计划列表子组件
+function HistoryList({ data, today, getDateLabel, onOpen }) {
+  // 所有历史日期（排除今天），按日期降序
+  const allDates = Object.keys(data)
+    .filter(d => d !== today && data[d] && data[d].tasks && data[d].tasks.length > 0)
+    .sort((a, b) => b.localeCompare(a))
+
+  if (allDates.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-sub)', fontSize: '14px' }}>
+        <p style={{ margin: 0 }}>📅 还没有历史计划</p>
+        <p style={{ fontSize: '12px', color: '#9ca3af', marginTop: '6px' }}>每天添加任务后会自动保存到历史</p>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+      <div style={{ fontSize: '12px', color: 'var(--gray-400)', marginBottom: '10px', textAlign: 'center' }}>
+        共 {allDates.length} 天历史计划
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {allDates.map(date => {
+          const tasks = data[date].tasks
+          const d = tasks.filter(t => t.done).length
+          const pct = tasks.length > 0 ? Math.round((d / tasks.length) * 100) : 0
+          return (
+            <button key={date} onClick={() => onOpen(date)} style={{
+              padding: '14px 16px', borderRadius: '12px',
+              border: '1.5px solid rgba(0,0,0,0.06)',
+              background: 'rgba(255,255,255,0.6)',
+              textAlign: 'left', cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,114,182,0.08)'; e.currentTarget.style.borderColor = 'rgba(244,114,182,0.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.06)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)' }}>{getDateLabel(date)}</span>
+                <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>{d}/{tasks.length} · {pct}%</span>
+              </div>
+              <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(244,114,182,0.1)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: '3px', width: `${pct}%`, background: pct === 100 ? 'linear-gradient(90deg,#34d399,#10b981)' : 'linear-gradient(90deg,#f472b6,#ec4899)' }} />
+              </div>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }
