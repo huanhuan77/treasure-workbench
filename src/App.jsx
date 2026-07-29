@@ -22,7 +22,7 @@ import { DailyPlanPage } from './pages/DailyPlanPage'
 function App() {
   // 全局自动云备份：每 3 小时自动备份一次
   useEffect(() => {
-    const KEYS = ['blogger_workbench_data_v1', 'blogger_investments_v1', 'blogger_calendar_v1']
+    const KEYS = ['blogger_workbench_data_v1', 'blogger_investments_v1', 'blogger_calendar_v1', 'daily_plan_v1']
     const GIST_ID_KEY = 'backup_gist_id'
     const doBackup = async () => {
       const token = localStorage.getItem('backup_github_token')

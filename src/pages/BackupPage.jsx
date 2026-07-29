@@ -6,6 +6,7 @@ const KEYS = [
   'blogger_workbench_data_v1',
   'blogger_investments_v1',
   'blogger_calendar_v1',
+  'daily_plan_v1',
 ]
 
 const GIST_ID_KEY = 'backup_gist_id'
@@ -145,6 +146,8 @@ export function BackupPage() {
           stats['日历'] = Object.keys(d).length
         } else if (key === 'blogger_investments_v1') {
           stats['投资'] = Array.isArray(d) ? d.length : 0
+        } else if (key === 'daily_plan_v1') {
+          stats['每日计划'] = d.tasks?.length || 0
         }
       }
     } catch (e) {}
