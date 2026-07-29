@@ -51,36 +51,35 @@ export function NewSamplePage() {
           <input style={inputStyle} placeholder="例如：补水喷雾" value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
         <Field label="所属账号">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {ACCOUNTS.map(a => {
               const selected = account === a
               return (
                 <button key={a} onClick={() => setAccount(a)} style={{
-                  padding: '14px 16px', borderRadius: '12px',
+                  flex: 1, minWidth: 0,
+                  padding: '12px 14px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
                   background: selected
-                    ? 'linear-gradient(135deg, rgba(244,114,182,0.08), rgba(236,72,153,0.04))'
+                    ? 'linear-gradient(135deg, #f472b6, #ec4899)'
                     : 'rgba(255,255,255,0.6)',
                   cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
                   transition: 'all 0.15s',
-                  boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.15)' : 'none',
+                  boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
+                  textAlign: 'center', minHeight: '44px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: '4px', flexShrink: 1,
                 }}>
-                  <div style={{
-                    fontSize: '16px', fontWeight: 600,
-                    color: 'var(--text-main)', whiteSpace: 'nowrap',
-                    overflow: 'hidden', textOverflow: 'ellipsis', flex: 1,
-                    textAlign: 'left',
-                  }}>{ACCOUNT_NICK[a]}</div>
-                  <div style={{
-                    width: '20px', height: '20px', borderRadius: '50%',
-                    border: selected ? 'none' : '2px solid #d1d5db',
-                    background: selected ? 'var(--primary)' : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontSize: '12px', flexShrink: 0,
-                  }}>
-                    {selected && '✓'}
-                  </div>
+                  <span style={{
+                    fontSize: '14px', fontWeight: 600,
+                    color: selected ? '#fff' : 'var(--text-main)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{ACCOUNT_NICK[a]}</span>
+                  {selected && (
+                    <span style={{
+                      color: '#fff', fontSize: '13px', fontWeight: 700, flexShrink: 0,
+                    }}>✓</span>
+                  )}
                 </button>
               )
             })}
