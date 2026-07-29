@@ -84,44 +84,50 @@ export function DailyPlanPage() {
         </div>
 
         {/* 添加任务输入框 */}
-        <div style={{
-          ...glassStyle, padding: '12px', marginBottom: '12px',
-          display: 'flex', gap: '8px', alignItems: 'flex-end',
-        }}>
-          <textarea
-            placeholder="今天想做什么..."
-            value={newTaskTitle}
-            onChange={e => setNewTaskTitle(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addTask()
-            }}
-            rows={2}
-            style={{
-              flex: 1, minHeight: '64px', maxHeight: '160px',
-              padding: '12px 14px',
-              border: '1.5px solid rgba(0,0,0,0.08)',
-              borderRadius: '12px',
-              fontSize: '15px', outline: 'none', resize: 'none',
-              background: '#fff', color: 'var(--text-main)',
-              boxSizing: 'border-box',
-              lineHeight: 1.5,
-              fontFamily: 'inherit',
-            }}
-          />
-          <button onClick={addTask} disabled={!newTaskTitle.trim()} style={{
-            height: '44px', padding: '0 18px', borderRadius: '12px', border: 'none', flexShrink: 0,
-            background: newTaskTitle.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#e5e7eb',
-            color: '#fff', fontSize: '15px', fontWeight: 700,
-            cursor: newTaskTitle.trim() ? 'pointer' : 'not-allowed',
-            boxShadow: newTaskTitle.trim() ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-            whiteSpace: 'nowrap',
-          }}>添加</button>
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '4px 4px 4px 14px',
+            background: 'rgba(255,255,255,0.6)',
+            border: '1.5px solid rgba(244,114,182,0.15)',
+            borderRadius: '16px',
+            boxShadow: '0 2px 8px rgba(244,114,182,0.04)',
+            transition: 'border-color 0.2s',
+          }}>
+            <input
+              type="text"
+              placeholder="今天想做什么..."
+              value={newTaskTitle}
+              onChange={e => setNewTaskTitle(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') addTask()
+              }}
+              style={{
+                flex: 1, height: '40px',
+                border: 'none', outline: 'none',
+                fontSize: '15px', background: 'transparent',
+                color: 'var(--text-main)',
+                fontFamily: 'inherit', padding: 0,
+              }}
+            />
+            <button onClick={addTask} disabled={!newTaskTitle.trim()} style={{
+              height: '32px', padding: '0 14px', borderRadius: '10px', border: 'none', flexShrink: 0,
+              background: newTaskTitle.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#f3f4f6',
+              color: newTaskTitle.trim() ? '#fff' : '#9ca3af',
+              fontSize: '13px', fontWeight: 600,
+              cursor: newTaskTitle.trim() ? 'pointer' : 'not-allowed',
+              transition: 'all 0.2s',
+            }}>添加</button>
+          </div>
+          <p style={{ margin: '6px 4px 0', fontSize: '11px', color: '#9ca3af' }}>
+            按 Enter 添加 · {newTaskTitle.length}/100
+          </p>
         </div>
 
         {/* 任务列表 */}
         {tasks.length === 0 ? (
           <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务，在上方输入框添加今天的计划</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
