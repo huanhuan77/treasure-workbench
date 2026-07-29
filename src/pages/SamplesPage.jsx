@@ -1,5 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
@@ -47,7 +50,7 @@ function sortSamples(samples) {
 
 export function SamplesPage() {
   const navigate = useNavigate()
-  const { samples, addSample, deleteSample, updateSample } = useStore()
+  const { samples, addSample, deleteSample, updateSample, reorderSamples } = useStore()
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -55,6 +58,20 @@ export function SamplesPage() {
   const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'unpublished')
   const [accountFilter, setAccountFilter] = useState(() => sessionStorage.getItem('samples_account') || '大号')
   const [searchKeyword, setSearchKeyword] = useState('')
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+  )
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = accountFiltered.findIndex(s => s.id === active.id)
+    const newIndex = accountFiltered.findIndex(s => s.id === over.id)
+    if (oldIndex < 0 || newIndex < 0) return
+    reorderSamples(arrayMove(accountFiltered.map(s => s.id), oldIndex, newIndex))
+  }
 
   // 恢复滚动位置和筛选状态（从编辑/新增页返回时）
   useEffect(() => {
@@ -202,73 +219,39 @@ export function SamplesPage() {
             <p style={{ fontSize: '14px', margin: 0 }}>暂无样品记录</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {accountFiltered.map((s) => {
-              const st = STATUS[s.status] || STATUS.unpublished
-              const dl = deadlineDesc(s.deadline)
-              // 解析剩余天数用于颜色判断
-              const dlMatch = dl && dl.match(/(\d+)天/)
-              const dlDays = dlMatch ? parseInt(dlMatch[1], 10) : (dl && dl.includes('今天') ? 0 : null)
-              const dlColor = dl && dl.includes('过期') ? '#dc2626' :
-                              dlDays === 0 ? '#dc2626' :
-                              dlDays !== null && dlDays <= 3 ? '#dc2626' :
-                              dlDays !== null && dlDays <= 7 ? '#ea580c' : 'var(--text-sub)'
-              const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
-              const isSwiped = swipedId === s.id
-              return (
-                <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
-                  {/* 左滑操作按钮 */}
-                  <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
-                                <button onClick={() => {
-              sessionStorage.setItem('samples_scroll', String(window.scrollY))
-              sessionStorage.setItem('samples_filter', filter)
-              sessionStorage.setItem('samples_account', accountFilter)
-              setSwipedId(null); navigate(`/samples/${s.id}/edit`)
-            }} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
-                    <button onClick={() => { setSwipedId(null); if (confirm('删除该样品？')) { deleteSample(s.id); show('已删除', 'success') } }} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
-                  </div>
-                  {/* 可滑动内容 */}
-                  <div
-                    onClick={() => { if (isSwiped) { setSwipedId(null) } else { /* tap to view */ } }}
-                    onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
-                    onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
-                    onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
-                    style={{
-                      ...glassStyle, padding: '12px 14px 10px 14px', borderLeft: `3px solid ${st.stripe}`,
-                      transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
-                      position: 'relative', zIndex: 1, cursor: 'pointer',
-                      display: 'flex', alignItems: 'flex-start', gap: '10px',
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={accountFiltered.map(s => s.id)} strategy={verticalListSortingStrategy}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {accountFiltered.map((s) => {
+                  const st = STATUS[s.status] || STATUS.unpublished
+                  const dl = deadlineDesc(s.deadline)
+                  const dlMatch = dl && dl.match(/(\d+)天/)
+                  const dlDays = dlMatch ? parseInt(dlMatch[1], 10) : (dl && dl.includes('今天') ? 0 : null)
+                  const dlColor = dl && dl.includes('过期') ? '#dc2626' :
+                                  dlDays === 0 ? '#dc2626' :
+                                  dlDays !== null && dlDays <= 3 ? '#dc2626' :
+                                  dlDays !== null && dlDays <= 7 ? '#ea580c' : 'var(--text-sub)'
+                  const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
+
+                  return <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} ac={ac}
+                    swipedId={swipedId} setSwipedId={setSwipedId}
+                    filter={filter} accountFilter={accountFilter}
+                    onEdit={() => {
+                      sessionStorage.setItem('samples_scroll', String(window.scrollY))
+                      sessionStorage.setItem('samples_filter', filter)
+                      sessionStorage.setItem('samples_account', accountFilter)
+                      setSwipedId(null)
+                      navigate(`/samples/${s.id}/edit`)
                     }}
-                  >
-                  {/* ↕ 排序指示 */}
-                  <span style={{ color: '#d1d5db', fontSize: '14px', marginTop: '2px', flexShrink: 0, userSelect: 'none', lineHeight: 1.2 }}>↕</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {/* 第一行：产品名 + 账号 + 状态 */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-                        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
-                        {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
-                      </div>
-                      <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>
-                    </div>
-                    {/* 第二行：佣金 + 日期 + 截止 */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
-                      {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
-                      {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
-                      {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
-                    </div>
-                    {/* 备注 */}
-                    {s.remark && (
-                      <div style={{ fontSize: '12px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.55)', padding: '6px 10px', borderRadius: '8px', lineHeight: 1.45, marginTop: '6px', border: '1px solid rgba(255,255,255,0.5)' }}>
-                        {s.remark}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                </div>
-              )
-            })}
-          </div>
+                    onDelete={() => {
+                      setSwipedId(null)
+                      if (confirm('删除该样品？')) { deleteSample(s.id); show('已删除', 'success') }
+                    }}
+                  />
+                })}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
@@ -322,6 +305,73 @@ export function SamplesPage() {
           onDelete={editing ? () => { deleteSample(editing.id); setEditing(null); show('已删除', 'success') } : null}
         />
       )}
+    </div>
+  )
+}
+
+// 可拖拽排序的样品卡片
+function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, filter, accountFilter, onEdit, onDelete }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
+  const isSwiped = swipedId === s.id
+  const cardStyle = {
+    ...CSS.Transform.toString(transform) ? { transform: CSS.Transform.toString(transform) } : {},
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.92 : 1,
+    boxShadow: isDragging ? '0 12px 30px rgba(244,114,182,0.28)' : undefined,
+  }
+  return (
+    <div ref={setNodeRef} style={cardStyle}>
+      <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
+        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px' }}>
+          <button onClick={onEdit} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
+          <button onClick={onDelete} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
+        </div>
+        <div
+          onClick={() => { if (isSwiped) { setSwipedId(null) } }}
+          onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
+          onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
+          onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
+          style={{
+            ...glassStyle, paddingBottom: '10px', overflow: 'hidden',
+            transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
+            position: 'relative', zIndex: 1, cursor: 'pointer',
+          }}
+        >
+          {/* 第一行：拖动手柄 + 产品名 + 账号 + 状态 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px 8px' }}>
+            <button
+              {...attributes}
+              {...listeners}
+              onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
+              aria-label="拖动排序"
+              style={{
+                background: 'transparent', border: 'none', cursor: 'grab',
+                color: '#9ca3af', fontSize: '18px', padding: '0',
+                touchAction: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, lineHeight: 1,
+              }}
+            >⇕</button>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
+              {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
+            </div>
+            <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>
+          </div>
+          {/* 第二行：佣金 + 日期 + 截止时间 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 14px', fontSize: '11px', color: 'var(--text-sub)', flexWrap: 'wrap', minHeight: '20px' }}>
+            {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
+            {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
+            {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
+          </div>
+          {/* 备注 */}
+          {s.remark && (
+            <div style={{ fontSize: '12px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.55)', padding: '6px 10px', borderRadius: '8px', lineHeight: 1.45, margin: '6px 14px 0', border: '1px solid rgba(255,255,255,0.5)' }}>
+              {s.remark}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

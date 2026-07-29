@@ -3206,6 +3206,15 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
+  const reorderSamples = useCallback((orderedIds) => {
+    setData((d) => {
+      const map = new Map(d.samples.map((s) => [s.id, s]))
+      const reordered = orderedIds.map((id) => map.get(id)).filter(Boolean)
+      const extra = d.samples.filter((s) => !orderedIds.includes(s.id))
+      return { ...d, samples: [...reordered, ...extra] }
+    })
+  }, [])
+
   const addCopy = useCallback((productId, copy) => {
     const newCopy = {
       id: uid(),
@@ -3372,7 +3381,7 @@ export function StoreProvider({ children }) {
 
   const value = {
     ...data,
-    addProduct, deleteProduct, updateProduct, reorderProducts, setProductTopics,
+    addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples, setProductTopics,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample,
     addTransaction, deleteTransaction, updateTransaction,
