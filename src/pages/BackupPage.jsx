@@ -7,6 +7,7 @@ const KEYS = [
   'blogger_investments_v1',
   'blogger_calendar_v1',
   'daily_plan_v1',
+  'blogger_funds_v1',
 ]
 
 const GIST_ID_KEY = 'backup_gist_id'
@@ -147,6 +148,8 @@ export function BackupPage() {
         } else if (key === 'daily_plan_v1') {
           // 每日计划数据按日期存储: { "2026-07-29": { tasks: [...] }, ... }
           stats['每日计划'] = Object.values(d).reduce((sum, plan) => sum + (plan.tasks?.length || 0), 0)
+        } else if (key === 'blogger_funds_v1') {
+          stats['基金'] = Array.isArray(d) ? d.length : 0
         }
       }
     } catch (e) {}
@@ -242,7 +245,7 @@ export function BackupPage() {
           💡 <b>云备份不会丢失</b>：数据存在 GitHub 私密 Gist，即使删掉 PWA 重装，点「从云端恢复」即可。<br />
           🔄 <b>自动同步</b>：每 3 小时自动备份一次，也可在此手动同步。<br />
           🔄 <b>恢复后</b>：需要刷新页面才能生效。<br />
-          📦 备份包含：产品、样品、收支、攒钱、投资、日历、每日计划等全部数据。
+          📦 备份包含：产品、样品、收支、攒钱、投资、基金、日历、每日计划等全部数据。
         </div>
       </div>
     </div>
