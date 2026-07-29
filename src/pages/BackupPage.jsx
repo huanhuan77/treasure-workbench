@@ -19,6 +19,9 @@ export function BackupPage() {
   const [showToken, setShowToken] = useState(false)
   const [lastSync, setLastSync] = useState(() => localStorage.getItem(LAST_SYNC_KEY) || '')
   const [gistId, setGistId] = useState(() => localStorage.getItem(GIST_ID_KEY) || '')
+  // 手动指定 Gist ID（多设备同步用：A 手机上传后，把 ID 复制到 B 手机）
+  const [manualGistId, setManualGistId] = useState('')
+  const [showGistInput, setShowGistInput] = useState(false)
 
   useEffect(() => {
     const handle = setInterval(() => {
@@ -126,28 +129,51 @@ export function BackupPage() {
   }
 
   // 从 GitHub Gist 下载
-  const downloadFromGist = async () => {
+  const downloadFromGist = async (useManualId) => {
     if (!token.trim()) { show('请先填写 GitHub Token', 'error'); return }
     setSyncing(true)
     try {
-      // 先尝试从本地缓存的 gistId 获取（最快）
-      let gistId = localStorage.getItem(GIST_ID_KEY)
+      // 优先级：手动指定 ID > 本地缓存 ID > GitHub API 搜索
       let fetchedGist = null
+      let usedId = null
 
-      if (gistId) {
-        const checkRes = await fetch(`https://api.github.com/gists/${gistId}`, {
+      // 1. 手动输入的 Gist ID（多设备同步用）
+      if (useManualId && manualGistId.trim()) {
+        const cleanId = manualGistId.trim()
+        const res = await fetch(`https://api.github.com/gists/${cleanId}`, {
           headers: { 'Authorization': `Bearer ${token.trim()}` },
         })
-        if (checkRes.ok) fetchedGist = await checkRes.json()
+        if (res.ok) {
+          fetchedGist = await res.json()
+          usedId = cleanId
+        } else if (res.status === 404) {
+          throw new Error('手动输入的 Gist ID 不存在')
+        }
       }
 
-      // 如果本地缓存无效，查 Gist 列表
+      // 2. 本地缓存的 gistId
       if (!fetchedGist) {
-        show('正在查找云端备份...', 'success')
+        let cachedId = localStorage.getItem(GIST_ID_KEY)
+        // 如果用户手动填了 ID，优先用
+        if (useManualId && manualGistId.trim()) cachedId = manualGistId.trim()
+        if (cachedId) {
+          const res = await fetch(`https://api.github.com/gists/${cachedId}`, {
+            headers: { 'Authorization': `Bearer ${token.trim()}` },
+          })
+          if (res.ok) {
+            fetchedGist = await res.json()
+            usedId = cachedId
+          }
+        }
+      }
+
+      // 3. 查 Gist 列表（最新更新）
+      if (!fetchedGist) {
+        show('正在查找最新备份...', 'success')
         const latest = await findLatestGist(token.trim())
         if (latest) {
-          gistId = latest.id
-          const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+          usedId = latest.id
+          const res = await fetch(`https://api.github.com/gists/${usedId}`, {
             headers: { 'Authorization': `Bearer ${token.trim()}` },
           })
           if (res.ok) fetchedGist = await res.json()
@@ -156,6 +182,12 @@ export function BackupPage() {
 
       if (!fetchedGist?.files?.['treasure-workbench-backup.json']?.content) {
         throw new Error('未找到云端备份，请先在任意设备上传')
+      }
+
+      // 更新本地缓存
+      if (usedId) {
+        localStorage.setItem(GIST_ID_KEY, usedId)
+        setGistId(usedId)
       }
 
       const content = fetchedGist.files['treasure-workbench-backup.json'].content
@@ -272,7 +304,7 @@ export function BackupPage() {
             }}>
               {syncing ? '同步中...' : '☁️ 上传到云端'}
             </button>
-            <button onClick={downloadFromGist} disabled={syncing || !token} style={{
+            <button onClick={() => downloadFromGist(false)} disabled={syncing || !token} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: '1.5px dashed #6366f1',
               background: 'transparent', color: '#4f46e5', fontSize: '14px', fontWeight: 700,
               cursor: syncing ? 'not-allowed' : 'pointer',
@@ -280,6 +312,33 @@ export function BackupPage() {
               {syncing ? '同步中...' : '☁️ 从云端恢复'}
             </button>
           </div>
+
+          {/* 多设备同步：手动指定 Gist ID */}
+          <button onClick={() => setShowGistInput(v => !v)} style={{
+            background: 'none', border: 'none', color: 'var(--text-sub)',
+            fontSize: '12px', cursor: 'pointer', padding: '6px 0', textDecoration: 'underline dotted',
+          }}>
+            {showGistInput ? '收起' : '📋 多设备同步？手动指定 Gist ID'}
+          </button>
+          {showGistInput && (
+            <div style={{ ...glassStyle, padding: '10px', marginBottom: '8px' }}>
+              <p style={{ margin: '0 0 8px', fontSize: '11px', color: 'var(--text-sub)', lineHeight: 1.5 }}>
+                多设备使用同一 GitHub 账号时，每台手机可能新建独立 Gist。<br />
+                在一台手机上找到「Gist ID」并复制（取自 GitHub gist 后网址），粘贴到这里再恢复。
+              </p>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input value={manualGistId} onChange={e => setManualGistId(e.target.value)}
+                  placeholder="比如：abc123def456..."
+                  style={{ flex: 1, padding: '8px 10px', borderRadius: '8px', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '12px', outline: 'none', fontFamily: 'monospace' }} />
+                <button onClick={() => downloadFromGist(true)} disabled={!manualGistId.trim() || !token} style={{
+                  padding: '8px 14px', borderRadius: '8px', border: 'none',
+                  background: manualGistId.trim() ? '#6366f1' : '#e5e7eb',
+                  color: '#fff', fontSize: '12px', fontWeight: 600,
+                  cursor: manualGistId.trim() ? 'pointer' : 'not-allowed', whiteSpace: 'nowrap',
+                }}>用此 ID 恢复</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 自动同步提示 */}
