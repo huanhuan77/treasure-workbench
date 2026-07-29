@@ -373,7 +373,7 @@ export function ProductDetailPage() {
       >
         <Field label="粘贴多条文案">
           <textarea
-            style={{ ...inputStyle, minHeight: '180px', resize: 'vertical', lineHeight: 1.6 }}
+            style={{ ...inputStyle, minHeight: '100px', resize: 'vertical', lineHeight: 1.6 }}
             placeholder="格式：首行可写产品名（自动忽略）；每条文案空行分隔；最后一行 #话题 套用全部；👍=出单、✅=用过（标记会自动去掉）"
             value={importText}
             onChange={(ev) => setImportText(ev.target.value)}
@@ -405,7 +405,7 @@ export function ProductDetailPage() {
                 {used > 0 && <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#dcfce7', color: '#16a34a', fontWeight: 600 }}>✓ 用过 {used}</span>}
                 {ordered === 0 && used === 0 && <span style={{ color: 'var(--gray-400)' }}>未标记状态</span>}
               </div>
-              <div style={{ borderTop: '1px dashed rgba(99,102,241,0.2)', paddingTop: '8px', maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ borderTop: '1px dashed rgba(99,102,241,0.2)', paddingTop: '8px', maxHeight: '140px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 {list.map((item, i) => (
                   <div key={i} style={{
                     padding: '6px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.6)',
