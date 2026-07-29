@@ -206,7 +206,13 @@ export function SamplesPage() {
             {accountFiltered.map((s) => {
               const st = STATUS[s.status] || STATUS.unpublished
               const dl = deadlineDesc(s.deadline)
-              const dlColor = dl && dl.includes('过期') ? '#fb7185' : dl && dl.includes('今天') ? '#fb923c' : 'var(--text-sub)'
+              // 解析剩余天数用于颜色判断
+              const dlMatch = dl && dl.match(/(\d+)天/)
+              const dlDays = dlMatch ? parseInt(dlMatch[1], 10) : (dl && dl.includes('今天') ? 0 : null)
+              const dlColor = dl && dl.includes('过期') ? '#dc2626' :
+                              dlDays === 0 ? '#dc2626' :
+                              dlDays !== null && dlDays <= 3 ? '#dc2626' :
+                              dlDays !== null && dlDays <= 7 ? '#ea580c' : 'var(--text-sub)'
               const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
               const isSwiped = swipedId === s.id
               return (
@@ -245,7 +251,7 @@ export function SamplesPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)' }}>
                     {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
                     {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
-                    {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
+                    {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
                   </div>
 
                   {/* 备注（可选） */}
