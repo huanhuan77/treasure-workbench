@@ -100,7 +100,7 @@ export function BackupPage() {
     }
   }
 
-  // 查找最新云端备份 gist（遍历多页）
+  // 查找云端备份 gist
   const findLatestGist = async (token) => {
     let page = 1
     let found = null
@@ -113,10 +113,15 @@ export function BackupPage() {
       if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`)
       const gists = await listRes.json()
       if (!Array.isArray(gists) || gists.length === 0) break
+      // API返回按更新时间倒序，找到的第一个就是最新的
       found = gists.find(g => g.files?.['treasure-workbench-backup.json'])
       page++
     }
-    if (!found) throw new Error('未找到云端备份，请先在任意设备上传一次')
+    if (found) {
+      // 更新本地缓存的 gistId
+      localStorage.setItem(GIST_ID_KEY, found.id)
+      setGistId(found.id)
+    }
     return found
   }
 
@@ -125,21 +130,36 @@ export function BackupPage() {
     if (!token.trim()) { show('请先填写 GitHub Token', 'error'); return }
     setSyncing(true)
     try {
-      // 始终查找最新的 gist（避免多设备不同步）
-      show('正在查找最新备份...', 'success')
-      const latest = await findLatestGist(token.trim())
-      const gistId = latest.id
-      localStorage.setItem(GIST_ID_KEY, gistId)
-      setGistId(gistId)
+      // 先尝试从本地缓存的 gistId 获取（最快）
+      let gistId = localStorage.getItem(GIST_ID_KEY)
+      let fetchedGist = null
 
-      const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-        headers: { 'Authorization': `Bearer ${token.trim()}` },
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const gist = await res.json()
-      const content = gist.files?.['treasure-workbench-backup.json']?.content
-      if (!content) throw new Error('备份文件不存在')
-      const updatedAt = gist.updated_at
+      if (gistId) {
+        const checkRes = await fetch(`https://api.github.com/gists/${gistId}`, {
+          headers: { 'Authorization': `Bearer ${token.trim()}` },
+        })
+        if (checkRes.ok) fetchedGist = await checkRes.json()
+      }
+
+      // 如果本地缓存无效，查 Gist 列表
+      if (!fetchedGist) {
+        show('正在查找云端备份...', 'success')
+        const latest = await findLatestGist(token.trim())
+        if (latest) {
+          gistId = latest.id
+          const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            headers: { 'Authorization': `Bearer ${token.trim()}` },
+          })
+          if (res.ok) fetchedGist = await res.json()
+        }
+      }
+
+      if (!fetchedGist?.files?.['treasure-workbench-backup.json']?.content) {
+        throw new Error('未找到云端备份，请先在任意设备上传')
+      }
+
+      const content = fetchedGist.files['treasure-workbench-backup.json'].content
+      const updatedAt = fetchedGist.updated_at
       const backup = JSON.parse(content)
       let count = 0
       for (const [key, value] of Object.entries(backup)) {
@@ -147,7 +167,7 @@ export function BackupPage() {
         count++
       }
       if (updatedAt) markSynced()
-      show(`已恢复 ${count} 个模块（${updatedAt?.slice(0,10)}），刷新后生效`, 'success')
+      show(`已恢复 ${count} 个模块（备份日期 ${updatedAt?.slice(0,10)}），刷新后生效`, 'success')
     } catch (e) {
       show('下载失败: ' + e.message, 'error')
     } finally {
