@@ -26,7 +26,7 @@ function PageHeader({ title, onBack }) {
 
 export function NewSamplePage() {
   const navigate = useNavigate()
-  const { addSample } = useStore()
+  const { samples, addSample } = useStore()
   const { show } = useToast()
   const [name, setName] = useState('')
   const [account, setAccount] = useState(() => sessionStorage.getItem('samples_account') || '大号')
@@ -36,8 +36,14 @@ export function NewSamplePage() {
   const [remark, setRemark] = useState('')
   const [commission, setCommission] = useState(5)
 
+  // 同名检测
+  const duplicateName = name.trim() && samples.some(s => s.name.toLowerCase() === name.trim().toLowerCase())
+
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
+    if (duplicateName) {
+      if (!confirm(`⚠️「${name.trim()}」已存在，确定要重复添加吗？`)) return
+    }
     addSample({ name: name.trim(), account, status, receiveDate, deadline, remark, commission: Number(commission) })
     show('已添加', 'success')
     navigate('/samples')
@@ -50,6 +56,11 @@ export function NewSamplePage() {
         <div style={{ ...glassStyle, padding: '16px', overflowX: 'hidden' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} placeholder="例如：补水喷雾" value={name} onChange={e => setName(e.target.value)} autoFocus />
+          {duplicateName && (
+            <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              ⚠️ 已有同名样品
+            </p>
+          )}
         </Field>
         <Field label="所属账号">
           <div style={{ display: 'flex', gap: '6px' }}>

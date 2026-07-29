@@ -38,6 +38,9 @@ export function EditSamplePage() {
   const [remark, setRemark] = useState(sample?.remark || '')
   const [commission, setCommission] = useState(sample?.commission || 5)
 
+  // 同名检测（排除当前编辑的）
+  const duplicateName = name.trim() && sample && samples.some(s => s.id !== sample.id && s.name.toLowerCase() === name.trim().toLowerCase())
+
   if (!sample) {
     return (
       <div className="app-container">
@@ -49,6 +52,9 @@ export function EditSamplePage() {
 
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
+    if (duplicateName) {
+      if (!confirm(`⚠️「${name.trim()}」已存在，确定要保存为重复名称吗？`)) return
+    }
     updateSample(id, { name: name.trim(), account, status, receiveDate, deadline, remark, commission: Number(commission) })
     show('已更新', 'success')
     navigate('/samples')
@@ -69,6 +75,11 @@ export function EditSamplePage() {
         <div style={{ ...glassStyle, padding: '16px' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
+          {duplicateName && (
+            <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              ⚠️ 已有同名样品
+            </p>
+          )}
         </Field>
         <Field label="所属账号">
           <div style={{ display: 'flex', gap: '6px' }}>
