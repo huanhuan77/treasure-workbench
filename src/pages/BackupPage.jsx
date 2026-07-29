@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useToast } from '../components/Toast'
 import { glassStyle, ConfirmModal } from '../components/Modal'
 
@@ -14,14 +14,12 @@ const LAST_SYNC_KEY = 'backup_last_sync_at'
 
 export function BackupPage() {
   const { show } = useToast()
-  const [importing, setImporting] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [token, setToken] = useState(() => localStorage.getItem('backup_github_token') || '')
   const [showToken, setShowToken] = useState(false)
   const [lastSync, setLastSync] = useState(() => localStorage.getItem(LAST_SYNC_KEY) || '')
   const [gistId, setGistId] = useState(() => localStorage.getItem(GIST_ID_KEY) || '')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const importRef = useRef(null)
 
   useEffect(() => {
     const handle = setInterval(() => {
@@ -60,42 +58,6 @@ export function BackupPage() {
     const diffHour = Math.floor(diffMin / 60)
     if (diffHour < 24) return `${diffHour} 小时前`
     return d.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-  }
-
-  const handleExport = () => {
-    const backup = getAllData()
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `全站备份_${new Date().toISOString().slice(0,10)}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
-    show(`已导出 ${Object.keys(backup).length} 个数据模块`, 'success')
-  }
-
-  const handleImport = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setImporting(true)
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      try {
-        const backup = JSON.parse(ev.target.result)
-        if (typeof backup !== 'object') throw new Error()
-        let count = 0
-        for (const [key, value] of Object.entries(backup)) {
-          localStorage.setItem(key, JSON.stringify(value))
-          count++
-        }
-        show(`已恢复 ${count} 个数据模块，刷新后生效`, 'success')
-        setImporting(false)
-      } catch {
-        show('文件格式错误', 'error')
-        setImporting(false)
-      }
-    }
-    reader.readAsText(file)
-    e.target.value = ''
   }
 
   // 上传到 GitHub Gist
@@ -218,7 +180,7 @@ export function BackupPage() {
     <div className="app-container">
       <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
         <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>💾 数据备份</h1>
-        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>本地导出 / 云同步，数据永不丢失</p>
+        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>云同步到 GitHub Gist，数据永不丢失</p>
       </header>
 
       <div style={{ padding: '0 16px' }}>
@@ -262,29 +224,6 @@ export function BackupPage() {
               Gist ID: {gistId}
             </div>
           )}
-        </div>
-
-        {/* 本地导出/导入 */}
-        <div style={{ ...glassStyle, padding: '14px', marginBottom: '12px' }}>
-          <h3 style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>📁 本地备份</h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={handleExport} style={{
-              flex: 1, padding: '12px 0', borderRadius: '10px', border: 'none',
-              background: 'linear-gradient(135deg,#6366f1,#4f46e5)', color: '#fff',
-              fontSize: '13px', fontWeight: 700, cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(99,102,241,0.3)',
-            }}>
-              📥 导出到文件
-            </button>
-            <button onClick={() => importRef.current?.click()} disabled={importing} style={{
-              flex: 1, padding: '12px 0', borderRadius: '10px', border: '1.5px dashed #6366f1',
-              background: 'transparent', color: '#4f46e5',
-              fontSize: '13px', fontWeight: 700, cursor: 'pointer',
-            }}>
-              {importing ? '导入中...' : '📄 从文件导入'}
-            </button>
-            <input ref={importRef} type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
-          </div>
         </div>
 
         {/* 云备份操作 */}
