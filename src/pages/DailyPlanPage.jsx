@@ -83,10 +83,45 @@ export function DailyPlanPage() {
           </div>
         </div>
 
+        {/* 添加任务输入框 */}
+        <div style={{
+          ...glassStyle, padding: '12px', marginBottom: '12px',
+          display: 'flex', gap: '8px', alignItems: 'flex-end',
+        }}>
+          <textarea
+            placeholder="今天想做什么..."
+            value={newTaskTitle}
+            onChange={e => setNewTaskTitle(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addTask()
+            }}
+            rows={2}
+            style={{
+              flex: 1, minHeight: '64px', maxHeight: '160px',
+              padding: '12px 14px',
+              border: '1.5px solid rgba(0,0,0,0.08)',
+              borderRadius: '12px',
+              fontSize: '15px', outline: 'none', resize: 'none',
+              background: '#fff', color: 'var(--text-main)',
+              boxSizing: 'border-box',
+              lineHeight: 1.5,
+              fontFamily: 'inherit',
+            }}
+          />
+          <button onClick={addTask} disabled={!newTaskTitle.trim()} style={{
+            height: '44px', padding: '0 18px', borderRadius: '12px', border: 'none', flexShrink: 0,
+            background: newTaskTitle.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#e5e7eb',
+            color: '#fff', fontSize: '15px', fontWeight: 700,
+            cursor: newTaskTitle.trim() ? 'pointer' : 'not-allowed',
+            boxShadow: newTaskTitle.trim() ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
+            whiteSpace: 'nowrap',
+          }}>添加</button>
+        </div>
+
         {/* 任务列表 */}
         {tasks.length === 0 ? (
           <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务，在底部输入框中添加今天的计划</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务，在上方输入框添加今天的计划</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -126,52 +161,6 @@ export function DailyPlanPage() {
         )}
       </div>
 
-      {/* 始终显示的输入框（页面底部固定位置） */}
-      <div style={{
-        position: 'fixed', left: 0, right: 0, bottom: 0,
-        padding: '12px 16px calc(16px + var(--safe-bottom))',
-        background: 'rgba(255,255,255,0.92)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        borderTop: '1px solid rgba(244,114,182,0.12)',
-        zIndex: 50,
-      }}>
-        <div style={{
-          display: 'flex', gap: '8px', alignItems: 'flex-end',
-        }}>
-          <textarea
-            placeholder="今天想做什么..."
-            value={newTaskTitle}
-            onChange={e => setNewTaskTitle(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addTask()
-            }}
-            rows={2}
-            style={{
-              flex: 1, minHeight: '72px', maxHeight: '160px',
-              padding: '12px 14px',
-              border: '1.5px solid rgba(0,0,0,0.08)',
-              borderRadius: '14px',
-              fontSize: '15px', outline: 'none', resize: 'none',
-              background: '#fff', color: 'var(--text-main)',
-              boxSizing: 'border-box',
-              boxShadow: '0 2px 8px rgba(244,114,182,0.06)',
-              lineHeight: 1.5,
-              fontFamily: 'inherit',
-            }}
-          />
-          <button onClick={addTask} disabled={!newTaskTitle.trim()} style={{
-            height: '44px', padding: '0 20px', borderRadius: '14px', border: 'none', flexShrink: 0,
-            background: newTaskTitle.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#e5e7eb',
-            color: '#fff', fontSize: '15px', fontWeight: 700,
-            cursor: newTaskTitle.trim() ? 'pointer' : 'not-allowed',
-            boxShadow: newTaskTitle.trim() ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-            whiteSpace: 'nowrap',
-          }}>添加</button>
-        </div>
       </div>
-      {/* 底部留空避免内容被遮挡 */}
-      <div style={{ height: '120px' }} />
-    </div>
   )
 }
