@@ -87,7 +87,7 @@ function SortableTaskRow({ task, onToggle, onDelete }) {
 
 export function DailyPlanPage() {
   const [data, setData] = useState(loadData)
-  const [today, setToday] = useState(getToday())
+  const today = getToday()
   const tomorrow = addDays(today, 1)
   const [viewDate, setViewDate] = useState(today)
   const plan = data[viewDate] || { tasks: [] }
@@ -96,18 +96,6 @@ export function DailyPlanPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [historyDate, setHistoryDate] = useState(null)
   const [input, setInput] = useState('')
-
-  // 跨天自动更新（每60秒检查一次日期变化）
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const d = getToday()
-      if (d !== today) {
-        setToday(d)
-        setViewDate(d)
-      }
-    }, 60000)
-    return () => clearInterval(timer)
-  }, [today])
 
   // FAB 拖动状态
   const [fabPos, setFabPos] = useState(() => {
