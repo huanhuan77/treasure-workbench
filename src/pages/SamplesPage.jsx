@@ -12,7 +12,7 @@ const STATUS = {
   hit:          { label: '🔥爆单', emoji: '🔥', color: '#e11d48', bg: 'rgba(244,63,94,0.13)', stripe: '#fb7185' },
   abandoned:    { label: '放弃', emoji: '🚫', color: '#94a3b8', bg: 'rgba(148,163,184,0.16)', stripe: '#94a3b8' },
 }
-const STATUS_ORDER = ['hit', 'published', 'unpublished', 'abandoned']
+const STATUS_ORDER = ['unpublished', 'hit', 'published', 'abandoned']
 const STATUS_LIST = STATUS_ORDER.map((k) => ({ key: k, ...STATUS[k] }))
 
 const ACCOUNTS = ['大号', '小号', '小小号']
@@ -52,7 +52,7 @@ export function SamplesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
-  const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'hit')
+  const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'unpublished')
   const [accountFilter, setAccountFilter] = useState(() => sessionStorage.getItem('samples_account') || '大号')
   const [searchKeyword, setSearchKeyword] = useState('')
 
@@ -178,7 +178,7 @@ export function SamplesPage() {
         {ACCOUNTS.map((a) => {
           const col = ACCOUNT_COLOR[a]
           return (
-            <button key={a} onClick={() => { setAccountFilter(a); setFilter('hit') }} style={acctChipStyle(accountFilter === a, ACCOUNT_NICK[a], col.c, col.bg)}>
+            <button key={a} onClick={() => { setAccountFilter(a); setFilter('unpublished') }} style={acctChipStyle(accountFilter === a, ACCOUNT_NICK[a], col.c, col.bg)}>
               {ACCOUNT_NICK[a]} {acctStats[a] || 0}
             </button>
           )
