@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { glassStyle } from '../components/Modal'
 
 const STORAGE_KEY = 'daily_plan_v1'
@@ -26,6 +26,16 @@ export function DailyPlanPage() {
   const [tasks, setTasks] = useState(plan.tasks)
   const [showModal, setShowModal] = useState(false)
   const [input, setInput] = useState('')
+
+  // 弹窗打开时锁定页面滚动
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [showModal])
 
   const sync = (newTasks) => {
     const nd = { ...data, [today]: { tasks: newTasks } }
