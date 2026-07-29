@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
@@ -55,6 +55,17 @@ export function SamplesPage() {
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('大号')
   const [searchKeyword, setSearchKeyword] = useState('')
+
+  // 恢复滚动位置（从编辑页返回时）
+  useEffect(() => {
+    const saved = sessionStorage.getItem('samples_scroll')
+    if (saved) {
+      sessionStorage.removeItem('samples_scroll')
+      requestAnimationFrame(() => {
+        window.scrollTo(0, parseInt(saved))
+      })
+    }
+  }, [])
 
   const sorted = useMemo(() => sortSamples(samples), [samples])
   const filtered = useMemo(() => {
@@ -119,6 +130,7 @@ export function SamplesPage() {
     if (m) {
       try { localStorage.setItem('sampleFabPos', JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else if (tap) {
+      sessionStorage.setItem('samples_scroll', String(window.scrollY))
       navigate('/samples/new')
     }
   }
@@ -191,7 +203,10 @@ export function SamplesPage() {
                 <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
                   {/* 左滑操作按钮 */}
                   <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
-                    <button onClick={() => { setSwipedId(null); navigate(`/samples/${s.id}/edit`) }} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
+                    <button onClick={() => {
+              sessionStorage.setItem('samples_scroll', String(window.scrollY))
+              setSwipedId(null); navigate(`/samples/${s.id}/edit`)
+            }} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
                     <button onClick={() => { setSwipedId(null); if (confirm('删除该样品？')) { deleteSample(s.id); show('已删除', 'success') } }} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
                   </div>
                   {/* 可滑动内容 */}
