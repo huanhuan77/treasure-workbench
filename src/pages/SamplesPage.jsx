@@ -313,61 +313,65 @@ export function SamplesPage() {
 function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, filter, accountFilter, onEdit, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
   const isSwiped = swipedId === s.id
-  const cardStyle = {
-    ...CSS.Transform.toString(transform) ? { transform: CSS.Transform.toString(transform) } : {},
+  const style = {
+    transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 50 : undefined,
     opacity: isDragging ? 0.92 : 1,
     boxShadow: isDragging ? '0 12px 30px rgba(244,114,182,0.28)' : undefined,
   }
   return (
-    <div ref={setNodeRef} style={cardStyle}>
+    <div ref={setNodeRef} style={style}>
       <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
-        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px' }}>
+        {/* 左滑操作按钮 */}
+        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
           <button onClick={onEdit} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
           <button onClick={onDelete} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
         </div>
+        {/* 可滑动内容 */}
         <div
           onClick={() => { if (isSwiped) { setSwipedId(null) } }}
           onTouchStart={(e) => { if (e.target.closest('button[aria-label="拖动排序"]')) return; const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
           onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
           onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
           style={{
-            ...glassStyle, paddingBottom: '10px', overflow: 'hidden',
+            ...glassStyle, padding: '12px 14px 10px', borderLeft: `3px solid ${st.stripe}`,
             transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
             position: 'relative', zIndex: 1, cursor: 'pointer',
           }}
         >
-          {/* 第一行：拖动手柄 + 产品名 + 账号 + 状态 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px 8px' }}>
-            <button
-              {...attributes}
-              {...listeners}
-              onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
-              onTouchStart={(e) => { e.stopPropagation(); listeners?.onTouchStart?.(e) }}
-              aria-label="拖动排序"
-              style={{
-                flexShrink: 0, width: '20px', height: '40px', alignSelf: 'center',
-                border: 'none', background: 'transparent', color: 'var(--gray-400)',
-                fontSize: '22px', lineHeight: 1, letterSpacing: '1px', cursor: 'grab', touchAction: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >⇕</button>
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
-              {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
-            </div>
-            <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>
+          {/* ⇕ 拖动按钮（左侧边缘） */}
+          <button
+            {...attributes}
+            {...listeners}
+            onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
+            onTouchStart={(e) => { e.stopPropagation(); listeners?.onTouchStart?.(e) }}
+            aria-label="拖动排序"
+            style={{
+              position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)',
+              width: '24px', height: '32px',
+              border: 'none', background: 'transparent', color: 'var(--gray-400)',
+              fontSize: '20px', lineHeight: 1, cursor: 'grab', touchAction: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              borderRadius: '6px',
+            }}
+          >⇕</button>
+          {/* 第一行：产品名 + 账号 + 状态 */}
+          <div style={{ paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
+            {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
+            <div style={{ flex: 1 }} />
+            {st && <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>}
           </div>
-          {/* 第二行：佣金 + 日期 + 截止时间 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 14px', fontSize: '11px', color: 'var(--text-sub)', flexWrap: 'wrap', minHeight: '20px' }}>
-            {(s.commission || 5) > 5 && <span style={{ fontSize: '11px', padding: '1px 7px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
+          {/* 第二行：日期 + 截止时间 */}
+          <div style={{ paddingLeft: '28px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', color: 'var(--text-sub)' }}>
             {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
             {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
+            {(s.commission || 5) > 5 && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
           </div>
           {/* 备注 */}
           {s.remark && (
-            <div style={{ fontSize: '12px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.55)', padding: '6px 10px', borderRadius: '8px', lineHeight: 1.45, margin: '6px 14px 0', border: '1px solid rgba(255,255,255,0.5)' }}>
+            <div style={{ paddingLeft: '28px', marginTop: '6px', fontSize: '12px', color: 'var(--text-main)' }}>
               {s.remark}
             </div>
           )}
