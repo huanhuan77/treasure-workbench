@@ -52,7 +52,7 @@ export function SamplesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
-  const [filter, setFilter] = useState('all')
+  const [filter, setFilter] = useState('hit')
   const [accountFilter, setAccountFilter] = useState('大号')
   const [searchKeyword, setSearchKeyword] = useState('')
 
@@ -164,11 +164,11 @@ export function SamplesPage() {
 
       {/* 账号筛选 */}
       <div style={{ display: 'flex', gap: '8px', padding: '6px 16px 12px', overflowX: 'auto' }}>
-        <button onClick={() => setAccountFilter('all')} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899', 'rgba(244,114,182,0.16)')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
+        <button onClick={() => { setAccountFilter('all'); setFilter('all') }} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899', 'rgba(244,114,182,0.16)')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
         {ACCOUNTS.map((a) => {
           const col = ACCOUNT_COLOR[a]
           return (
-            <button key={a} onClick={() => setAccountFilter(a)} style={acctChipStyle(accountFilter === a, ACCOUNT_NICK[a], col.c, col.bg)}>
+            <button key={a} onClick={() => { setAccountFilter(a); setFilter('hit') }} style={acctChipStyle(accountFilter === a, ACCOUNT_NICK[a], col.c, col.bg)}>
               {ACCOUNT_NICK[a]} {acctStats[a] || 0}
             </button>
           )
