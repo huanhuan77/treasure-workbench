@@ -34,7 +34,8 @@ export function formatDate(ts) {
 }
 
 export function todayStr() {
-  return new Date().toISOString().slice(0, 10)
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
 // 日期加 n 天，返回 YYYY-MM-DD（按本地日期解析，避免时区偏移）

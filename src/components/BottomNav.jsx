@@ -91,7 +91,8 @@ export function BottomNav() {
   useEffect(() => {
     const calc = () => {
       try {
-        const today = new Date().toISOString().slice(0, 10)
+        const d = new Date()
+        const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
         const raw = localStorage.getItem('daily_plan_v1')
         if (!raw) { setPlanBadge(0); return }
         const data = JSON.parse(raw)
