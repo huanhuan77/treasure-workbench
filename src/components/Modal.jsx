@@ -160,10 +160,12 @@ export function Field({ label, children, required }) {
 
 export const inputStyle = {
   width: '100%',
+  minHeight: '44px',
   padding: '12px 14px',
   border: '1.5px solid rgba(0,0,0,0.1)',
   borderRadius: '12px',
   fontSize: '15px',
+  lineHeight: '1.4',
   outline: 'none',
   background: '#fff',
   color: 'var(--text-main)',
@@ -171,6 +173,10 @@ export const inputStyle = {
   boxSizing: 'border-box',
   maxWidth: '100%',
   display: 'block',
+  appearance: 'none',
+  WebkitAppearance: 'none',
+  MozAppearance: 'none',
+  fontFamily: 'inherit',
 }
 
 export const btnPrimary = {

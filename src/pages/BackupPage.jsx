@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '../components/Toast'
-import { glassStyle } from '../components/Modal'
+import { glassStyle, inputStyle } from '../components/Modal'
 
 const KEYS = [
   'blogger_workbench_data_v1',
@@ -207,7 +207,7 @@ export function BackupPage() {
           <div style={{ display: 'flex', gap: '6px' }}>
             <input value={token} onChange={e => { setToken(e.target.value); localStorage.setItem('backup_github_token', e.target.value) }}
               type={showToken ? 'text' : 'password'} placeholder="ghp_xxxxxxxxxxxx"
-              style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1.5px solid rgba(0,0,0,0.06)', fontSize: '14px', outline: 'none' }} />
+              style={{ ...inputStyle, flex: 1 }} />
             <button onClick={() => setShowToken(!showToken)}
               style={{ padding: '10px', borderRadius: '8px', border: '1px solid #d1d5db', background: '#fff', color: '#6b7280', fontSize: '13px', cursor: 'pointer' }}>
               {showToken ? '隐藏' : '显示'}
