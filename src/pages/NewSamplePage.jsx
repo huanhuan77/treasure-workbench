@@ -51,13 +51,12 @@ export function NewSamplePage() {
           <input style={inputStyle} placeholder="例如：补水喷雾" value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
         <Field label="所属账号">
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
             {ACCOUNTS.map(a => {
               const selected = account === a
               return (
                 <button key={a} onClick={() => setAccount(a)} style={{
-                  flex: 1, minWidth: 0,
-                  padding: '12px 14px', borderRadius: '999px',
+                  padding: '14px 12px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
                   background: selected
                     ? 'linear-gradient(135deg, #f472b6, #ec4899)'
@@ -67,7 +66,7 @@ export function NewSamplePage() {
                   boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
                   textAlign: 'center', minHeight: '44px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '4px', flexShrink: 1,
+                  gap: '4px',
                 }}>
                   <span style={{
                     fontSize: '14px', fontWeight: 600,
