@@ -14,6 +14,7 @@ const sideTabs = [
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/savings', label: '攒钱计划', icon: '🐷' },
   { to: '/investment', label: '投资跟踪', icon: '📈' },
+  { to: '/backup', label: '数据备份', icon: '💾' },
   { to: '/sensitive', label: '词库', icon: '📚' },
   { to: '/sensitive-check', label: '违禁词检测', icon: '🚫' },
 ]
