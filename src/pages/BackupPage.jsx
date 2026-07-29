@@ -103,10 +103,23 @@ export function BackupPage() {
   // 从 GitHub Gist 下载
   const downloadFromGist = async () => {
     if (!token.trim()) { show('请先填写 GitHub Token', 'error'); return }
-    const gistId = localStorage.getItem(GIST_ID_KEY)
-    if (!gistId) { show('还没有云端备份，请先上传', 'error'); return }
+    let gistId = localStorage.getItem(GIST_ID_KEY)
     setSyncing(true)
     try {
+      // 如果没有保存的 gistId，尝试自动查找
+      if (!gistId) {
+        show('正在查找云端备份...', 'success')
+        const listRes = await fetch('https://api.github.com/gists?per_page=50', {
+          headers: { 'Authorization': `Bearer ${token.trim()}` },
+        })
+        if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`)
+        const gists = await listRes.json()
+        const found = gists.find(g => g.files?.['treasure-workbench-backup.json'])
+        if (!found) throw new Error('未找到云端备份，请先上传')
+        gistId = found.id
+        localStorage.setItem(GIST_ID_KEY, gistId)
+        setGistId(gistId)
+      }
       const res = await fetch(`https://api.github.com/gists/${gistId}`, {
         headers: { 'Authorization': `Bearer ${token.trim()}` },
       })
