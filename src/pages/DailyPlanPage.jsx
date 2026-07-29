@@ -136,6 +136,15 @@ export function DailyPlanPage() {
     window.dispatchEvent(new Event('dailyPlanUpdated'))
   }
 
+  // 确保 tasks 来自当前 viewDate（防止跨天后用户操作时用了旧日期数据）
+  const freshTasks = () => {
+    if (prevViewDateRef.current !== viewDate) {
+      prevViewDateRef.current = viewDate
+      setTasks(plan.tasks)
+      return plan.tasks
+    }
+    return tasks
+  }
 
   const total = tasks.length
   const done = tasks.filter(t => t.done).length
@@ -143,7 +152,8 @@ export function DailyPlanPage() {
 
   const addTask = () => {
     if (!input.trim()) return
-    const newTasks = [...tasks, { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: input.trim(), done: false }]
+    const cur = freshTasks()
+    const newTasks = [...cur, { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: input.trim(), done: false }]
     setTasks(newTasks)
     sync(newTasks)
     setInput('')
@@ -151,13 +161,15 @@ export function DailyPlanPage() {
   }
 
   const toggleTask = (id) => {
-    const newTasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
+    const cur = freshTasks()
+    const newTasks = cur.map(t => t.id === id ? { ...t, done: !t.done } : t)
     setTasks(newTasks)
     sync(newTasks)
   }
 
   const deleteTask = (id) => {
-    const newTasks = tasks.filter(t => t.id !== id)
+    const cur = freshTasks()
+    const newTasks = cur.filter(t => t.id !== id)
     setTasks(newTasks)
     sync(newTasks)
   }
@@ -175,10 +187,11 @@ export function DailyPlanPage() {
   const handleDragEnd = (event) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const oldIndex = tasks.findIndex(t => t.id === active.id)
-    const newIndex = tasks.findIndex(t => t.id === over.id)
+    const cur = freshTasks()
+    const oldIndex = cur.findIndex(t => t.id === active.id)
+    const newIndex = cur.findIndex(t => t.id === over.id)
     if (oldIndex < 0 || newIndex < 0) return
-    const newTasks = arrayMove(tasks, oldIndex, newIndex)
+    const newTasks = arrayMove(cur, oldIndex, newIndex)
     setTasks(newTasks)
     sync(newTasks)
   }
@@ -235,7 +248,8 @@ export function DailyPlanPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(viewDate)}</p>
+            <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(viewDate)}</p>
+            <p style={{ margin: '1px 0 0', fontSize: '11px', color: '#9ca3af' }}>{viewDate}</p>
           </div>
           <button onClick={() => setShowHistory(true)} style={{
             padding: '6px 12px', borderRadius: '10px',
