@@ -55,15 +55,15 @@ export function BatchImportPage() {
         </div>
       </div>
 
-      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px', height: 'calc(100vh - 160px)' }}>
+      <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, gap: '8px', minHeight: 0 }}>
         <textarea
           placeholder="格式：首行可写产品名（自动忽略）；每条文案空行分隔；最后一行 #话题 套用全部；&#10;👍=出单、✅=用过（标记会自动去掉）"
           value={text}
           onChange={e => setText(e.target.value)}
           autoFocus
           style={{
-            ...inputStyle, minHeight: '180px', flex: 1, resize: 'none',
-            lineHeight: 1.6, fontFamily: 'inherit', fontSize: '15px',
+            ...inputStyle, minHeight: '120px', resize: 'none',
+            lineHeight: 1.6, fontFamily: 'inherit', fontSize: '14px',
           }}
         />
 
@@ -73,7 +73,7 @@ export function BatchImportPage() {
             💡 多条文案之间用<b>空行</b>分隔；末尾一行 <code style={{ background: 'rgba(0,0,0,0.06)', padding: '0 4px', borderRadius: '3px' }}>#话题1 #话题2</code> 套用全部
           </div>
         ) : (
-          <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(99,102,241,0.06)', fontSize: '12px', maxHeight: '200px', overflowY: 'auto' }}>
+          <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(99,102,241,0.06)', fontSize: '12px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
               <span style={{ color: 'var(--text-main)', fontWeight: 600 }}>📊 解析预览</span>
               <span style={{ color: 'var(--text-sub)' }}>共 <b style={{ color: '#6366f1' }}>{list.length}</b> 条</span>
@@ -101,11 +101,18 @@ export function BatchImportPage() {
             ))}
           </div>
         )}
+      </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button style={{ ...btnGhost, flex: 1 }} onClick={() => navigate(-1)}>取消</button>
-          <button style={{ ...btnPrimary, flex: 2 }} onClick={handleImport} disabled={list.length === 0}>导入 {list.length > 0 ? `${list.length} 条` : ''}</button>
-        </div>
+      {/* 底部固定按钮 - 始终可见 */}
+      <div style={{
+        position: 'sticky', bottom: 0,
+        padding: '12px 16px calc(12px + var(--safe-bottom))',
+        background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(0,0,0,0.06)',
+        display: 'flex', gap: '10px',
+      }}>
+        <button style={{ ...btnGhost, flex: 1 }} onClick={() => navigate(-1)}>取消</button>
+        <button style={{ ...btnPrimary, flex: 2 }} onClick={handleImport} disabled={list.length === 0}>导入 {list.length > 0 ? `${list.length} 条` : ''}</button>
       </div>
     </div>
   )
