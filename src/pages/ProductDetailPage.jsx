@@ -210,10 +210,10 @@ export function ProductDetailPage() {
     show(!current ? '已标记「出单」' : '已取消标记', 'success')
   }
 
-  // 标记/取消「用过」：用过是出单的前提，出单必用过；取消用过则一并取消出单
+  // 标记/取消「用过」（不影响出单状态）
   const toggleUsed = (copyId, current) => {
     if (current) {
-      updateCopy(id, copyId, { used: false, usedDate: null, hasOrder: false })
+      updateCopy(id, copyId, { used: false, usedDate: null })
       show('已取消「用过」', 'success')
     } else {
       updateCopy(id, copyId, { used: true, usedDate: todayStr() })
