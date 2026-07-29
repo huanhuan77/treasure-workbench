@@ -92,7 +92,7 @@ export function SamplesPage() {
     }
   }, [])
 
-  const sorted = useMemo(() => sortSamples(samples), [samples])
+  const sorted = useMemo(() => samples, [samples])
   const filtered = useMemo(() => {
     if (filter === 'all') return sorted
     return sorted.filter((s) => s.status === filter)
