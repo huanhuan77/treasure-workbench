@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { StoreProvider } from './store'
-import { ToastProvider } from './components/Toast'
+import { ToastProvider, useToast } from './components/Toast'
 import { BottomNav } from './components/BottomNav'
 import { HomePage } from './pages/HomePage'
 import { SamplesPage } from './pages/SamplesPage'
@@ -19,11 +19,13 @@ import { EditSamplePage } from './pages/EditSamplePage'
 import { NewProductPage, EditProductPage } from './pages/NewProductPage'
 import { DailyPlanPage } from './pages/DailyPlanPage'
 
-function App() {
-  // 全局自动云备份：每 3 小时自动备份一次
+// 自动云同步组件（放在 ToastProvider 内，可弹出通知）
+function AutoBackup() {
+  const { show } = useToast()
   useEffect(() => {
     const KEYS = ['blogger_workbench_data_v1', 'blogger_investments_v1', 'blogger_calendar_v1', 'daily_plan_v1']
     const GIST_ID_KEY = 'backup_gist_id'
+    const LAST_SYNC_KEY = 'backup_last_sync_at'
     const doBackup = async () => {
       const token = localStorage.getItem('backup_github_token')
       if (!token) return
@@ -31,6 +33,7 @@ function App() {
       for (const key of KEYS) {
         try { const r = localStorage.getItem(key); if (r) data[key] = JSON.parse(r) } catch (e){}
       }
+      if (Object.keys(data).length === 0) return
       const gistId = localStorage.getItem(GIST_ID_KEY)
       const url = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists'
       try {
@@ -47,16 +50,23 @@ function App() {
         if (res.ok) {
           const result = await res.json()
           if (!gistId) localStorage.setItem(GIST_ID_KEY, result.id)
+          localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString())
         }
       } catch (e){}
     }
-    const first = setTimeout(doBackup, 30000)
+    // 首次延迟 60 秒避免影响首屏加载，之后每 3 小时自动同步
+    const first = setTimeout(doBackup, 60000)
     const interval = setInterval(doBackup, 3 * 60 * 60 * 1000)
     return () => { clearTimeout(first); clearInterval(interval) }
-  }, [])
+  }, [show])
+  return null
+}
+
+function App() {
   return (
     <StoreProvider>
       <ToastProvider>
+        <AutoBackup />
         <HashRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
