@@ -1,19 +1,7 @@
-import { useState, useEffect } from 'react'
-import { useToast } from '../components/Toast'
-import { Modal, glassStyle } from '../components/Modal'
+import { useState } from 'react'
+import { glassStyle } from '../components/Modal'
 
 const STORAGE_KEY = 'daily_plan_v1'
-
-const REWARDS = [
-  { id: 'icecream', label: '🍦 吃冰淇淋', cost: 3 },
-  { id: 'takeout', label: '🥡 点外卖', cost: 5 },
-  { id: 'shopping', label: '🛍️ 买个小东西', cost: 7 },
-  { id: 'movie', label: '🎬 看个剧', cost: 4 },
-  { id: 'nap', label: '💤 睡个午觉', cost: 2 },
-  { id: 'snack', label: '🍿 买零食', cost: 3 },
-  { id: 'game', label: '🎮 玩游戏30分钟', cost: 5 },
-  { id: 'walk', label: '🌳 出去走走', cost: 2 },
-]
 
 function loadData() {
   try {
@@ -31,18 +19,14 @@ function getToday() {
 }
 
 export function DailyPlanPage() {
-  const { show } = useToast()
   const [data, setData] = useState(loadData)
   const today = getToday()
-  const plan = data[today] || { tasks: [], stars: 0 }
+  const plan = data[today] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
-  const [stars, setStars] = useState(plan.stars || 0)
   const [newTaskTitle, setNewTaskTitle] = useState('')
-  const [showRewards, setShowRewards] = useState(false)
 
-  // 同步到 localStorage
-  const sync = (newTasks, newStars) => {
-    const nd = { ...data, [today]: { tasks: newTasks, stars: newStars } }
+  const sync = (newTasks) => {
+    const nd = { ...data, [today]: { tasks: newTasks } }
     setData(nd)
     saveData(nd)
   }
@@ -55,39 +39,20 @@ export function DailyPlanPage() {
     if (!newTaskTitle.trim()) return
     const newTasks = [...tasks, { id: Date.now(), title: newTaskTitle.trim(), done: false }]
     setTasks(newTasks)
-    sync(newTasks, stars)
+    sync(newTasks)
     setNewTaskTitle('')
   }
 
   const toggleTask = (id) => {
     const newTasks = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t)
     setTasks(newTasks)
-    sync(newTasks, stars)
-    // 如果所有任务都完成了，弹奖励
-    if (newTasks.filter(t => t.done).length === newTasks.length && newTasks.length > 0) {
-      setShowRewards(true)
-      show('🎉 全部完成！领取奖励吧！', 'success')
-    }
+    sync(newTasks)
   }
 
   const deleteTask = (id) => {
     const newTasks = tasks.filter(t => t.id !== id)
     setTasks(newTasks)
-    sync(newTasks, stars)
-  }
-
-  const claimReward = (reward) => {
-    setStars(s => s + reward.cost)
-    setShowRewards(false)
-    show(`🎉 获得 ${reward.cost} ��星星！`, 'success')
-  }
-
-  const resetStars = () => {
-    const newStars = 0
-    setStars(newStars)
-    const nd = { ...data, [today]: { tasks, stars: newStars } }
-    setData(nd)
-    saveData(nd)
+    sync(newTasks)
   }
 
   const getDateLabel = (dateStr) => {
@@ -101,16 +66,9 @@ export function DailyPlanPage() {
   return (
     <div className="app-container">
       {/* 头部 */}
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
-        </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button onClick={() => setShowRewards(true)} style={{ padding: '8px 12px', borderRadius: '10px', border: 'none', background: 'rgba(251,191,36,0.12)', color: '#d97706', fontSize: '14px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            ⭐ {stars}
-          </button>
-        </div>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
+        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
+        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
       </header>
 
       <div style={{ padding: '0 16px' }}>
@@ -123,17 +81,12 @@ export function DailyPlanPage() {
           <div style={{ height: '10px', borderRadius: '5px', background: 'rgba(244,114,182,0.1)', overflow: 'hidden' }}>
             <div style={{ height: '100%', borderRadius: '5px', width: `${progress}%`, background: 'linear-gradient(90deg,#34d399,#10b981)', transition: 'width 0.3s ease' }} />
           </div>
-          {progress === 100 && total > 0 && (
-            <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#059669', textAlign: 'center', fontWeight: 600 }}>
-              🎉 全部完成！去领取星星奖励吧！
-            </p>
-          )}
         </div>
 
         {/* 任务列表 */}
         {tasks.length === 0 ? (
           <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务，点 + 添加今天的计划</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务，在底部输入框中添加今天的计划</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -219,39 +172,6 @@ export function DailyPlanPage() {
       </div>
       {/* 底部留空避免内容被遮挡 */}
       <div style={{ height: '120px' }} />
-
-      {/* 奖励弹窗 */}
-      <Modal open={showRewards} onClose={() => setShowRewards(false)} title="🎁 领取奖励"
-        footer={
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-            <button onClick={() => setShowRewards(false)} style={{
-              flex: 1, padding: '12px', background: 'rgba(252, 231, 243, 0.6)',
-              color: 'var(--text-sub)', borderRadius: '14px', fontSize: '15px',
-              fontWeight: 500, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
-            }}>先不领</button>
-          </div>
-        }
-      >
-        <p style={{ margin: '0 0 12px', fontSize: '14px', color: 'var(--text-sub)', textAlign: 'center' }}>
-          完成任务获得星星 ⭐，选择奖励来犒劳自己吧！
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          {REWARDS.map(r => (
-            <button key={r.id} onClick={() => claimReward(r)} style={{
-              padding: '12px 8px', borderRadius: '12px', border: '1.5px solid rgba(0,0,0,0.06)',
-              background: '#fff', cursor: 'pointer', textAlign: 'center',
-              transition: 'all 0.15s',
-            }}>
-              <div style={{ fontSize: '24px', marginBottom: '4px' }}>{r.label.split(' ')[0]}</div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>{r.label}</div>
-              <div style={{ fontSize: '12px', color: '#d97706', marginTop: '2px' }}>⭐ {r.cost} 颗星</div>
-            </button>
-          ))}
-        </div>
-        <p style={{ margin: '12px 0 0', fontSize: '12px', color: 'var(--gray-400)', textAlign: 'center' }}>
-          当前拥有 ⭐ {stars} 颗星
-        </p>
-      </Modal>
     </div>
   )
 }
