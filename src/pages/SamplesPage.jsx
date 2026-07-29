@@ -52,18 +52,26 @@ export function SamplesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
-  const [filter, setFilter] = useState('hit')
-  const [accountFilter, setAccountFilter] = useState('大号')
+  const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'hit')
+  const [accountFilter, setAccountFilter] = useState(() => sessionStorage.getItem('samples_account') || '大号')
   const [searchKeyword, setSearchKeyword] = useState('')
 
-  // 恢复滚动位置（从编辑页返回时）
+  // 恢复滚动位置和筛选状态（从编辑/新增页返回时）
   useEffect(() => {
     const saved = sessionStorage.getItem('samples_scroll')
+    const savedFilter = sessionStorage.getItem('samples_filter')
+    const savedAccount = sessionStorage.getItem('samples_account')
     if (saved) {
       sessionStorage.removeItem('samples_scroll')
       requestAnimationFrame(() => {
         window.scrollTo(0, parseInt(saved))
       })
+    }
+    if (savedFilter) {
+      sessionStorage.removeItem('samples_filter')
+    }
+    if (savedAccount) {
+      sessionStorage.removeItem('samples_account')
     }
   }, [])
 
@@ -131,6 +139,8 @@ export function SamplesPage() {
       try { localStorage.setItem('sampleFabPos', JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else if (tap) {
       sessionStorage.setItem('samples_scroll', String(window.scrollY))
+      sessionStorage.setItem('samples_filter', filter)
+      sessionStorage.setItem('samples_account', accountFilter)
       navigate('/samples/new')
     }
   }
@@ -203,8 +213,10 @@ export function SamplesPage() {
                 <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
                   {/* 左滑操作按钮 */}
                   <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
-                    <button onClick={() => {
+                                <button onClick={() => {
               sessionStorage.setItem('samples_scroll', String(window.scrollY))
+              sessionStorage.setItem('samples_filter', filter)
+              sessionStorage.setItem('samples_account', accountFilter)
               setSwipedId(null); navigate(`/samples/${s.id}/edit`)
             }} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
                     <button onClick={() => { setSwipedId(null); if (confirm('删除该样品？')) { deleteSample(s.id); show('已删除', 'success') } }} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
