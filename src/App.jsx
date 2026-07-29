@@ -17,6 +17,7 @@ import { NewTransactionPage } from './pages/NewTransactionPage'
 import { NewSamplePage } from './pages/NewSamplePage'
 import { EditSamplePage } from './pages/EditSamplePage'
 import { NewProductPage, EditProductPage } from './pages/NewProductPage'
+import { DailyPlanPage } from './pages/DailyPlanPage'
 
 function App() {
   // 全局自动云备份：每 3 小时自动备份一次
@@ -67,6 +68,7 @@ function App() {
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/calendar/:date" element={<CalendarDetailPage />} />
             <Route path="/backup" element={<BackupPage />} />
+            <Route path="/daily" element={<DailyPlanPage />} />
             <Route path="/product/new" element={<NewProductPage />} />
             <Route path="/product/:id/edit" element={<EditProductPage />} />
             <Route path="/samples/new" element={<NewSamplePage />} />

@@ -11,6 +11,7 @@ const mainTabs = [
 
 // 更多侧边栏 tab
 const sideTabs = [
+  { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/backup', label: '数据备份', icon: '💾' },
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/sensitive', label: '词库', icon: '📚' },
