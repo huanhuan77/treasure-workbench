@@ -180,7 +180,7 @@ export function SamplesPage() {
             onClick={() => setFilter(f.key)}
             style={{
               flex: 1, minWidth: 0,
-              padding: '7px 13px', borderRadius: '18px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap',
+              padding: '6px 4px', borderRadius: '999px', fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap',
               background: filter === f.key ? (f.key === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : STATUS[f.key].color) : 'rgba(255,255,255,0.5)',
               color: filter === f.key ? '#fff' : 'var(--text-sub)',
               border: filter === f.key ? 'none' : '1px solid rgba(255,255,255,0.6)',
