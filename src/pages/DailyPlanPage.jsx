@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { glassStyle } from '../components/Modal'
+import { Modal, glassStyle } from '../components/Modal'
 
 const STORAGE_KEY = 'daily_plan_v1'
 const MAX_LEN = 100
@@ -143,64 +143,38 @@ export function DailyPlanPage() {
         )}
       </div>
 
-      {/* 遮罩层 */}
-      {showModal && (
-        <div
-          onClick={() => { setShowModal(false); setInput('') }}
-          style={{
-            position: 'fixed', inset: 0, background: 'rgba(74, 44, 58, 0.25)',
-            backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', zIndex: 1000,
-            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: 'rgba(255,255,255,0.92)',
-              backdropFilter: 'blur(30px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-              width: '100%', maxWidth: '480px',
-              borderRadius: '28px 28px 0 0',
-              padding: '24px 22px calc(16px + var(--safe-bottom))',
-              animation: 'slideUp 0.3s cubic-bezier(0.16,1,0.3,1)',
-              boxShadow: '0 -8px 40px rgba(244,114,182,0.15)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: 'var(--text-main)' }}>添加任务</h3>
-              <button onClick={() => { setShowModal(false); setInput('') }} style={{
-                width: '32px', height: '32px', borderRadius: '50%', border: 'none',
-                background: 'rgba(252,231,243,0.7)', fontSize: '16px', color: 'var(--text-sub)',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>✕</button>
-            </div>
-            <textarea
-              placeholder="今天要做什么？"
-              value={input}
-              onChange={e => setInput(e.target.value.slice(0, MAX_LEN))}
-              onKeyDown={e => { if (e.key === 'Enter') addTask() }}
-              autoFocus
-              rows={3}
-              style={{
-                width: '100%', padding: '14px 16px', border: '1.5px solid rgba(0,0,0,0.08)',
-                borderRadius: '14px', fontSize: '16px', outline: 'none', resize: 'none',
-                background: '#fff', color: 'var(--text-main)',
-                boxSizing: 'border-box', lineHeight: 1.5, fontFamily: 'inherit',
-              }}
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-              <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{input.length}/{MAX_LEN}</span>
-              <button onClick={addTask} disabled={!input.trim()} style={{
-                padding: '10px 28px', borderRadius: '12px', border: 'none',
-                background: input.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#e5e7eb',
-                color: '#fff', fontSize: '15px', fontWeight: 600,
-                cursor: input.trim() ? 'pointer' : 'not-allowed',
-                boxShadow: input.trim() ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-              }}>添加</button>
-            </div>
+      {/* 添加任务弹窗 */}
+      <Modal open={showModal} onClose={() => { setShowModal(false); setInput('') }} title="添加任务"
+        footer={
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{input.length}/{MAX_LEN}</span>
+            <button onClick={addTask} disabled={!input.trim()} style={{
+              padding: '10px 28px', borderRadius: '12px', border: 'none',
+              background: input.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#e5e7eb',
+              color: '#fff', fontSize: '15px', fontWeight: 600,
+              cursor: input.trim() ? 'pointer' : 'not-allowed',
+              boxShadow: input.trim() ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
+            }}>添加</button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <textarea
+          placeholder="今天要做什么？"
+          value={input}
+          onChange={e => setInput(e.target.value.slice(0, MAX_LEN))}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addTask()
+          }}
+          rows={3}
+          autoFocus
+          style={{
+            width: '100%', padding: '14px 16px', border: '1.5px solid rgba(0,0,0,0.08)',
+            borderRadius: '14px', fontSize: '16px', outline: 'none', resize: 'none',
+            background: '#fff', color: 'var(--text-main)',
+            boxSizing: 'border-box', lineHeight: 1.5, fontFamily: 'inherit',
+          }}
+        />
+      </Modal>
     </div>
   )
 }
