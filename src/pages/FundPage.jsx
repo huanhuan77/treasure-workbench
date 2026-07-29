@@ -106,24 +106,30 @@ export function FundPage() {
         {/* 概览卡片 */}
         <div style={{ ...glassStyle, padding: '16px', marginBottom: '12px' }}>
           <h3 style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>📊 总览</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-            <div style={{ textAlign: 'center', padding: '8px 4px', borderRadius: '8px', background: 'rgba(99,102,241,0.06)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '10px' }}>
+            <div style={{ textAlign: 'center', padding: '8px 2px', borderRadius: '8px', background: 'rgba(99,102,241,0.06)' }}>
               <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginBottom: '2px' }}>总投入</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>¥{formatMoney(totalAmount)}</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>¥{formatMoney(totalAmount)}</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '8px 4px', borderRadius: '8px', background: 'rgba(99,102,241,0.06)' }}>
+            <div style={{ textAlign: 'center', padding: '8px 2px', borderRadius: '8px', background: 'rgba(99,102,241,0.06)' }}>
               <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginBottom: '2px' }}>当前市值</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>¥{formatMoney(totalValue)}</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-main)' }}>¥{formatMoney(totalValue)}</div>
             </div>
-            <div style={{ textAlign: 'center', padding: '8px 4px', borderRadius: '8px', background: totalProfit >= 0 ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)' }}>
+            <div style={{ textAlign: 'center', padding: '8px 2px', borderRadius: '8px', background: totalProfit >= 0 ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)' }}>
               <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginBottom: '2px' }}>总盈亏</div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: totalProfit >= 0 ? '#16a34a' : '#dc2626' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: totalProfit >= 0 ? '#16a34a' : '#dc2626' }}>
                 {totalProfit >= 0 ? '+' : ''}{formatMoney(totalProfit)}
               </div>
             </div>
+            <div style={{ textAlign: 'center', padding: '8px 2px', borderRadius: '8px', background: totalProfit >= 0 ? 'rgba(34,197,94,0.06)' : 'rgba(239,68,68,0.06)' }}>
+              <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginBottom: '2px' }}>收益率</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: totalProfit >= 0 ? '#16a34a' : '#dc2626' }}>
+                {totalProfit >= 0 ? '+' : ''}{profitRate.toFixed(1)}%
+              </div>
+            </div>
           </div>
-          <div style={{ textAlign: 'center', marginTop: '8px', fontSize: '13px', color: totalProfit >= 0 ? '#16a34a' : '#dc2626', fontWeight: 600 }}>
-            收益率 {totalProfit >= 0 ? '+' : ''}{profitRate.toFixed(2)}%
+          <div style={{ fontSize: '12px', color: 'var(--gray-400)', textAlign: 'center' }}>
+            共 {funds.length} 支基金
           </div>
         </div>
 
@@ -154,23 +160,22 @@ export function FundPage() {
                       }}
                     >✕</button>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-sub)', flexWrap: 'wrap' }}>
                     <span>投入 <b style={{ color: 'var(--text-main)' }}>¥{formatMoney(fund.amount)}</b></span>
-                    <span>→</span>
+                    <span style={{ color: '#d1d5db' }}>→</span>
                     <span>市值 <b style={{ color: 'var(--text-main)' }}>¥{formatMoney(fund.currentValue)}</b></span>
                     <span style={{
                       padding: '2px 6px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
                       background: profit >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
                       color: profit >= 0 ? '#16a34a' : '#dc2626',
                     }}>
-                      {profit >= 0 ? '+' : ''}{formatMoney(profit)} ({rate >= 0 ? '+' : ''}{rate.toFixed(2)}%)
+                      {profit >= 0 ? '+' : ''}{formatMoney(profit)} ({rate >= 0 ? '+' : ''}{rate.toFixed(1)}%)
                     </span>
                   </div>
-                  {fund.date && (
-                    <div style={{ marginTop: '6px', fontSize: '11px', color: '#9ca3af' }}>
-                      📅 {fund.date}{fund.remark ? ` · ${fund.remark}` : ''}
-                    </div>
-                  )}
+                  <div style={{ marginTop: '6px', display: 'flex', gap: '12px', fontSize: '11px', color: '#9ca3af' }}>
+                    {fund.date && <span>📅 {fund.date}</span>}
+                    {fund.remark && <span>💬 {fund.remark}</span>}
+                  </div>
                 </div>
               )
             })}
@@ -180,14 +185,18 @@ export function FundPage() {
 
       {/* + 浮动按钮 */}
       <button onClick={openAdd} style={{
-        position: 'fixed', right: 'calc(50% - 210px)', bottom: 'calc(80px + var(--safe-bottom))',
+        position: 'fixed', right: 'max(16px, calc((100vw - 480px) / 2 + 16px))', bottom: 'calc(80px + var(--safe-bottom))',
         width: '52px', height: '52px', borderRadius: '50%', border: 'none',
         background: 'linear-gradient(135deg,#6366f1,#4f46e5)',
         color: '#fff', fontSize: '26px', cursor: 'pointer', zIndex: 40,
         boxShadow: '0 4px 16px rgba(99,102,241,0.4)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'transform 0.15s',
-      }}>+</button>
+        transition: 'transform 0.15s, box-shadow 0.15s',
+      }}
+        onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.92)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(99,102,241,0.3)' }}
+        onMouseUp={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
+        onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '' }}
+      >+</button>
 
       {/* 底部弹窗 */}
       {showModal && (
