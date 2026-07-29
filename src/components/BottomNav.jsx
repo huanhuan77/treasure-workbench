@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 
 // 底部主 tab（5 个核心功能）
 const mainTabs = [
-  { to: '/', label: '产品', icon: '📦', end: true },
+  { to: '/', label: '文案', icon: '📝', end: true },
   { to: '/samples', label: '样品', icon: '🏷️' },
   { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/finance', label: '收支', icon: '💳' },

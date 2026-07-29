@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { Modal, glassStyle } from '../components/Modal'
 
 const STORAGE_KEY = 'daily_plan_v1'
 const MAX_LEN = 100
+const FAB_KEY = 'dailyPlanFabPos'
 
 function loadData() {
   try {
@@ -19,6 +23,62 @@ function getToday() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function SortableTaskRow({ task, onToggle, onDelete }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.92 : 1,
+    boxShadow: isDragging ? '0 12px 30px rgba(244,114,182,0.28)' : undefined,
+  }
+  return (
+    <div ref={setNodeRef} style={{ ...style, ...glassStyle, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* 拖动手柄 */}
+      <button
+        {...attributes}
+        {...listeners}
+        onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
+        aria-label="拖动排序"
+        style={{
+          background: 'transparent', border: 'none', cursor: 'grab',
+          color: '#9ca3af', fontSize: '20px', padding: '0 4px',
+          touchAction: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, lineHeight: 1,
+        }}
+      >⇕</button>
+      {/* 勾选框 */}
+      <div
+        onClick={() => onToggle(task.id)}
+        style={{
+          width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
+          border: `2.5px solid ${task.done ? '#10b981' : '#d1d5db'}`,
+          background: task.done ? '#10b981' : '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+          transition: 'all 0.2s',
+        }}
+      >
+        {task.done ? '✓' : ''}
+      </div>
+      {/* 任务名 */}
+      <div style={{
+        flex: 1, fontSize: '15px', fontWeight: 500,
+        color: task.done ? 'var(--text-sub)' : 'var(--text-main)',
+        textDecoration: task.done ? 'line-through' : 'none',
+      }}>
+        {task.title}
+      </div>
+      {/* 删除 */}
+      <button onClick={() => onDelete(task.id)} style={{
+        width: '28px', height: '28px', borderRadius: '50%', border: 'none',
+        background: 'rgba(244,63,94,0.08)', color: '#e11d48', fontSize: '14px',
+        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+      }}>✕</button>
+    </div>
+  )
+}
+
 export function DailyPlanPage() {
   const [data, setData] = useState(loadData)
   const today = getToday()
@@ -27,7 +87,22 @@ export function DailyPlanPage() {
   const [showModal, setShowModal] = useState(false)
   const [input, setInput] = useState('')
 
-  // 弹窗打开时锁定页面滚动
+  // FAB 拖动状态
+  const [fabPos, setFabPos] = useState(() => {
+    try { const d = localStorage.getItem(FAB_KEY); if (d) return JSON.parse(d) } catch(e) {}
+    return null
+  })
+  const fabPosRef = useRef(fabPos)
+  fabPosRef.current = fabPos
+  const fabRef = useRef(null)
+  const fabDragInfo = useRef(null)
+  const [fabDragging, setFabDragging] = useState(false)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+  )
+
   useEffect(() => {
     if (showModal) {
       document.body.style.overflow = 'hidden'
@@ -49,7 +124,7 @@ export function DailyPlanPage() {
 
   const addTask = () => {
     if (!input.trim()) return
-    const newTasks = [...tasks, { id: Date.now(), title: input.trim(), done: false }]
+    const newTasks = [...tasks, { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), title: input.trim(), done: false }]
     setTasks(newTasks)
     sync(newTasks)
     setInput('')
@@ -68,6 +143,51 @@ export function DailyPlanPage() {
     sync(newTasks)
   }
 
+  const handleDragEnd = (event) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = tasks.findIndex(t => t.id === active.id)
+    const newIndex = tasks.findIndex(t => t.id === over.id)
+    if (oldIndex < 0 || newIndex < 0) return
+    const newTasks = arrayMove(tasks, oldIndex, newIndex)
+    setTasks(newTasks)
+    sync(newTasks)
+  }
+
+  // FAB 拖动事件
+  const onFabPDown = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const r = fabRef.current.getBoundingClientRect()
+    fabDragInfo.current = { sx: e.clientX, sy: e.clientY, ox: r.left, oy: r.top, moved: false }
+    setFabDragging(true)
+    if (e.target.setPointerCapture && e.pointerId !== undefined) {
+      try { e.target.setPointerCapture(e.pointerId) } catch(_) {}
+    }
+  }
+  const onFabPMove = (e) => {
+    if (!fabDragInfo.current) return
+    const dx = e.clientX - fabDragInfo.current.sx
+    const dy = e.clientY - fabDragInfo.current.sy
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) fabDragInfo.current.moved = true
+    const sz = 56
+    let x = Math.max(8, Math.min(window.innerWidth - sz - 8, fabDragInfo.current.ox + dx))
+    let y = Math.max(8, Math.min(window.innerHeight - sz - 8, fabDragInfo.current.oy + dy))
+    fabPosRef.current = { x, y }
+    setFabPos({ x, y })
+  }
+  const endFabDrag = () => {
+    if (!fabDragInfo.current) return
+    const m = fabDragInfo.current.moved
+    fabDragInfo.current = null
+    setFabDragging(false)
+    if (m) {
+      try { localStorage.setItem(FAB_KEY, JSON.stringify(fabPosRef.current)) } catch(e) {}
+    } else {
+      setShowModal(true)
+    }
+  }
+
   const getDateLabel = (dateStr) => {
     const weekDays = ['日', '一', '二', '三', '四', '五', '六']
     const d = new Date(dateStr)
@@ -76,20 +196,15 @@ export function DailyPlanPage() {
     return isToday ? '今天' : `${parseInt(dateStr.split('-')[1])}月${parseInt(dateStr.split('-')[2])}日 周${wd}`
   }
 
+  const fabStyle = fabPos
+    ? { left: fabPos.x + 'px', top: fabPos.y + 'px' }
+    : { left: 'calc(100vw - 72px)', top: 'calc(100vh - 148px)' }
+
   return (
     <div className="app-container">
-      {/* 头部 */}
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
-        </div>
-        <button onClick={() => setShowModal(true)} style={{
-          width: '36px', height: '36px', borderRadius: '50%', border: 'none',
-          background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
-          fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 14px rgba(244,114,182,0.3)',
-        }}>+</button>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
+        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
+        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{getDateLabel(today)}</p>
       </header>
 
       <div style={{ padding: '0 16px' }}>
@@ -107,41 +222,48 @@ export function DailyPlanPage() {
         {/* 任务列表 */}
         {tasks.length === 0 ? (
           <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
-            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务，点 + 添加</p>
+            <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>还没有任务</p>
+            <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>点右下角 + 添加</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {tasks.map(task => (
-              <div key={task.id} style={{ ...glassStyle, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  onClick={() => toggleTask(task.id)}
-                  style={{
-                    width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
-                    border: `2.5px solid ${task.done ? '#10b981' : '#d1d5db'}`,
-                    background: task.done ? '#10b981' : '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-                  }}
-                >
-                  {task.done ? '✓' : ''}
-                </div>
-                <div style={{
-                  flex: 1, fontSize: '15px', fontWeight: 500,
-                  color: task.done ? 'var(--text-sub)' : 'var(--text-main)',
-                  textDecoration: task.done ? 'line-through' : 'none',
-                }}>
-                  {task.title}
-                </div>
-                <button onClick={() => deleteTask(task.id)} style={{
-                  width: '28px', height: '28px', borderRadius: '50%', border: 'none',
-                  background: 'rgba(244,63,94,0.08)', color: '#e11d48', fontSize: '14px',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>✕</button>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '100px' }}>
+                {tasks.map(task => (
+                  <SortableTaskRow
+                    key={task.id}
+                    task={task}
+                    onToggle={toggleTask}
+                    onDelete={deleteTask}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
+
+      {/* 可拖动 + 浮动按钮 */}
+      <button
+        ref={fabRef}
+        onPointerDown={onFabPDown}
+        onPointerMove={onFabPMove}
+        onPointerUp={endFabDrag}
+        onPointerCancel={endFabDrag}
+        onClick={(e) => { e.stopPropagation() }}
+        style={{
+          position: 'fixed',
+          ...fabStyle,
+          width: '56px', height: '56px', borderRadius: '50%', border: 'none',
+          background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+          fontSize: '30px', fontWeight: 300, lineHeight: 1, cursor: fabDragging ? 'grabbing' : 'grab',
+          boxShadow: fabDragging ? '0 12px 32px rgba(244,114,182,0.5)' : '0 8px 24px rgba(244,114,182,0.4)',
+          zIndex: 50,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none',
+          transition: fabDragging ? 'none' : 'box-shadow 0.2s',
+        }}
+      >+</button>
 
       {/* 添加任务弹窗 */}
       <Modal open={showModal} onClose={() => { setShowModal(false); setInput('') }} title="添加任务"
