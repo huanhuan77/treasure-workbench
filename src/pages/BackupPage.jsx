@@ -145,7 +145,8 @@ export function BackupPage() {
         } else if (key === 'blogger_investments_v1') {
           stats['投资'] = Array.isArray(d) ? d.length : 0
         } else if (key === 'daily_plan_v1') {
-          stats['每日计划'] = d.tasks?.length || 0
+          // 每日计划数据按日期存储: { "2026-07-29": { tasks: [...] }, ... }
+          stats['每日计划'] = Object.values(d).reduce((sum, plan) => sum + (plan.tasks?.length || 0), 0)
         }
       }
     } catch (e) {}
