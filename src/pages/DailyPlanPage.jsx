@@ -89,13 +89,8 @@ export function DailyPlanPage() {
   const [data, setData] = useState(loadData)
   const today = getToday()
   const tomorrow = addDays(today, 1)
-  const [viewDate, setViewDate] = useState(today)
-  const prevDayRef = useRef(today)
-  // 日期过零时强制切换今日（在渲染期间更新状态，保证下次渲染立即生效）
-  if (prevDayRef.current !== today) {
-    prevDayRef.current = today
-    setViewDate(today)
-  }
+  const [tab, setTab] = useState(0) // 0=今日, 1=明日
+  const viewDate = tab === 0 ? today : tomorrow
   const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
   const [showModal, setShowModal] = useState(false)
@@ -257,12 +252,12 @@ export function DailyPlanPage() {
           background: 'rgba(244,114,182,0.06)',
         }}>
           {[
-            { key: 'today', label: '今日', date: today },
-            { key: 'tomorrow', label: '明日', date: tomorrow },
+            { key: 0, label: '今日', date: today },
+            { key: 1, label: '明日', date: tomorrow },
           ].map(item => {
-            const selected = viewDate === item.date
+            const selected = tab === item.key
             return (
-              <button key={item.key} onClick={() => setViewDate(item.date)} style={{
+              <button key={item.key} onClick={() => setTab(item.key)} style={{
                 flex: 1, padding: '9px 0', border: 'none', borderRadius: '9px',
                 fontSize: '14px', fontWeight: selected ? 600 : 500,
                 color: selected ? '#fff' : 'var(--text-sub)',

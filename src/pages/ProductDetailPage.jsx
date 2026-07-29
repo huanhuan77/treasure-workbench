@@ -44,8 +44,6 @@ export function ProductDetailPage() {
   const [genLoading, setGenLoading] = useState(false)
   const [copyFilter, setCopyFilter] = useState('全部')
 
-  const [showImport, setShowImport] = useState(false)
-  const [importText, setImportText] = useState('')
   const [showClear, setShowClear] = useState(false)
 
   // 话题管理
@@ -92,24 +90,6 @@ export function ProductDetailPage() {
     setEditCopy(null); show('文案已更新', 'success')
   }
 
-  const handleImport = () => {
-    const list = parseBulkCopies(importText)
-    if (list.length === 0) { show('没有解析到文案', 'error'); return }
-    const enriched = list.map((item) => ({
-      content: item.content,
-      title: generateTitle(item.content, product.name, product.brand, sensitiveWords),
-      topics: (item.topics && item.topics.length)
-        ? item.topics
-        : (product.topics && product.topics.length
-          ? product.topics
-          : generateTopics(item.content, product.name, product.brand, sensitiveWords)),
-      hasOrder: item.hasOrder,
-    }))
-    addCopies(product.id, enriched)
-    setShowImport(false)
-    setImportText('')
-    show(`已导入 ${enriched.length} 条文案`, 'success')
-  }
 
   if (!product) {
     return (
@@ -268,7 +248,7 @@ export function ProductDetailPage() {
               }}
             ># 话题</button>
             <button
-              onClick={() => setShowImport(true)}
+              onClick={() => navigate(`/batch-import/${product.id}`)}
               style={{
                 background: '#fff',
                 color: 'var(--primary)',
@@ -332,7 +312,7 @@ export function ProductDetailPage() {
             color: 'var(--text-sub)',
           }}>
             <div style={{ fontSize: '36px', marginBottom: '8px' }}>📝</div>
-            <p style={{ fontSize: '14px', margin: 0 }}>还没有文案，点击「批量导入」添加你的爆款文案</p>
+            <p style={{ fontSize: '14px', margin: 0 }}>还没有文案，<span style={{ color: 'var(--primary)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => navigate(`/batch-import/${product.id}`)}>点击批量导入</span>添加你的爆款文案</p>
           </div>
         ) : displayedCopies.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '30px 20px', color: 'var(--text-sub)' }}>

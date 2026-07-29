@@ -13,6 +13,7 @@ import { SensitiveCheckPage } from './pages/SensitiveCheckPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { CalendarDetailPage } from './pages/CalendarDetailPage'
 import { BackupPage } from './pages/BackupPage'
+import { BatchImportPage } from './pages/BatchImportPage'
 import { InvestmentPage } from './pages/InvestmentPage'
 import { NewTransactionPage } from './pages/NewTransactionPage'
 import { NewSamplePage } from './pages/NewSamplePage'
@@ -83,6 +84,7 @@ function App() {
             <Route path="/daily" element={<DailyPlanPage />} />
             <Route path="/product/new" element={<NewProductPage />} />
             <Route path="/product/:id/edit" element={<EditProductPage />} />
+            <Route path="/batch-import/:id" element={<BatchImportPage />} />
             <Route path="/samples/new" element={<NewSamplePage />} />
             <Route path="/samples/:id/edit" element={<EditSamplePage />} />
             <Route path="/finance/new" element={<NewTransactionPage />} />
