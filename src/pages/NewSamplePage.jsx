@@ -51,13 +51,50 @@ export function NewSamplePage() {
           <input style={inputStyle} placeholder="例如：补水喷雾" value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
         <Field label="所属账号">
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {ACCOUNTS.map(a => (
-              <button key={a} onClick={() => setAccount(a)} style={{
-                padding: '8px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: account === a ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.5)',
-                color: account === a ? '#fff' : 'var(--text-sub)' }}>{a}（{ACCOUNT_NICK[a]}）</button>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {ACCOUNTS.map(a => {
+              const selected = account === a
+              return (
+                <button key={a} onClick={() => setAccount(a)} style={{
+                  padding: '14px 16px', borderRadius: '12px',
+                  border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
+                  background: selected
+                    ? 'linear-gradient(135deg, rgba(244,114,182,0.08), rgba(236,72,153,0.04))'
+                    : 'rgba(255,255,255,0.6)',
+                  textAlign: 'left', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+                  transition: 'all 0.15s',
+                  boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.15)' : 'none',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '50%',
+                      background: selected
+                        ? 'linear-gradient(135deg, #f472b6, #ec4899)'
+                        : 'rgba(244,114,182,0.12)',
+                      color: selected ? '#fff' : 'var(--primary)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '14px', fontWeight: 700, flexShrink: 0,
+                    }}>
+                      {a.replace('号', '')}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.3 }}>{a}</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>{ACCOUNT_NICK[a]}</div>
+                    </div>
+                  </div>
+                  <div style={{
+                    width: '20px', height: '20px', borderRadius: '50%',
+                    border: selected ? 'none' : '2px solid #d1d5db',
+                    background: selected ? 'var(--primary)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontSize: '12px', flexShrink: 0,
+                  }}>
+                    {selected && '✓'}
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </Field>
         <Field label="状态">
