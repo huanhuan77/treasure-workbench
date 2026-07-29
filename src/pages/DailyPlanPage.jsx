@@ -89,10 +89,16 @@ export function DailyPlanPage() {
   const [data, setData] = useState(loadData)
   const today = getToday()
   const tomorrow = addDays(today, 1)
-  const [tab, setTab] = useState(0) // 0=今日, 1=明日
+  const [tab, setTab] = useState(0)
   const viewDate = tab === 0 ? today : tomorrow
   const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
+  // 渲染期间检测日期变化，自动同步任务列表（解决跨天 tasks 未更新问题）
+  const prevViewDateRef = useRef(viewDate)
+  if (prevViewDateRef.current !== viewDate) {
+    prevViewDateRef.current = viewDate
+    setTasks(plan.tasks)
+  }
   const [showModal, setShowModal] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
   const [historyDate, setHistoryDate] = useState(null)
@@ -130,10 +136,6 @@ export function DailyPlanPage() {
     window.dispatchEvent(new Event('dailyPlanUpdated'))
   }
 
-  // 切换 viewDate 时同步任务列表
-  useEffect(() => {
-    setTasks((data[viewDate] || { tasks: [] }).tasks)
-  }, [viewDate, data])
 
   const total = tasks.length
   const done = tasks.filter(t => t.done).length
