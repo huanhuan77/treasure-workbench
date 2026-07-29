@@ -141,7 +141,7 @@ export function SamplesPage() {
       sessionStorage.setItem('samples_scroll', String(window.scrollY))
       sessionStorage.setItem('samples_filter', filter)
       sessionStorage.setItem('samples_account', accountFilter)
-      navigate('/samples/new')
+      navigate('/samples/new', { state: { account: accountFilter } })
     }
   }
 

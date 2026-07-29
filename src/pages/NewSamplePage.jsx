@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
@@ -26,10 +26,13 @@ function PageHeader({ title, onBack }) {
 
 export function NewSamplePage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { samples, addSample } = useStore()
   const { show } = useToast()
   const [name, setName] = useState('')
-  const [account, setAccount] = useState(() => sessionStorage.getItem('samples_account') || '大号')
+  // 优先从 location.state 拿到当前账号，否则从 sessionStorage 兜底
+  const initialAccount = location.state?.account || sessionStorage.getItem('samples_account') || '大号'
+  const [account, setAccount] = useState(initialAccount)
   const [status, setStatus] = useState('unpublished')
   const [receiveDate, setReceiveDate] = useState(new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(() => addDays(new Date().toISOString().slice(0, 10), 15))
