@@ -61,28 +61,17 @@ export function NewSamplePage() {
                   background: selected
                     ? 'linear-gradient(135deg, rgba(244,114,182,0.08), rgba(236,72,153,0.04))'
                     : 'rgba(255,255,255,0.6)',
-                  textAlign: 'left', cursor: 'pointer',
+                  cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
                   transition: 'all 0.15s',
                   boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.15)' : 'none',
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '36px', height: '36px', borderRadius: '50%',
-                      background: selected
-                        ? 'linear-gradient(135deg, #f472b6, #ec4899)'
-                        : 'rgba(244,114,182,0.12)',
-                      color: selected ? '#fff' : 'var(--primary)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '14px', fontWeight: 700, flexShrink: 0,
-                    }}>
-                      {a.replace('号', '')}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.3 }}>{a}</div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>{ACCOUNT_NICK[a]}</div>
-                    </div>
-                  </div>
+                  <div style={{
+                    fontSize: '16px', fontWeight: 600,
+                    color: 'var(--text-main)', whiteSpace: 'nowrap',
+                    overflow: 'hidden', textOverflow: 'ellipsis', flex: 1,
+                    textAlign: 'left',
+                  }}>{ACCOUNT_NICK[a]}</div>
                   <div style={{
                     width: '20px', height: '20px', borderRadius: '50%',
                     border: selected ? 'none' : '2px solid #d1d5db',
