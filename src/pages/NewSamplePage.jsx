@@ -29,7 +29,7 @@ export function NewSamplePage() {
   const { addSample } = useStore()
   const { show } = useToast()
   const [name, setName] = useState('')
-  const [account, setAccount] = useState('大号')
+  const [account, setAccount] = useState(() => sessionStorage.getItem('samples_account') || '大号')
   const [status, setStatus] = useState('unpublished')
   const [receiveDate, setReceiveDate] = useState(new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(() => addDays(new Date().toISOString().slice(0, 10), 15))
