@@ -174,13 +174,13 @@ export function SamplesPage() {
 
       {/* 状态筛选 */}
       <div style={{ display: 'flex', gap: '8px', padding: '8px 16px 6px', overflowX: 'auto' }}>
-        {[{ key: 'all', label: '全部' }, ...STATUS_LIST].map((f) => (
+        {[{ key: 'all', label: '全部', color: '#ec4899' }, ...STATUS_LIST].map((f) => (
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
             style={{
               padding: '7px 13px', borderRadius: '18px', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap',
-              background: f.key === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : (filter === f.key ? STATUS[f.key].color : 'rgba(255,255,255,0.5)'),
+              background: filter === f.key ? (f.key === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : STATUS[f.key].color) : 'rgba(255,255,255,0.5)',
               color: filter === f.key ? '#fff' : 'var(--text-sub)',
               border: filter === f.key ? 'none' : '1px solid rgba(255,255,255,0.6)',
               boxShadow: filter === f.key ? '0 4px 12px rgba(244,114,182,0.25)' : 'none',

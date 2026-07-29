@@ -387,8 +387,8 @@ export function ProductDetailPage() {
           const list = parseBulkCopies(importText)
           if (list.length === 0) {
             return (
-              <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(156,163,175,0.08)', fontSize: '12px', color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                💡 解析提示：多条文案之间用 <b>空行</b> 分隔；末尾写一行 <code>#话题1 #话题2</code> 套用全部
+              <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(156,163,175,0.08)', fontSize: '12px', color: 'var(--text-sub)' }}>
+                💡 解析提示：多条文案之间用 <b>空行</b> 分隔；末尾写一行 <code style={{ background: 'rgba(0,0,0,0.06)', padding: '0 4px', borderRadius: '3px' }}>#话题1 #话题2</code> 套用全部
               </div>
             )
           }
