@@ -32,11 +32,7 @@ export function BatchImportPage() {
     const enriched = list.map((item) => ({
       content: item.content,
       title: generateTitle(item.content, product.name, product.brand, DEFAULT_SENSITIVE_WORDS),
-      topics: (item.topics && item.topics.length)
-        ? item.topics
-        : (product.topics && product.topics.length
-          ? product.topics
-          : generateTopics(item.content, product.name, product.brand, DEFAULT_SENSITIVE_WORDS)),
+      topics: item.topics || [],
       hasOrder: item.hasOrder,
     }))
     addCopies(product.id, enriched)
@@ -57,7 +53,7 @@ export function BatchImportPage() {
 
       <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, gap: '8px', minHeight: 0 }}>
         <textarea
-          placeholder="格式：首行可写产品名（自动忽略）；每条文案空行分隔；最后一行 #话题 套用全部；&#10;👍=出单、✅=用过（标记会自动去掉）"
+          placeholder="格式：多条文案之间用空行分隔；&#10;👍=出单、✅=用过（标记会自动去掉）"
           value={text}
           onChange={e => setText(e.target.value)}
           autoFocus
