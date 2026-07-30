@@ -364,32 +364,53 @@ export function ProductDetailPage() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', minHeight: '40px' }}>
           {topicDraft.length === 0 ? (
             <span style={{ fontSize: '13px', color: 'var(--gray-400)' }}>暂无话题</span>
-          ) : topicDraft.map((t, i) => (
-            <span key={i} style={{
-              display: 'inline-flex', alignItems: 'center', gap: '6px',
-              fontSize: '12px', color: 'var(--primary-dark)', background: 'rgba(252, 231, 243, 0.7)',
-              padding: '4px 8px 4px 10px', borderRadius: '8px', fontWeight: 500,
-            }}>
-              {editTopicIdx === i ? (
-                <>
-                  <input
-                    style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '12px', color: 'var(--primary-dark)', width: '90px', fontWeight: 600, padding: 0 }}
-                    value={editTopicVal}
-                    onChange={(ev) => setEditTopicVal(ev.target.value)}
-                    onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); saveEditTopic() } }}
-                    autoFocus
-                  />
-                  <button onClick={saveEditTopic} style={{ border: 'none', background: 'transparent', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', padding: 0 }}>✓</button>
-                </>
-              ) : (
-                <>
-                  {t}
-                  <button onClick={() => startEditTopic(i)} style={{ border: 'none', background: 'transparent', color: 'var(--text-sub)', fontSize: '11px', cursor: 'pointer', padding: 0 }}>✎</button>
-                  <button onClick={() => removeTopic(t)} style={{ border: 'none', background: 'transparent', color: '#e11d48', fontSize: '13px', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
-                </>
-              )}
-            </span>
-          ))}
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '6px' }}>
+                <button onClick={async () => {
+                  const text = topicDraft.map(t => `#${t}#`).join(' ')
+                  const ok = await copyText(text)
+                  show(ok ? `已复制 ${topicDraft.length} 个话题` : '复制失败', ok ? 'success' : 'error')
+                }} style={{
+                  padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(99,102,241,0.3)',
+                  background: 'rgba(99,102,241,0.08)', color: '#4f46e5',
+                  fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                }}>📋 复制全部到剪贴板</button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', minHeight: '40px' }}>
+                {topicDraft.map((t, i) => (
+                  <span key={i} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    fontSize: '12px', color: 'var(--primary-dark)', background: 'rgba(252, 231, 243, 0.7)',
+                    padding: '4px 8px 4px 10px', borderRadius: '8px', fontWeight: 500,
+                  }}>
+                    {editTopicIdx === i ? (
+                      <>
+                        <input
+                          style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: '12px', color: 'var(--primary-dark)', width: '90px', fontWeight: 600, padding: 0 }}
+                          value={editTopicVal}
+                          onChange={(ev) => setEditTopicVal(ev.target.value)}
+                          onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); saveEditTopic() } }}
+                          autoFocus
+                        />
+                        <button onClick={saveEditTopic} style={{ border: 'none', background: 'transparent', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', padding: 0 }}>✓</button>
+                      </>
+                    ) : (
+                      <>
+                        {t}
+                        <button onClick={async () => {
+                          const ok = await copyText(`#${t}#`)
+                          show(ok ? `已复制 #${t}#` : '复制失败', ok ? 'success' : 'error')
+                        }} title="复制话题" style={{ border: 'none', background: 'transparent', color: '#6b7280', fontSize: '11px', cursor: 'pointer', padding: 0 }}>📋</button>
+                        <button onClick={() => startEditTopic(i)} style={{ border: 'none', background: 'transparent', color: 'var(--text-sub)', fontSize: '11px', cursor: 'pointer', padding: 0 }}>✎</button>
+                        <button onClick={() => removeTopic(t)} style={{ border: 'none', background: 'transparent', color: '#e11d48', fontSize: '13px', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+                      </>
+                    )}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
         </div>
         <p style={{ fontSize: '12px', color: 'var(--gray-400)', margin: '10px 0 0' }}>
           💡 话题用于「复制话题」，统一管理当前产品的所有话题
