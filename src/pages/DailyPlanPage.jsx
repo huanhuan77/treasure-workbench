@@ -323,7 +323,7 @@ export function DailyPlanPage() {
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '80px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingBottom: '20px' }}>
                 {tasks.map(task => (
                   <SortableTaskRow
                     key={task.id}
