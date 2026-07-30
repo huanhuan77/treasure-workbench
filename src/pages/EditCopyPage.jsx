@@ -71,7 +71,8 @@ export function EditCopyPage() {
           autoFocus
           style={{
             ...inputStyle, flex: 1, resize: 'none',
-            lineHeight: 1.6, fontFamily: 'inherit', fontSize: '15px', minHeight: '180px',
+            lineHeight: 1.6, fontFamily: 'inherit', fontSize: '15px',
+            minHeight: '60vh',
           }}
         />
       </div>
