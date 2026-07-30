@@ -107,7 +107,10 @@ export function ProductDetailPage() {
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
     else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder)
     else if (copyFilter === '未用过') list = list.filter((c) => !c.used)
-    return [...list].sort((a, b) => (b.hasOrder ? 1 : 0) - (a.hasOrder ? 1 : 0))
+    return [...list].sort((a, b) => {
+      if (a.hasOrder !== b.hasOrder) return b.hasOrder ? 1 : -1
+      return (b.createdAt || 0) - (a.createdAt || 0)
+    })
   })()
 
   // 打开生成相似弹窗（从某条文案触发）
