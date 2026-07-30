@@ -183,11 +183,11 @@ export function ProductDetailPage() {
     if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
   }
 
-  const toggleOrder = (copyId, current) => {
+  const toggleOrder = (copyId, current, existingUsedDate) => {
     updateCopy(id, copyId, {
       hasOrder: !current,
       used: true,
-      usedDate: !current ? todayStr() : null,
+      usedDate: existingUsedDate || todayStr(),
     })
     show(!current ? '已标记「出单」' : '已取消标记', 'success')
   }
@@ -332,7 +332,7 @@ export function ProductDetailPage() {
                 onCopyContent={() => handleCopyContent(copy.content, copy.id)}
                 onCopyTopics={() => handleCopyTopics(copy.topics, copy.id)}
                 onEdit={() => openEditCopy(copy)}
-                onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder)}
+                onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder, copy.usedDate)}
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
                 onDelete={() => setDelCopyId(copy.id)}
               />
