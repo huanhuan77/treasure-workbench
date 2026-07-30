@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { SavingsButton } from '../components/SavingsButton'
@@ -155,9 +155,21 @@ export function HomePage() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [swipedId, setSwipedId] = useState(null)
   const [delId, setDelId] = useState(null)
+
+  // 恢复滚动位置（从产品详情返回时）
+  useEffect(() => {
+    const saved = sessionStorage.getItem('home_scroll')
+    if (saved) {
+      sessionStorage.removeItem('home_scroll')
+      requestAnimationFrame(() => window.scrollTo(0, parseInt(saved)))
+    }
+  }, [])
+
+  const saveScroll = () => sessionStorage.setItem('home_scroll', String(window.scrollY))
   const [search, setSearch] = useState('')
 
   const openEdit = (p) => {
+    saveScroll()
     navigate(`/product/${p.id}/edit`)
   }
 
@@ -247,6 +259,7 @@ export function HomePage() {
       justDraggedRef.current = true
       try { localStorage.setItem('fabPos', JSON.stringify(fabPosRef.current)) } catch (e) {}
     } else if (openIfTap) {
+      saveScroll()
       navigate('/product/new')
     }
   }
