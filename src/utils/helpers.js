@@ -94,9 +94,13 @@ function isProductNameHeader(line) {
 
 export function parseBulkCopies(text) {
   if (!text) return []
-  // 首行若像产品名表头（如「洁比兔 湿巾」），去掉该行不入库
   const _lines = text.split('\n')
-  if (_lines.length > 1 && isProductNameHeader(_lines[0])) {
+  // 首行以「产品名称：」开头 → 去掉该行（用户显式标记产品名）
+  if (_lines.length > 1 && /^\s*产品名称[：:]\s*/.test(_lines[0])) {
+    text = _lines.slice(1).join('\n')
+  }
+  // 首行若像产品名表头（如「洁比兔 湿巾」），去掉该行不入库
+  else if (_lines.length > 1 && isProductNameHeader(_lines[0])) {
     text = _lines.slice(1).join('\n')
   }
   const blocks = text.split(/\n\s*\n/)
