@@ -81,12 +81,11 @@ export function ProductDetailPage() {
   const saveTopics = () => { setProductTopics(product.id, topicDraft); setShowTopics(false); show('话题已保存', 'success') }
 
   // 文案编辑
-  const [editCopy, setEditCopy] = useState(null) // { id, content, title, topics }
-  const openEditCopy = (c) => setEditCopy({ id: c.id, content: c.content, title: c.title || '', topics: [...(c.topics || [])] })
+  const openEditCopy = (c) => navigate(`/copy-edit/${product.id}/${c.id}`)
   const saveEditCopy = () => {
     if (!editCopy) return
     if (!editCopy.content.trim()) { show('文案内容不能为空', 'error'); return }
-    updateCopy(product.id, editCopy.id, { content: editCopy.content, title: editCopy.title, topics: editCopy.topics })
+    updateCopy(product.id, editCopy.id, { content: editCopy.content })
     setEditCopy(null); show('文案已更新', 'success')
   }
 
@@ -415,43 +414,6 @@ export function ProductDetailPage() {
         <p style={{ fontSize: '12px', color: 'var(--gray-400)', margin: '10px 0 0' }}>
           💡 话题用于「复制话题」，统一管理当前产品的所有话题
         </p>
-      </Modal>
-
-      {/* 文案编辑弹窗 */}
-      <Modal
-        open={!!editCopy}
-        onClose={() => setEditCopy(null)}
-        title="编辑文案"
-        footer={
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={btnGhost} onClick={() => setEditCopy(null)}>取消</button>
-            <button style={{ ...btnPrimary, flex: 1 }} onClick={saveEditCopy}>保存</button>
-          </div>
-        }
-      >
-        <Field label="标题">
-          <input
-            style={inputStyle}
-            value={editCopy?.title || ''}
-            onChange={(ev) => setEditCopy({ ...editCopy, title: ev.target.value })}
-            placeholder="文案标题"
-          />
-        </Field>
-        <Field label="文案内容" required>
-          <textarea
-            style={{ ...inputStyle, minHeight: '160px', resize: 'vertical', lineHeight: 1.6 }}
-            value={editCopy?.content || ''}
-            onChange={(ev) => setEditCopy({ ...editCopy, content: ev.target.value })}
-          />
-        </Field>
-        <Field label="话题（每行一个）">
-          <textarea
-            style={{ ...inputStyle, minHeight: '80px', resize: 'vertical', lineHeight: 1.6 }}
-            value={(editCopy?.topics || []).join('\n')}
-            onChange={(ev) => setEditCopy({ ...editCopy, topics: ev.target.value.split('\n').map((x) => x.trim()).filter(Boolean) })}
-            placeholder={'#话题1\n#话题2'}
-          />
-        </Field>
       </Modal>
 
       <ConfirmModal
