@@ -183,6 +183,21 @@ export function HomePage() {
   })
   const active = keyword || categoryFilter
 
+  // 置顶产品：洁比兔湿巾 / 洁比兔洗液 永远在最前
+  const PINNED_NAMES = ['洁比兔湿巾', '洁比兔洗液']
+  const pinFirst = (list) => {
+    const pinned = []
+    const rest = []
+    list.forEach((p) => {
+      if (PINNED_NAMES.includes(p.name)) pinned.push(p)
+      else rest.push(p)
+    })
+    // 保持置顶产品内部的相对顺序（洁比兔湿巾在洗液前面）
+    pinned.sort((a, b) => PINNED_NAMES.indexOf(a.name) - PINNED_NAMES.indexOf(b.name))
+    return [...pinned, ...rest]
+  }
+  const displayedList = pinFirst(active ? filtered : products)
+
   // 拖拽排序
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -340,20 +355,20 @@ export function HomePage() {
             emptyGlass('📭', '还没有产品', '点击下方 + 添加你的第一个产品')
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={products.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={displayedList.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {products.map((p) => (
+                  {displayedList.map((p) => (
                     <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
                   ))}
                 </div>
               </SortableContext>
             </DndContext>
           )
-        ) : filtered.length === 0 ? (
+        ) : displayedList.length === 0 ? (
           emptyGlass('🔍', keyword ? `没有找到「${search.trim()}」` : `「${categoryFilter}」分类下暂无产品`, '换个筛选条件试试')
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filtered.map((p) => (
+            {displayedList.map((p) => (
               <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
             ))}
           </div>
