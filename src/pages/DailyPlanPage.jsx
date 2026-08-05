@@ -2,11 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Modal, glassStyle } from '../components/Modal'
+import { Modal, glassStyle, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
+import { useStore } from '../store'
+import { useToast } from '../components/Toast'
 
 const STORAGE_KEY = 'daily_plan_v1'
+const PUBLISH_KEY = 'daily_publish_plan_v1'
 const MAX_LEN = 100
 const FAB_KEY = 'dailyPlanFabPos'
+const ACCOUNTS = ['大号', '小号', '小小号']
+const PUB_CATEGORIES = ['全部', '保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
 
 function loadData() {
   try {
@@ -17,6 +22,21 @@ function loadData() {
 
 function saveData(d) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(d))
+}
+
+function loadPublish() {
+  try {
+    const raw = localStorage.getItem(PUBLISH_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch { return {} }
+}
+
+function savePublish(d) {
+  localStorage.setItem(PUBLISH_KEY, JSON.stringify(d))
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
 
 // 用本地时区（不是 UTC）获取今天日期字符串 YYYY-MM-DD
@@ -94,6 +114,8 @@ function SortableTaskRow({ task, onToggle, onDelete }) {
 }
 
 export function DailyPlanPage() {
+  const { products } = useStore()
+  const { show } = useToast()
   const [data, setData] = useState(loadData)
   const today = getToday()
   const tomorrow = addDays(today, 1)
@@ -101,6 +123,39 @@ export function DailyPlanPage() {
   const viewDate = tab === 0 ? today : tomorrow
   const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
+
+  // 发布计划（记录明天每个账号要发布的产品）
+  const [publishData, setPublishData] = useState(loadPublish)
+  const publishDate = tomorrow
+  const pubPlans = publishData[publishDate] || []
+  const [showPublishModal, setShowPublishModal] = useState(false)
+  const [pubAccount, setPubAccount] = useState('大号')
+  const [pubCategory, setPubCategory] = useState('全部')
+  const [pubProductId, setPubProductId] = useState('')
+
+  const catProducts = products.filter((p) => pubCategory === '全部' || p.category === pubCategory)
+  const allAccounts = [...new Set([...ACCOUNTS, ...pubPlans.map((p) => p.account)])]
+  const groupedPlans = {}
+  pubPlans.forEach((p) => { (groupedPlans[p.account] = groupedPlans[p.account] || []).push(p) })
+
+  const addPublishPlan = () => {
+    if (!pubAccount) { show('请选择账号', 'error'); return }
+    if (!pubProductId) { show('请选择产品', 'error'); return }
+    const p = products.find((x) => x.id === pubProductId)
+    if (!p) return
+    const item = { id: uid(), account: pubAccount, productId: p.id, productName: p.name, category: p.category, createdAt: Date.now() }
+    const nd = { ...publishData, [publishDate]: [...pubPlans, item] }
+    setPublishData(nd); savePublish(nd)
+    setShowPublishModal(false); setPubProductId('')
+    show(`已记录：${p.name} → ${pubAccount}`, 'success')
+  }
+
+  const deletePublishPlan = (planId) => {
+    const nd = { ...publishData, [publishDate]: pubPlans.filter((x) => x.id !== planId) }
+    setPublishData(nd); savePublish(nd)
+    show('已删除', 'success')
+  }
+
   // 渲染期间检测日期变化，自动同步任务列表（解决跨天 tasks 未更新问题）
   const prevViewDateRef = useRef(viewDate)
   if (prevViewDateRef.current !== viewDate) {
@@ -234,7 +289,8 @@ export function DailyPlanPage() {
     if (m) {
       try { localStorage.setItem(FAB_KEY, JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else {
-      setShowModal(true)
+      if (tab === 2) setShowPublishModal(true)
+      else setShowModal(true)
     }
   }
 
@@ -272,7 +328,7 @@ export function DailyPlanPage() {
           }}>📅 历史</button>
         </div>
 
-        {/* 今日 / 明日 切换 */}
+        {/* 今日 / 明日 / 发布计划 切换 */}
         <div style={{
           display: 'flex', gap: '6px',
           padding: '3px', borderRadius: '12px',
@@ -281,6 +337,7 @@ export function DailyPlanPage() {
           {[
             { key: 0, label: '今日', date: today },
             { key: 1, label: '明日', date: tomorrow },
+            { key: 2, label: '📣 发布计划' },
           ].map(item => {
             const selected = tab === item.key
             return (
@@ -294,13 +351,65 @@ export function DailyPlanPage() {
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 boxShadow: selected ? '0 2px 8px rgba(236,72,153,0.25)' : 'none',
+                whiteSpace: 'nowrap',
               }}>{item.label}</button>
             )
           })}
         </div>
       </header>
 
-      <div style={{ padding: '0 16px' }}>
+      {tab === 2 ? (
+        /* ============ 发布计划视图（记录明天每个账号要发布的产品） ============ */
+        <div style={{ padding: '0 16px' }}>
+          <div style={{ ...glassStyle, padding: '14px 16px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>📣 发布计划</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>{getDateLabel(publishDate)}（{publishDate}）各账号发布产品</div>
+            </div>
+            <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>共 {pubPlans.length} 项</span>
+          </div>
+
+          {pubPlans.length === 0 ? (
+            <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
+              <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>明天还没有发布计划</p>
+              <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>点右下角 + 记录「账号 × 产品」</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingBottom: '20px' }}>
+              {allAccounts.filter((a) => groupedPlans[a]).map((acc) => (
+                <div key={acc} style={{ ...glassStyle, padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{
+                      fontSize: '13px', fontWeight: 700, color: '#fff',
+                      background: 'linear-gradient(135deg,#f472b6,#ec4899)',
+                      padding: '3px 10px', borderRadius: '999px',
+                    }}>{acc}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>{groupedPlans[acc].length} 个产品</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {groupedPlans[acc].map((pl) => (
+                      <span key={pl.id} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        fontSize: '13px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.7)',
+                        padding: '6px 10px', borderRadius: '10px', fontWeight: 500,
+                        border: '1px solid rgba(0,0,0,0.06)',
+                      }}>
+                        {pl.productName}
+                        {pl.category && <span style={{ fontSize: '10px', color: '#9ca3af', background: 'rgba(0,0,0,0.05)', padding: '1px 6px', borderRadius: '999px' }}>{pl.category}</span>}
+                        <button onClick={() => deletePublishPlan(pl.id)} style={{
+                          border: 'none', background: 'transparent', color: '#e11d48',
+                          fontSize: '13px', cursor: 'pointer', padding: '0', lineHeight: 1,
+                        }}>×</button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ padding: '0 16px' }}>
         {/* 进度卡片 */}
         <div style={{ ...glassStyle, padding: '16px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -336,7 +445,8 @@ export function DailyPlanPage() {
             </SortableContext>
           </DndContext>
         )}
-      </div>
+        </div>
+      )}
 
       {/* 可拖动 + 浮动按钮 */}
       <button
@@ -392,6 +502,54 @@ export function DailyPlanPage() {
             boxSizing: 'border-box', lineHeight: 1.5, fontFamily: 'inherit',
           }}
         />
+      </Modal>
+
+      {/* 发布计划添加弹窗 */}
+      <Modal
+        open={showPublishModal}
+        onClose={() => { setShowPublishModal(false); setPubProductId('') }}
+        title={`添加发布计划（${getDateLabel(publishDate)}）`}
+        footer={
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button style={btnGhost} onClick={() => { setShowPublishModal(false); setPubProductId('') }}>取消</button>
+            <button style={{ ...btnPrimary, flex: 1 }} onClick={addPublishPlan}>添加</button>
+          </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {/* 账号 */}
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>发布账号</div>
+            <select value={pubAccount} onChange={(e) => setPubAccount(e.target.value)} style={inputStyle}>
+              {allAccounts.map((a) => <option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
+          {/* 分类（可选） */}
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>产品分类（可选）</div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {PUB_CATEGORIES.map((c) => (
+                <button key={c} onClick={() => { setPubCategory(c); setPubProductId('') }} style={{
+                  padding: '7px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, border: '1.5px solid',
+                  borderColor: pubCategory === c ? 'var(--primary)' : 'rgba(0,0,0,0.08)',
+                  background: pubCategory === c ? 'rgba(244,114,182,0.1)' : '#fff',
+                  color: pubCategory === c ? 'var(--primary)' : 'var(--text-sub)',
+                  cursor: 'pointer',
+                }}>{c}</button>
+              ))}
+            </div>
+          </div>
+          {/* 产品 */}
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>
+              选择产品 {pubCategory !== '全部' ? `（${pubCategory} · ${catProducts.length}个）` : `（共 ${products.length} 个）`}
+            </div>
+            <select value={pubProductId} onChange={(e) => setPubProductId(e.target.value)} style={{ ...inputStyle, height: '180px' }} multiple>
+              {catProducts.length === 0 && <option value="" disabled>该分类暂无产品</option>}
+              {catProducts.map((p) => <option key={p.id} value={p.id}>{p.name}{p.brand ? `（${p.brand}）` : ''}</option>)}
+            </select>
+          </div>
+        </div>
       </Modal>
 
       {/* 历史计划弹窗 */}

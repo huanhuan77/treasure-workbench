@@ -55,10 +55,11 @@ export function ProductDetailPage() {
   const [editTopicVal, setEditTopicVal] = useState('')
 
   const openTopics = () => {
-    // 从产品级话题 + 所有文案自带话题聚合（去重），作为可统一编辑的清单
+    // 从产品级话题 + 所有文案自带话题聚合（去重 + 拆分 #a#b 双话题，避免重复观感）
     const allTopics = new Set()
-    ;(product.topics || []).forEach((t) => allTopics.add(t))
-    ;(product.copies || []).forEach((c) => (c.topics || []).forEach((t) => allTopics.add(t)))
+    const splitT = (t) => (t || '').split('#').map((x) => x.trim()).filter(Boolean).map((x) => '#' + x)
+    ;(product.topics || []).forEach((t) => splitT(t).forEach((x) => allTopics.add(x)))
+    ;(product.copies || []).forEach((c) => (c.topics || []).forEach((t) => splitT(t).forEach((x) => allTopics.add(x))))
     const arr = [...allTopics]
     setTopicDraft(arr)
     setTopicOriginals(arr)
@@ -67,11 +68,19 @@ export function ProductDetailPage() {
     setShowTopics(true)
   }
   const addTopic = () => {
-    let t = newTopic.trim()
-    if (!t) return
-    if (!t.startsWith('#')) t = '#' + t
-    if (topicDraft.includes(t)) { show('该话题已存在', 'error'); return }
-    setTopicDraft([...topicDraft, t]); setNewTopic('')
+    const raw = newTopic.trim()
+    if (!raw) return
+    // 支持粘贴整行多个话题（#a #b 或 #a#b 或 a b），按 # 前插空格再按空白切割
+    const tokens = raw.replace(/#/g, ' #').split(/\s+/).map((s) => s.trim()).filter(Boolean)
+    const normalized = tokens.map((t) => (t.startsWith('#') ? t : '#' + t))
+    const next = [...topicDraft]
+    let addedCount = 0
+    for (const t of normalized) {
+      if (!next.includes(t)) { next.push(t); addedCount++ }
+    }
+    if (addedCount === 0) { show('这些话题已存在', 'error'); return }
+    setTopicDraft(next); setNewTopic('')
+    show(`已添加 ${addedCount} 个话题`, 'success')
   }
   const removeTopic = (t) => setTopicDraft(topicDraft.filter((x) => x !== t))
   const startEditTopic = (i) => { setEditTopicIdx(i); setEditTopicVal(topicDraft[i]) }
@@ -96,20 +105,21 @@ export function ProductDetailPage() {
     const removed = [...copiesOrig].filter((t) => !finalSet.has(t))
     const added = topicDraft.filter((t) => !copiesOrig.has(t))
 
-    // 把变更同步到所有文案
+    // 把变更同步到所有文案（norm 同时拆分 #a#b 双话题）
+    const norm = (arr) => [...new Set((arr || []).flatMap((t) => (t || '').split('#').map((x) => x.trim()).filter(Boolean).map((x) => '#' + x)))]
     const updatedCopies = (product.copies || []).map((c) => {
-      let topics = [...(c.topics || [])]
+      let topics = norm(c.topics)
       topics = topics.filter((t) => !removed.includes(t))
       renames.forEach(({ from, to }) => {
         const idx = topics.indexOf(from)
         if (idx >= 0) topics[idx] = to
       })
       added.forEach((t) => { if (!topics.includes(t)) topics.push(t) })
-      return { ...c, topics }
+      return { ...c, topics: norm(topics) }
     })
 
-    // 写入 store：copies 同步 + product.topics 作为权威池
-    updateProduct(product.id, { copies: updatedCopies, topics: topicDraft })
+    // 写入 store：copies 同步 + product.topics 作为权威池（同样拆分）
+    updateProduct(product.id, { copies: updatedCopies, topics: norm(topicDraft) })
     setShowTopics(false)
     const msg = `已同步到 ${updatedCopies.length} 条文案${added.length ? `（+${added.length}）` : ''}${removed.length ? `（-${removed.length}）` : ''}${renames.length ? `（${renames.length} 处改名）` : ''}`
     show(msg, 'success')
@@ -142,6 +152,7 @@ export function ProductDetailPage() {
     let list = product.copies
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
     else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder)
+    else if (copyFilter === '爆单') list = list.filter((c) => c.hasHot)
     else if (copyFilter === '未用过') list = list.filter((c) => !c.used)
     return [...list].sort((a, b) => {
       if (!sortPending && a.hasOrder !== b.hasOrder) return b.hasOrder ? 1 : -1
@@ -232,6 +243,12 @@ export function ProductDetailPage() {
       setTimeout(() => setSortPending(false), 1000)
     }
     show(!current ? `已标记「出单」：${preview}` : `已取消出单：${preview}`, 'success')
+  }
+
+  // 标记/取消「爆单」（独立于出单）
+  const toggleHot = (copyId, current) => {
+    updateCopy(id, copyId, { hasHot: !current })
+    show(!current ? '🔥 已标记「爆单」' : '已取消「爆单」', 'success')
   }
 
   // 标记/取消「用过」（不影响出单状态）
@@ -326,6 +343,7 @@ export function ProductDetailPage() {
             { key: '全部', label: '全部' },
             { key: '出单', label: '出单文案' },
             { key: '未出单', label: '未出单文案' },
+            { key: '爆单', label: '🔥爆单文案' },
             { key: '未用过', label: '未用过文案' },
           ].map((f) => {
             const active = copyFilter === f.key
@@ -376,6 +394,7 @@ export function ProductDetailPage() {
                 onCopyTopics={() => handleCopyTopics(copy.topics, copy.id)}
                 onEdit={() => openEditCopy(copy)}
                 onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder, copy.usedDate, (copy.content || '').replace(/\n/g, ' ').slice(0, 12))}
+                onToggleHot={() => toggleHot(copy.id, copy.hasHot)}
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
                 onDelete={() => setDelCopyId(copy.id)}
               />
@@ -717,13 +736,15 @@ export function ProductDetailPage() {
 function CopyCard({
   copy, productName, brand, productTopics,
   onCopyContent, onCopyTopics,
-  onEdit, onToggleOrder, onToggleUsed, onDelete,
+  onEdit, onToggleOrder, onToggleHot, onToggleUsed, onDelete,
 }) {
   const cardAccent = copy.hasOrder
     ? { borderLeft: '4px solid #f59e0b', borderTop: '3px solid #fbbf24' }
-    : copy.used
-      ? { borderLeft: '4px solid #06b6d4' }
-      : {}
+    : copy.hasHot
+      ? { borderLeft: '4px solid #ef4444', borderTop: '3px solid #f87171' }
+      : copy.used
+        ? { borderLeft: '4px solid #06b6d4' }
+        : {}
 
   return (
     <div style={{
@@ -747,13 +768,13 @@ function CopyCard({
         {copy.content}
       </div>
 
-      {/* 话题：只显示文案自带话题 */}
+      {/* 话题：只显示文案自带话题（去重后） */}
       <div style={{ marginBottom: '8px' }}>
         {copy.topics && copy.topics.length > 0 && (
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '4px', fontWeight: 500 }}># 文案自带话题</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {copy.topics.map((t, i) => (
+              {[...new Set((copy.topics || []).filter(Boolean))].map((t, i) => (
                 <span key={i} style={{
                   fontSize: '12px',
                   color: '#7c3aed',
@@ -788,6 +809,15 @@ function CopyCard({
               padding: '4px 12px', borderRadius: '8px', fontWeight: 700,
               boxShadow: '0 2px 8px rgba(251,191,36,0.35)',
             }}>🔥 出单</span>
+          )
+        })()}
+        {copy.hasHot && (() => {
+          return (
+            <span style={{
+              fontSize: '13px', color: '#fff', background: 'linear-gradient(135deg,#f43f5e,#dc2626)',
+              padding: '4px 12px', borderRadius: '8px', fontWeight: 700,
+              boxShadow: '0 2px 8px rgba(244,63,94,0.4)',
+            }}>🔥 爆单</span>
           )
         })()}
         {copy.style && (
@@ -836,6 +866,9 @@ function CopyCard({
         <ActionBtn active={copy.hasOrder} onClick={onToggleOrder} activeColor="success">
           {copy.hasOrder ? '取消出单' : '标记出单'}
         </ActionBtn>
+        <ActionBtn active={copy.hasHot} onClick={onToggleHot} activeColor="hot">
+          {copy.hasHot ? '取消爆单' : '🔥爆单'}
+        </ActionBtn>
         <ActionBtn onClick={onEdit} tone="neutral">
           ✎ 编辑
         </ActionBtn>
@@ -854,6 +887,7 @@ function ActionBtn({ children, onClick, active, activeColor = 'primary', tone })
     success: { bg: 'linear-gradient(135deg, #34d399, #10b981)', text: '#fff' },
     info: { bg: 'linear-gradient(135deg, #22d3ee, #06b6d4)', text: '#fff' },
     danger: { bg: 'linear-gradient(135deg, #fb7185, #f43f5e)', text: '#fff' },
+    hot: { bg: 'linear-gradient(135deg, #f43f5e, #dc2626)', text: '#fff' },
   }
   // tone：非激活时的静态样式（用于「编辑 / 删除」这类次要操作）
   const toneMap = {
