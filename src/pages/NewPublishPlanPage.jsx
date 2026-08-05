@@ -37,8 +37,11 @@ export function NewPublishPlanPage() {
   // 账号固定三个
   const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']  // 固定三个账号
   // 选择来源：样品列表的数据（不是产品库），排除「放弃」，可按 未发布/已发布/爆单 筛选
-  // 注意：账号选择与样品列表互不影响（样品可能还没绑定账号，不应因选了账号而消失）
+  // 选账号后过滤该账号的样品；不选账号显示所有样品
   const sampleList = (samples || []).filter((s) => s.status !== 'abandoned' && (pubStatus === 'all' || s.status === pubStatus))
+  const accountFiltered = pubAccount
+    ? sampleList.filter((s) => s.account === pubAccount)
+    : sampleList
 
   const handleAdd = () => {
     if (!pubAccount) { show('请选择账号', 'error'); return }
@@ -134,10 +137,10 @@ export function NewPublishPlanPage() {
           </div>
         </div>
 
-        {/* 选择样品（全部样品，可按状态筛选） */}
+        {/* 选择样品（按所选账号过滤） */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>
-            选择样品（共 {sampleList.length} 个）
+            {pubAccount ? `选择样品 · ${pubAccount}（共 ${accountFiltered.length} 个）` : `选择样品（共 ${sampleList.length} 个）`}
           </div>
           <select value={pubSampleId} onChange={(e) => setPubSampleId(e.target.value)} multiple style={{
             width: '100%', padding: '12px 14px', borderRadius: '12px',
@@ -145,8 +148,8 @@ export function NewPublishPlanPage() {
             fontSize: '15px', outline: 'none', background: '#fff', color: 'var(--text-main)',
             boxSizing: 'border-box', height: '260px',
           }}>
-            {sampleList.length === 0 && <option value="" disabled>暂无样品</option>}
-            {sampleList.map((s) => <option key={s.id} value={s.id}>{s.name}{s.account ? `（${s.account}）` : ''}</option>)}
+            {accountFiltered.length === 0 && <option value="" disabled>{pubAccount ? '该账号暂无样品' : '暂无样品'}</option>}
+            {accountFiltered.map((s) => <option key={s.id} value={s.id}>{s.name}{s.account ? `（${s.account}）` : ''}</option>)}
           </select>
         </div>
       </div>
