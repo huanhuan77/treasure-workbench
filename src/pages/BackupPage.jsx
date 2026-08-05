@@ -158,7 +158,7 @@ export function BackupPage() {
       }
 
       if (!fetchedGist?.files?.['treasure-workbench-backup.json']?.content) {
-        throw new Error('未找到云端备份，请先在任意设备上传')
+        throw new Error('未找到云端备份：Token 的 Gist 列表里没有 treasure-workbench-backup.json。请在上方输入 Gist ID 后重试，或先在任意设备点"上传到云端"')
       }
 
       if (usedId) {
@@ -252,27 +252,33 @@ export function BackupPage() {
           <div style={{ fontSize: '12px', color: 'var(--text-sub)' }}>
             上次同步：<span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{formatSyncTime(lastSync)}</span>
           </div>
-          {gistId && (
-            <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {editingGistId ? (
-                <>
-                  <input value={gistId} onChange={e => { setGistId(e.target.value); localStorage.setItem(GIST_ID_KEY, e.target.value) }}
-                    autoFocus
-                    style={{ flex: 1, padding: '4px 8px', borderRadius: '6px', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '11px', outline: 'none', fontFamily: 'monospace', minWidth: 0 }} />
+          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '6px', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {editingGistId || !gistId ? (
+              <>
+                <input
+                  value={gistId}
+                  onChange={e => { setGistId(e.target.value); localStorage.setItem(GIST_ID_KEY, e.target.value) }}
+                  placeholder={gistId ? '编辑 Gist ID' : '粘贴 Gist ID 恢复（多设备同步）'}
+                  autoFocus={!gistId}
+                  style={{ flex: 1, padding: '5px 8px', borderRadius: '6px', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '11px', outline: 'none', fontFamily: 'monospace', minWidth: 0 }} />
+                {gistId && (
+                  <button onClick={() => { setGistId(''); localStorage.removeItem(GIST_ID_KEY); setEditingGistId(false); show('已清空 Gist ID', 'success') }} style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #d1d5db', background: '#fff', color: '#6b7280', fontSize: '10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>清空</button>
+                )}
+                {editingGistId && (
                   <button onClick={() => setEditingGistId(false)} style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #d1d5db', background: '#fff', fontSize: '10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>完成</button>
-                </>
-              ) : (
-                <>
-                  <span style={{ flex: 1 }}>Gist ID: {gistId}</span>
-                  <button onClick={() => {
-                    navigator.clipboard?.writeText(gistId)
-                    show('已复制 Gist ID', 'success')
-                  }} style={{ padding: '2px 6px', borderRadius: '4px', border: 'none', background: 'rgba(99,102,241,0.1)', color: '#6366f1', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>复制</button>
-                  <button onClick={() => setEditingGistId(true)} style={{ padding: '2px 6px', borderRadius: '4px', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--text-sub)', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>编辑</button>
-                </>
-              )}
-            </div>
-          )}
+                )}
+              </>
+            ) : (
+              <>
+                <span style={{ flex: 1 }}>Gist ID: {gistId}</span>
+                <button onClick={() => {
+                  navigator.clipboard?.writeText(gistId)
+                  show('已复制 Gist ID', 'success')
+                }} style={{ padding: '2px 6px', borderRadius: '4px', border: 'none', background: 'rgba(99,102,241,0.1)', color: '#6366f1', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>复制</button>
+                <button onClick={() => setEditingGistId(true)} style={{ padding: '2px 6px', borderRadius: '4px', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--text-sub)', fontSize: '11px', cursor: 'pointer', whiteSpace: 'nowrap' }}>编辑</button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* 云备份操作 */}
