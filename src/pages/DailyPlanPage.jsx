@@ -10,7 +10,6 @@ const STORAGE_KEY = 'daily_plan_v1'
 const PUBLISH_KEY = 'daily_publish_plan_v1'
 const MAX_LEN = 100
 const FAB_KEY = 'dailyPlanFabPos'
-const ACCOUNTS = ['大号', '小号', '小小号']
 const PUB_CATEGORIES = ['全部', '保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
 
 function loadData() {
@@ -114,7 +113,7 @@ function SortableTaskRow({ task, onToggle, onDelete }) {
 }
 
 export function DailyPlanPage() {
-  const { products } = useStore()
+  const { products, samples } = useStore()
   const { show } = useToast()
   const [data, setData] = useState(loadData)
   const today = getToday()
@@ -130,12 +129,16 @@ export function DailyPlanPage() {
   const publishDate = tomorrow
   const pubPlans = publishData[publishDate] || []
   const [showPublishModal, setShowPublishModal] = useState(false)
-  const [pubAccount, setPubAccount] = useState('大号')
+  const [pubAccount, setPubAccount] = useState('')
   const [pubCategory, setPubCategory] = useState('全部')
   const [pubProductId, setPubProductId] = useState('')
 
+  // 账号选项 = 样例数据里实际使用过的账号名称（过滤 大号/小号 代号）
+  const ACCOUNT_CODE_WORDS = ['大号', '小号', '小小号', '中号', '大号1', '小号1']
+  const accountOptions = [...new Set(
+    [...(samples || []).map((s) => s.account || '').filter(Boolean), ...pubPlans.map((p) => p.account)]
+  )].filter((a) => !ACCOUNT_CODE_WORDS.includes(a))
   const catProducts = products.filter((p) => pubCategory === '全部' || p.category === pubCategory)
-  const allAccounts = [...new Set([...ACCOUNTS, ...pubPlans.map((p) => p.account)])]
   const groupedPlans = {}
   pubPlans.forEach((p) => { (groupedPlans[p.account] = groupedPlans[p.account] || []).push(p) })
 
@@ -406,7 +409,7 @@ export function DailyPlanPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingBottom: '20px' }}>
-              {allAccounts.filter((a) => groupedPlans[a]).map((acc) => (
+              {Object.keys(groupedPlans).map((acc) => (
                 <div key={acc} style={{ ...glassStyle, padding: '12px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                     <span style={{
@@ -550,9 +553,13 @@ export function DailyPlanPage() {
           {/* 账号 */}
           <div>
             <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>发布账号</div>
-            <select value={pubAccount} onChange={(e) => setPubAccount(e.target.value)} style={inputStyle}>
-              {allAccounts.map((a) => <option key={a} value={a}>{a}</option>)}
-            </select>
+              <select value={pubAccount} onChange={(e) => setPubAccount(e.target.value)} style={inputStyle}>
+                <option value="" disabled>请选择账号</option>
+                {accountOptions.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+              {accountOptions.length === 0 && (
+                <div style={{ fontSize: '11px', color: '#92400e', marginTop: '4px' }}>暂无账号，请先在「样品」里给样品填写账号名称</div>
+              )}
           </div>
           {/* 分类（可选） */}
           <div>
