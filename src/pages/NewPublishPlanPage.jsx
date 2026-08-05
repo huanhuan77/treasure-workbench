@@ -4,7 +4,6 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 
 const PUBLISH_KEY = 'daily_publish_plan_v1'
-const PUB_CATEGORIES = ['全部', '保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
 
 function getTomorrow() {
   const d = new Date()
@@ -27,31 +26,35 @@ function uid() {
 
 export function NewPublishPlanPage() {
   const navigate = useNavigate()
-  const { products } = useStore()
+  const { samples } = useStore()
   const { show } = useToast()
   const [pubAccount, setPubAccount] = useState('')
-  const [pubCategory, setPubCategory] = useState('全部')
-  const [pubProductId, setPubProductId] = useState('')
+  const [pubSampleId, setPubSampleId] = useState('')
 
   const publishDate = fmtDate(getTomorrow())
+  // 账号固定三个
   const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']  // 固定三个账号
-  const catProducts = products.filter((p) => pubCategory === '全部' || p.category === pubCategory)
+  // 选择来源：样品列表的数据（不是产品库）
+  const sampleList = samples || []
+  // 选账号后只显示该账号的样品；不选账号显示所有样品
+  const accountFiltered = pubAccount
+    ? sampleList.filter((s) => !s.account || s.account === pubAccount)
+    : sampleList
 
   const handleAdd = () => {
     if (!pubAccount) { show('请选择账号', 'error'); return }
-    if (!pubProductId) { show('请选择产品', 'error'); return }
-    const p = products.find((x) => x.id === pubProductId)
-    if (!p) return
+    if (!pubSampleId) { show('请选择样品', 'error'); return }
+    const s = sampleList.find((x) => x.id === pubSampleId)
+    if (!s) return
     let data = {}
     try { data = JSON.parse(localStorage.getItem(PUBLISH_KEY) || '{}') } catch { data = {} }
-    const item = { id: uid(), account: pubAccount, productId: p.id, productName: p.name, category: p.category, createdAt: Date.now() }
+    const item = { id: uid(), account: pubAccount, sampleId: s.id, productName: s.name, createdAt: Date.now() }
     const arr = data[publishDate] || []
     arr.push(item)
     data[publishDate] = arr
     localStorage.setItem(PUBLISH_KEY, JSON.stringify(data))
-    // 通知 DailyPlanPage 刷新
     window.dispatchEvent(new Event('publishPlanUpdated'))
-    show(`已记录：${p.name} → ${pubAccount}`, 'success')
+    show(`已记录：${s.name} → ${pubAccount}`, 'success')
     navigate(-1)
   }
 
@@ -89,35 +92,19 @@ export function NewPublishPlanPage() {
           )}
         </div>
 
-        {/* 产品分类（可选） */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>产品分类（可选）</div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {PUB_CATEGORIES.map((c) => (
-              <button key={c} onClick={() => { setPubCategory(c); setPubProductId('') }} style={{
-                padding: '8px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: '1.5px solid',
-                borderColor: pubCategory === c ? 'var(--primary)' : 'rgba(0,0,0,0.08)',
-                background: pubCategory === c ? 'rgba(244,114,182,0.1)' : '#fff',
-                color: pubCategory === c ? 'var(--primary)' : 'var(--text-sub)',
-                cursor: 'pointer',
-              }}>{c}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* 选择产品 */}
+        {/* 选择样品（来自样品列表，按所选账号预过滤） */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>
-            选择产品 {pubCategory !== '全部' ? `（${pubCategory} · ${catProducts.length} 个）` : `（共 ${products.length} 个）`}
+            {pubAccount ? `选择样品 · ${pubAccount}（共 ${accountFiltered.length} 个）` : `选择样品（共 ${sampleList.length} 个）`}
           </div>
-          <select value={pubProductId} onChange={(e) => setPubProductId(e.target.value)} multiple style={{
+          <select value={pubSampleId} onChange={(e) => setPubSampleId(e.target.value)} multiple style={{
             width: '100%', padding: '12px 14px', borderRadius: '12px',
             border: '1.5px solid rgba(0,0,0,0.08)',
             fontSize: '15px', outline: 'none', background: '#fff', color: 'var(--text-main)',
-            boxSizing: 'border-box', height: '220px',
+            boxSizing: 'border-box', height: '260px',
           }}>
-            {catProducts.length === 0 && <option value="" disabled>该分类暂无产品</option>}
-            {catProducts.map((p) => <option key={p.id} value={p.id}>{p.name}{p.brand ? `（${p.brand}）` : ''}</option>)}
+            {accountFiltered.length === 0 && <option value="" disabled>{pubAccount ? '该账号暂无样品，请先在样品中绑定账号' : '暂无样品'}</option>}
+            {accountFiltered.map((s) => <option key={s.id} value={s.id}>{s.name}{s.account ? `（${s.account}）` : ''}</option>)}
           </select>
         </div>
       </div>
