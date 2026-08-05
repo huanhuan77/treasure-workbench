@@ -293,7 +293,7 @@ export function DailyPlanPage() {
     if (m) {
       try { localStorage.setItem(FAB_KEY, JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else {
-      if (tab === 1) navigate('/publish-plan/new')
+      if (tab === 0) navigate('/publish-plan/new')
       else setShowModal(true)
     }
   }
@@ -316,10 +316,10 @@ export function DailyPlanPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
-              {tab === 1 ? '发布计划' : '📋 每日计划'}
+              {tab === 0 ? '发布计划' : '📋 每日计划'}
             </h1>
             <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {tab === 1 ? (
+              {tab === 0 ? (
                 <span>{getDateLabel(publishDate)}（{publishDate}）各账号发布产品</span>
               ) : (
                 <>
@@ -330,7 +330,7 @@ export function DailyPlanPage() {
               )}
             </p>
           </div>
-          {tab === 0 && (
+          {tab === 1 && (
             <button onClick={() => setShowHistory(true)} style={{
               padding: '6px 12px', borderRadius: '10px',
               border: '1.5px solid rgba(244,114,182,0.2)',
@@ -349,8 +349,8 @@ export function DailyPlanPage() {
           background: 'rgba(244,114,182,0.06)',
         }}>
           {[
-            { key: 0, label: '📋 每日计划' },
-            { key: 1, label: '📣 发布计划' },
+            { key: 0, label: '📣 发布计划' },
+            { key: 1, label: '📋 每日计划' },
           ].map(item => {
             const selected = tab === item.key
             return (
@@ -372,7 +372,7 @@ export function DailyPlanPage() {
       </header>
 
       {/* 每日计划 tab 内的今日/明日子切换 */}
-      {tab === 0 && (
+      {tab === 1 && (
         <div style={{ display: 'flex', gap: '6px', padding: '0 16px 12px' }}>
           {[
             { key: 0, label: '今日', date: today },
@@ -394,7 +394,7 @@ export function DailyPlanPage() {
         </div>
       )}
 
-      {tab === 1 ? (
+      {tab === 0 ? (
         /* ============ 发布计划视图（纯文本风格：按账号分组，同账号同产品合并数量） ============ */
         <div style={{ padding: '16px 20px' }}>
           {aggregated.length === 0 ? (
