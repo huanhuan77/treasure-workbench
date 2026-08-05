@@ -339,7 +339,7 @@ export function DailyPlanPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
-              {tab === 1 ? '明日发布计划' : '📋 每日计划'}
+              {tab === 1 ? '发布计划' : '📋 每日计划'}
             </h1>
             <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               {tab === 1 ? (
