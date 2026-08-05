@@ -3075,6 +3075,21 @@ function loadData() {
     // 逐个保护，单个处理失败不影响其他数据
     try { productsFinal = consolidateJiebitudu(productsFinal) } catch(e) { console.warn('[loadData] consolidateJiebitudu失败:', e) }
     try { productsFinal = sanitizeJiebitudu(productsFinal) } catch(e) { console.warn('[loadData] sanitizeJiebitudu失败:', e) }
+    // 修复重复的文案 ID：历史导入若产生相同 ID，点击时会出现"标记到别的文案"的 bug
+    try {
+      productsFinal = productsFinal.map((p) => {
+        const seen = new Set()
+        return {
+          ...p,
+          copies: (p.copies || []).map((c) => {
+            let id = c.id || uid()
+            while (seen.has(id)) id = uid()  // 发现重复就重新生成，保证唯一
+            seen.add(id)
+            return c.id === id ? c : { ...c, id }
+          }),
+        }
+      })
+    } catch(e) { console.warn('[loadData] 修复文案ID失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
@@ -3353,7 +3368,12 @@ export function StoreProvider({ children }) {
   const updateTransaction = useCallback((id, patch) => {
     setData((d) => ({
       ...d,
-      transactions: d.transactions.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+      transactions: d.transactions.map((t) => {
+        if (t.id !== id) return t
+        const next = { ...t, ...patch }
+        if ('amount' in patch) next.amount = Number(patch.amount) || 0
+        return next
+      }),
     }))
   }, [])
 

@@ -16,36 +16,32 @@ import { CSS } from '@dnd-kit/utilities'
 // 产品分类（供添加时选择）
 const CATEGORIES = ['保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
 
-// 根据产品名获取图标文字和颜色
-function getIconInfo(name) {
-  const map = {
-    'olly女维': { text: '绿', bg: '#fce7f3', color: '#ec4899' },
-    '珀芙研冷膜': { text: '冷', bg: '#dbeafe', color: '#3b82f6' },
-    '珀芙研闪光棒': { text: '闪', bg: '#fef3c7', color: '#d97706' },
-    '植研加睫毛胶水': { text: '睫', bg: '#fce7f3', color: '#ec4899' },
-    '维特健灵': { text: '维', bg: '#d1fae5', color: '#059669' },
-    '褪黑素': { text: '褪', bg: '#ede9fe', color: '#7c3aed' },
-    'PH咖啡': { text: '咖', bg: '#ffedd5', color: '#c2410c' },
-    '珀芙研修护霜正装': { text: '霜', bg: '#fce7f3', color: '#ec4899' },
-    '绵绵的羊': { text: '绵', bg: '#fce7f3', color: '#ec4899' },
-    '清清片文案': { text: '清', bg: '#d1fae5', color: '#059669' },
-    '珀芙研油敏霜': { text: '霜', bg: '#fce7f3', color: '#ec4899' },
-    '润喉糖': { text: '喉', bg: '#fef3c7', color: '#d97706' },
-    '洗护液文案': { text: '洗', bg: '#dbeafe', color: '#3b82f6' },
-    '珀芙研面膜': { text: '膜', bg: '#fce7f3', color: '#ec4899' },
-    '湿巾文案': { text: '湿', bg: '#d1fae5', color: '#059669' },
-    '噗噗片': { text: '噗', bg: '#dbeafe', color: '#3b82f6' },
-    '珀芙研修护霜小样': { text: '霜', bg: '#fce7f3', color: '#ec4899' },
-    '洁比兔湿巾': { text: '洁', bg: '#d1fae5', color: '#059669' },
-    '洁比兔洗液': { text: '洁', bg: '#dbeafe', color: '#3b82f6' },
-    '维特健灵益生菌': { text: '维', bg: '#d1fae5', color: '#059669' },
-    '维特健灵静心': { text: '维', bg: '#d1fae5', color: '#059669' },
-  }
-  for (const [key, info] of Object.entries(map)) {
-    if (name.includes(key)) return info
-  }
-  const first = name.charAt(0)
-  return { text: first, bg: '#fce7f3', color: '#ec4899' }
+// 每个分类一个固定颜色 + 第一字作为图标文字
+const CATEGORY_STYLE = {
+  '保健品': { bg: '#d1fae5', color: '#059669' },  // 绿
+  '护肤':   { bg: '#fce7f3', color: '#ec4899' },  // 粉
+  '美妆':   { bg: '#fee2e2', color: '#dc2626' },  // 红
+  '饮品':   { bg: '#ffedd5', color: '#c2410c' },  // 橙
+  '食品':   { bg: '#fef3c7', color: '#d97706' },  // 黄
+  '洗护':   { bg: '#dbeafe', color: '#3b82f6' },  // 蓝
+  '日用':   { bg: '#ede9fe', color: '#7c3aed' },  // 紫
+  '其他':   { bg: '#f3f4f6', color: '#6b7280' },  // 灰
+}
+
+// 根据产品分类返回图标（显示分类缩写 + 配色）
+const CAT_SHORT = {
+  '保健品': '保健',
+  '护肤':   '护肤',
+  '美妆':   '美妆',
+  '饮品':   '饮品',
+  '食品':   '食品',
+  '洗护':   '洗护',
+  '日用':   '日用',
+  '其他':   '其他',
+}
+function getIconInfo(name, category) {
+  const style = CATEGORY_STYLE[category] || CATEGORY_STYLE['其他']
+  return { text: CAT_SHORT[category] || (category || '?').slice(0, 2), ...style }
 }
 
 // 品牌名 + 产品名 拼接显示（避免品牌重复，如「珀芙研冷膜」）
@@ -64,7 +60,7 @@ function displayTitle(p) {
 
 // 产品卡片视觉层：左滑编辑/删除
 function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, handle, swipedId, setSwipedId }) {
-  const iconInfo = getIconInfo(p.name)
+  const iconInfo = getIconInfo(p.name, p.category)
   const copies = p.copies?.length || 0
   const orders = (p.copies || []).filter((c) => c.hasOrder).length
   const isSwiped = swipedId === p.id
@@ -91,12 +87,12 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
         {/* 拖拽手柄 */}
         {handle}
 
-        {/* 左侧图标 */}
+        {/* 左侧图标：显示分类名 */}
         <div style={{
-          width: '36px', height: '36px', borderRadius: '10px', background: iconInfo.bg,
+          width: '44px', height: '36px', borderRadius: '10px', background: iconInfo.bg,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: iconInfo.color }}>{iconInfo.text}</span>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: iconInfo.color, letterSpacing: '-0.5px' }}>{iconInfo.text}</span>
         </div>
 
         {/* 中间内容：品牌 + 产品名 + 统计 */}
@@ -183,17 +179,18 @@ export function HomePage() {
   })
   const active = keyword || categoryFilter
 
-  // 置顶产品：洁比兔湿巾 / 洁比兔洗液 永远在最前
-  const PINNED_NAMES = ['洁比兔湿巾', '洁比兔洗液']
+  // 置顶产品：洁比兔湿巾(湿厕纸) / 洁比兔洗护液(洗液) 永远在最前
+  const isPinWet = (p) => /洁比兔/.test(p.name) && /湿巾|湿厕纸/.test(p.name)
+  const isPinWash = (p) => /洁比兔/.test(p.name) && /洗液|洗护液/.test(p.name)
   const pinFirst = (list) => {
     const pinned = []
     const rest = []
     list.forEach((p) => {
-      if (PINNED_NAMES.includes(p.name)) pinned.push(p)
+      if (isPinWet(p) || isPinWash(p)) pinned.push(p)
       else rest.push(p)
     })
-    // 保持置顶产品内部的相对顺序（洁比兔湿巾在洗液前面）
-    pinned.sort((a, b) => PINNED_NAMES.indexOf(a.name) - PINNED_NAMES.indexOf(b.name))
+    // 保持置顶产品内部的相对顺序（湿巾在洗液前面）
+    pinned.sort((a, b) => (isPinWet(a) ? 0 : 1) - (isPinWet(b) ? 0 : 1))
     return [...pinned, ...rest]
   }
   const displayedList = pinFirst(active ? filtered : products)

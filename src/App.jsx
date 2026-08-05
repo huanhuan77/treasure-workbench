@@ -15,8 +15,12 @@ import { CalendarDetailPage } from './pages/CalendarDetailPage'
 import { BackupPage } from './pages/BackupPage'
 import { BatchImportPage } from './pages/BatchImportPage'
 import { EditCopyPage } from './pages/EditCopyPage'
+import { ReadingPage } from './pages/ReadingPage'
+import { NotePage } from './pages/NotePage'
+import { BrandContactsPage } from './pages/BrandContactsPage'
 import { InvestmentPage } from './pages/InvestmentPage'
 import { NewTransactionPage } from './pages/NewTransactionPage'
+import { EditTransactionPage } from './pages/EditTransactionPage'
 import { NewSamplePage } from './pages/NewSamplePage'
 import { EditSamplePage } from './pages/EditSamplePage'
 import { NewProductPage, EditProductPage } from './pages/NewProductPage'
@@ -82,6 +86,9 @@ function App() {
             <Route path="/calendar/:date" element={<CalendarDetailPage />} />
             <Route path="/backup" element={<BackupPage />} />
             <Route path="/investment" element={<InvestmentPage />} />
+            <Route path="/reading" element={<ReadingPage />} />
+            <Route path="/reading/:id/notes" element={<NotePage />} />
+            <Route path="/brands" element={<BrandContactsPage />} />
             <Route path="/daily" element={<DailyPlanPage />} />
             <Route path="/product/new" element={<NewProductPage />} />
             <Route path="/product/:id/edit" element={<EditProductPage />} />
@@ -90,6 +97,7 @@ function App() {
             <Route path="/samples/new" element={<NewSamplePage />} />
             <Route path="/samples/:id/edit" element={<EditSamplePage />} />
             <Route path="/finance/new" element={<NewTransactionPage />} />
+            <Route path="/finance/edit/:id" element={<EditTransactionPage />} />
             <Route path="/product/:id" element={<ProductDetailPage />} />
           </Routes>
           <BottomNav />

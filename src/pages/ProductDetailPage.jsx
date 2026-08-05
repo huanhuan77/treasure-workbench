@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
@@ -101,14 +101,15 @@ export function ProductDetailPage() {
     )
   }
 
-  // 文案筛选 + 出单优先排序
+  // 文案筛选 + 爆单优先、同状态按创建时间倒序（标记出单后延时 1 秒再排序）
+  const [sortPending, setSortPending] = useState(false)
   const displayedCopies = (() => {
     let list = product.copies
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
     else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder)
     else if (copyFilter === '未用过') list = list.filter((c) => !c.used)
     return [...list].sort((a, b) => {
-      if (a.hasOrder !== b.hasOrder) return b.hasOrder ? 1 : -1
+      if (!sortPending && a.hasOrder !== b.hasOrder) return b.hasOrder ? 1 : -1
       return (b.createdAt || 0) - (a.createdAt || 0)
     })
   })()
@@ -175,21 +176,27 @@ export function ProductDetailPage() {
     show(`已生成「${style}」风格文案`, 'success')
   }
 
-  // 复制话题（标题已不再展示，单独复制话题即可）
+  // 复制话题：合并产品级话题和该文案的话题
   const handleCopyTopics = async (topics, copyId) => {
-    const text = (topics || []).join(' ')
+    const merged = [...new Set([...(product.topics || []), ...(topics || [])])]
+    const text = merged.join(' ')
     const ok = await copyText(text)
     show(ok ? '话题已复制' : '复制失败', ok ? 'success' : 'error')
     if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
   }
 
-  const toggleOrder = (copyId, current, existingUsedDate) => {
+  const toggleOrder = (copyId, current, existingUsedDate, preview) => {
     updateCopy(id, copyId, {
       hasOrder: !current,
       used: true,
       usedDate: existingUsedDate || todayStr(),
     })
-    show(!current ? '已标记「出单」' : '已取消标记', 'success')
+    // 标记出单后延时 1 秒再按爆单排序，让用户看清自己标记的是哪条
+    if (!current) {
+      setSortPending(true)
+      setTimeout(() => setSortPending(false), 1000)
+    }
+    show(!current ? `已标记「出单」：${preview}` : `已取消出单：${preview}`, 'success')
   }
 
   // 标记/取消「用过」（不影响出单状态）
@@ -329,10 +336,11 @@ export function ProductDetailPage() {
                 copy={copy}
                 productName={product.name}
                 brand={product.brand}
+                productTopics={product.topics}
                 onCopyContent={() => handleCopyContent(copy.content, copy.id)}
                 onCopyTopics={() => handleCopyTopics(copy.topics, copy.id)}
                 onEdit={() => openEditCopy(copy)}
-                onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder, copy.usedDate)}
+                onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder, copy.usedDate, (copy.content || '').replace(/\n/g, ' ').slice(0, 12))}
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
                 onDelete={() => setDelCopyId(copy.id)}
               />
@@ -672,7 +680,7 @@ export function ProductDetailPage() {
 }
 
 function CopyCard({
-  copy, productName, brand,
+  copy, productName, brand, productTopics,
   onCopyContent, onCopyTopics,
   onEdit, onToggleOrder, onToggleUsed, onDelete,
 }) {
@@ -704,11 +712,11 @@ function CopyCard({
         {copy.content}
       </div>
 
-      {/* 话题 */}
+      {/* 话题：只显示产品级（弹窗管理的那个），删除后立即消失 */}
       <div style={{ marginBottom: '8px' }}>
         <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '4px', fontWeight: 500 }}># 热门话题</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {copy.topics.map((t, i) => (
+          {(productTopics || []).map((t, i) => (
             <span key={i} style={{
               fontSize: '12px',
               color: 'var(--primary-dark)',
@@ -718,6 +726,9 @@ function CopyCard({
               fontWeight: 500,
             }}>{t}</span>
           ))}
+          {(productTopics || []).length === 0 && copy.topics && copy.topics.length > 0 && (
+            <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>该文案自带：{copy.topics.map(t => t.replace(/^#/, '')).join(' ')}</span>
+          )}
         </div>
       </div>
 

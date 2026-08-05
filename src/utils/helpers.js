@@ -80,15 +80,17 @@ function takeTopicLine(content) {
   return { topics: [], rest: content }
 }
 
-// 判断一行是否像「产品名」表头：单行、无标记、非话题行、较短且无中英文标点
+// 判断首行是否是「产品名表头」：
+// 纯名词短语（品牌+品类），不含口语词/代词/动词，避免把文案第一句误当产品名
+const COPY_LIKE_CHARS = /[你我他她它这那很真太怎么哪什么谁不没别就还也都了吗吧啊呢啦哟哦咋啥被让把给在从对于是有要会能懂跟和与上下去来吃用做玩拍想知看说写笑爱恨]/
 function isProductNameHeader(line) {
   const s = (line || '').trim()
-  if (!s) return false
+  if (!s || s.length < 2 || s.length > 12) return false
   if (s.includes('\n')) return false
   if (/[\u2705\u{1F44D}](?:[\u{FE0F}\u{1F3FB}-\u{1F3FF}])?/u.test(s)) return false
   if (/^#\S+(\s+#\S+)*$/.test(s)) return false
-  if (s.length > 15) return false
-  if (/[。！？，；：、.!?,;:]/.test(s)) return false
+  if (/[。！？，；：、.!?,;:'"'"'()（）]/.test(s)) return false
+  if (COPY_LIKE_CHARS.test(s)) return false  // 含口语/代词/动词 → 是文案不是产品名
   return true
 }
 
@@ -99,7 +101,7 @@ export function parseBulkCopies(text) {
   if (_lines.length > 1 && /^\s*产品名称[：:]\s*/.test(_lines[0])) {
     text = _lines.slice(1).join('\n')
   }
-  // 首行若像产品名表头（如「洁比兔 湿巾」），去掉该行不入库
+  // 首行像产品名表头（纯名词短语）→ 去掉该行不入库
   else if (_lines.length > 1 && isProductNameHeader(_lines[0])) {
     text = _lines.slice(1).join('\n')
   }

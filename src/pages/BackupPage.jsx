@@ -7,6 +7,8 @@ const KEYS = [
   'blogger_investments_v1',
   'blogger_calendar_v1',
   'daily_plan_v1',
+  'brand_contacts_v1',
+  'reading_growth_v1',
 ]
 
 const GIST_ID_KEY = 'backup_gist_id'
@@ -198,6 +200,10 @@ export function BackupPage() {
         } else if (key === 'daily_plan_v1') {
           // 每日计划数据按日期存储: { "2026-07-29": { tasks: [...] }, ... }
           stats['每日计划'] = Object.values(d).reduce((sum, plan) => sum + (plan.tasks?.length || 0), 0)
+        } else if (key === 'brand_contacts_v1') {
+          stats['品牌方'] = Array.isArray(d) ? d.length : 0
+        } else if (key === 'reading_growth_v1') {
+          stats['读书成长'] = d?.items?.length || 0
         }
       }
     } catch (e) {}

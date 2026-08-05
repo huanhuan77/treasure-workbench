@@ -27,7 +27,12 @@ export function FinancePage() {
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterAccount, setFilterAccount] = useState('all')
   const [filterType, setFilterType] = useState('all')
-  const [filterMonth, setFilterMonth] = useState('2026-07')
+  const [filterMonth, setFilterMonth] = useState(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+  })
+  const [showMonthPicker, setShowMonthPicker] = useState(false)
+  const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear())
   const [sortBy, setSortBy] = useState('date_desc')
   const [showMoreCat, setShowMoreCat] = useState(false)
 
@@ -47,10 +52,12 @@ export function FinancePage() {
   }, [transactions])
 
   // 筛选+排序
-  // 提取所有有数据的月份（YYYY-MM）
+  // 提取所有有数据的月份 + 当前年所有 12 个月（方便补录/查看）
   const months = useMemo(() => {
     const set = new Set()
     transactions.forEach((t) => { const m = (t.date || '').slice(0, 7); if (m) set.add(m) })
+    const curY = new Date().getFullYear()
+    for (let mm = 1; mm <= 12; mm++) set.add(`${curY}-${String(mm).padStart(2,'0')}`)
     return [...set].sort().reverse()
   }, [transactions])
 
@@ -74,8 +81,9 @@ export function FinancePage() {
   const totals = useMemo(() => {
     let income = 0, expense = 0
     filtered.forEach((t) => {
-      if (t.type === 'income') income += t.amount
-      else expense += t.amount
+      const n = Number(t.amount) || 0
+      if (t.type === 'income') income += n
+      else expense += n
     })
     return { income, expense, net: income - expense, count: filtered.length }
   }, [filtered])
@@ -103,20 +111,20 @@ export function FinancePage() {
         }}>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>收入合计</div>
-            <div style={{ fontSize: '18px', fontWeight: 700, color: '#e11d48', marginTop: '4px' }}>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#e11d48', marginTop: '4px', whiteSpace: 'nowrap' }}>
               +¥{totals.income.toFixed(2)}
             </div>
           </div>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>支出合计</div>
-            <div style={{ fontSize: '18px', fontWeight: 700, color: '#059669', marginTop: '4px' }}>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: '#059669', marginTop: '4px', whiteSpace: 'nowrap' }}>
               -¥{totals.expense.toFixed(2)}
             </div>
           </div>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>净收支</div>
             <div style={{
-              fontSize: '18px', fontWeight: 700, marginTop: '4px',
+              fontSize: '18px', fontWeight: 700, marginTop: '4px', whiteSpace: 'nowrap',
               color: totals.net >= 0 ? '#e11d48' : '#059669',
             }}>
               {totals.net >= 0 ? '+' : ''}¥{totals.net.toFixed(2)}
@@ -150,11 +158,10 @@ export function FinancePage() {
 
         {/* 月份 + 账号 + 排序 同行对齐 */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', alignItems: 'stretch', overflowX: 'auto' }}>
-          <select value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}
-            style={{ ...inputStyle, width: '88px', flex:'0 0 88px', padding:'8px 6px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
-            <option value="all">全部月份</option>
-            {months.map((m) => <option key={m} value={m}>{m}</option>)}
-          </select>
+          <button onClick={() => { setPickerYear(parseInt((filterMonth !== 'all' ? filterMonth : new Date().toISOString().slice(0,4)).slice(0,4)) || new Date().getFullYear()); setShowMonthPicker(true) }}
+            style={{ ...inputStyle, width: '104px', flex:'0 0 104px', padding:'8px 6px', fontSize:'13px', background:'rgba(255,255,255,0.6)', textAlign:'center', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:'4px' }}>
+            {filterMonth === 'all' ? '📅 全部月份' : `📅 ${filterMonth}`} ▾
+          </button>
           {accounts.length > 0 && (
             <select value={filterAccount} onChange={(e) => setFilterAccount(e.target.value)}
               style={{ ...inputStyle, flex:'1 1 0', minWidth: '80px', padding:'8px 8px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
@@ -183,6 +190,7 @@ export function FinancePage() {
                 <div key={t.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
                   {/* 左滑操作按钮 */}
                   <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
+                    <button onClick={() => { setSwipedTxId(null); navigate(`/finance/edit/${t.id}`) }} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
                     <button onClick={() => { setSwipedTxId(null); setDelId(t.id) }} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
                   </div>
                   <div
@@ -191,7 +199,7 @@ export function FinancePage() {
                     onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedTxId(prev => prev === t.id ? null : t.id) } }}
                     style={{
                       ...glassStyle, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-80px)' : 'translateX(0)',
+                      transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-160px)' : 'translateX(0)',
                       position: 'relative', zIndex: 1,
                     }}
                   >
@@ -222,7 +230,7 @@ export function FinancePage() {
                       fontWeight: 700,
                       color: t.type === 'income' ? '#e11d48' : '#059669',
                     }}>
-                      {t.type === 'income' ? '+' : '-'}¥{t.amount.toFixed(2)}
+                      {t.type === 'income' ? '+' : '-'}¥{(Number(t.amount) || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -274,6 +282,46 @@ export function FinancePage() {
         confirmText="删除"
         danger
       />
+
+      {/* 月份选择弹窗（支持跨年份翻页） */}
+      <Modal open={showMonthPicker} onClose={() => setShowMonthPicker(false)} title="选择月份">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <button onClick={() => setPickerYear(pickerYear - 1)} style={{
+            width: '38px', height: '38px', borderRadius: '50%', border: '1px solid rgba(0,0,0,0.1)',
+            background: '#fff', fontSize: '18px', cursor: 'pointer', color: 'var(--text-main)',
+          }}>‹</button>
+          <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>{pickerYear} 年</span>
+          <button onClick={() => setPickerYear(pickerYear + 1)} style={{
+            width: '38px', height: '38px', borderRadius: '50%', border: '1px solid rgba(0,0,0,0.1)',
+            background: '#fff', fontSize: '18px', cursor: 'pointer', color: 'var(--text-main)',
+          }}>›</button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+          {Array.from({ length: 12 }, (_, i) => {
+            const mm = String(i + 1).padStart(2, '0')
+            const val = `${pickerYear}-${mm}`
+            const selected = filterMonth === val
+            const hasData = months.includes(val)
+            return (
+              <button key={val} onClick={() => { setFilterMonth(val); setShowMonthPicker(false) }} style={{
+                padding: '10px 0', borderRadius: '10px', border: selected ? 'none' : '1px solid rgba(0,0,0,0.08)',
+                background: selected ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+                color: selected ? '#fff' : 'var(--text-main)',
+                fontSize: '13px', fontWeight: selected ? 600 : 500, cursor: 'pointer',
+              }}>
+                {i + 1}月{hasData ? ' •' : ''}
+              </button>
+            )
+          })}
+        </div>
+        <button onClick={() => { setFilterMonth('all'); setShowMonthPicker(false) }} style={{
+          width: '100%', marginTop: '12px', padding: '10px 0', borderRadius: '10px',
+          border: filterMonth === 'all' ? 'none' : '1px dashed rgba(0,0,0,0.15)',
+          background: filterMonth === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'transparent',
+          color: filterMonth === 'all' ? '#fff' : 'var(--text-sub)',
+          fontSize: '13px', fontWeight: filterMonth === 'all' ? 600 : 500, cursor: 'pointer',
+        }}>全部月份</button>
+      </Modal>
     </div>
   )
 }
