@@ -32,7 +32,7 @@ function displayTitle(p) {
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { products, addCopy, deleteCopy, updateCopy, addCopies, clearCopies, setProductTopics, sensitiveWords } = useStore()
+  const { products, addCopy, deleteCopy, updateCopy, addCopies, clearCopies, updateProduct, sensitiveWords } = useStore()
   const { show } = useToast()
   const product = products.find((p) => p.id === id)
 
@@ -46,19 +46,21 @@ export function ProductDetailPage() {
 
   const [showClear, setShowClear] = useState(false)
 
-  // 话题管理
+  // 话题管理（话题统一从所有文案自带话题聚合，编辑时同步到所有文案）
   const [showTopics, setShowTopics] = useState(false)
   const [topicDraft, setTopicDraft] = useState([])
+  const [topicOriginals, setTopicOriginals] = useState([])  // 打开时的快照，用于计算 renames/added/removed
   const [newTopic, setNewTopic] = useState('')
   const [editTopicIdx, setEditTopicIdx] = useState(null)
   const [editTopicVal, setEditTopicVal] = useState('')
 
   const openTopics = () => {
-    // 合并产品级话题和所有文案的话题（去重），让编辑器显示完整的已有话题
+    // 从所有文案的自带话题聚合（去重），作为可统一编辑的清单
     const allTopics = new Set()
-    ;(product.topics || []).forEach((t) => allTopics.add(t))
     ;(product.copies || []).forEach((c) => (c.topics || []).forEach((t) => allTopics.add(t)))
-    setTopicDraft([...allTopics])
+    const arr = [...allTopics]
+    setTopicDraft(arr)
+    setTopicOriginals(arr)
     setNewTopic('')
     setEditTopicIdx(null)
     setShowTopics(true)
@@ -78,7 +80,37 @@ export function ProductDetailPage() {
     if (!t.startsWith('#')) t = '#' + t
     const next = [...topicDraft]; next[editTopicIdx] = t; setTopicDraft(next); setEditTopicIdx(null)
   }
-  const saveTopics = () => { setProductTopics(product.id, topicDraft); setShowTopics(false); show('话题已保存', 'success') }
+  const saveTopics = () => {
+    // 计算差异：rename（同位置改名）、added（新增）、removed（被删掉的原条目）
+    const orig = topicOriginals
+    const renames = []
+    const added = []
+    topicDraft.forEach((t, i) => {
+      if (i < orig.length) {
+        if (orig[i] !== t) renames.push({ from: orig[i], to: t })
+      } else {
+        added.push(t)
+      }
+    })
+    const removed = orig.slice(topicDraft.length)
+
+    // 把变更同步到所有文案
+    const updatedCopies = (product.copies || []).map((c) => {
+      let topics = [...(c.topics || [])]
+      topics = topics.filter((t) => !removed.includes(t))
+      renames.forEach(({ from, to }) => {
+        const idx = topics.indexOf(from)
+        if (idx >= 0) topics[idx] = to
+      })
+      added.forEach((t) => { if (!topics.includes(t)) topics.push(t) })
+      return { ...c, topics }
+    })
+
+    updateProduct(product.id, { copies: updatedCopies })
+    setShowTopics(false)
+    const msg = `已同步到 ${updatedCopies.length} 条文案${added.length ? `（+${added.length}）` : ''}${removed.length ? `（-${removed.length}）` : ''}${renames.length ? `（${renames.length} 处改名）` : ''}`
+    show(msg, 'success')
+  }
 
   // 文案编辑
   const openEditCopy = (c) => navigate(`/copy-edit/${product.id}/${c.id}`)
@@ -423,7 +455,7 @@ export function ProductDetailPage() {
           )}
         </div>
         <p style={{ fontSize: '12px', color: 'var(--gray-400)', margin: '10px 0 0' }}>
-          💡 话题用于「复制话题」，统一管理当前产品的所有话题
+          💡 列表来自所有文案的自带话题；保存时新增=全部加上，删除=全部移除，改名=在原条目上替换
         </p>
       </Modal>
 
