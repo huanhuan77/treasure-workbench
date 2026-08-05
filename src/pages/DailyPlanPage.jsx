@@ -119,9 +119,9 @@ export function DailyPlanPage() {
   const [data, setData] = useState(loadData)
   const today = getToday()
   const tomorrow = addDays(today, 1)
-  const [tab, setTab] = useState(0)
-  const [subTab, setSubTab] = useState(0)  // 明日 tab 下的子视图：0=明日计划，1=发布计划
-  const viewDate = tab === 0 ? today : tomorrow
+  const [tab, setTab] = useState(0)  // 0=每日计划，1=发布计划
+  const [dayTab, setDayTab] = useState(0)  // 每日计划 tab 内的子视图：0=今日，1=明日
+  const viewDate = dayTab === 0 ? today : tomorrow
   const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
 
@@ -290,7 +290,7 @@ export function DailyPlanPage() {
     if (m) {
       try { localStorage.setItem(FAB_KEY, JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else {
-      if (tab === 1 && subTab === 1) setShowPublishModal(true)
+      if (tab === 1) setShowPublishModal(true)
       else setShowModal(true)
     }
   }
@@ -312,32 +312,42 @@ export function DailyPlanPage() {
       <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📋 每日计划</h1>
+            <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
+              {tab === 1 ? '📣 发布计划' : '📋 每日计划'}
+            </h1>
             <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span>{getDateLabel(viewDate)}</span>
-              <span style={{ color: '#d1d5db' }}>·</span>
-              <span style={{ color: '#9ca3af' }}>{viewDate}</span>
+              {tab === 1 ? (
+                <span>{getDateLabel(publishDate)}（{publishDate}）各账号发布产品</span>
+              ) : (
+                <>
+                  <span>{getDateLabel(viewDate)}</span>
+                  <span style={{ color: '#d1d5db' }}>·</span>
+                  <span style={{ color: '#9ca3af' }}>{viewDate}</span>
+                </>
+              )}
             </p>
           </div>
-          <button onClick={() => setShowHistory(true)} style={{
-            padding: '6px 12px', borderRadius: '10px',
-            border: '1.5px solid rgba(244,114,182,0.2)',
-            background: 'rgba(244,114,182,0.06)',
-            color: 'var(--primary)', fontSize: '13px', fontWeight: 600,
-            cursor: 'pointer', whiteSpace: 'nowrap',
-            display: 'flex', alignItems: 'center', gap: '4px',
-          }}>📅 历史</button>
+          {tab === 0 && (
+            <button onClick={() => setShowHistory(true)} style={{
+              padding: '6px 12px', borderRadius: '10px',
+              border: '1.5px solid rgba(244,114,182,0.2)',
+              background: 'rgba(244,114,182,0.06)',
+              color: 'var(--primary)', fontSize: '13px', fontWeight: 600,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: '4px',
+            }}>📅 历史</button>
+          )}
         </div>
 
-        {/* 今日 / 明日 切换 */}
+        {/* 每日计划 / 发布计划 切换 */}
         <div style={{
           display: 'flex', gap: '6px',
           padding: '3px', borderRadius: '12px',
           background: 'rgba(244,114,182,0.06)',
         }}>
           {[
-            { key: 0, label: '今日', date: today },
-            { key: 1, label: '明日', date: tomorrow },
+            { key: 0, label: '📋 每日计划' },
+            { key: 1, label: '📣 发布计划' },
           ].map(item => {
             const selected = tab === item.key
             return (
@@ -358,16 +368,16 @@ export function DailyPlanPage() {
         </div>
       </header>
 
-      {/* 明日 tab 下的子切换：明日计划 / 发布计划（同级） */}
-      {tab === 1 && (
+      {/* 每日计划 tab 内的今日/明日子切换 */}
+      {tab === 0 && (
         <div style={{ display: 'flex', gap: '6px', padding: '0 16px 12px' }}>
           {[
-            { key: 0, label: '📝 明日计划' },
-            { key: 1, label: '📣 发布计划' },
+            { key: 0, label: '今日', date: today },
+            { key: 1, label: '明日', date: tomorrow },
           ].map(item => {
-            const selected = subTab === item.key
+            const selected = dayTab === item.key
             return (
-              <button key={item.key} onClick={() => setSubTab(item.key)} style={{
+              <button key={item.key} onClick={() => setDayTab(item.key)} style={{
                 flex: 1, padding: '8px 0', border: '1.5px solid', borderRadius: '10px',
                 fontSize: '13px', fontWeight: selected ? 600 : 500,
                 color: selected ? '#fff' : 'var(--text-sub)',
@@ -381,14 +391,11 @@ export function DailyPlanPage() {
         </div>
       )}
 
-      {tab === 1 && subTab === 1 ? (
+      {tab === 1 ? (
         /* ============ 发布计划视图（记录明天每个账号要发布的产品） ============ */
         <div style={{ padding: '0 16px' }}>
-          <div style={{ ...glassStyle, padding: '14px 16px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>明天各账号发布产品</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>{getDateLabel(publishDate)}（{publishDate}）</div>
-            </div>
+          <div style={{ ...glassStyle, padding: '12px 16px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-sub)' }}>记录明天各账号要发布的产品</span>
             <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>共 {pubPlans.length} 项</span>
           </div>
 
