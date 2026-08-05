@@ -142,6 +142,24 @@ export function DailyPlanPage() {
   const groupedPlans = {}
   pubPlans.forEach((p) => { (groupedPlans[p.account] = groupedPlans[p.account] || []).push(p) })
 
+  // 按 (账号, 产品) 聚合：同账号同产品重复添加自动合并显示数量
+  const aggregated = (() => {
+    const map = new Map()
+    for (const p of pubPlans) {
+      const key = `${p.account}__${p.productId}`
+      if (map.has(key)) {
+        const cur = map.get(key)
+        cur.count += 1
+        cur.ids.push(p.id)
+      } else {
+        map.set(key, { account: p.account, productId: p.productId, productName: p.productName, category: p.category, count: 1, ids: [p.id] })
+      }
+    }
+    return [...map.values()]
+  })()
+  const groupedAgg = {}
+  aggregated.forEach((p) => { (groupedAgg[p.account] = groupedAgg[p.account] || []).push(p) })
+
   const addPublishPlan = () => {
     if (!pubAccount) { show('请选择账号', 'error'); return }
     if (!pubProductId) { show('请选择产品', 'error'); return }
@@ -156,6 +174,11 @@ export function DailyPlanPage() {
 
   const deletePublishPlan = (planId) => {
     const nd = { ...publishData, [publishDate]: pubPlans.filter((x) => x.id !== planId) }
+    setPublishData(nd); savePublish(nd)
+    show('已删除', 'success')
+  }
+  const deletePublishAgg = (account, productId) => {
+    const nd = { ...publishData, [publishDate]: pubPlans.filter((x) => !(x.account === account && x.productId === productId)) }
     setPublishData(nd); savePublish(nd)
     show('已删除', 'success')
   }
@@ -316,7 +339,7 @@ export function DailyPlanPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
-              {tab === 1 ? '📣 发布计划' : '📋 每日计划'}
+              {tab === 1 ? '明日发布计划' : '📋 每日计划'}
             </h1>
             <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-sub)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               {tab === 1 ? (
@@ -395,47 +418,28 @@ export function DailyPlanPage() {
       )}
 
       {tab === 1 ? (
-        /* ============ 发布计划视图（记录明天每个账号要发布的产品） ============ */
-        <div style={{ padding: '0 16px' }}>
-          <div style={{ ...glassStyle, padding: '12px 16px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-sub)' }}>记录明天各账号要发布的产品</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>共 {pubPlans.length} 项</span>
-          </div>
-
-          {pubPlans.length === 0 ? (
-            <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
-              <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>明天还没有发布计划</p>
+        /* ============ 发布计划视图（纯文本风格：按账号分组，同账号同产品合并数量） ============ */
+        <div style={{ padding: '16px 20px' }}>
+          {aggregated.length === 0 ? (
+            <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--text-sub)' }}>
+              <p style={{ fontSize: '14px', margin: 0 }}>明天还没有发布计划</p>
               <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>点右下角 + 记录「账号 × 产品」</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingBottom: '20px' }}>
-              {Object.keys(groupedPlans).map((acc) => (
-                <div key={acc} style={{ ...glassStyle, padding: '12px 14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span style={{
-                      fontSize: '13px', fontWeight: 700, color: '#fff',
-                      background: 'linear-gradient(135deg,#f472b6,#ec4899)',
-                      padding: '3px 10px', borderRadius: '999px',
-                    }}>{acc}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>{groupedPlans[acc].length} 个产品</span>
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {groupedPlans[acc].map((pl) => (
-                      <span key={pl.id} style={{
-                        display: 'inline-flex', alignItems: 'center', gap: '6px',
-                        fontSize: '13px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.7)',
-                        padding: '6px 10px', borderRadius: '10px', fontWeight: 500,
-                        border: '1px solid rgba(0,0,0,0.06)',
-                      }}>
-                        {pl.productName}
-                        {pl.category && <span style={{ fontSize: '10px', color: '#9ca3af', background: 'rgba(0,0,0,0.05)', padding: '1px 6px', borderRadius: '999px' }}>{pl.category}</span>}
-                        <button onClick={() => deletePublishPlan(pl.id)} style={{
-                          border: 'none', background: 'transparent', color: '#e11d48',
-                          fontSize: '13px', cursor: 'pointer', padding: '0', lineHeight: 1,
-                        }}>×</button>
+            <div style={{ paddingBottom: '20px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-sub)', fontWeight: 600, marginBottom: '16px' }}>发布时间 · {publishDate}</div>
+              {Object.keys(groupedAgg).map((acc) => (
+                <div key={acc} style={{ marginBottom: '24px' }}>
+                  <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '10px' }}>{acc}</div>
+                  {groupedAgg[acc].map((p) => (
+                    <div key={p.productId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', fontSize: '16px', color: 'var(--text-main)' }}>
+                      <span>
+                        {p.productName}
+                        {p.count > 1 && <span style={{ color: 'var(--text-sub)', marginLeft: '8px' }}>×{p.count}</span>}
                       </span>
-                    ))}
-                  </div>
+                      <button onClick={() => deletePublishAgg(p.account, p.productId)} title="删除" style={{ border: 'none', background: 'transparent', color: '#ef4444', fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>×</button>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
