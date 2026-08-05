@@ -29,13 +29,14 @@ export function NewPublishPlanPage() {
   const { samples } = useStore()
   const { show } = useToast()
   const [pubAccount, setPubAccount] = useState('')
+  const [pubStatus, setPubStatus] = useState('all')
   const [pubSampleId, setPubSampleId] = useState('')
 
   const publishDate = fmtDate(getTomorrow())
   // 账号固定三个
   const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']  // 固定三个账号
-  // 选择来源：样品列表的数据（不是产品库）
-  const sampleList = samples || []
+  // 选择来源：样品列表的数据（不是产品库），排除「放弃」，可按 未发布/已发布/爆单 筛选
+  const sampleList = (samples || []).filter((s) => s.status !== 'abandoned' && (pubStatus === 'all' || s.status === pubStatus))
   // 选账号后只显示该账号的样品；不选账号显示所有样品
   const accountFiltered = pubAccount
     ? sampleList.filter((s) => !s.account || s.account === pubAccount)
@@ -90,6 +91,27 @@ export function NewPublishPlanPage() {
               暂无账号，请先在「样品」里给样品填写账号名称
             </div>
           )}
+        </div>
+
+        {/* 状态筛选：未发布 / 已发布 / 爆单（放弃的不出现在列表） */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>样品状态（筛选）</div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {[
+              { key: 'all', label: '全部' },
+              { key: 'unpublished', label: '⚪️ 未发布' },
+              { key: 'published', label: '🟢 已发布' },
+              { key: 'hit', label: '🔥 爆单' },
+            ].map((st) => (
+              <button key={st.key} onClick={() => { setPubStatus(st.key); setPubSampleId('') }} style={{
+                padding: '8px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: '1.5px solid',
+                borderColor: pubStatus === st.key ? 'var(--primary)' : 'rgba(0,0,0,0.08)',
+                background: pubStatus === st.key ? 'rgba(244,114,182,0.1)' : '#fff',
+                color: pubStatus === st.key ? 'var(--primary)' : 'var(--text-sub)',
+                cursor: 'pointer',
+              }}>{st.label}</button>
+            ))}
+          </div>
         </div>
 
         {/* 选择样品（来自样品列表，按所选账号预过滤） */}
