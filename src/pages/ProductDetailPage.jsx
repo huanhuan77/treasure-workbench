@@ -55,8 +55,9 @@ export function ProductDetailPage() {
   const [editTopicVal, setEditTopicVal] = useState('')
 
   const openTopics = () => {
-    // 从所有文案的自带话题聚合（去重），作为可统一编辑的清单
+    // 从产品级话题 + 所有文案自带话题聚合（去重），作为可统一编辑的清单
     const allTopics = new Set()
+    ;(product.topics || []).forEach((t) => allTopics.add(t))
     ;(product.copies || []).forEach((c) => (c.topics || []).forEach((t) => allTopics.add(t)))
     const arr = [...allTopics]
     setTopicDraft(arr)
@@ -81,18 +82,19 @@ export function ProductDetailPage() {
     const next = [...topicDraft]; next[editTopicIdx] = t; setTopicDraft(next); setEditTopicIdx(null)
   }
   const saveTopics = () => {
-    // 计算差异：rename（同位置改名）、added（新增）、removed（被删掉的原条目）
+    // 计算 renames：按打开时的快照顺序，同位置改名
     const orig = topicOriginals
     const renames = []
-    const added = []
     topicDraft.forEach((t, i) => {
-      if (i < orig.length) {
-        if (orig[i] !== t) renames.push({ from: orig[i], to: t })
-      } else {
-        added.push(t)
-      }
+      if (i < orig.length && orig[i] !== t) renames.push({ from: orig[i], to: t })
     })
-    const removed = orig.slice(topicDraft.length)
+    // 计算 added / removed：以"当前所有文案实际拥有的话题集合"为基准
+    // 这样如果某些文案缺了池里的话题，保存时会自动补回（修复）
+    const copiesOrig = new Set()
+    ;(product.copies || []).forEach((c) => (c.topics || []).forEach((t) => copiesOrig.add(t)))
+    const finalSet = new Set(topicDraft)
+    const removed = [...copiesOrig].filter((t) => !finalSet.has(t))
+    const added = topicDraft.filter((t) => !copiesOrig.has(t))
 
     // 把变更同步到所有文案
     const updatedCopies = (product.copies || []).map((c) => {
@@ -106,7 +108,8 @@ export function ProductDetailPage() {
       return { ...c, topics }
     })
 
-    updateProduct(product.id, { copies: updatedCopies })
+    // 写入 store：copies 同步 + product.topics 作为权威池
+    updateProduct(product.id, { copies: updatedCopies, topics: topicDraft })
     setShowTopics(false)
     const msg = `已同步到 ${updatedCopies.length} 条文案${added.length ? `（+${added.length}）` : ''}${removed.length ? `（-${removed.length}）` : ''}${renames.length ? `（${renames.length} 处改名）` : ''}`
     show(msg, 'success')
