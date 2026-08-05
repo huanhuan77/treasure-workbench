@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -10,7 +11,6 @@ const STORAGE_KEY = 'daily_plan_v1'
 const PUBLISH_KEY = 'daily_publish_plan_v1'
 const MAX_LEN = 100
 const FAB_KEY = 'dailyPlanFabPos'
-const PUB_CATEGORIES = ['全部', '保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
 
 function loadData() {
   try {
@@ -113,6 +113,7 @@ function SortableTaskRow({ task, onToggle, onDelete }) {
 }
 
 export function DailyPlanPage() {
+  const navigate = useNavigate()
   const { products, samples } = useStore()
   const { show } = useToast()
   const [data, setData] = useState(loadData)
@@ -124,21 +125,22 @@ export function DailyPlanPage() {
   const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
 
-  // 发布计划（记录明天每个账号要发布的产品）
+  // 发布计划（记录明天每个账号要发布的产品）—— 列表读取
   const [publishData, setPublishData] = useState(loadPublish)
   const publishDate = tomorrow
   const pubPlans = publishData[publishDate] || []
-  const [showPublishModal, setShowPublishModal] = useState(false)
-  const [pubAccount, setPubAccount] = useState('')
-  const [pubCategory, setPubCategory] = useState('全部')
-  const [pubProductId, setPubProductId] = useState('')
 
-  // 账号选项 = 样例数据里实际使用过的账号名称（过滤 大号/小号 代号）
-  const ACCOUNT_CODE_WORDS = ['大号', '小号', '小小号', '中号', '大号1', '小号1']
+  // 监听新页面添加后的事件，刷新列表
+  useEffect(() => {
+    const reload = () => setPublishData(loadPublish())
+    window.addEventListener('publishPlanUpdated', reload)
+    return () => window.removeEventListener('publishPlanUpdated', reload)
+  }, [])
+
+  // 账号预览：从样例数据里实际绑定过的账号名称（完整列表，不在 DailyPlanPage 过滤）
   const accountOptions = [...new Set(
     [...(samples || []).map((s) => s.account || '').filter(Boolean), ...pubPlans.map((p) => p.account)]
-  )].filter((a) => !ACCOUNT_CODE_WORDS.includes(a))
-  const catProducts = products.filter((p) => pubCategory === '全部' || p.category === pubCategory)
+  )]
   const groupedPlans = {}
   pubPlans.forEach((p) => { (groupedPlans[p.account] = groupedPlans[p.account] || []).push(p) })
 
@@ -159,29 +161,6 @@ export function DailyPlanPage() {
   })()
   const groupedAgg = {}
   aggregated.forEach((p) => { (groupedAgg[p.account] = groupedAgg[p.account] || []).push(p) })
-
-  const addPublishPlan = () => {
-    if (!pubAccount) { show('请选择账号', 'error'); return }
-    if (!pubProductId) { show('请选择产品', 'error'); return }
-    const p = products.find((x) => x.id === pubProductId)
-    if (!p) return
-    const item = { id: uid(), account: pubAccount, productId: p.id, productName: p.name, category: p.category, createdAt: Date.now() }
-    const nd = { ...publishData, [publishDate]: [...pubPlans, item] }
-    setPublishData(nd); savePublish(nd)
-    setShowPublishModal(false); setPubProductId('')
-    show(`已记录：${p.name} → ${pubAccount}`, 'success')
-  }
-
-  const deletePublishPlan = (planId) => {
-    const nd = { ...publishData, [publishDate]: pubPlans.filter((x) => x.id !== planId) }
-    setPublishData(nd); savePublish(nd)
-    show('已删除', 'success')
-  }
-  const deletePublishAgg = (account, productId) => {
-    const nd = { ...publishData, [publishDate]: pubPlans.filter((x) => !(x.account === account && x.productId === productId)) }
-    setPublishData(nd); savePublish(nd)
-    show('已删除', 'success')
-  }
 
   // 渲染期间检测日期变化，自动同步任务列表（解决跨天 tasks 未更新问题）
   const prevViewDateRef = useRef(viewDate)
@@ -316,7 +295,7 @@ export function DailyPlanPage() {
     if (m) {
       try { localStorage.setItem(FAB_KEY, JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else {
-      if (tab === 1) setShowPublishModal(true)
+      if (tab === 1) navigate('/publish-plan/new')
       else setShowModal(true)
     }
   }
@@ -539,58 +518,6 @@ export function DailyPlanPage() {
             boxSizing: 'border-box', lineHeight: 1.5, fontFamily: 'inherit',
           }}
         />
-      </Modal>
-
-      {/* 发布计划添加弹窗 */}
-      <Modal
-        open={showPublishModal}
-        onClose={() => { setShowPublishModal(false); setPubProductId('') }}
-        title={`添加发布计划（${getDateLabel(publishDate)}）`}
-        footer={
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={btnGhost} onClick={() => { setShowPublishModal(false); setPubProductId('') }}>取消</button>
-            <button style={{ ...btnPrimary, flex: 1 }} onClick={addPublishPlan}>添加</button>
-          </div>
-        }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {/* 账号 */}
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>发布账号</div>
-              <select value={pubAccount} onChange={(e) => setPubAccount(e.target.value)} style={inputStyle}>
-                <option value="" disabled>请选择账号</option>
-                {accountOptions.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
-              {accountOptions.length === 0 && (
-                <div style={{ fontSize: '11px', color: '#92400e', marginTop: '4px' }}>暂无账号，请先在「样品」里给样品填写账号名称</div>
-              )}
-          </div>
-          {/* 分类（可选） */}
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>产品分类（可选）</div>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {PUB_CATEGORIES.map((c) => (
-                <button key={c} onClick={() => { setPubCategory(c); setPubProductId('') }} style={{
-                  padding: '7px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, border: '1.5px solid',
-                  borderColor: pubCategory === c ? 'var(--primary)' : 'rgba(0,0,0,0.08)',
-                  background: pubCategory === c ? 'rgba(244,114,182,0.1)' : '#fff',
-                  color: pubCategory === c ? 'var(--primary)' : 'var(--text-sub)',
-                  cursor: 'pointer',
-                }}>{c}</button>
-              ))}
-            </div>
-          </div>
-          {/* 产品 */}
-          <div>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>
-              选择产品 {pubCategory !== '全部' ? `（${pubCategory} · ${catProducts.length}个）` : `（共 ${products.length} 个）`}
-            </div>
-            <select value={pubProductId} onChange={(e) => setPubProductId(e.target.value)} style={{ ...inputStyle, height: '180px' }} multiple>
-              {catProducts.length === 0 && <option value="" disabled>该分类暂无产品</option>}
-              {catProducts.map((p) => <option key={p.id} value={p.id}>{p.name}{p.brand ? `（${p.brand}）` : ''}</option>)}
-            </select>
-          </div>
-        </div>
       </Modal>
 
       {/* 历史计划弹窗 */}

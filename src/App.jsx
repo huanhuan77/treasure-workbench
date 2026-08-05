@@ -25,6 +25,7 @@ import { NewSamplePage } from './pages/NewSamplePage'
 import { EditSamplePage } from './pages/EditSamplePage'
 import { NewProductPage, EditProductPage } from './pages/NewProductPage'
 import { DailyPlanPage } from './pages/DailyPlanPage'
+import { NewPublishPlanPage } from './pages/NewPublishPlanPage'
 
 // 自动云同步组件（放在 ToastProvider 内，可弹出通知）
 function AutoBackup() {
@@ -90,6 +91,7 @@ function App() {
             <Route path="/reading/:id/notes" element={<NotePage />} />
             <Route path="/brands" element={<BrandContactsPage />} />
             <Route path="/daily" element={<DailyPlanPage />} />
+            <Route path="/publish-plan/new" element={<NewPublishPlanPage />} />
             <Route path="/product/new" element={<NewProductPage />} />
             <Route path="/product/:id/edit" element={<EditProductPage />} />
             <Route path="/batch-import/:id" element={<BatchImportPage />} />
