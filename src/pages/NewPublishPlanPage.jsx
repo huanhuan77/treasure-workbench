@@ -1,14 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Selector } from 'antd-mobile'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 
 const PUBLISH_KEY = 'daily_publish_plan_v1'
 
-function getTomorrow() {
-  const d = new Date()
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
-}
 function fmtDate(d) {
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
@@ -24,20 +21,33 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
 
+const DATE_OPTS = [
+  { offset: 0, label: '今天' },
+  { offset: 1, label: '明天' },
+  { offset: 2, label: '后天' },
+  { offset: 3, label: '3天后' },
+  { offset: 7, label: '1周后' },
+]
+const STATUS_OPTS = [
+  { key: 'all', label: '全部' },
+  { key: 'unpublished', label: '未发布' },
+  { key: 'published', label: '已发布' },
+  { key: 'hit', label: '爆单' },
+]
+
 export function NewPublishPlanPage() {
   const navigate = useNavigate()
   const { samples } = useStore()
   const { show } = useToast()
   const [pubAccount, setPubAccount] = useState('')
   const [pubStatus, setPubStatus] = useState('all')
-  const [pubSampleId, setPubSampleId] = useState('')
+  const [pubSampleIds, setPubSampleIds] = useState([])
   const [dateOffset, setDateOffset] = useState(1)  // 0=今天, 1=明天, 2=后天, 可调
 
   const publishDate = fmtDate(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + dateOffset))
   // 账号固定三个
-  const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']  // 固定三个账号
-  // 选择来源：样品列表的数据（不是产品库），排除「放弃」，可按 未发布/已发布/爆单 筛选
-  // 选账号后过滤该账号的样品；不选账号显示所有样品
+  const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
+  // 样品：排除「放弃」，可按 未发布/已发布/爆单 筛选，选账号后过滤该账号
   const sampleList = (samples || []).filter((s) => s.status !== 'abandoned' && (pubStatus === 'all' || s.status === pubStatus))
   const accountFiltered = pubAccount
     ? sampleList.filter((s) => s.account === pubAccount)
@@ -45,20 +55,23 @@ export function NewPublishPlanPage() {
 
   const handleAdd = () => {
     if (!pubAccount) { show('请选择账号', 'error'); return }
-    if (!pubSampleId) { show('请选择样品', 'error'); return }
-    const s = sampleList.find((x) => x.id === pubSampleId)
-    if (!s) return
+    if (pubSampleIds.length === 0) { show('请选择样品', 'error'); return }
+    const chosen = sampleList.filter((x) => pubSampleIds.includes(x.id))
+    if (chosen.length === 0) return
     let data = {}
     try { data = JSON.parse(localStorage.getItem(PUBLISH_KEY) || '{}') } catch { data = {} }
-    const item = { id: uid(), account: ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[pubAccount] || pubAccount), sampleId: s.id, productName: s.name, createdAt: Date.now() }
     const arr = data[publishDate] || []
-    arr.push(item)
+    for (const s of chosen) {
+      arr.push({ id: uid(), account: pubAccount, sampleId: s.id, productName: s.name, createdAt: Date.now() })
+    }
     data[publishDate] = arr
     localStorage.setItem(PUBLISH_KEY, JSON.stringify(data))
     window.dispatchEvent(new Event('publishPlanUpdated'))
-    show(`已记录：${s.name} → ${pubAccount}`, 'success')
+    show(`已记录：${chosen.length} 个样品 → ${pubAccount}`, 'success')
     navigate(-1)
   }
+
+  const sectionTitle = { fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '10px' }
 
   return (
     <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -77,80 +90,61 @@ export function NewPublishPlanPage() {
       <div style={{ padding: '16px 20px', flex: 1 }}>
         {/* 发布时间选择 */}
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>发布时间</div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {[
-              { offset: 0, label: '今天' },
-              { offset: 1, label: '明天' },
-              { offset: 2, label: '后天' },
-              { offset: 3, label: '3天后' },
-              { offset: 7, label: '1周后' },
-            ].map((d) => (
-              <button key={d.offset} onClick={() => setDateOffset(d.offset)} style={{
-                padding: '8px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: '1.5px solid',
-                borderColor: dateOffset === d.offset ? 'var(--primary)' : 'rgba(0,0,0,0.08)',
-                background: dateOffset === d.offset ? 'rgba(244,114,182,0.1)' : '#fff',
-                color: dateOffset === d.offset ? 'var(--primary)' : 'var(--text-sub)',
-                cursor: 'pointer',
-              }}>{d.label}</button>
-            ))}
-          </div>
+          <div style={sectionTitle}>发布时间</div>
+          <Selector
+            options={DATE_OPTS.map((d) => ({ label: d.label, value: String(d.offset) }))}
+            value={[String(dateOffset)]}
+            onChange={(v) => v.length && setDateOffset(Number(v[0]))}
+            columns={5}
+            showCheckMark={false}
+          />
         </div>
 
         {/* 发布账号 */}
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>发布账号</div>
-          <select value={pubAccount} onChange={(e) => setPubAccount(e.target.value)} style={{
-            width: '100%', padding: '14px 16px', borderRadius: '12px',
-            border: pubAccount ? '1.5px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.08)',
-            fontSize: '15px', outline: 'none', background: '#fff', color: 'var(--text-main)',
-            boxSizing: 'border-box',
-          }}>
-            <option value="" disabled>请选择账号</option>
-            {accountOptions.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
-          {accountOptions.length === 0 && (
-            <div style={{ fontSize: '12px', color: '#92400e', marginTop: '6px', padding: '8px 12px', background: 'rgba(251,191,36,0.1)', borderRadius: '8px' }}>
-              暂无账号，请先在「样品」里给样品填写账号名称
-            </div>
-          )}
+          <div style={sectionTitle}>发布账号</div>
+          <Selector
+            options={accountOptions.map((a) => ({ label: a, value: a }))}
+            value={pubAccount ? [pubAccount] : []}
+            onChange={(v) => setPubAccount(v[0] || '')}
+            columns={1}
+            showCheckMark={false}
+          />
         </div>
 
-        {/* 状态筛选：未发布 / 已发布 / 爆单（放弃的不出现在列表） */}
+        {/* 状态筛选 */}
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>样品状态（筛选）</div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {[
-              { key: 'all', label: '全部' },
-              { key: 'unpublished', label: '⚪️ 未发布' },
-              { key: 'published', label: '🟢 已发布' },
-              { key: 'hit', label: '🔥 爆单' },
-            ].map((st) => (
-              <button key={st.key} onClick={() => { setPubStatus(st.key); setPubSampleId('') }} style={{
-                padding: '8px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: '1.5px solid',
-                borderColor: pubStatus === st.key ? 'var(--primary)' : 'rgba(0,0,0,0.08)',
-                background: pubStatus === st.key ? 'rgba(244,114,182,0.1)' : '#fff',
-                color: pubStatus === st.key ? 'var(--primary)' : 'var(--text-sub)',
-                cursor: 'pointer',
-              }}>{st.label}</button>
-            ))}
-          </div>
+          <div style={sectionTitle}>样品状态（筛选）</div>
+          <Selector
+            options={STATUS_OPTS.map((st) => ({ label: st.label, value: st.key }))}
+            value={[pubStatus]}
+            onChange={(v) => { setPubStatus(v[0] || 'all'); setPubSampleIds([]) }}
+            columns={4}
+            showCheckMark={false}
+          />
         </div>
 
-        {/* 选择样品（按所选账号过滤） */}
+        {/* 选择样品 */}
         <div style={{ marginBottom: '24px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>
+          <div style={sectionTitle}>
             {pubAccount ? `选择样品 · ${pubAccount}（共 ${accountFiltered.length} 个）` : `选择样品（共 ${sampleList.length} 个）`}
           </div>
-          <select value={pubSampleId} onChange={(e) => setPubSampleId(e.target.value)} multiple style={{
-            width: '100%', padding: '12px 14px', borderRadius: '12px',
-            border: '1.5px solid rgba(0,0,0,0.08)',
-            fontSize: '15px', outline: 'none', background: '#fff', color: 'var(--text-main)',
-            boxSizing: 'border-box', height: '260px',
-          }}>
-            {accountFiltered.length === 0 && <option value="" disabled>{pubAccount ? '该账号暂无样品' : '暂无样品'}</option>}
-            {accountFiltered.map((s) => <option key={s.id} value={s.id}>{s.name}{s.account ? `（${s.account}）` : ''}</option>)}
-          </select>
+          {accountFiltered.length === 0 ? (
+            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '16px 0', textAlign: 'center' }}>
+              {pubAccount ? '该账号暂无样品' : '暂无样品'}
+            </div>
+          ) : (
+            <div style={{ maxHeight: '46vh', overflowY: 'auto', paddingBottom: '4px' }}>
+              <Selector
+                options={accountFiltered.map((s) => ({ label: s.name, value: s.id, description: s.account }))}
+                value={pubSampleIds}
+                onChange={setPubSampleIds}
+                multiple
+                columns={2}
+                showCheckMark={false}
+              />
+            </div>
+          )}
         </div>
       </div>
 

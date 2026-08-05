@@ -26,6 +26,9 @@ importers:
       '@ffmpeg/util':
         specifier: ^0.12.2
         version: 0.12.2
+      antd-mobile:
+        specifier: ^5.42.3
+        version: 5.42.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react:
         specifier: ^19.2.7
         version: 19.2.8
@@ -56,6 +59,10 @@ importers:
         version: 8.1.5
 
 packages:
+
+  '@babel/runtime@7.29.7':
+    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
+    engines: {node: '>=6.9.0'}
 
   '@dnd-kit/accessibility@3.1.1':
     resolution: {integrity: sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw==}
@@ -105,6 +112,15 @@ packages:
   '@ffmpeg/util@0.12.2':
     resolution: {integrity: sha512-ouyoW+4JB7WxjeZ2y6KpRvB+dLp7Cp4ro8z0HIVpZVCM7AwFlHa0c4R8Y/a4M3wMqATpYKhC7lSFHQ0T11MEDw==}
     engines: {node: '>=18.x'}
+
+  '@floating-ui/core@1.8.0':
+    resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
+
+  '@floating-ui/dom@1.8.0':
+    resolution: {integrity: sha512-yXSrzeHZBTZadLOlfyhCkJHNeLJnHRnRInwdZ40L7ZiaAtrBwoYlsDrX3v5zB1Utk7CLfzcOVnVVWoXEky7Ceg==}
+
+  '@floating-ui/utils@0.2.12':
+    resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
 
   '@napi-rs/wasm-runtime@1.1.6':
     resolution: {integrity: sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg==}
@@ -237,6 +253,37 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@rc-component/mini-decimal@1.1.4':
+    resolution: {integrity: sha512-xiuXcaCwyOWpD8a8scdExFl+bntNphAW8XeenL1ig2en0AAZY0Pcp4pC0dI22qJ+NvxKn9RoNIoRdqYU3BLH4w==}
+    engines: {node: '>=8.x'}
+
+  '@react-spring/animated@9.6.1':
+    resolution: {integrity: sha512-ls/rJBrAqiAYozjLo5EPPLLOb1LM0lNVQcXODTC1SMtS6DbuBCPaKco5svFUQFMP2dso3O+qcC4k9FsKc0KxMQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
+  '@react-spring/core@9.6.1':
+    resolution: {integrity: sha512-3HAAinAyCPessyQNNXe5W0OHzRfa8Yo5P748paPcmMowZ/4sMfaZ2ZB6e5x5khQI8NusOHj8nquoutd6FRY5WQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
+  '@react-spring/rafz@9.6.1':
+    resolution: {integrity: sha512-v6qbgNRpztJFFfSE3e2W1Uz+g8KnIBs6SmzCzcVVF61GdGfGOuBrbjIcp+nUz301awVmREKi4eMQb2Ab2gGgyQ==}
+
+  '@react-spring/shared@9.6.1':
+    resolution: {integrity: sha512-PBFBXabxFEuF8enNLkVqMC9h5uLRBo6GQhRMQT/nRTnemVENimgRd+0ZT4yFnAQ0AxWNiJfX3qux+bW2LbG6Bw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+
+  '@react-spring/types@9.6.1':
+    resolution: {integrity: sha512-POu8Mk0hIU3lRXB3bGIGe4VHIwwDsQyoD1F394OK7STTiX9w4dG3cTLljjYswkQN+hDSHRrj4O36kuVa7KPU8Q==}
+
+  '@react-spring/web@9.6.1':
+    resolution: {integrity: sha512-X2zR6q2Z+FjsWfGAmAXlQaoUHbPmfuCaXpuM6TcwXPpLE1ZD4A1eys/wpXboFQmDkjnrlTmKvpVna1MjWpZ5Hw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+
   '@rolldown/binding-android-arm64@1.1.5':
     resolution: {integrity: sha512-lZg8fqIv2v7FF237bwMgzGZEJvGL79/s5knJ/i6FmsGF4XXlzccZ4jb+TrFIxtSSxFtIpdsgrPZeMk1I9AFcyQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -338,6 +385,9 @@ packages:
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
 
+  '@types/js-cookie@3.0.6':
+    resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
+
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
@@ -345,6 +395,14 @@ packages:
 
   '@types/react@19.2.17':
     resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
+
+  '@use-gesture/core@10.3.0':
+    resolution: {integrity: sha512-rh+6MND31zfHcy9VU3dOZCqGY511lvGcfyJenN4cWZe0u1BH6brBpBddLVXhF2r4BMqWbvxfsbL7D287thJU2A==}
+
+  '@use-gesture/react@10.3.0':
+    resolution: {integrity: sha512-3zc+Ve99z4usVP6l9knYVbVnZgfqhKah7sIG+PS2w+vpig2v2OLct05vs+ZXMzwxdNCMka8B+8WlOo0z6Pn6DA==}
+    peerDependencies:
+      react: '>= 16.8.0'
 
   '@vitejs/plugin-react@6.0.4':
     resolution: {integrity: sha512-XcCQz0TBpBgljhj0gMuuDj49i6Ytqh5q1osT/Gp5uAVJUCTWxyskk/l1jwYYiu2xcNHHipdMz40EGfM1VdamVg==}
@@ -359,12 +417,43 @@ packages:
       babel-plugin-react-compiler:
         optional: true
 
+  ahooks@3.9.7:
+    resolution: {integrity: sha512-S0lvzhbdlhK36RFBkGv+RbOM/dbbweym+BIHM/bwwuWVSVN5TuVErHPMWo4w0t1NDYg5KPp2iEf7Y7E5LASYiw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  antd-mobile-icons@0.3.0:
+    resolution: {integrity: sha512-rqINQpJWZWrva9moCd1Ye695MZYWmqLPE+bY8d2xLRy7iSQwPsinCdZYjpUPp2zL/LnKYSyXxP2ut2A+DC+whQ==}
+
+  antd-mobile-v5-count@1.0.1:
+    resolution: {integrity: sha512-YGsiEDCPUDz3SzfXi6gLZn/HpeSMW+jgPc4qiYUr1fSopg3hkUie2TnooJdExgfiETHefH3Ggs58He0OVfegLA==}
+
+  antd-mobile@5.42.3:
+    resolution: {integrity: sha512-HLykA0Cr2am7dgEch/TRUnr4GHgTOM59rA9CVjgBJVVJ8dk2w8uUBz//Bji19sRH2leiUObWY7KQZpsWF+WQeg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  async-validator@4.2.5:
+    resolution: {integrity: sha512-7HhHjtERjqlNbZtqNqy2rckN/SpOOlmDliet+lP7k+eKZEjPk3DgyeU9lIXLdeLz0uBbbVp+9Qdow9wJWgwwfg==}
+
+  classnames@2.5.1:
+    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
+
   cookie@1.1.1:
     resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
     engines: {node: '>=18'}
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  dayjs@1.11.21:
+    resolution: {integrity: sha512-98IT+HOahAisibz/yjKbzuOBwYcjJ7BCLPzARyHiyEBmRz4fatF+KPJszEHXsGYjUG234aH/cOjW1wwTbKUZlA==}
+
+  deepmerge@4.3.1:
+    resolution: {integrity: sha512-3sUqbMEc77XqpdNO7FRyRog+eW3ph+GYCbj+rK+uYyRMuwsVy0rMiVtPn+QJlKFvWP/1PYpapqYn0Me2knFn+A==}
+    engines: {node: '>=0.10.0'}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -383,6 +472,13 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
+
+  intersection-observer@0.12.2:
+    resolution: {integrity: sha512-7m1vEcPCxXYI8HqnL8CKI6siDyD+eIWSwgB3DZA+ZTogxk9I4CDnj4wilt9x/+/QbHI4YG5YZNmC6458/e9Ktg==}
+    deprecated: The Intersection Observer polyfill is no longer needed and can safely be removed. Intersection Observer has been Baseline since 2019.
+
+  js-cookie@3.0.8:
+    resolution: {integrity: sha512-yeJd4aNAdYZQjaon2bpD/Gb0B/omw7HQOsynXXcOiWVCacbBcPlgn8S/d1X6blFSaHao7ozqtW7NZW19xpCtIw==}
 
   lightningcss-android-arm64@1.33.0:
     resolution: {integrity: sha512-gEpRTalKdosp4Bb8qWtc2iOgE5SeIHlpS1up9bFq2wAyYhl1UdTObYiHe98zEM9SQvSoqQZ1IQD0JNpg3Ml5pg==}
@@ -458,6 +554,12 @@ packages:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
 
+  lodash@4.18.1:
+    resolution: {integrity: sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==}
+
+  nano-memoize@3.0.16:
+    resolution: {integrity: sha512-JyK96AKVGAwVeMj3MoMhaSXaUNqgMbCRSQB3trUV8tYZfWEzqUBKdK1qJpfuNXgKeHOx1jv/IEYTM659ly7zUA==}
+
   nanoid@3.3.16:
     resolution: {integrity: sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
@@ -487,10 +589,41 @@ packages:
     resolution: {integrity: sha512-g50586zr4bZmwFiTlflMu8E0bDTb5I5gertgwAKmsdUlTQIhZtunzUlD1WSzwcVWPoAVpsrA6vlfCD7oXvRwgg==}
     engines: {node: ^10 || ^12 || >=14}
 
+  rc-field-form@1.44.0:
+    resolution: {integrity: sha512-el7w87fyDUsca63Y/s8qJcq9kNkf/J5h+iTdqG5WsSHLH0e6Usl7QuYSmSVzJMgtp40mOVZIY/W/QP9zwrp1FA==}
+    engines: {node: '>=8.x'}
+    peerDependencies:
+      react: '>=16.9.0'
+      react-dom: '>=16.9.0'
+
+  rc-motion@2.9.5:
+    resolution: {integrity: sha512-w+XTUrfh7ArbYEd2582uDrEhmBHwK1ZENJiSJVb7uRxdE7qJSYjbO2eksRXmndqyKqKoYPc9ClpPh5242mV1vA==}
+    peerDependencies:
+      react: '>=16.9.0'
+      react-dom: '>=16.9.0'
+
+  rc-segmented@2.4.1:
+    resolution: {integrity: sha512-KUi+JJFdKnumV9iXlm+BJ00O4NdVBp2TEexLCk6bK1x/RH83TvYKQMzIz/7m3UTRPD08RM/8VG/JNjWgWbd4cw==}
+    peerDependencies:
+      react: '>=16.0.0'
+      react-dom: '>=16.0.0'
+
+  rc-util@5.44.4:
+    resolution: {integrity: sha512-resueRJzmHG9Q6rI/DfK6Kdv9/Lfls05vzMs1Sk3M2P+3cJa+MakaZyWY8IPfehVuhPJFKrIY1IK4GqbiaiY5w==}
+    peerDependencies:
+      react: '>=16.9.0'
+      react-dom: '>=16.9.0'
+
   react-dom@19.2.8:
     resolution: {integrity: sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ==}
     peerDependencies:
       react: ^19.2.8
+
+  react-fast-compare@3.2.2:
+    resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
+
+  react-is@18.3.1:
+    resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
   react-router-dom@7.18.1:
     resolution: {integrity: sha512-KaZh+X/6UtEp28x51AUYZDMg9NGoz2ja3dNHa+ta/tk40vCzKhQ/RypCWBMLbmDr6//E24Vv5uPsrqXFozdkAg==}
@@ -513,13 +646,23 @@ packages:
     resolution: {integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==}
     engines: {node: '>=0.10.0'}
 
+  resize-observer-polyfill@1.5.1:
+    resolution: {integrity: sha512-LwZrotdHOo12nQuZlHEmtuXdqGoOD0OhaxopaNFxWzInpEgaLWoVuAMbTzixuosCx2nEG58ngzW3vxdWoxIgdg==}
+
   rolldown@1.1.5:
     resolution: {integrity: sha512-t9z29cJjXf/vxQ8dyhCSpt6H6aSwHTk8cT5I3iy6SMXuFpk5mB6PL6XfC8PCwrPTx93udwKUm9HRteAlTGBLiA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
+  runes2@1.1.4:
+    resolution: {integrity: sha512-LNPnEDPOOU4ehF71m5JoQyzT2yxwD6ZreFJ7MxZUAoMKNMY1XrAo60H1CUoX5ncSm0rIuKlqn9JZNRrRkNou2g==}
+
   scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
+
+  screenfull@5.2.0:
+    resolution: {integrity: sha512-9BakfsO2aUQN2K9Fdbj87RJIEZ82Q9IGim7FqM5OsebfoFC6ZHXgDq/KvniuLTPdeM8wY2o6Dj3WQ7KeQCj3cA==}
+    engines: {node: '>=0.10.0'}
 
   set-cookie-parser@2.7.2:
     resolution: {integrity: sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw==}
@@ -527,6 +670,11 @@ packages:
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
+
+  staged-components@1.1.3:
+    resolution: {integrity: sha512-9EIswzDqjwlEu+ymkV09TTlJfzSbKgEnNteUnZSTxkpMgr5Wx2CzzA9WcMFWBNCldqVPsHVnRGGrApduq2Se5A==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
   stock-sdk@2.4.0:
     resolution: {integrity: sha512-4pVdLKQ8x3iGYt9edasQoa4tT3/5xCK0EebLhuvFoVYyLYKP5Y8Eld/W3B0LZi2+LBgcOxeDUKd+jYxrOeCd5Q==}
@@ -539,6 +687,11 @@ packages:
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
+
+  use-sync-external-store@1.6.0:
+    resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   vite@8.1.5:
     resolution: {integrity: sha512-7ULLwsCdYx/nRyrpiEwvqb5TFHrMVZyBt+rg/OAXT7rgj/z+DtTDyKFeLAdDkubDVDKD8jOsndmy7m55XcfUsw==}
@@ -584,6 +737,8 @@ packages:
         optional: true
 
 snapshots:
+
+  '@babel/runtime@7.29.7': {}
 
   '@dnd-kit/accessibility@3.1.1(react@19.2.8)':
     dependencies:
@@ -640,6 +795,17 @@ snapshots:
   '@ffmpeg/types@0.12.4': {}
 
   '@ffmpeg/util@0.12.2': {}
+
+  '@floating-ui/core@1.8.0':
+    dependencies:
+      '@floating-ui/utils': 0.2.12
+
+  '@floating-ui/dom@1.8.0':
+    dependencies:
+      '@floating-ui/core': 1.8.0
+      '@floating-ui/utils': 0.2.12
+
+  '@floating-ui/utils@0.2.12': {}
 
   '@napi-rs/wasm-runtime@1.1.6(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)':
     dependencies:
@@ -707,6 +873,43 @@ snapshots:
   '@oxlint/binding-win32-x64-msvc@1.75.0':
     optional: true
 
+  '@rc-component/mini-decimal@1.1.4':
+    dependencies:
+      '@babel/runtime': 7.29.7
+
+  '@react-spring/animated@9.6.1(react@19.2.8)':
+    dependencies:
+      '@react-spring/shared': 9.6.1(react@19.2.8)
+      '@react-spring/types': 9.6.1
+      react: 19.2.8
+
+  '@react-spring/core@9.6.1(react@19.2.8)':
+    dependencies:
+      '@react-spring/animated': 9.6.1(react@19.2.8)
+      '@react-spring/rafz': 9.6.1
+      '@react-spring/shared': 9.6.1(react@19.2.8)
+      '@react-spring/types': 9.6.1
+      react: 19.2.8
+
+  '@react-spring/rafz@9.6.1': {}
+
+  '@react-spring/shared@9.6.1(react@19.2.8)':
+    dependencies:
+      '@react-spring/rafz': 9.6.1
+      '@react-spring/types': 9.6.1
+      react: 19.2.8
+
+  '@react-spring/types@9.6.1': {}
+
+  '@react-spring/web@9.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@react-spring/animated': 9.6.1(react@19.2.8)
+      '@react-spring/core': 9.6.1(react@19.2.8)
+      '@react-spring/shared': 9.6.1(react@19.2.8)
+      '@react-spring/types': 9.6.1
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
   '@rolldown/binding-android-arm64@1.1.5':
     optional: true
 
@@ -763,6 +966,8 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
+  '@types/js-cookie@3.0.6': {}
+
   '@types/react-dom@19.2.3(@types/react@19.2.17)':
     dependencies:
       '@types/react': 19.2.17
@@ -771,14 +976,73 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
+  '@use-gesture/core@10.3.0': {}
+
+  '@use-gesture/react@10.3.0(react@19.2.8)':
+    dependencies:
+      '@use-gesture/core': 10.3.0
+      react: 19.2.8
+
   '@vitejs/plugin-react@6.0.4(vite@8.1.5)':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.1.5
 
+  ahooks@3.9.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@types/js-cookie': 3.0.6
+      dayjs: 1.11.21
+      intersection-observer: 0.12.2
+      js-cookie: 3.0.8
+      lodash: 4.18.1
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-fast-compare: 3.2.2
+      resize-observer-polyfill: 1.5.1
+      screenfull: 5.2.0
+      tslib: 2.8.1
+
+  antd-mobile-icons@0.3.0: {}
+
+  antd-mobile-v5-count@1.0.1: {}
+
+  antd-mobile@5.42.3(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      '@floating-ui/dom': 1.8.0
+      '@rc-component/mini-decimal': 1.1.4
+      '@react-spring/web': 9.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@use-gesture/react': 10.3.0(react@19.2.8)
+      ahooks: 3.9.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      antd-mobile-icons: 0.3.0
+      antd-mobile-v5-count: 1.0.1
+      classnames: 2.5.1
+      dayjs: 1.11.21
+      deepmerge: 4.3.1
+      nano-memoize: 3.0.16
+      rc-field-form: 1.44.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      rc-segmented: 2.4.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      rc-util: 5.44.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-fast-compare: 3.2.2
+      react-is: 18.3.1
+      runes2: 1.1.4
+      staged-components: 1.1.3(react@19.2.8)
+      tslib: 2.8.1
+      use-sync-external-store: 1.6.0(react@19.2.8)
+
+  async-validator@4.2.5: {}
+
+  classnames@2.5.1: {}
+
   cookie@1.1.1: {}
 
   csstype@3.2.3: {}
+
+  dayjs@1.11.21: {}
+
+  deepmerge@4.3.1: {}
 
   detect-libc@2.1.2: {}
 
@@ -788,6 +1052,10 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
+
+  intersection-observer@0.12.2: {}
+
+  js-cookie@3.0.8: {}
 
   lightningcss-android-arm64@1.33.0:
     optional: true
@@ -838,6 +1106,10 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
 
+  lodash@4.18.1: {}
+
+  nano-memoize@3.0.16: {}
+
   nanoid@3.3.16: {}
 
   oxlint@1.75.0:
@@ -872,10 +1144,46 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
+  rc-field-form@1.44.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      '@babel/runtime': 7.29.7
+      async-validator: 4.2.5
+      rc-util: 5.44.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
+  rc-motion@2.9.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      '@babel/runtime': 7.29.7
+      classnames: 2.5.1
+      rc-util: 5.44.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
+  rc-segmented@2.4.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      '@babel/runtime': 7.29.7
+      classnames: 2.5.1
+      rc-motion: 2.9.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      rc-util: 5.44.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+
+  rc-util@5.44.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      '@babel/runtime': 7.29.7
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
+      react-is: 18.3.1
+
   react-dom@19.2.8(react@19.2.8):
     dependencies:
       react: 19.2.8
       scheduler: 0.27.0
+
+  react-fast-compare@3.2.2: {}
+
+  react-is@18.3.1: {}
 
   react-router-dom@7.18.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -892,6 +1200,8 @@ snapshots:
       react-dom: 19.2.8(react@19.2.8)
 
   react@19.2.8: {}
+
+  resize-observer-polyfill@1.5.1: {}
 
   rolldown@1.1.5:
     dependencies:
@@ -914,11 +1224,19 @@ snapshots:
       '@rolldown/binding-win32-arm64-msvc': 1.1.5
       '@rolldown/binding-win32-x64-msvc': 1.1.5
 
+  runes2@1.1.4: {}
+
   scheduler@0.27.0: {}
+
+  screenfull@5.2.0: {}
 
   set-cookie-parser@2.7.2: {}
 
   source-map-js@1.2.1: {}
+
+  staged-components@1.1.3(react@19.2.8):
+    dependencies:
+      react: 19.2.8
 
   stock-sdk@2.4.0: {}
 
@@ -928,6 +1246,10 @@ snapshots:
       picomatch: 4.0.5
 
   tslib@2.8.1: {}
+
+  use-sync-external-store@1.6.0(react@19.2.8):
+    dependencies:
+      react: 19.2.8
 
   vite@8.1.5:
     dependencies:

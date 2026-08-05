@@ -16,6 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
+    "antd-mobile": "^5.42.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
