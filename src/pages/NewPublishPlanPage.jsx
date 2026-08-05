@@ -27,15 +27,14 @@ function uid() {
 
 export function NewPublishPlanPage() {
   const navigate = useNavigate()
-  const { products, samples } = useStore()
+  const { products } = useStore()
   const { show } = useToast()
   const [pubAccount, setPubAccount] = useState('')
   const [pubCategory, setPubCategory] = useState('全部')
   const [pubProductId, setPubProductId] = useState('')
 
   const publishDate = fmtDate(getTomorrow())
-  // 账号直接从样品里读取（用户要求："绑定了账号的，你拿那边的就行"）
-  const accountOptions = [...new Set((samples || []).map((s) => s.account || '').filter(Boolean))]
+  const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']  // 固定三个账号
   const catProducts = products.filter((p) => pubCategory === '全部' || p.category === pubCategory)
 
   const handleAdd = () => {

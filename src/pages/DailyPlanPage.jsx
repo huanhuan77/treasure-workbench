@@ -137,10 +137,8 @@ export function DailyPlanPage() {
     return () => window.removeEventListener('publishPlanUpdated', reload)
   }, [])
 
-  // 账号预览：从样例数据里实际绑定过的账号名称（完整列表，不在 DailyPlanPage 过滤）
-  const accountOptions = [...new Set(
-    [...(samples || []).map((s) => s.account || '').filter(Boolean), ...pubPlans.map((p) => p.account)]
-  )]
+  // 账号预览：固定三个账号（广东刘亦菲 / 晚梨不吃梨 / 努力成为富婆）
+  const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
   const groupedPlans = {}
   pubPlans.forEach((p) => { (groupedPlans[p.account] = groupedPlans[p.account] || []).push(p) })
 
