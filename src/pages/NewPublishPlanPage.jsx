@@ -31,8 +31,9 @@ export function NewPublishPlanPage() {
   const [pubAccount, setPubAccount] = useState('')
   const [pubStatus, setPubStatus] = useState('all')
   const [pubSampleId, setPubSampleId] = useState('')
+  const [dateOffset, setDateOffset] = useState(1)  // 0=今天, 1=明天, 2=后天, 可调
 
-  const publishDate = fmtDate(getTomorrow())
+  const publishDate = fmtDate(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + dateOffset))
   // 账号固定三个
   const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']  // 固定三个账号
   // 选择来源：样品列表的数据（不是产品库），排除「放弃」，可按 未发布/已发布/爆单 筛选
@@ -74,6 +75,28 @@ export function NewPublishPlanPage() {
       </header>
 
       <div style={{ padding: '16px 20px', flex: 1 }}>
+        {/* 发布时间选择 */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>发布时间</div>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {[
+              { offset: 0, label: '今天' },
+              { offset: 1, label: '明天' },
+              { offset: 2, label: '后天' },
+              { offset: 3, label: '3天后' },
+              { offset: 7, label: '1周后' },
+            ].map((d) => (
+              <button key={d.offset} onClick={() => setDateOffset(d.offset)} style={{
+                padding: '8px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: '1.5px solid',
+                borderColor: dateOffset === d.offset ? 'var(--primary)' : 'rgba(0,0,0,0.08)',
+                background: dateOffset === d.offset ? 'rgba(244,114,182,0.1)' : '#fff',
+                color: dateOffset === d.offset ? 'var(--primary)' : 'var(--text-sub)',
+                cursor: 'pointer',
+              }}>{d.label}</button>
+            ))}
+          </div>
+        </div>
+
         {/* 发布账号 */}
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }}>发布账号</div>
