@@ -228,9 +228,9 @@ export function SamplesPage() {
                   const dl = deadlineDesc(s.deadline)
                   const dlMatch = dl && dl.match(/(\d+)天/)
                   const dlDays = dlMatch ? parseInt(dlMatch[1], 10) : (dl && dl.includes('今天') ? 0 : null)
-                  const dlColor = dl && dl.includes('过期') ? '#dc2626' :
-                                  dlDays === 0 ? '#dc2626' :
-                                  dlDays !== null && dlDays <= 3 ? '#dc2626' :
+                  const dlColor = dl && dl.includes('过期') ? '#ef4444' :
+                                  dlDays === 0 ? '#ef4444' :
+                                  dlDays !== null && dlDays <= 3 ? '#ef4444' :
                                   dlDays !== null && dlDays <= 7 ? '#ea580c' : 'var(--text-sub)'
                   const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
 
