@@ -26,7 +26,13 @@ function saveData(d) {
 function loadPublish() {
   try {
     const raw = localStorage.getItem(PUBLISH_KEY)
-    return raw ? JSON.parse(raw) : {}
+    const d = raw ? JSON.parse(raw) : {}
+    // 全局账号映射：旧代号 → 真实账号名
+    const ACCOUNT_MAP = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
+    for (const date of Object.keys(d)) {
+      d[date] = (d[date] || []).map((p) => ({ ...p, account: (ACCOUNT_MAP[p.account] || p.account) }))
+    }
+    return d
   } catch { return {} }
 }
 

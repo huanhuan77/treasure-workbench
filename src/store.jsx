@@ -8,6 +8,10 @@ const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
 const CURRENT_VERSION = '20'
 
+// 全局账号映射：旧代号 → 真实账号名（用户要求全局替换）
+const ACCOUNT_MAP = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
+const mapAccount = (a) => (a && ACCOUNT_MAP[a]) || a || ''
+
 
 // 植研加睫毛胶水：用户整理后内置文案（thumb-up=出单，check=用过；末 # 行为指定话题
 const jiemaoSeed = [
@@ -3095,8 +3099,8 @@ function loadData() {
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
     return {
       products: productsFinal,
-      samples: (old.samples || []).map((s) => migrateSample(s)),
-      transactions: migrateTransactions(Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])),
+      samples: (old.samples || []).map((s) => migrateSample({ ...s, account: mapAccount(s.account) })),
+      transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
       savingsData: (() => {
         let sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
         // 独立 key 回退：主数据无投资记录时尝试从独立 localStorage key 恢复

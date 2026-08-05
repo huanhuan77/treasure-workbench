@@ -47,7 +47,7 @@ export function NewPublishPlanPage() {
     if (!s) return
     let data = {}
     try { data = JSON.parse(localStorage.getItem(PUBLISH_KEY) || '{}') } catch { data = {} }
-    const item = { id: uid(), account: pubAccount, sampleId: s.id, productName: s.name, createdAt: Date.now() }
+    const item = { id: uid(), account: ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[pubAccount] || pubAccount), sampleId: s.id, productName: s.name, createdAt: Date.now() }
     const arr = data[publishDate] || []
     arr.push(item)
     data[publishDate] = arr
