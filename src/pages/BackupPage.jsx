@@ -260,7 +260,7 @@ export function BackupPage() {
                   onChange={e => { setGistId(e.target.value); localStorage.setItem(GIST_ID_KEY, e.target.value) }}
                   placeholder={gistId ? '编辑 Gist ID' : '粘贴 Gist ID 恢复（多设备同步）'}
                   autoFocus={!gistId}
-                  style={{ flex: 1, padding: '5px 8px', borderRadius: '6px', border: '1.5px solid rgba(0,0,0,0.08)', fontSize: '11px', outline: 'none', fontFamily: 'monospace', minWidth: 0 }} />
+                  style={{ flex: 1, padding: '10px 12px', borderRadius: '8px', border: '1.5px solid rgba(0,0,0,0.12)', fontSize: '13px', outline: 'none', fontFamily: 'monospace', minWidth: 0 }} />
                 {gistId && (
                   <button onClick={() => { setGistId(''); localStorage.removeItem(GIST_ID_KEY); setEditingGistId(false); show('已清空 Gist ID', 'success') }} style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #d1d5db', background: '#fff', color: '#6b7280', fontSize: '10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>清空</button>
                 )}
