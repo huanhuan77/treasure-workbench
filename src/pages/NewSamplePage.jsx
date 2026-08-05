@@ -12,7 +12,7 @@ const STATUS = {
   abandoned: { label: '放弃', emoji: '🚫' },
 }
 
-const ACCOUNTS = ['大号', '小号', '小小号']
+const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 const ACCOUNT_NICK = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
 
 function PageHeader({ title, onBack }) {
@@ -31,7 +31,8 @@ export function NewSamplePage() {
   const { show } = useToast()
   const [name, setName] = useState('')
   // 优先从 location.state 拿到当前账号，否则从 sessionStorage 兜底
-  const initialAccount = location.state?.account || sessionStorage.getItem('samples_account') || '大号'
+  const _mapAcc = (a) => ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[a] || a || '广东刘亦菲')
+  const initialAccount = _mapAcc(location.state?.account || sessionStorage.getItem('samples_account'))
   const [account, setAccount] = useState(initialAccount)
   const [status, setStatus] = useState('unpublished')
   const [receiveDate, setReceiveDate] = useState(new Date().toISOString().slice(0, 10))

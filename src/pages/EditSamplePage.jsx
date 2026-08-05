@@ -12,7 +12,7 @@ const STATUS = {
   abandoned: { label: '放弃', emoji: '🚫' },
 }
 
-const ACCOUNTS = ['大号', '小号', '小小号']
+const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 const ACCOUNT_NICK = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
 
 function PageHeader({ title, onBack }) {
@@ -31,7 +31,8 @@ export function EditSamplePage() {
   const id = window.location.hash.match(/\/samples\/([^/]+)\/edit/)?.[1]
   const sample = id ? samples.find(s => s.id === id) : null
   const [name, setName] = useState(sample?.name || '')
-  const [account, setAccount] = useState(sample?.account || '大号')
+  const _mapAcc = (a) => ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[a] || a || '广东刘亦菲')
+  const [account, setAccount] = useState(_mapAcc(sample?.account))
   const [status, setStatus] = useState(sample?.status || 'unpublished')
   const [receiveDate, setReceiveDate] = useState(sample?.receiveDate || new Date().toISOString().slice(0,10))
   const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0,10), 15))

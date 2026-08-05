@@ -18,12 +18,12 @@ const STATUS = {
 const STATUS_ORDER = ['unpublished', 'hit', 'published', 'abandoned']
 const STATUS_LIST = STATUS_ORDER.map((k) => ({ key: k, ...STATUS[k] }))
 
-const ACCOUNTS = ['大号', '小号', '小小号']
-const ACCOUNT_NICK = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
+const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
+const ACCOUNT_NICK = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆', '广东刘亦菲': '广东刘亦菲', '晚梨不吃梨': '晚梨不吃梨', '努力成为富婆': '努力成为富婆' }
 const ACCOUNT_COLOR = {
-  '大号': { c: '#c2410c', bg: 'rgba(251,146,60,0.16)' },
-  '小号': { c: '#1d4ed8', bg: 'rgba(59,130,246,0.16)' },
-  '小小号': { c: '#7e22ce', bg: 'rgba(168,85,247,0.16)' },
+  '广东刘亦菲': { c: '#c2410c', bg: 'rgba(251,146,60,0.16)' },
+  '晚梨不吃梨': { c: '#1d4ed8', bg: 'rgba(59,130,246,0.16)' },
+  '努力成为富婆': { c: '#7e22ce', bg: 'rgba(168,85,247,0.16)' },
 }
 
 function acctChipStyle(active, label, color, bg) {
@@ -56,7 +56,11 @@ export function SamplesPage() {
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
   const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'unpublished')
-  const [accountFilter, setAccountFilter] = useState(() => sessionStorage.getItem('samples_account') || '大号')
+  const [accountFilter, setAccountFilter] = useState(() => {
+    const v = sessionStorage.getItem('samples_account') || ''
+    const map = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
+    return map[v] || v || 'all'
+  })
   const [searchKeyword, setSearchKeyword] = useState('')
 
   const sensors = useSensors(
