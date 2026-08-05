@@ -712,24 +712,44 @@ function CopyCard({
         {copy.content}
       </div>
 
-      {/* 话题：只显示产品级（弹窗管理的那个），删除后立即消失 */}
+      {/* 话题：产品级 + 文案自带，都显示为胶囊标签 */}
       <div style={{ marginBottom: '8px' }}>
-        <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '4px', fontWeight: 500 }}># 热门话题</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          {(productTopics || []).map((t, i) => (
-            <span key={i} style={{
-              fontSize: '12px',
-              color: 'var(--primary-dark)',
-              background: 'rgba(252, 231, 243, 0.7)',
-              padding: '3px 9px',
-              borderRadius: '8px',
-              fontWeight: 500,
-            }}>{t}</span>
-          ))}
-          {(productTopics || []).length === 0 && copy.topics && copy.topics.length > 0 && (
-            <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>该文案自带：{copy.topics.map(t => t.replace(/^#/, '')).join(' ')}</span>
-          )}
-        </div>
+        {(productTopics || []).length > 0 && (
+          <div style={{ marginBottom: '6px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '4px', fontWeight: 500 }}># 热门话题</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {(productTopics || []).map((t, i) => (
+                <span key={i} style={{
+                  fontSize: '12px',
+                  color: 'var(--primary-dark)',
+                  background: 'rgba(252, 231, 243, 0.7)',
+                  padding: '3px 9px',
+                  borderRadius: '999px',
+                  fontWeight: 500,
+                  border: '1px solid rgba(236, 72, 153, 0.12)',
+                }}>{t}</span>
+              ))}
+            </div>
+          </div>
+        )}
+        {copy.topics && copy.topics.length > 0 && (
+          <div>
+            <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '4px', fontWeight: 500 }}># 文案自带话题</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {copy.topics.map((t, i) => (
+                <span key={i} style={{
+                  fontSize: '12px',
+                  color: '#7c3aed',
+                  background: 'rgba(237, 233, 254, 0.8)',
+                  padding: '3px 9px',
+                  borderRadius: '999px',
+                  fontWeight: 500,
+                  border: '1px solid rgba(124, 58, 237, 0.15)',
+                }}># {t.replace(/^#/, '')}</span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 状态标签 */}
