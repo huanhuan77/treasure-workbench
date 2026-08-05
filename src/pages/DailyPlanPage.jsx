@@ -120,6 +120,7 @@ export function DailyPlanPage() {
   const today = getToday()
   const tomorrow = addDays(today, 1)
   const [tab, setTab] = useState(0)
+  const [subTab, setSubTab] = useState(0)  // 明日 tab 下的子视图：0=明日计划，1=发布计划
   const viewDate = tab === 0 ? today : tomorrow
   const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
@@ -289,7 +290,7 @@ export function DailyPlanPage() {
     if (m) {
       try { localStorage.setItem(FAB_KEY, JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else {
-      if (tab === 2) setShowPublishModal(true)
+      if (tab === 1 && subTab === 1) setShowPublishModal(true)
       else setShowModal(true)
     }
   }
@@ -328,7 +329,7 @@ export function DailyPlanPage() {
           }}>📅 历史</button>
         </div>
 
-        {/* 今日 / 明日 / 发布计划 切换 */}
+        {/* 今日 / 明日 切换 */}
         <div style={{
           display: 'flex', gap: '6px',
           padding: '3px', borderRadius: '12px',
@@ -337,7 +338,6 @@ export function DailyPlanPage() {
           {[
             { key: 0, label: '今日', date: today },
             { key: 1, label: '明日', date: tomorrow },
-            { key: 2, label: '📣 发布计划' },
           ].map(item => {
             const selected = tab === item.key
             return (
@@ -358,13 +358,36 @@ export function DailyPlanPage() {
         </div>
       </header>
 
-      {tab === 2 ? (
+      {/* 明日 tab 下的子切换：明日计划 / 发布计划（同级） */}
+      {tab === 1 && (
+        <div style={{ display: 'flex', gap: '6px', padding: '0 16px 12px' }}>
+          {[
+            { key: 0, label: '📝 明日计划' },
+            { key: 1, label: '📣 发布计划' },
+          ].map(item => {
+            const selected = subTab === item.key
+            return (
+              <button key={item.key} onClick={() => setSubTab(item.key)} style={{
+                flex: 1, padding: '8px 0', border: '1.5px solid', borderRadius: '10px',
+                fontSize: '13px', fontWeight: selected ? 600 : 500,
+                color: selected ? '#fff' : 'var(--text-sub)',
+                background: selected ? 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)' : 'rgba(255,255,255,0.5)',
+                borderColor: selected ? 'transparent' : 'rgba(244,114,182,0.2)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}>{item.label}</button>
+            )
+          })}
+        </div>
+      )}
+
+      {tab === 1 && subTab === 1 ? (
         /* ============ 发布计划视图（记录明天每个账号要发布的产品） ============ */
         <div style={{ padding: '0 16px' }}>
           <div style={{ ...glassStyle, padding: '14px 16px', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>📣 发布计划</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>{getDateLabel(publishDate)}（{publishDate}）各账号发布产品</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>明天各账号发布产品</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>{getDateLabel(publishDate)}（{publishDate}）</div>
             </div>
             <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>共 {pubPlans.length} 项</span>
           </div>
