@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Selector } from 'antd-mobile'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 
@@ -35,6 +34,13 @@ const STATUS_OPTS = [
   { key: 'hit', label: '爆单' },
 ]
 
+// 紧凑样式（旧式精致，不堆空间）
+const chipBase = {
+  padding: '7px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+  border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
+  whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+}
+
 export function NewPublishPlanPage() {
   const navigate = useNavigate()
   const { samples } = useStore()
@@ -45,9 +51,7 @@ export function NewPublishPlanPage() {
   const [dateOffset, setDateOffset] = useState(1)  // 0=今天, 1=明天, 2=后天, 可调
 
   const publishDate = fmtDate(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + dateOffset))
-  // 账号固定三个
   const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
-  // 样品：排除「放弃」，可按 未发布/已发布/爆单 筛选，选账号后过滤该账号
   const sampleList = (samples || []).filter((s) => s.status !== 'abandoned' && (pubStatus === 'all' || s.status === pubStatus))
   const accountFiltered = pubAccount
     ? sampleList.filter((s) => s.account === pubAccount)
@@ -71,7 +75,11 @@ export function NewPublishPlanPage() {
     navigate(-1)
   }
 
-  const sectionTitle = { fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '10px' }
+  const toggleSample = (id) => {
+    setPubSampleIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }
+
+  const sectionTitle = { fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }
 
   return (
     <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -87,69 +95,94 @@ export function NewPublishPlanPage() {
         </h1>
       </header>
 
-      <div style={{ padding: '16px 20px', flex: 1 }}>
+      <div style={{ padding: '12px 16px', flex: 1 }}>
         {/* 发布时间选择 */}
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>发布时间</div>
-          <Selector
-            options={DATE_OPTS.map((d) => ({ label: d.label, value: String(d.offset) }))}
-            value={[String(dateOffset)]}
-            onChange={(v) => v.length && setDateOffset(Number(v[0]))}
-            columns={5}
-            showCheckMark={false}
-          />
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {DATE_OPTS.map((d) => (
+              <button key={d.offset} onClick={() => setDateOffset(d.offset)} style={{
+                ...chipBase,
+                borderColor: dateOffset === d.offset ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                background: dateOffset === d.offset ? 'rgba(244,114,182,0.1)' : '#fff',
+                color: dateOffset === d.offset ? 'var(--primary)' : 'var(--text-sub)',
+              }}>{d.label}</button>
+            ))}
+          </div>
         </div>
 
         {/* 发布账号 */}
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>发布账号</div>
-          <Selector
-            options={accountOptions.map((a) => ({ label: a, value: a }))}
-            value={pubAccount ? [pubAccount] : []}
-            onChange={(v) => setPubAccount(v[0] || '')}
-            columns={1}
-            showCheckMark={false}
-          />
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {accountOptions.map((a) => (
+              <button key={a} onClick={() => setPubAccount(a)} style={{
+                ...chipBase,
+                borderColor: pubAccount === a ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                background: pubAccount === a ? 'var(--primary)' : '#fff',
+                color: pubAccount === a ? '#fff' : 'var(--text-sub)',
+              }}>{a}</button>
+            ))}
+          </div>
         </div>
 
         {/* 状态筛选 */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={sectionTitle}>样品状态（筛选）</div>
-          <Selector
-            options={STATUS_OPTS.map((st) => ({ label: st.label, value: st.key }))}
-            value={[pubStatus]}
-            onChange={(v) => { setPubStatus(v[0] || 'all'); setPubSampleIds([]) }}
-            columns={4}
-            showCheckMark={false}
-          />
+        <div style={{ marginBottom: '14px' }}>
+          <div style={sectionTitle}>样品状态</div>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {STATUS_OPTS.map((st) => (
+              <button key={st.key} onClick={() => { setPubStatus(st.key); setPubSampleIds([]) }} style={{
+                ...chipBase,
+                borderColor: pubStatus === st.key ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                background: pubStatus === st.key ? 'var(--primary)' : '#fff',
+                color: pubStatus === st.key ? '#fff' : 'var(--text-sub)',
+              }}>{st.label}</button>
+            ))}
+          </div>
         </div>
 
         {/* 选择样品 */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={sectionTitle}>
-            {pubAccount ? `选择样品 · ${pubAccount}（共 ${accountFiltered.length} 个）` : `选择样品（共 ${sampleList.length} 个）`}
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ ...sectionTitle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>选择样品 {pubAccount && `· ${pubAccount}`}</span>
+            <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 500 }}>已选 {pubSampleIds.length}/{accountFiltered.length}</span>
           </div>
           {accountFiltered.length === 0 ? (
-            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '16px 0', textAlign: 'center' }}>
+            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center', background: 'rgba(255,255,255,0.4)', borderRadius: '10px' }}>
               {pubAccount ? '该账号暂无样品' : '暂无样品'}
             </div>
           ) : (
-            <div style={{ maxHeight: '46vh', overflowY: 'auto', paddingBottom: '4px' }}>
-              <Selector
-                options={accountFiltered.map((s) => ({ label: s.name, value: s.id, description: s.account }))}
-                value={pubSampleIds}
-                onChange={setPubSampleIds}
-                multiple
-                columns={2}
-                showCheckMark={false}
-              />
+            <div style={{ maxHeight: '44vh', overflowY: 'auto', borderRadius: '10px', background: 'rgba(255,255,255,0.4)', padding: '4px' }}>
+              {accountFiltered.map((s) => {
+                const sel = pubSampleIds.includes(s.id)
+                return (
+                  <button key={s.id} onClick={() => toggleSample(s.id)} style={{
+                    display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
+                    padding: '10px 12px', borderRadius: '8px', border: 'none',
+                    background: sel ? 'var(--primary)' : 'transparent',
+                    color: sel ? '#fff' : 'var(--text-main)',
+                    textAlign: 'left', cursor: 'pointer',
+                    transition: 'background 0.15s',
+                  }}>
+                    <span style={{
+                      width: '20px', height: '20px', minWidth: '20px', borderRadius: '50%',
+                      border: sel ? 'none' : '2px solid #d1d5db',
+                      background: sel ? '#fff' : 'transparent',
+                      color: 'var(--primary)', fontSize: '13px', fontWeight: 700,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    }}>{sel ? '✓' : ''}</span>
+                    <span style={{ flex: 1, fontSize: '14px', fontWeight: sel ? 600 : 500 }}>{s.name}</span>
+                    {s.account && <span style={{ fontSize: '11px', opacity: 0.7 }}>{s.account}</span>}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
       </div>
 
       {/* 底部按钮 */}
-      <div style={{ padding: '12px 20px 24px', display: 'flex', gap: '12px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ padding: '12px 16px 24px', display: 'flex', gap: '12px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
         <button onClick={() => navigate(-1)} style={{
           flex: 1, padding: '14px 0', borderRadius: '12px',
           border: '1.5px solid rgba(0,0,0,0.1)', background: '#f9fafb',
