@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { DatePicker, Popup } from 'antd-mobile'
+import { Popup } from 'antd-mobile'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 
@@ -53,7 +53,6 @@ export function NewPublishPlanPage() {
     const d = new Date()
     return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
   })
-  const [showDatePicker, setShowDatePicker] = useState(false)
   const [pubAccount, setPubAccount] = useState(location.state?.account || '')
   const [pubStatus, setPubStatus] = useState('all')
   const [pubSampleIds, setPubSampleIds] = useState([])
@@ -105,13 +104,23 @@ export function NewPublishPlanPage() {
       </header>
 
       <div style={{ padding: '12px 16px', flex: 1 }}>
-        {/* 发布时间：antd DatePicker 弹出 */}
+        {/* 发布时间：原生 input type=date（浏览器自带日期选择器，最稳定） */}
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>发布时间</div>
-          <div style={fieldBox} onClick={() => setShowDatePicker(true)}>
-            <span>{getDateLabel(publishDateStr)}（{publishDateStr}）</span>
-            <span style={{ color: '#c4c9d0', fontSize: '13px' }}>▾</span>
-          </div>
+          <input
+            type="date"
+            value={publishDateStr}
+            min="2000-01-01"
+            max="2099-12-31"
+            onChange={(e) => { if (e.target.value) setPublishDate(new Date(e.target.value)) }}
+            style={{
+              width: '100%', padding: '13px 14px', borderRadius: '10px',
+              background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
+              fontSize: '15px', color: 'var(--text-main)', boxSizing: 'border-box',
+              fontFamily: 'inherit',
+            }}
+          />
+          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>{getDateLabel(publishDateStr)}</div>
         </div>
 
         {/* 发布账号：圆角按钮 chips */}
@@ -179,35 +188,11 @@ export function NewPublishPlanPage() {
         }}>添加</button>
       </div>
 
-      {/* 日期选择 Popup */}
-      <Popup
-        visible={showDatePicker}
-        onMaskClick={() => setShowDatePicker(false)}
-        bodyStyle={{ borderTopLeftRadius: '16px', borderTopRightRadius: '16px', paddingBottom: '16px' }}
-      >
-        <div style={{ padding: '16px 16px 0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '16px', fontWeight: 700 }}>选择发布日</span>
-            <button onClick={() => setShowDatePicker(false)} style={{
-              background: 'transparent', border: 'none', color: '#9ca3af', fontSize: '20px', cursor: 'pointer', padding: '0 4px',
-            }}>×</button>
-          </div>
-          <DatePicker
-            value={publishDate}
-            onConfirm={(v) => { setPublishDate(v); setShowDatePicker(false) }}
-            title=""
-            confirmText="确定"
-            cancelText=""
-            min={new Date(2000, 0, 1)}
-            max={new Date(2099, 11, 31)}
-          />
-        </div>
-      </Popup>
-
       {/* 样品多选弹层 */}
       <Popup
         visible={showSamples}
         onMaskClick={() => setShowSamples(false)}
+        onClose={() => setShowSamples(false)}
         bodyStyle={{ borderTopLeftRadius: '16px', borderTopRightRadius: '16px', maxHeight: '70vh', overflowY: 'auto' }}
       >
         <div style={{ padding: '16px 16px 24px' }}>
