@@ -69,13 +69,13 @@ export function NewSamplePage() {
           )}
         </Field>
         <Field label="所属账号">
-          <div style={{ display: 'flex', gap: '6px' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {ACCOUNTS.map(a => {
               const selected = account === a
               return (
                 <button key={a} onClick={() => setAccount(a)} style={{
-                  flex: 1, minWidth: 0,
-                  padding: '10px 8px', borderRadius: '999px',
+                  flex: '0 0 auto', minWidth: '92px',
+                  padding: '10px 14px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
                   background: selected
                     ? 'linear-gradient(135deg, #f472b6, #ec4899)'
@@ -83,19 +83,18 @@ export function NewSamplePage() {
                   cursor: 'pointer',
                   transition: 'all 0.15s',
                   boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-                  textAlign: 'center', minHeight: '38px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '2px',
+                  textAlign: 'center', minHeight: '40px',
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  gap: '4px',
                 }}>
                   <span style={{
-                    fontSize: '12px', fontWeight: 600,
+                    fontSize: '13px', fontWeight: 600,
                     color: selected ? '#fff' : 'var(--text-main)',
                     whiteSpace: 'nowrap',
-                    overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{ACCOUNT_NICK[a]}</span>
+                  }}>{a}</span>
                   {selected && (
                     <span style={{
-                      color: '#fff', fontSize: '11px', fontWeight: 700, flexShrink: 0,
+                      color: '#fff', fontSize: '12px', fontWeight: 700, flexShrink: 0,
                     }}>✓</span>
                   )}
                 </button>
