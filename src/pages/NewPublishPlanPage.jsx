@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Picker, Popup } from 'antd-mobile'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 
@@ -34,11 +35,17 @@ const STATUS_OPTS = [
   { key: 'hit', label: '爆单' },
 ]
 
-// 紧凑样式（旧式精致，不堆空间）
 const chipBase = {
   padding: '7px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
   border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
   whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+}
+// 字段行容器（像输入框）
+const fieldBox = {
+  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+  width: '100%', padding: '13px 14px', borderRadius: '10px',
+  background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
+  fontSize: '15px', color: 'var(--text-main)', cursor: 'pointer', boxSizing: 'border-box',
 }
 
 export function NewPublishPlanPage() {
@@ -49,6 +56,7 @@ export function NewPublishPlanPage() {
   const [pubStatus, setPubStatus] = useState('all')
   const [pubSampleIds, setPubSampleIds] = useState([])
   const [dateOffset, setDateOffset] = useState(1)  // 0=今天, 1=明天, 2=后天, 可调
+  const [showSamples, setShowSamples] = useState(false)
 
   const publishDate = fmtDate(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + dateOffset))
   const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
@@ -111,19 +119,25 @@ export function NewPublishPlanPage() {
           </div>
         </div>
 
-        {/* 发布账号 */}
+        {/* 发布账号：antd Picker */}
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>发布账号</div>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {accountOptions.map((a) => (
-              <button key={a} onClick={() => setPubAccount(a)} style={{
-                ...chipBase,
-                borderColor: pubAccount === a ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-                background: pubAccount === a ? 'var(--primary)' : '#fff',
-                color: pubAccount === a ? '#fff' : 'var(--text-sub)',
-              }}>{a}</button>
-            ))}
-          </div>
+          <Picker
+            columns={[accountOptions.map((a) => ({ label: a, value: a }))]}
+            value={pubAccount ? [pubAccount] : []}
+            onConfirm={(v) => setPubAccount(v[0])}
+            onSelect={(v) => setPubAccount(v[0])}
+            title="选择发布账号"
+            confirmText="确定"
+            cancelText="取消"
+          >
+            {(items, { open }) => (
+              <div style={fieldBox} onClick={open}>
+                <span style={{ color: pubAccount ? 'var(--text-main)' : '#9ca3af' }}>{pubAccount || '请选择账号'}</span>
+                <span style={{ color: '#c4c9d0', fontSize: '13px' }}>▾</span>
+              </div>
+            )}
+          </Picker>
         </div>
 
         {/* 状态筛选 */}
@@ -141,43 +155,15 @@ export function NewPublishPlanPage() {
           </div>
         </div>
 
-        {/* 选择样品 */}
+        {/* 选择样品：antd Popup 底部多选 */}
         <div style={{ marginBottom: '12px' }}>
-          <div style={{ ...sectionTitle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>选择样品 {pubAccount && `· ${pubAccount}`}</span>
-            <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: 500 }}>已选 {pubSampleIds.length}/{accountFiltered.length}</span>
+          <div style={sectionTitle}>选择样品 {pubAccount && `· ${pubAccount}`}</div>
+          <div style={fieldBox} onClick={() => setShowSamples(true)}>
+            <span style={{ color: pubSampleIds.length ? 'var(--text-main)' : '#9ca3af' }}>
+              {pubSampleIds.length ? `已选 ${pubSampleIds.length} 个样品` : '点击选择样品'}
+            </span>
+            <span style={{ color: '#c4c9d0', fontSize: '13px' }}>▾</span>
           </div>
-          {accountFiltered.length === 0 ? (
-            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center', background: 'rgba(255,255,255,0.4)', borderRadius: '10px' }}>
-              {pubAccount ? '该账号暂无样品' : '暂无样品'}
-            </div>
-          ) : (
-            <div style={{ maxHeight: '44vh', overflowY: 'auto', borderRadius: '10px', background: 'rgba(255,255,255,0.4)', padding: '4px' }}>
-              {accountFiltered.map((s) => {
-                const sel = pubSampleIds.includes(s.id)
-                return (
-                  <button key={s.id} onClick={() => toggleSample(s.id)} style={{
-                    display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
-                    padding: '10px 12px', borderRadius: '8px', border: 'none',
-                    background: sel ? 'var(--primary)' : 'transparent',
-                    color: sel ? '#fff' : 'var(--text-main)',
-                    textAlign: 'left', cursor: 'pointer',
-                    transition: 'background 0.15s',
-                  }}>
-                    <span style={{
-                      width: '20px', height: '20px', minWidth: '20px', borderRadius: '50%',
-                      border: sel ? 'none' : '2px solid #d1d5db',
-                      background: sel ? '#fff' : 'transparent',
-                      color: 'var(--primary)', fontSize: '13px', fontWeight: 700,
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    }}>{sel ? '✓' : ''}</span>
-                    <span style={{ flex: 1, fontSize: '14px', fontWeight: sel ? 600 : 500 }}>{s.name}</span>
-                    {s.account && <span style={{ fontSize: '11px', opacity: 0.7 }}>{s.account}</span>}
-                  </button>
-                )
-              })}
-            </div>
-          )}
         </div>
       </div>
 
@@ -195,6 +181,56 @@ export function NewPublishPlanPage() {
           boxShadow: '0 4px 14px rgba(244,114,182,0.3)',
         }}>添加</button>
       </div>
+
+      {/* 样品多选弹层 */}
+      <Popup
+        visible={showSamples}
+        onMaskClick={() => setShowSamples(false)}
+        bodyStyle={{ borderTopLeftRadius: '16px', borderTopRightRadius: '16px', maxHeight: '70vh', overflowY: 'auto' }}
+      >
+        <div style={{ padding: '16px 16px 24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)' }}>
+              选择样品 {pubAccount ? `· ${pubAccount}` : ''}
+            </span>
+            <span style={{ fontSize: '12px', color: '#9ca3af' }}>已选 {pubSampleIds.length}</span>
+          </div>
+          {accountFiltered.length === 0 ? (
+            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>
+              {pubAccount ? '该账号暂无样品' : '暂无样品'}
+            </div>
+          ) : (
+            <>
+              {accountFiltered.map((s) => {
+                const sel = pubSampleIds.includes(s.id)
+                return (
+                  <button key={s.id} onClick={() => toggleSample(s.id)} style={{
+                    display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
+                    padding: '11px 6px', borderRadius: '8px', border: 'none',
+                    background: 'transparent', color: 'var(--text-main)',
+                    textAlign: 'left', cursor: 'pointer', borderBottom: '1px solid rgba(0,0,0,0.04)',
+                  }}>
+                    <span style={{
+                      width: '22px', height: '22px', minWidth: '22px', borderRadius: '6px',
+                      border: sel ? 'none' : '2px solid #d1d5db',
+                      background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'transparent',
+                      color: '#fff', fontSize: '14px', fontWeight: 700,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    }}>{sel ? '✓' : ''}</span>
+                    <span style={{ flex: 1, fontSize: '15px', fontWeight: sel ? 600 : 500 }}>{s.name}</span>
+                    {s.account && <span style={{ fontSize: '11px', color: '#9ca3af' }}>{s.account}</span>}
+                  </button>
+                )
+              })}
+            </>
+          )}
+          <button onClick={() => setShowSamples(false)} style={{
+            width: '100%', marginTop: '14px', padding: '13px 0', borderRadius: '12px', border: 'none',
+            background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+            fontSize: '15px', fontWeight: 600, cursor: 'pointer',
+          }}>完成</button>
+        </div>
+      </Popup>
     </div>
   )
 }
