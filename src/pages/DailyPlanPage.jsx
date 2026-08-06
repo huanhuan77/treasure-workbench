@@ -131,9 +131,10 @@ export function DailyPlanPage() {
   const plan = data[viewDate] || { tasks: [] }
   const [tasks, setTasks] = useState(plan.tasks)
 
-  // 发布计划（记录明天每个账号要发布的产品）—— 列表读取
+  // 发布计划（按所选日期读取，支持今天/明天/后天）
   const [publishData, setPublishData] = useState(loadPublish)
-  const publishDate = tomorrow
+  const [publishOffset, setPublishOffset] = useState(1)  // 0=今天, 1=明天, 2=后天
+  const publishDate = addDays(today, publishOffset)
   const pubPlans = publishData[publishDate] || []
 
   // 监听新页面添加后的事件，刷新列表
@@ -403,14 +404,29 @@ export function DailyPlanPage() {
       {tab === 0 ? (
         /* ============ 发布计划视图（纯文本风格：按账号分组，同账号同产品合并数量） ============ */
         <div style={{ padding: '16px 20px' }}>
+          {/* 日期切换：今天/明天/后天 */}
+          <div style={{ display: 'flex', gap: '6px', paddingBottom: '12px' }}>
+            {[{off:0,label:'今天'},{off:1,label:'明天'},{off:2,label:'后天'}].map(({off,label}) => (
+              <button key={off} onClick={() => setPublishOffset(off)} style={{
+                padding: '7px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+                border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
+                whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                borderColor: publishOffset === off ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                background: publishOffset === off ? 'rgba(244,114,182,0.1)' : '#fff',
+                color: publishOffset === off ? 'var(--primary)' : 'var(--text-sub)',
+              }}>{label}</button>
+            ))}
+          </div>
           {aggregated.length === 0 ? (
             <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--text-sub)' }}>
-              <p style={{ fontSize: '14px', margin: 0 }}>明天还没有发布计划</p>
+              <p style={{ fontSize: '14px', margin: 0 }}>{publishOffset === 0 ? '今天' : publishOffset === 1 ? '明天' : '后天'}还没有发布计划</p>
               <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>点右下角 + 记录「账号 × 产品」</p>
             </div>
           ) : (
             <div style={{ paddingBottom: '20px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-sub)', fontWeight: 600, marginBottom: '16px' }}>发布时间 · {publishDate}</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-sub)', fontWeight: 600, marginBottom: '16px' }}>
+                发布时间 · {publishDate}（{publishOffset === 0 ? '今天' : publishOffset === 1 ? '明天' : '后天'}）
+              </div>
               {Object.keys(groupedAgg).map((acc) => (
                 <div key={acc} style={{ marginBottom: '24px' }}>
                   <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '10px' }}>{acc}</div>

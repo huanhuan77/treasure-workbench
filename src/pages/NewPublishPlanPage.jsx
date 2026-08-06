@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Picker, Popup } from 'antd-mobile'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { DatePicker, Popup } from 'antd-mobile'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 
@@ -21,26 +21,19 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
 
-const DATE_OPTS = [
-  { offset: 0, label: '今天' },
-  { offset: 1, label: '明天' },
-  { offset: 2, label: '后天' },
-  { offset: 3, label: '3天后' },
-  { offset: 7, label: '1周后' },
-]
 const STATUS_OPTS = [
   { key: 'all', label: '全部' },
   { key: 'unpublished', label: '未发布' },
   { key: 'published', label: '已发布' },
   { key: 'hit', label: '爆单' },
 ]
+const ACCOUNT_OPTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 
 const chipBase = {
   padding: '7px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
   border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
   whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
 }
-// 字段行容器（像输入框）
 const fieldBox = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   width: '100%', padding: '13px 14px', borderRadius: '10px',
@@ -50,16 +43,23 @@ const fieldBox = {
 
 export function NewPublishPlanPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { samples } = useStore()
   const { show } = useToast()
-  const [pubAccount, setPubAccount] = useState('')
+  // 默认从发布计划视图选中的日期跳转过来；若没有则默认明天
+  const initDateStr = location.state?.publishDate
+  const [publishDate, setPublishDate] = useState(() => {
+    if (initDateStr) return new Date(initDateStr)
+    const d = new Date()
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)
+  })
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [pubAccount, setPubAccount] = useState(location.state?.account || '')
   const [pubStatus, setPubStatus] = useState('all')
   const [pubSampleIds, setPubSampleIds] = useState([])
-  const [dateOffset, setDateOffset] = useState(1)  // 0=今天, 1=明天, 2=后天, 可调
   const [showSamples, setShowSamples] = useState(false)
 
-  const publishDate = fmtDate(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + dateOffset))
-  const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
+  const publishDateStr = fmtDate(publishDate)
   const sampleList = (samples || []).filter((s) => s.status !== 'abandoned' && (pubStatus === 'all' || s.status === pubStatus))
   const accountFiltered = pubAccount
     ? sampleList.filter((s) => s.account === pubAccount)
@@ -72,15 +72,16 @@ export function NewPublishPlanPage() {
     if (chosen.length === 0) return
     let data = {}
     try { data = JSON.parse(localStorage.getItem(PUBLISH_KEY) || '{}') } catch { data = {} }
-    const arr = data[publishDate] || []
+    const arr = data[publishDateStr] || []
     for (const s of chosen) {
       arr.push({ id: uid(), account: pubAccount, sampleId: s.id, productName: s.name, createdAt: Date.now() })
     }
-    data[publishDate] = arr
+    data[publishDateStr] = arr
     localStorage.setItem(PUBLISH_KEY, JSON.stringify(data))
     window.dispatchEvent(new Event('publishPlanUpdated'))
-    show(`已记录：${chosen.length} 个样品 → ${pubAccount}`, 'success')
+    // 通知 DailyPlanPage 跳转到对应日期视图
     navigate(-1)
+    show(`已记录：${chosen.length} 个样品 → ${pubAccount}`, 'success')
   }
 
   const toggleSample = (id) => {
@@ -99,45 +100,41 @@ export function NewPublishPlanPage() {
           alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>‹</button>
         <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
-          添加发布计划（{getDateLabel(publishDate)}）
+          添加发布计划（{getDateLabel(publishDateStr)}）
         </h1>
       </header>
 
       <div style={{ padding: '12px 16px', flex: 1 }}>
-        {/* 发布时间选择 */}
+        {/* 发布时间：antd DatePicker 弹出 */}
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>发布时间</div>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {DATE_OPTS.map((d) => (
-              <button key={d.offset} onClick={() => setDateOffset(d.offset)} style={{
-                ...chipBase,
-                borderColor: dateOffset === d.offset ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-                background: dateOffset === d.offset ? 'rgba(244,114,182,0.1)' : '#fff',
-                color: dateOffset === d.offset ? 'var(--primary)' : 'var(--text-sub)',
-              }}>{d.label}</button>
-            ))}
+          <div style={fieldBox} onClick={() => setShowDatePicker(true)}>
+            <span>{getDateLabel(publishDateStr)}（{publishDateStr}）</span>
+            <span style={{ color: '#c4c9d0', fontSize: '13px' }}>▾</span>
           </div>
         </div>
 
-        {/* 发布账号：antd Picker */}
+        {/* 发布账号：圆角按钮 chips */}
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>发布账号</div>
-          <Picker
-            columns={[accountOptions.map((a) => ({ label: a, value: a }))]}
-            value={pubAccount ? [pubAccount] : []}
-            onConfirm={(v) => setPubAccount(v[0])}
-            onSelect={(v) => setPubAccount(v[0])}
-            title="选择发布账号"
-            confirmText="确定"
-            cancelText="取消"
-          >
-            {(items, { open }) => (
-              <div style={fieldBox} onClick={open}>
-                <span style={{ color: pubAccount ? 'var(--text-main)' : '#9ca3af' }}>{pubAccount || '请选择账号'}</span>
-                <span style={{ color: '#c4c9d0', fontSize: '13px' }}>▾</span>
-              </div>
-            )}
-          </Picker>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {ACCOUNT_OPTS.map((a) => {
+              const selected = pubAccount === a
+              return (
+                <button key={a} onClick={() => setPubAccount(a)} style={{
+                  ...chipBase,
+                  minWidth: '96px',
+                  padding: '10px 14px',
+                  borderColor: selected ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                  background: selected
+                    ? 'linear-gradient(135deg, #f472b6, #ec4899)'
+                    : '#fff',
+                  color: selected ? '#fff' : 'var(--text-main)',
+                  boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
+                }}>{a}</button>
+              )
+            })}
+          </div>
         </div>
 
         {/* 状态筛选 */}
@@ -181,6 +178,31 @@ export function NewPublishPlanPage() {
           boxShadow: '0 4px 14px rgba(244,114,182,0.3)',
         }}>添加</button>
       </div>
+
+      {/* 日期选择 Popup */}
+      <Popup
+        visible={showDatePicker}
+        onMaskClick={() => setShowDatePicker(false)}
+        bodyStyle={{ borderTopLeftRadius: '16px', borderTopRightRadius: '16px', paddingBottom: '16px' }}
+      >
+        <div style={{ padding: '16px 16px 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ fontSize: '16px', fontWeight: 700 }}>选择发布日</span>
+            <button onClick={() => setShowDatePicker(false)} style={{
+              background: 'transparent', border: 'none', color: '#9ca3af', fontSize: '20px', cursor: 'pointer', padding: '0 4px',
+            }}>×</button>
+          </div>
+          <DatePicker
+            value={publishDate}
+            onConfirm={(v) => { setPublishDate(v); setShowDatePicker(false) }}
+            title=""
+            confirmText="确定"
+            cancelText=""
+            min={new Date(2000, 0, 1)}
+            max={new Date(2099, 11, 31)}
+          />
+        </div>
+      </Popup>
 
       {/* 样品多选弹层 */}
       <Popup
