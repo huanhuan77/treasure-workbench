@@ -38,7 +38,6 @@ export function NewTransactionPage() {
   const [remark, setRemark] = useState('')
 
   const types = type === 'income' ? INCOME_TYPES : EXPENSE_TYPES
-  const accounts = [...new Set(transactions.filter(t => t.account).map(t => t.account))]
 
   const handleSave = () => {
     if (!amount || Number(amount) <= 0) { show('请输入金额', 'error'); return }
@@ -79,13 +78,23 @@ export function NewTransactionPage() {
           </div>
         </Field>
         <Field label="账号">
-          <div style={{ position: 'relative' }}>
-            <select value={account} onChange={e => setAccount(e.target.value)}
-              style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: '36px', color: account ? 'var(--text-main)' : 'var(--text-sub)' }}>
-              <option value="">请选择账号</option>
-              {accounts.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
-            <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {(['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']).map(a => {
+              const selected = account === a
+              return (
+                <button key={a} onClick={() => setAccount(a)} style={{
+                  padding: '9px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+                  border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
+                  whiteSpace: 'nowrap', minWidth: '96px',
+                  borderColor: selected ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                  background: selected
+                    ? 'linear-gradient(135deg, #f472b6, #ec4899)'
+                    : '#fff',
+                  color: selected ? '#fff' : 'var(--text-main)',
+                  boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
+                }}>{a}</button>
+              )
+            })}
           </div>
         </Field>
         <Field label="金额" required>
