@@ -155,7 +155,10 @@ export function ProductDetailPage() {
     else if (copyFilter === '爆单') list = list.filter((c) => c.hasHot)
     else if (copyFilter === '未用过') list = list.filter((c) => !c.used)
     return [...list].sort((a, b) => {
-      if (!sortPending && a.hasOrder !== b.hasOrder) return b.hasOrder ? 1 : -1
+      if (!sortPending) {
+        if (a.hasHot !== b.hasHot) return b.hasHot ? 1 : -1  // 爆单优先
+        if (a.hasOrder !== b.hasOrder) return b.hasOrder ? 1 : -1  // 其次出单
+      }
       return (b.createdAt || 0) - (a.createdAt || 0)
     })
   })()
@@ -247,6 +250,11 @@ export function ProductDetailPage() {
   // 标记/取消「爆单」（独立于出单）
   const toggleHot = (copyId, current) => {
     updateCopy(id, copyId, { hasHot: !current })
+    // 标记爆单后延时 1 秒再按爆单排序，让用户看清自己标记的是哪条
+    if (!current) {
+      setSortPending(true)
+      setTimeout(() => setSortPending(false), 1000)
+    }
     show(!current ? '🔥 已标记「爆单」' : '已取消「爆单」', 'success')
   }
 
