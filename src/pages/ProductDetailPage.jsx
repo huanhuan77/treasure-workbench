@@ -222,13 +222,12 @@ export function ProductDetailPage() {
     show(`已生成「${style}」风格文案`, 'success')
   }
 
-  // 复制话题：合并产品级话题和该文案的话题
+  // 复制话题：合并产品级话题和该文案的话题（不标记用过）
   const handleCopyTopics = async (topics, copyId) => {
     const merged = [...new Set([...(product.topics || []), ...(topics || [])])]
     const text = merged.join(' ')
     const ok = await copyText(text)
     show(ok ? '话题已复制' : '复制失败', ok ? 'success' : 'error')
-    if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
   }
 
   const toggleOrder = (copyId, current, existingUsedDate, preview) => {
@@ -805,10 +804,10 @@ function CopyCard({
         {copy.hasOrder && (() => {
           return (
             <span style={{
-              fontSize: '13px', color: '#dc2626', background: 'linear-gradient(135deg,#fef3c7,#fde68a)',
+              fontSize: '13px', color: '#047857', background: 'linear-gradient(135deg,#d1fae5,#a7f3d0)',
               padding: '4px 12px', borderRadius: '8px', fontWeight: 700,
-              boxShadow: '0 2px 8px rgba(251,191,36,0.35)',
-            }}>🔥 出单</span>
+              boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+            }}>💰 出单</span>
           )
         })()}
         {copy.hasHot && (() => {
@@ -864,10 +863,10 @@ function CopyCard({
           {copy.used ? '✓ 用过' : '标记用过'}
         </ActionBtn>
         <ActionBtn active={copy.hasOrder} onClick={onToggleOrder} activeColor="success">
-          {copy.hasOrder ? '取消出单' : '标记出单'}
+          {copy.hasOrder ? '💰 取消出单' : '💰 出单'}
         </ActionBtn>
         <ActionBtn active={copy.hasHot} onClick={onToggleHot} activeColor="hot">
-          {copy.hasHot ? '取消爆单' : '🔥爆单'}
+          {copy.hasHot ? '🔥 取消爆单' : '🔥 爆单'}
         </ActionBtn>
         <ActionBtn onClick={onEdit} tone="neutral">
           ✎ 编辑
