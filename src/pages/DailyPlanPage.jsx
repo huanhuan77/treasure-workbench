@@ -132,6 +132,11 @@ export function DailyPlanPage() {
   const [tasks, setTasks] = useState(plan.tasks)
 
   // 发布计划（按所选日期读取，支持今天/明天/后天）
+const ACCOUNT_CARD_COLOR = {
+  '广东刘亦菲': '#fb923c',  // 橙
+  '晚梨不吃梨': '#3b82f6',  // 蓝
+  '努力成为富婆': '#a855f7',  // 紫
+}
   const [publishData, setPublishData] = useState(loadPublish)
   const [publishOffset, setPublishOffset] = useState(1)  // 0=今天, 1=明天, 2=后天
   const publishDate = addDays(today, publishOffset)
@@ -149,23 +154,31 @@ export function DailyPlanPage() {
   const groupedPlans = {}
   pubPlans.forEach((p) => { (groupedPlans[p.account] = groupedPlans[p.account] || []).push(p) })
 
-  // 按 (账号, 产品) 聚合：同账号同产品重复添加自动合并显示数量
+  // 按 (账号, 样品) 聚合：同账号同样品重复添加自动合并显示数量（兼容旧数据 productId 字段）
+  const itemKey = (p) => p.sampleId || p.productId
   const aggregated = (() => {
     const map = new Map()
     for (const p of pubPlans) {
-      const key = `${p.account}__${p.productId}`
+      const key = `${p.account}__${itemKey(p)}`
       if (map.has(key)) {
         const cur = map.get(key)
         cur.count += 1
         cur.ids.push(p.id)
       } else {
-        map.set(key, { account: p.account, productId: p.productId, productName: p.productName, category: p.category, count: 1, ids: [p.id] })
+        map.set(key, { account: p.account, sampleId: itemKey(p), productName: p.productName, category: p.category, count: 1, ids: [p.id] })
       }
     }
     return [...map.values()]
   })()
   const groupedAgg = {}
   aggregated.forEach((p) => { (groupedAgg[p.account] = groupedAgg[p.account] || []).push(p) })
+
+  // 删除某账号下的某个样品（聚合组）
+  const deletePublishAgg = (account, sampleId) => {
+    const nd = { ...publishData, [publishDate]: pubPlans.filter((x) => !(x.account === account && (x.sampleId || x.productId) === sampleId)) }
+    setPublishData(nd); savePublish(nd)
+    show('已删除', 'success')
+  }
 
   // 渲染期间检测日期变化，自动同步任务列表（解决跨天 tasks 未更新问题）
   const prevViewDateRef = useRef(viewDate)
@@ -428,15 +441,46 @@ export function DailyPlanPage() {
                 发布时间 · {publishDate}（{publishOffset === 0 ? '今天' : publishOffset === 1 ? '明天' : '后天'}）
               </div>
               {Object.keys(groupedAgg).map((acc) => (
-                <div key={acc} style={{ marginBottom: '24px' }}>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '10px' }}>{acc}</div>
+                <div key={acc} style={{
+                  marginBottom: '16px',
+                  background: '#fff', borderRadius: '14px', padding: '16px',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.02)',
+                  border: '1px solid rgba(0,0,0,0.04)',
+                }}>
+                  {/* 卡片头部：账号名 */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '6px', height: '18px', borderRadius: '3px', background: (ACCOUNT_CARD_COLOR[acc] || '#8b6f7a') }} />
+                      <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>{acc}</span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>{groupedAgg[acc].length} 项</span>
+                  </div>
+                  {/* 样品行：每行一个子项（带左侧色条 + 圆角） */}
                   {groupedAgg[acc].map((p) => (
-                    <div key={p.productId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0', fontSize: '16px', color: 'var(--text-main)' }}>
-                      <span>
-                        {p.productName}
-                        {p.count > 1 && <span style={{ color: 'var(--text-sub)', marginLeft: '8px' }}>×{p.count}</span>}
-                      </span>
-                      <button onClick={() => deletePublishAgg(p.account, p.productId)} title="删除" style={{ border: 'none', background: 'transparent', color: '#ef4444', fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>×</button>
+                    <div key={p.sampleId} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 12px', borderRadius: '10px',
+                      background: 'rgba(0,0,0,0.02)',
+                      marginBottom: '6px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                        <span style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: (ACCOUNT_CARD_COLOR[acc] || '#8b6f7a'), opacity: 0.5 }} />
+                        <span style={{ fontSize: '14px', color: 'var(--text-main)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {p.productName}
+                        </span>
+                        {p.count > 1 && (
+                          <span style={{
+                            fontSize: '11px', fontWeight: 700, color: '#fff',
+                            background: 'linear-gradient(135deg, #f472b6, #ec4899)',
+                            padding: '2px 8px', borderRadius: '10px', minWidth: '22px', textAlign: 'center', flexShrink: 0,
+                          }}>×{p.count}</span>
+                        )}
+                      </div>
+                      <button onClick={() => deletePublishAgg(p.account, p.sampleId)} title="删除" style={{
+                        border: 'none', background: 'rgba(239,68,68,0.08)', color: '#ef4444',
+                        fontSize: '14px', cursor: 'pointer', padding: '4px 10px',
+                        borderRadius: '8px', lineHeight: 1, fontWeight: 600, flexShrink: 0,
+                      }}>×</button>
                     </div>
                   ))}
                 </div>
