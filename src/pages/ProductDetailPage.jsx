@@ -151,7 +151,7 @@ export function ProductDetailPage() {
   const displayedCopies = (() => {
     let list = product.copies
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
-    else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder)
+    else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder && !c.hasHot)
     else if (copyFilter === '爆单') list = list.filter((c) => c.hasHot)
     else if (copyFilter === '未用过') list = list.filter((c) => !c.used)
     return [...list].sort((a, b) => {
