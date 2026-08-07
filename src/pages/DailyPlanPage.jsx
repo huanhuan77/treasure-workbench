@@ -138,7 +138,16 @@ const ACCOUNT_CARD_COLOR = {
   '努力成为富婆': '#a855f7',  // 紫
 }
   const [publishData, setPublishData] = useState(loadPublish)
-  const [publishOffset, setPublishOffset] = useState(1)  // 0=今天, 1=明天, 2=后天
+  // 发布计划视图的日期偏移持久化（sessionStorage），切页面/跳回后保持所选日期
+  const [publishOffset, setPublishOffset] = useState(() => {
+    try {
+      const v = sessionStorage.getItem('pubPlanOffset')
+      return v !== null ? Number(v) : 1
+    } catch { return 1 }
+  })
+  useEffect(() => {
+    try { sessionStorage.setItem('pubPlanOffset', String(publishOffset)) } catch (e) {}
+  }, [publishOffset])
   const publishDate = addDays(today, publishOffset)
   const pubPlans = publishData[publishDate] || []
 
@@ -313,7 +322,7 @@ const ACCOUNT_CARD_COLOR = {
     if (m) {
       try { localStorage.setItem(FAB_KEY, JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else {
-      if (tab === 0) navigate('/publish-plan/new')
+      if (tab === 0) navigate('/publish-plan/new', { state: { publishDate } })
       else setShowModal(true)
     }
   }
