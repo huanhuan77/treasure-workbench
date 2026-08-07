@@ -445,19 +445,19 @@ const ACCOUNT_CARD_COLOR = {
               <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>点右下角 + 记录「账号 × 产品」</p>
             </div>
           ) : (
-            <div style={{ paddingBottom: '20px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-sub)', fontWeight: 600, marginBottom: '16px' }}>
+            <div style={{ paddingBottom: '12px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-sub)', fontWeight: 600, marginBottom: '8px' }}>
                 发布时间 · {publishDate}（{publishOffset === 0 ? '今天' : publishOffset === 1 ? '明天' : '后天'}）
               </div>
               {Object.keys(groupedAgg).map((acc) => (
                 <div key={acc} style={{
-                  marginBottom: '16px',
-                  background: '#fff', borderRadius: '14px', padding: '16px',
+                  marginBottom: '10px',
+                  background: '#fff', borderRadius: '12px', padding: '12px',
                   boxShadow: '0 2px 12px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.02)',
                   border: '1px solid rgba(0,0,0,0.04)',
                 }}>
                   {/* 卡片头部：账号名 */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '10px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', paddingBottom: '6px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ width: '6px', height: '18px', borderRadius: '3px', background: (ACCOUNT_CARD_COLOR[acc] || '#8b6f7a') }} />
                       <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>{acc}</span>
@@ -468,9 +468,9 @@ const ACCOUNT_CARD_COLOR = {
                   {groupedAgg[acc].map((p) => (
                     <div key={p.sampleId} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '10px 12px', borderRadius: '10px',
+                      padding: '7px 10px', borderRadius: '8px',
                       background: 'rgba(0,0,0,0.02)',
-                      marginBottom: '6px',
+                      marginBottom: '3px',
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
                         <span style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: (ACCOUNT_CARD_COLOR[acc] || '#8b6f7a'), opacity: 0.5 }} />
