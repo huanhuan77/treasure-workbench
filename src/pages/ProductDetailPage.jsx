@@ -242,7 +242,7 @@ export function ProductDetailPage() {
     // 标记出单后延时 1 秒再按爆单排序，让用户看清自己标记的是哪条
     if (!current) {
       setSortPending(true)
-      setTimeout(() => setSortPending(false), 1000)
+      setTimeout(() => setSortPending(false), 2500)
     }
     show(!current ? `已标记「出单」：${preview}` : `已取消出单：${preview}`, 'success')
   }
@@ -253,7 +253,7 @@ export function ProductDetailPage() {
     // 标记爆单后延时 1 秒再按爆单排序，让用户看清自己标记的是哪条
     if (!current) {
       setSortPending(true)
-      setTimeout(() => setSortPending(false), 1000)
+      setTimeout(() => setSortPending(false), 2500)
     }
     show(!current ? '🔥 已标记「爆单」' : '已取消「爆单」', 'success')
   }
