@@ -62,10 +62,32 @@ function AutoBackup() {
         }
       } catch (e){}
     }
-    // 首次延迟 60 秒避免影响首屏加载，之后每 3 小时自动同步
+    // 距上次同步超过 3 小时才算"需要同步"（首次无记录也视为需要）
+    const SYNC_INTERVAL = 3 * 60 * 60 * 1000
+    const shouldSync = () => {
+      const last = localStorage.getItem(LAST_SYNC_KEY)
+      if (!last) return true
+      const lastTime = new Date(last).getTime()
+      if (Number.isNaN(lastTime)) return true
+      return Date.now() - lastTime >= SYNC_INTERVAL
+    }
+    // iOS PWA 切后台会冻结 setInterval，改为：
+    //  1) 首次延迟 60 秒做一次初始同步
+    //  2) 回到前台 / 网络恢复时检查是否超过间隔，超过则补同步
     const first = setTimeout(doBackup, 60000)
-    const interval = setInterval(doBackup, 3 * 60 * 60 * 1000)
-    return () => { clearTimeout(first); clearInterval(interval) }
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && shouldSync()) doBackup()
+    }
+    const onOnline = () => {
+      if (shouldSync()) doBackup()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('online', onOnline)
+    return () => {
+      clearTimeout(first)
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('online', onOnline)
+    }
   }, [show])
   return null
 }
