@@ -19,7 +19,6 @@ const STATUS_ORDER = ['unpublished', 'hit', 'published', 'abandoned']
 const STATUS_LIST = STATUS_ORDER.map((k) => ({ key: k, ...STATUS[k] }))
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
-const ACCOUNT_NICK = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆', '广东刘亦菲': '广东刘亦菲', '晚梨不吃梨': '晚梨不吃梨', '努力成为富婆': '努力成为富婆' }
 const ACCOUNT_COLOR = {
   '广东刘亦菲': { c: '#c2410c', bg: 'rgba(251,146,60,0.16)' },
   '晚梨不吃梨': { c: '#1d4ed8', bg: 'rgba(59,130,246,0.16)' },
@@ -200,8 +199,8 @@ export function SamplesPage() {
         {ACCOUNTS.map((a) => {
           const col = ACCOUNT_COLOR[a]
           return (
-            <button key={a} onClick={() => { setAccountFilter(a); setFilter('unpublished'); sessionStorage.setItem('samples_account', a) }} style={acctChipStyle(accountFilter === a, ACCOUNT_NICK[a], col.c, col.bg)}>
-              {ACCOUNT_NICK[a]} {acctStats[a] || 0}
+            <button key={a} onClick={() => { setAccountFilter(a); setFilter('unpublished'); sessionStorage.setItem('samples_account', a) }} style={acctChipStyle(accountFilter === a, a, col.c, col.bg)}>
+              {a} {acctStats[a] || 0}
             </button>
           )
         })}
@@ -364,7 +363,7 @@ function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, fil
           {/* 第一行：产品名 + 账号 + 状态 */}
           <div style={{ paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
-            {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{ACCOUNT_NICK[s.account]}</span>}
+            {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.account}</span>}
             <div style={{ flex: 1 }} />
             {st && <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>}
           </div>
@@ -439,7 +438,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
             color: form.account ? 'var(--text-main)' : 'var(--text-sub)',
           }}>
             <option value="">请选择</option>
-            {ACCOUNTS.map((a) => <option key={a} value={a}>{a}（{ACCOUNT_NICK[a]}）</option>)}
+            {ACCOUNTS.map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
           <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
         </div>

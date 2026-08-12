@@ -13,7 +13,6 @@ const STATUS = {
 }
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
-const ACCOUNT_NICK = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
 
 function PageHeader({ title, onBack }) {
   return (
@@ -103,7 +102,7 @@ export function EditSamplePage() {
                     color: selected ? '#fff' : 'var(--text-main)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{ACCOUNT_NICK[a]}</span>
+                  }}>{a}</span>
                   {selected && (
                     <span style={{
                       color: '#fff', fontSize: '11px', fontWeight: 700, flexShrink: 0,

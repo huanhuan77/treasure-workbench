@@ -13,7 +13,6 @@ const STATUS = {
 }
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
-const ACCOUNT_NICK = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
 
 function PageHeader({ title, onBack }) {
   return (
