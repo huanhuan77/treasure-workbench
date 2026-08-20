@@ -88,6 +88,9 @@ export function BackupPage() {
         },
         body: JSON.stringify(body),
       })
+      if (res.status === 401) throw new Error('Token 无效或已过期')
+      if (res.status === 403) throw new Error('GitHub API 限流，或 Token 缺少 gist 权限')
+      if (res.status === 404) throw new Error('Gist 不存在，或 Token 缺少 gist 权限（请改用带 gist scope 的 token，不是 repo）')
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const result = await res.json()
       if (!gistId) {
@@ -294,7 +297,7 @@ export function BackupPage() {
             </button>
           </div>
           <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--gray-400)' }}>
-            需要 repo 权限的 token，数据存储在私密 Gist 中
+            需要 <b>gist</b> 权限的 token（不是 repo），数据存储在私密 Gist 中。在 GitHub → Settings → Developer settings → Personal access tokens 勾选 gist 生成。
           </p>
 
           <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
