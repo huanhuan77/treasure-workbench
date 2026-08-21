@@ -61,6 +61,13 @@ export function SamplesPage() {
     return map[v] || v || 'all'
   })
   const [searchKeyword, setSearchKeyword] = useState('')
+  // 隐藏样品卡上的账号标签（隐私/展示场景），开关持久化到本地
+  const [hideAccount, setHideAccount] = useState(() => localStorage.getItem('samples_hide_account') === '1')
+  const toggleHideAccount = () => {
+    const next = !hideAccount
+    setHideAccount(next)
+    localStorage.setItem('samples_hide_account', next ? '1' : '0')
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -168,7 +175,16 @@ export function SamplesPage() {
   return (
     <div className="app-container">
       <header style={{ padding: 'calc(20px + var(--safe-top)) 20px 12px' }}>
-        <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>样品记录</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>样品记录</h1>
+          <button onClick={toggleHideAccount} title={hideAccount ? '点击显示账号标签' : '点击隐藏账号标签'} style={{
+            padding: '5px 12px', borderRadius: '999px', border: '1px solid rgba(99,102,241,0.35)',
+            background: hideAccount ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.5)',
+            color: hideAccount ? '#4f46e5' : 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+          }}>
+            {hideAccount ? '🙈 显示账号' : '👁 隐藏账号'}
+          </button>
+        </div>
         <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
           共 {Object.values(statusStats).reduce((a,b) => a + b, 0)} 个样品
           {' · '}{STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.emoji}${statusStats[s.key]}`).join('  ')}
@@ -239,7 +255,7 @@ export function SamplesPage() {
 
                   return <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} ac={ac}
                     swipedId={swipedId} setSwipedId={setSwipedId}
-                    filter={filter} accountFilter={accountFilter}
+                    filter={filter} accountFilter={accountFilter} hideAccount={hideAccount}
                     onEdit={() => {
                       sessionStorage.setItem('samples_scroll', String(window.scrollY))
                       sessionStorage.setItem('samples_filter', filter)
@@ -314,7 +330,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, filter, accountFilter, onEdit, onDelete }) {
+function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, filter, accountFilter, hideAccount, onEdit, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
   const isSwiped = swipedId === s.id
   const style = {
@@ -363,7 +379,7 @@ function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, fil
           {/* 第一行：产品名 + 账号 + 状态 */}
           <div style={{ paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
-            {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.account}</span>}
+            {!hideAccount && s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.account}</span>}
             <div style={{ flex: 1 }} />
             {st && <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>}
           </div>
