@@ -7,7 +7,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { formatDate, todayStr, deadlineDesc, addDays } from '../utils/helpers'
-import { isAccountsHidden, setAccountsHidden, anonAccount } from '../utils/accountVis'
+import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 
 // 样品状态（去掉投流/出单后改为手动选择）
 const STATUS = {
@@ -213,11 +213,11 @@ export function SamplesPage() {
       {/* 账号筛选 */}
       <div style={{ display: 'flex', gap: '8px', padding: '6px 16px 12px', overflowX: 'auto' }}>
         <button onClick={() => { setAccountFilter('all'); setFilter('unpublished') }} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899', 'rgba(244,114,182,0.16)')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
-        {ACCOUNTS.map((a) => {
+        {!hideAccount && ACCOUNTS.map((a) => {
           const col = ACCOUNT_COLOR[a]
           return (
             <button key={a} onClick={() => { setAccountFilter(a); setFilter('unpublished'); sessionStorage.setItem('samples_account', a) }} style={acctChipStyle(accountFilter === a, a, col.c, col.bg)}>
-              {anonAccount(a, hideAccount, ACCOUNTS)} {acctStats[a] || 0}
+              {a} {acctStats[a] || 0}
             </button>
           )
         })}
@@ -380,7 +380,7 @@ function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, fil
           {/* 第一行：产品名 + 账号 + 状态 */}
           <div style={{ paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
-            {!hideAccount && s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.account}</span>}
+            {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{hideAccount ? '***' : s.account}</span>}
             <div style={{ flex: 1 }} />
             {st && <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>}
           </div>
