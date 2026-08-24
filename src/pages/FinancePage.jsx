@@ -4,6 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
 import { formatDate } from '../utils/helpers'
+import { isAccountsHidden, setAccountsHidden, anonAccount } from '../utils/accountVis'
 
 const CATEGORIES = {
   // 收入类
@@ -35,6 +36,13 @@ export function FinancePage() {
   const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear())
   const [sortBy, setSortBy] = useState('date_desc')
   const [showMoreCat, setShowMoreCat] = useState(false)
+  // 隐藏账号（隐私/展示场景），与样品页共用全局开关
+  const [hideAccount, setHideAccount] = useState(isAccountsHidden)
+  const toggleHideAccount = () => {
+    const next = !hideAccount
+    setHideAccount(next)
+    setAccountsHidden(next)
+  }
 
   // 点击表头箭头切换排序（再次点击同一字段则反序）
   const toggleSort = (field) => {
@@ -93,7 +101,16 @@ export function FinancePage() {
       <header style={{
         padding: 'calc(20px + var(--safe-top)) 20px 16px',
       }}>
-        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>收支明细</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>收支明细</h1>
+          <button onClick={toggleHideAccount} title={hideAccount ? '点击显示账号' : '点击隐藏账号'} style={{
+            padding: '5px 12px', borderRadius: '999px', border: '1px solid rgba(99,102,241,0.35)',
+            background: hideAccount ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.5)',
+            color: hideAccount ? '#4f46e5' : 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+          }}>
+            {hideAccount ? '🙈 显示账号' : '👁 隐藏账号'}
+          </button>
+        </div>
         <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
           共 {totals.count} 笔记录
         </p>
@@ -166,7 +183,7 @@ export function FinancePage() {
             <select value={filterAccount} onChange={(e) => setFilterAccount(e.target.value)}
               style={{ ...inputStyle, flex:'1 1 0', minWidth: '80px', padding:'8px 8px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
               <option value="all">全部账号</option>
-              {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
+              {accounts.map((a) => <option key={a} value={a}>{anonAccount(a, hideAccount, accounts)}</option>)}
             </select>
           )}
           <SortButton label="日期" field="date" sortBy={sortBy} onClick={toggleSort} />
@@ -213,7 +230,7 @@ export function FinancePage() {
                         color: cat.color,
                         fontWeight: 600,
                       }}>{cat.label}</span>
-                      {t.account && (
+                      {!hideAccount && t.account && (
                         <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>@{t.account}</span>
                       )}
                     </div>
