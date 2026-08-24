@@ -7,6 +7,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { formatDate, todayStr, deadlineDesc, addDays } from '../utils/helpers'
+import { isAccountsHidden, setAccountsHidden, anonAccount } from '../utils/accountVis'
 
 // 样品状态（去掉投流/出单后改为手动选择）
 const STATUS = {
@@ -61,12 +62,12 @@ export function SamplesPage() {
     return map[v] || v || 'all'
   })
   const [searchKeyword, setSearchKeyword] = useState('')
-  // 隐藏样品卡上的账号标签（隐私/展示场景），开关持久化到本地
-  const [hideAccount, setHideAccount] = useState(() => localStorage.getItem('samples_hide_account') === '1')
+  // 隐藏样品卡上的账号标签（隐私/展示场景），全局开关持久化到本地
+  const [hideAccount, setHideAccount] = useState(isAccountsHidden)
   const toggleHideAccount = () => {
     const next = !hideAccount
     setHideAccount(next)
-    localStorage.setItem('samples_hide_account', next ? '1' : '0')
+    setAccountsHidden(next)
   }
 
   const sensors = useSensors(
@@ -216,7 +217,7 @@ export function SamplesPage() {
           const col = ACCOUNT_COLOR[a]
           return (
             <button key={a} onClick={() => { setAccountFilter(a); setFilter('unpublished'); sessionStorage.setItem('samples_account', a) }} style={acctChipStyle(accountFilter === a, a, col.c, col.bg)}>
-              {a} {acctStats[a] || 0}
+              {anonAccount(a, hideAccount, ACCOUNTS)} {acctStats[a] || 0}
             </button>
           )
         })}
