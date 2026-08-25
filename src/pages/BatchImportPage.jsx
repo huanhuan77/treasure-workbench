@@ -7,6 +7,9 @@ import { DEFAULT_SENSITIVE_WORDS } from '../utils/copyGenerator'
 import { parseBulkCopies } from '../utils/helpers'
 import { inputStyle, btnPrimary, btnGhost } from '../components/Modal'
 
+// 导入时自动套用的兜底话题（产品未单独配置话题时使用）
+const DEFAULT_IMPORT_TOPICS = ['#好物推荐', '#亲测分享', '#强烈推荐', '#仙女都在喝什么']
+
 export function BatchImportPage() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -29,10 +32,12 @@ export function BatchImportPage() {
 
   const handleImport = () => {
     if (list.length === 0) { show('没有解析到文案', 'error'); return }
+    // 话题优先级：文本自带 > 产品级(product.topics) > 兜底通用，保证新导入文案自动带话题
+    const baseTopics = product.topics && product.topics.length ? product.topics : DEFAULT_IMPORT_TOPICS
     const enriched = list.map((item) => ({
       content: item.content,
       title: generateTitle(item.content, product.name, product.brand, DEFAULT_SENSITIVE_WORDS),
-      topics: item.topics || [],
+      topics: item.topics && item.topics.length ? item.topics : baseTopics,
       hasOrder: item.hasOrder,
     }))
     addCopies(product.id, enriched)
@@ -78,6 +83,7 @@ export function BatchImportPage() {
               {ordered > 0 && <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#fee2e2', color: '#dc2626', fontWeight: 600 }}>🔥 出单 {ordered}</span>}
               {used > 0 && <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#dcfce7', color: '#16a34a', fontWeight: 600 }}>✓ 用过 {used}</span>}
               {ordered === 0 && used === 0 && <span style={{ color: 'var(--gray-400)' }}>未标记状态</span>}
+              <div style={{ fontSize: '11px', color: 'var(--primary)', marginBottom: '6px' }}>🏷️ 将自动添加话题：{(product.topics && product.topics.length ? product.topics : DEFAULT_IMPORT_TOPICS).map(t => t.replace(/^#/, '')).join(' ')}</div>
             </div>
             {list.map((item, i) => (
               <div key={i} style={{
