@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
-import { StoreProvider } from './store'
+import { StoreProvider, useStore } from './store'
 import { ToastProvider, useToast } from './components/Toast'
+import { syncAll, GIST_ID_KEY, LAST_SYNC_KEY } from './utils/sync'
 import { BottomNav } from './components/BottomNav'
 import { HomePage } from './pages/HomePage'
 import { SamplesPage } from './pages/SamplesPage'
@@ -27,46 +28,41 @@ import { NewProductPage, EditProductPage } from './pages/NewProductPage'
 import { DailyPlanPage } from './pages/DailyPlanPage'
 import { NewPublishPlanPage } from './pages/NewPublishPlanPage'
 
-// 自动云同步组件（放在 ToastProvider 内，可弹出通知）
-// ⚠️ 重要：只【拉取】云端较新的数据到本地，绝不自动【上传】本地数据。
-// 旧逻辑会自动把本地数据覆盖到云端，一旦本地为空/旧，就会把云端已写好的文案冲掉。
-// 需要把本地改动推到云端时，请到「数据备份」页手动点「上传到云端」。
+// 自动云同步组件：双向同步（拉取云端 → 智能合并 → 写本地 → 推回云端）
 function AutoBackup() {
   const { show } = useToast()
-  useEffect(() => {
-    const KEYS = ['blogger_workbench_data_v1', 'blogger_investments_v1', 'blogger_calendar_v1', 'daily_plan_v1']
-    const GIST_ID_KEY = 'backup_gist_id'
-    const LAST_SYNC_KEY = 'backup_last_sync_at'
-    const doPull = async () => {
-      const token = localStorage.getItem('backup_github_token')
-      if (!token) return
+  const { applySyncResult } = useStore()
+  const doSync = useCallback(async () => {
+    const token = localStorage.getItem('backup_github_token')
+    if (!token) return
+    try {
       const gistId = localStorage.getItem(GIST_ID_KEY)
-      if (!gistId) return
-      const lastSync = localStorage.getItem(LAST_SYNC_KEY)
-      try {
-        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        })
-        if (!res.ok) return
-        const gist = await res.json()
-        const remoteUpdated = gist.updated_at ? new Date(gist.updated_at).getTime() : 0
-        const localUpdated = lastSync ? new Date(lastSync).getTime() : 0
-        // 仅当云端比本地最近一次同步更新时才拉取，避免覆盖本地未上传的改动
-        if (remoteUpdated <= localUpdated) return
-        const content = gist.files?.['treasure-workbench-backup.json']?.content
-        if (!content) return
-        const backup = JSON.parse(content)
-        for (const [key, value] of Object.entries(backup)) {
-          localStorage.setItem(key, JSON.stringify(value))
-        }
-        localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString())
-        show('☁️ 已自动同步最新云端数据', 'success')
-      } catch (e) {}
+      const result = await syncAll(token, gistId)
+      applySyncResult(result.merged['blogger_workbench_data_v1'])
+      localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString())
+      if (result.hasChanges) show('🔄 已自动同步云端数据')
+    } catch (e) {}
+  }, [show, applySyncResult])
+  useEffect(() => {
+    // 距上次同步超过 3 小时才算"需要同步"（首次无记录也视为需要）
+    const SYNC_INTERVAL = 3 * 60 * 60 * 1000
+    const shouldSync = () => {
+      const last = localStorage.getItem(LAST_SYNC_KEY)
+      if (!last) return true
+      const lastTime = new Date(last).getTime()
+      if (Number.isNaN(lastTime)) return true
+      return Date.now() - lastTime >= SYNC_INTERVAL
     }
-    // iOS PWA 切后台会冻结定时器，改为：首屏延迟、回到前台、网络恢复时检查
-    const first = setTimeout(doPull, 8000)
-    const onVisibility = () => { if (document.visibilityState === 'visible') doPull() }
-    const onOnline = () => doPull()
+    // iOS PWA 切后台会冻结 setInterval，改为：
+    //  1) 首次延迟 60 秒做一次初始同步
+    //  2) 回到前台 / 网络恢复时检查是否超过间隔，超过则补同步
+    const first = setTimeout(() => { if (shouldSync()) doSync() }, 60000)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && shouldSync()) doSync()
+    }
+    const onOnline = () => {
+      if (shouldSync()) doSync()
+    }
     document.addEventListener('visibilitychange', onVisibility)
     window.addEventListener('online', onOnline)
     return () => {
@@ -74,7 +70,7 @@ function AutoBackup() {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('online', onOnline)
     }
-  }, [show])
+  }, [doSync])
   return null
 }
 

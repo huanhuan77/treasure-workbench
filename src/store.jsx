@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { DEFAULT_SENSITIVE_WORDS, generateTitle, generateTopics } from './utils/copyGenerator'
 import { todayStr } from './utils/helpers'
+import { recordDelete, clearLocalMeta, clearDelete, setWordTime } from './utils/sync'
 
 const StoreContext = createContext(null)
 
@@ -3158,13 +3159,15 @@ export function StoreProvider({ children }) {
   }, [data])
 
   const addProduct = useCallback((product) => {
+    const now = Date.now()
     const newProduct = {
       id: uid(),
       name: product.name,
       brand: product.brand || '',
       category: product.category || '',
       cover: product.cover || '',
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
       copies: [],
     }
     setData((d) => ({ ...d, products: [newProduct, ...d.products] }))
@@ -3172,20 +3175,21 @@ export function StoreProvider({ children }) {
   }, [])
 
   const deleteProduct = useCallback((id) => {
+    recordDelete('blogger_workbench_data_v1', id)
     setData((d) => ({ ...d, products: d.products.filter((p) => p.id !== id) }))
   }, [])
 
   const updateProduct = useCallback((id, patch) => {
     setData((d) => ({
       ...d,
-      products: d.products.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+      products: d.products.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p)),
     }))
   }, [])
 
   const setProductTopics = useCallback((productId, topics) => {
     setData((d) => ({
       ...d,
-      products: d.products.map((p) => (p.id === productId ? { ...p, topics } : p)),
+      products: d.products.map((p) => (p.id === productId ? { ...p, topics, updatedAt: Date.now() } : p)),
     }))
   }, [])
 
@@ -3198,18 +3202,22 @@ export function StoreProvider({ children }) {
       const oldData = d.savingsData || { monthlyGoal: 5000, records: {} }
       const records = { ...oldData.records }
       const old = records[monthKey] || {}
-      records[monthKey] = { ...old, ...patch }
-      return { ...d, savingsData: { ...oldData, records } }
+      records[monthKey] = { ...old, ...patch, updatedAt: Date.now() }
+      return { ...d, savingsData: { ...oldData, records, updatedAt: Date.now() } }
     })
   }, [])
 
   const setSavings = useCallback((patch) => {
     setData((d) => {
-      const next = { ...d, savingsData: { ...(d.savingsData || defaultData.savingsData), ...patch } }
+      const next = { ...d, savingsData: { ...(d.savingsData || defaultData.savingsData), ...patch, updatedAt: Date.now() } }
+      // investments 记录补时间戳
+      if (Array.isArray(next.savingsData.investments)) {
+        next.savingsData.investments = next.savingsData.investments.map((iv) =>
+          iv && iv.id ? { ...iv, updatedAt: Date.now() } : iv
+        )
+      }
       // 即时写入 localStorage（不依赖 useEffect 的延迟写入）
       try {
-        console.log('[setSavings] patch:', JSON.stringify(patch))
-        console.log('[setSavings] savingsData.investments:', JSON.stringify(next.savingsData.investments))
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
       } catch(e) { console.warn('[setSavings] save error:', e) }
       return next
@@ -3235,6 +3243,7 @@ export function StoreProvider({ children }) {
   }, [])
 
   const addCopy = useCallback((productId, copy) => {
+    const now = Date.now()
     const newCopy = {
       id: uid(),
       content: copy.content || '',
@@ -3244,12 +3253,13 @@ export function StoreProvider({ children }) {
       used: false,
       usedDate: null,
       hasOrder: false,
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     }
     setData((d) => ({
       ...d,
       products: d.products.map((p) =>
-        p.id === productId ? { ...p, copies: [newCopy, ...p.copies] } : p
+        p.id === productId ? { ...p, copies: [newCopy, ...p.copies], updatedAt: now } : p
       ),
     }))
     return newCopy.id
@@ -3257,12 +3267,14 @@ export function StoreProvider({ children }) {
 
   const addCopies = useCallback((productId, list) => {
     if (!list || list.length === 0) return
+    const now = Date.now()
     setData((d) => ({
       ...d,
       products: d.products.map((p) =>
         p.id === productId
           ? {
               ...p,
+              updatedAt: now,
               copies: [
                 ...list.map((c) => {
                   const hasOrder = !!c.hasOrder
@@ -3276,7 +3288,8 @@ export function StoreProvider({ children }) {
                     used,
                     usedDate: used ? todayStr() : null,
                     hasOrder,
-                    createdAt: Date.now(),
+                    createdAt: now,
+                    updatedAt: now,
                   }
                 }),
                 ...p.copies,
@@ -3288,11 +3301,12 @@ export function StoreProvider({ children }) {
   }, [])
 
   const deleteCopy = useCallback((productId, copyId) => {
+    recordDelete('blogger_workbench_data_v1', copyId)
     setData((d) => ({
       ...d,
       products: d.products.map((p) =>
         p.id === productId
-          ? { ...p, copies: p.copies.filter((c) => c.id !== copyId) }
+          ? { ...p, copies: p.copies.filter((c) => c.id !== copyId), updatedAt: Date.now() }
           : p
       ),
     }))
@@ -3302,9 +3316,11 @@ export function StoreProvider({ children }) {
   const clearCopies = useCallback((productId) => {
     setData((d) => ({
       ...d,
-      products: d.products.map((p) =>
-        p.id === productId ? { ...p, copies: [] } : p
-      ),
+      products: d.products.map((p) => {
+        if (p.id !== productId) return p
+        for (const c of p.copies || []) recordDelete('blogger_workbench_data_v1', c.id)
+        return { ...p, copies: [], updatedAt: Date.now() }
+      }),
     }))
   }, [])
 
@@ -3315,8 +3331,9 @@ export function StoreProvider({ children }) {
         p.id === productId
           ? {
               ...p,
+              updatedAt: Date.now(),
               copies: p.copies.map((c) =>
-                c.id === copyId ? { ...c, ...patch } : c
+                c.id === copyId ? { ...c, ...patch, updatedAt: Date.now() } : c
               ),
             }
           : p
@@ -3325,6 +3342,7 @@ export function StoreProvider({ children }) {
   }, [])
 
   const addSample = useCallback((sample) => {
+    const now = Date.now()
     const newSample = {
       id: uid(),
       name: sample.name || '',
@@ -3333,24 +3351,27 @@ export function StoreProvider({ children }) {
       deadline: sample.deadline || '',
       remark: sample.remark || '',
       status: sample.status || 'unpublished',
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     }
     setData((d) => ({ ...d, samples: [newSample, ...d.samples] }))
     return newSample.id
   }, [])
 
   const deleteSample = useCallback((id) => {
+    recordDelete('blogger_workbench_data_v1', id)
     setData((d) => ({ ...d, samples: d.samples.filter((s) => s.id !== id) }))
   }, [])
 
   const updateSample = useCallback((id, patch) => {
     setData((d) => ({
       ...d,
-      samples: d.samples.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+      samples: d.samples.map((s) => (s.id === id ? { ...s, ...patch, updatedAt: Date.now() } : s)),
     }))
   }, [])
 
   const addTransaction = useCallback((tx) => {
+    const now = Date.now()
     const newTx = {
       id: uid(),
       type: tx.type || 'income',
@@ -3359,13 +3380,15 @@ export function StoreProvider({ children }) {
       amount: Number(tx.amount) || 0,
       date: tx.date || new Date().toISOString().slice(0, 10),
       remark: tx.remark || '',
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     }
     setData((d) => ({ ...d, transactions: [newTx, ...d.transactions] }))
     return newTx.id
   }, [])
 
   const deleteTransaction = useCallback((id) => {
+    recordDelete('blogger_workbench_data_v1', id)
     setData((d) => ({ ...d, transactions: d.transactions.filter((t) => t.id !== id) }))
   }, [])
 
@@ -3374,7 +3397,7 @@ export function StoreProvider({ children }) {
       ...d,
       transactions: d.transactions.map((t) => {
         if (t.id !== id) return t
-        const next = { ...t, ...patch }
+        const next = { ...t, ...patch, updatedAt: Date.now() }
         if ('amount' in patch) next.amount = Number(patch.amount) || 0
         return next
       }),
@@ -3384,6 +3407,8 @@ export function StoreProvider({ children }) {
   const addSensitiveWord = useCallback((word) => {
     const w = (word || '').trim()
     if (!w) return
+    clearDelete('blogger_workbench_data_v1', w)
+    setWordTime(w, Date.now())
     setData((d) =>
       d.sensitiveWords.includes(w)
         ? d
@@ -3392,15 +3417,33 @@ export function StoreProvider({ children }) {
   }, [])
 
   const deleteSensitiveWord = useCallback((word) => {
+    recordDelete('blogger_workbench_data_v1', word)
     setData((d) => ({ ...d, sensitiveWords: d.sensitiveWords.filter((w) => w !== word) }))
   }, [])
 
   const resetData = useCallback(() => {
     try {
+      clearLocalMeta()
       localStorage.removeItem(STORAGE_KEY)
       localStorage.removeItem(VERSION_KEY)
     } catch (e) {}
     if (typeof window !== 'undefined') window.location.reload()
+  }, [])
+
+  // 同步引擎合并结果应用到本机（主数据模块）
+  const applySyncResult = useCallback((mergedMain) => {
+    if (!mergedMain) return
+    setData((d) => {
+      const next = {
+        products: mergedMain.products ?? d.products,
+        samples: mergedMain.samples ?? d.samples,
+        transactions: mergedMain.transactions ?? d.transactions,
+        savingsData: mergedMain.savingsData ?? d.savingsData,
+        sensitiveWords: mergedMain.sensitiveWords ?? d.sensitiveWords,
+      }
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch (e) {}
+      return next
+    })
   }, [])
 
   const value = {
@@ -3411,6 +3454,7 @@ export function StoreProvider({ children }) {
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord, resetData,
     getSavings, updateSavings, setSavings,
+    applySyncResult,
   }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

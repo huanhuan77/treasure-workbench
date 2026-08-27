@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Modal, glassStyle, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
+import { recordDelete } from '../utils/sync'
 
 const STORAGE_KEY = 'daily_plan_v1'
 const PUBLISH_KEY = 'daily_publish_plan_v1'
@@ -264,6 +265,7 @@ const ACCOUNT_CARD_COLOR = {
   }
 
   const deleteTask = (id) => {
+    recordDelete('daily_plan_v1', id)
     const cur = freshTasks()
     const newTasks = cur.filter(t => t.id !== id)
     setTasks(newTasks)

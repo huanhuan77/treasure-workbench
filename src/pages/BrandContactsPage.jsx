@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle, ConfirmModal } from '../components/Modal'
 import { copyText } from '../utils/helpers'
+import { recordDelete } from '../utils/sync'
 
 const STORAGE_KEY = 'brand_contacts_v1'
 
@@ -139,7 +140,7 @@ export function BrandContactsPage() {
       <ConfirmModal
         open={!!delId}
         onClose={() => setDelId(null)}
-        onConfirm={() => { setList(list.filter(i => i.id !== delId)); show('已删除', 'success') }}
+        onConfirm={() => { recordDelete('brand_contacts_v1', delId); setList(list.filter(i => i.id !== delId)); show('已删除', 'success') }}
         title="删除"
         message="确定删除这个品牌方吗？"
         confirmText="删除"

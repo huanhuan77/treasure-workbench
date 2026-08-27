@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useStore } from '../store'
+import { recordDelete } from '../utils/sync'
 
 const STORAGE_KEY = 'blogger_investments_v1'
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+}
 
 function loadInvestments() {
   try {
@@ -193,7 +198,7 @@ export function InvestmentPage() {
     const normCode = invCode.trim()
     const shares = parseFloat(invShares) || 0
     const amount = shares * sp
-    const newItem = { code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change, shares, amount }
+    const newItem = { id: uid(), code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change, shares, amount, updatedAt: Date.now() }
     setInvCode('')
     setInvName('')
     setInvCurrentPrice(null)
@@ -236,7 +241,11 @@ export function InvestmentPage() {
           items.sort((a, b) => (b.sellDate || '').localeCompare(a.sellDate || ''))
           const latest = items[0]
           const expanded = expandedInv === key
-          const delItem = (delIdx) => saveInvestments(investments.filter((_, i) => i !== delIdx))
+          const delItem = (delIdx) => {
+            const item = investments[delIdx]
+            if (item && item.id) recordDelete('blogger_investments_v1', item.id)
+            saveInvestments(investments.filter((_, i) => i !== delIdx))
+          }
           return (
             <div key={key} style={{ marginBottom:'8px', borderRadius:'12px', border:'1px solid rgba(99,102,241,0.2)', background:'rgba(238,242,255,0.4)', overflow:'hidden' }}>
               <div onClick={() => setExpandedInv(expanded ? null : key)} style={{ padding:'10px 12px', cursor:'pointer' }}>

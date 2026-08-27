@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle, ConfirmModal } from '../components/Modal'
+import { recordDelete } from '../utils/sync'
 
 const STORAGE_KEY = 'reading_growth_v1'
 
@@ -438,7 +439,7 @@ export function ReadingPage() {
       <ConfirmModal
         open={!!delId}
         onClose={() => setDelId(null)}
-        onConfirm={() => { save(items.filter(i => i.id !== delId)); show('已删除', 'success') }}
+        onConfirm={() => { recordDelete('reading_growth_v1', delId); save(items.filter(i => i.id !== delId)); show('已删除', 'success') }}
         title="删除"
         message="确定删除这项吗？"
         confirmText="删除"

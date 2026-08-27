@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useToast } from '../components/Toast'
 import { glassStyle, inputStyle } from '../components/Modal'
+import { useStore } from '../store'
+import { syncAll } from '../utils/sync'
 
 const KEYS = [
   'blogger_workbench_data_v1',
@@ -16,6 +18,7 @@ const LAST_SYNC_KEY = 'backup_last_sync_at'
 
 export function BackupPage() {
   const { show } = useToast()
+  const { applySyncResult } = useStore()
   const [syncing, setSyncing] = useState(false)
   const [token, setToken] = useState(() => localStorage.getItem('backup_github_token') || '')
   const [showToken, setShowToken] = useState(false)
@@ -101,6 +104,29 @@ export function BackupPage() {
       show('☁️ 已上传到 GitHub Gist', 'success')
     } catch (e) {
       show('上传失败: ' + e.message, 'error')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  // 立即双向同步：拉取云端 → 智能合并 → 写本机 → 推回（不覆盖任何一端的数据）
+  const syncToCloud = async () => {
+    if (!token.trim()) { show('请先填写 GitHub Token', 'error'); return }
+    setSyncing(true)
+    try {
+      const gistId = localStorage.getItem(GIST_ID_KEY)
+      const result = await syncAll(token.trim(), gistId)
+      if (result.gistId) {
+        localStorage.setItem(GIST_ID_KEY, result.gistId)
+        setGistId(result.gistId)
+      }
+      applySyncResult(result.merged['blogger_workbench_data_v1'])
+      const now = new Date().toISOString()
+      localStorage.setItem(LAST_SYNC_KEY, now)
+      setLastSync(now)
+      show(result.hasChanges ? '✅ 同步完成：本机与云端已智能合并' : '✅ 已是最新，无需同步', 'success')
+    } catch (e) {
+      show('同步失败: ' + e.message, 'error')
     } finally {
       setSyncing(false)
     }
@@ -301,11 +327,18 @@ export function BackupPage() {
           </p>
 
           <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-            <button onClick={uploadToGist} disabled={syncing || !token} style={{
+            <button onClick={syncToCloud} disabled={syncing || !token} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: 'none',
               background: syncing ? '#9ca3af' : 'linear-gradient(135deg,#6366f1,#4f46e5)',
               color: '#fff', fontSize: '14px', fontWeight: 700, cursor: syncing ? 'not-allowed' : 'pointer',
               boxShadow: syncing ? 'none' : '0 4px 14px rgba(99,102,241,0.3)',
+            }}>
+              {syncing ? '同步中...' : '🔄 立即同步（双向合并）'}
+            </button>
+            <button onClick={uploadToGist} disabled={syncing || !token} style={{
+              flex: 1, padding: '14px 0', borderRadius: '10px', border: '1.5px solid #d1d5db',
+              background: 'transparent', color: '#4b5563', fontSize: '14px', fontWeight: 700,
+              cursor: syncing ? 'not-allowed' : 'pointer',
             }}>
               {syncing ? '同步中...' : '☁️ 上传到云端'}
             </button>
@@ -321,11 +354,13 @@ export function BackupPage() {
 
         {/* 自动同步提示 */}
         <div style={{ marginTop: '4px', padding: '12px', borderRadius: '10px', background: 'rgba(251,191,36,0.08)', fontSize: '12px', color: '#92400e', lineHeight: 1.7 }}>
-          💡 <b>云备份不会丢失</b>：数据存在 GitHub 私密 Gist，即使删掉 PWA 重装，点「从云端恢复」即可。<br />
-          🔄 <b>自动同步</b>：每 3 小时自动备份一次，也可在此手动同步。<br />
-          📱 <b>多设备同步</b>：在本页复制 Gist ID，发给另一台设备编辑粘贴后点「从云端恢复」。<br />
-          🔄 <b>恢复后</b>：需要刷新页面才能生效。<br />
-          📦 备份包含：产品、样品、收支、攒钱、投资、日历、每日计划等全部数据。
+          🔄 <b>双向自动同步</b>：回到前台/网络恢复时自动拉取云端并<b>智能合并</b>，两边各自新增的内容都会保留，不会互相覆盖。<br />
+          ⚡ <b>同时修改冲突</b>：同一条记录两台手机同时改，以<b>最后修改的时间</b>为准，数据不会丢。<br />
+          🗑️ <b>删除会同步</b>：一台删掉的数据，同步后另一台也会删除。<br />
+          📱 <b>首次使用</b>：一台手机点「立即同步」创建云端，另一台填同一个 token 后点「立即同步」即可打通。<br />
+          ☁️ <b>上传到云端</b>：手动把本机数据覆盖上传到云端（仅用于确认本机数据更全时）。<br />
+          ⚠️ <b>从云端恢复</b>：用云端数据<b>覆盖本机全部数据</b>，仅用于换新手机或数据混乱时抢救。<br />
+          📦 同步包含：产品、样品、收支、攒钱、投资、日历、每日计划、品牌方、读书成长等全部数据。
         </div>
       </div>
     </div>

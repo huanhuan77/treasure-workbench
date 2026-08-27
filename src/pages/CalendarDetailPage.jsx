@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useToast } from '../components/Toast'
 import { glassStyle } from '../components/Modal'
+import { recordDelete } from '../utils/sync'
 
 const STORAGE_KEY = 'blogger_calendar_v1'
 
@@ -56,6 +57,7 @@ export function CalendarDetailPage() {
   const handleDelete = () => {
     const data = loadData()
     delete data[date]
+    recordDelete('blogger_calendar_v1', date)
     saveData(data)
     show('已删除', 'success')
     navigate('/calendar')
