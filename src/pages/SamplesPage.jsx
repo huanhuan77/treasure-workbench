@@ -26,6 +26,12 @@ const ACCOUNT_COLOR = {
   '努力成为富婆': { c: '#7e22ce', bg: 'rgba(168,85,247,0.16)' },
 }
 
+// 兼容旧数据：老样品只有 account（字符串），新样品有 accounts（数组）
+function getAccounts(s) {
+  if (Array.isArray(s?.accounts) && s.accounts.length) return s.accounts
+  return s?.account ? [s.account] : []
+}
+
 function acctChipStyle(active, label, color, bg) {
   return {
     padding: '6px 13px', borderRadius: '18px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
@@ -110,14 +116,14 @@ export function SamplesPage() {
   }, [sorted, filter])
   const accountFiltered = useMemo(() => {
     let r = filtered
-    if (accountFilter !== 'all') r = r.filter((s) => s.account === accountFilter)
+    if (accountFilter !== 'all') r = r.filter((s) => getAccounts(s).includes(accountFilter))
     if (searchKeyword.trim()) r = r.filter((s) => s.name.toLowerCase().includes(searchKeyword.trim().toLowerCase()))
     return r
   }, [filtered, accountFilter, searchKeyword])
 
   const acctStats = useMemo(() => {
     const stats = {}
-    for (const a of ACCOUNTS) stats[a] = samples.filter((s) => s.account === a).length
+    for (const a of ACCOUNTS) stats[a] = samples.filter((s) => getAccounts(s).includes(a)).length
     return stats
   }, [samples])
 
@@ -125,7 +131,7 @@ export function SamplesPage() {
     const stats = {}
     for (const k of STATUS_ORDER) stats[k] = 0
     // 只统计当前所选账号的数据
-    const ss = accountFilter === 'all' ? samples : samples.filter((s) => s.account === accountFilter)
+    const ss = accountFilter === 'all' ? samples : samples.filter((s) => getAccounts(s).includes(accountFilter))
     ss.forEach((s) => { if (STATUS[s.status]) stats[s.status]++ })
     return stats
   }, [samples, accountFilter])
@@ -252,9 +258,9 @@ export function SamplesPage() {
                                   dlDays === 0 ? '#ef4444' :
                                   dlDays !== null && dlDays <= 3 ? '#ef4444' :
                                   dlDays !== null && dlDays <= 7 ? '#ea580c' : 'var(--text-sub)'
-                  const ac = ACCOUNT_COLOR[s.account] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }
+                  const acList = getAccounts(s).map(a => ({ name: a, ...(ACCOUNT_COLOR[a] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }) }))
 
-                  return <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} ac={ac}
+                  return <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
                     swipedId={swipedId} setSwipedId={setSwipedId}
                     filter={filter} accountFilter={accountFilter} hideAccount={hideAccount}
                     onEdit={() => {
@@ -331,7 +337,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, filter, accountFilter, hideAccount, onEdit, onDelete }) {
+function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, filter, accountFilter, hideAccount, onEdit, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
   const isSwiped = swipedId === s.id
   const style = {
@@ -380,7 +386,13 @@ function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, fil
           {/* 第一行：产品名 + 账号 + 状态 */}
           <div style={{ paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '0 1 auto', minWidth: '40px' }}>{s.name}</h3>
-            {s.account && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: ac.bg, color: ac.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{hideAccount ? '***' : s.account}</span>}
+            {acList.length > 0 && (
+              hideAccount
+                ? <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: 'rgba(148,163,184,0.16)', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>***</span>
+                : acList.map((a) => (
+                    <span key={a.name} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a.name}</span>
+                  ))
+            )}
             <div style={{ flex: 1 }} />
             {st && <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>}
           </div>
@@ -405,7 +417,8 @@ function SortableSampleCard({ s, st, dl, dlColor, ac, swipedId, setSwipedId, fil
 function SampleForm({ sample, onClose, onSave, onDelete }) {
   const [form, setForm] = useState({
     name: sample?.name || '',
-    account: sample?.account || '',
+    account: sample?.account || (Array.isArray(sample?.accounts) && sample.accounts[0]) || '',
+    accounts: Array.isArray(sample?.accounts) && sample.accounts.length ? sample.accounts : (sample?.account ? [sample.account] : []),
     status: sample?.status || 'unpublished',
     receiveDate: sample?.receiveDate || todayStr(),
     deadline: sample?.deadline || (sample ? '' : addDays(todayStr(), 15)),
@@ -414,6 +427,13 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
   })
   // 截止时间是否被用户手动改过（未手动改时，随收货时间自动 +15 天）
   const [deadlineTouched, setDeadlineTouched] = useState(!!sample?.deadline)
+
+  const toggleAccountSel = (a) => {
+    setForm((f) => ({
+      ...f,
+      accounts: f.accounts.includes(a) ? f.accounts.filter((x) => x !== a) : [...f.accounts, a],
+    }))
+  }
 
   const onReceiveChange = (v) => {
     setForm((f) => {
@@ -425,7 +445,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
 
   const handleSave = () => {
     if (!form.name.trim()) return
-    onSave({ ...form, name: form.name.trim() })
+    onSave({ ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] })
   }
 
   return (
@@ -448,16 +468,26 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
         <input style={inputStyle} placeholder="样品名称" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
       </Field>
 
-      <Field label="所属账号">
-        <div style={{ position: 'relative' }}>
-          <select value={form.account} onChange={(e) => setForm({ ...form, account: e.target.value })} style={{
-            ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: '36px',
-            color: form.account ? 'var(--text-main)' : 'var(--text-sub)',
-          }}>
-            <option value="">请选择</option>
-            {ACCOUNTS.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
-          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
+      <Field label="归属账号（可多选）">
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {ACCOUNTS.map((a) => {
+            const selected = form.accounts.includes(a)
+            return (
+              <button key={a} type="button" onClick={() => toggleAccountSel(a)} style={{
+                flex: '0 0 auto', minWidth: '92px',
+                padding: '10px 14px', borderRadius: '999px',
+                border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
+                background: selected ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.6)',
+                cursor: 'pointer', transition: 'all 0.15s',
+                boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
+                textAlign: 'center', minHeight: '40px',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+              }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: selected ? '#fff' : 'var(--text-main)', whiteSpace: 'nowrap' }}>{a}</span>
+                {selected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>✓</span>}
+              </button>
+            )
+          })}
         </div>
       </Field>
 

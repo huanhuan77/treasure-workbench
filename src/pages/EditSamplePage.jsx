@@ -30,18 +30,26 @@ export function EditSamplePage() {
   const id = window.location.hash.match(/\/samples\/([^/]+)\/edit/)?.[1]
   const sample = id ? samples.find(s => s.id === id) : null
   const [name, setName] = useState(sample?.name || '')
-  const _mapAcc = (a) => ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[a] || a || '广东刘亦菲')
-  const [account, setAccount] = useState(_mapAcc(sample?.account))
+  const _mapAcc = (a) => ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[a] || a || '')
+  const initialAccounts = Array.isArray(sample?.accounts) && sample.accounts.length
+    ? sample.accounts
+    : (sample?.account ? [_mapAcc(sample.account)] : [])
+  const [accounts, setAccounts] = useState(initialAccounts)
   const [status, setStatus] = useState(sample?.status || 'unpublished')
   const [receiveDate, setReceiveDate] = useState(sample?.receiveDate || new Date().toISOString().slice(0,10))
   const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0,10), 15))
   const [remark, setRemark] = useState(sample?.remark || '')
   const [commission, setCommission] = useState(sample?.commission || 5)
 
-  // 同名检测（排除当前编辑的，只判断同一账号，仅保存时）
-  const isDuplicate = (val, acct) => val.trim() && sample && samples.some(s =>
-    s.id !== sample.id && s.name.toLowerCase() === val.trim().toLowerCase() && s.account === (acct || account)
+  // 同名检测（排除当前编辑的，按所选账号交集判断，仅保存时）
+  const getAccounts = (s) => Array.isArray(s?.accounts) && s.accounts.length ? s.accounts : (s?.account ? [s.account] : [])
+  const isDuplicate = (val) => val.trim() && sample && accounts.length > 0 && samples.some(s =>
+    s.id !== sample.id && s.name.toLowerCase() === val.trim().toLowerCase() && getAccounts(s).some(a => accounts.includes(a))
   )
+
+  const toggleAccount = (a) => {
+    setAccounts(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a])
+  }
 
   if (!sample) {
     return (
@@ -57,7 +65,8 @@ export function EditSamplePage() {
     if (isDuplicate(name)) {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要保存为重复名称吗？`)) return
     }
-    updateSample(id, { name: name.trim(), account, status, receiveDate, deadline, remark, commission: Number(commission) })
+    if (accounts.length === 0) { show('请选择归属账号', 'error'); return }
+    updateSample(id, { name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission) })
     show('已更新', 'success')
     navigate('/samples')
   }
@@ -78,12 +87,12 @@ export function EditSamplePage() {
         <Field label="产品名称" required>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
-        <Field label="所属账号">
-          <div style={{ display: 'flex', gap: '6px' }}>
+        <Field label="归属账号（可多选）">
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {ACCOUNTS.map(a => {
-              const selected = account === a
+              const selected = accounts.includes(a)
               return (
-                <button key={a} onClick={() => setAccount(a)} style={{
+                <button key={a} onClick={() => toggleAccount(a)} style={{
                   flex: 1, minWidth: 0,
                   padding: '10px 8px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',

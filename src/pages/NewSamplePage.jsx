@@ -29,27 +29,34 @@ export function NewSamplePage() {
   const { samples, addSample } = useStore()
   const { show } = useToast()
   const [name, setName] = useState('')
-  // 优先从 location.state 拿到当前账号，否则从 sessionStorage 兜底
-  const _mapAcc = (a) => ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[a] || a || '广东刘亦菲')
-  const initialAccount = _mapAcc(location.state?.account || sessionStorage.getItem('samples_account'))
-  const [account, setAccount] = useState(initialAccount)
+  // 优先从 location.state 拿到当前账号，否则从 sessionStorage 兜底；归属账号支持多选
+  const _mapAcc = (a) => ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[a] || a || '')
+  const _rawAcc = _mapAcc(location.state?.account || sessionStorage.getItem('samples_account'))
+  const initialAccounts = _rawAcc && ACCOUNTS.includes(_rawAcc) ? [_rawAcc] : []
+  const [accounts, setAccounts] = useState(initialAccounts)
   const [status, setStatus] = useState('unpublished')
   const [receiveDate, setReceiveDate] = useState(new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(() => addDays(new Date().toISOString().slice(0, 10), 15))
   const [remark, setRemark] = useState('')
   const [commission, setCommission] = useState(5)
 
-  // 同名检测（只判断当前账号）
-  const duplicateName = name.trim() && account && samples.some(s =>
-    s.name.toLowerCase() === name.trim().toLowerCase() && s.account === account
+  // 同名检测（按所选账号交集判断）
+  const getAccounts = (s) => Array.isArray(s?.accounts) && s.accounts.length ? s.accounts : (s?.account ? [s.account] : [])
+  const duplicateName = name.trim() && accounts.length > 0 && samples.some(s =>
+    s.name.toLowerCase() === name.trim().toLowerCase() && getAccounts(s).some(a => accounts.includes(a))
   )
+
+  const toggleAccount = (a) => {
+    setAccounts(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a])
+  }
 
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
+    if (accounts.length === 0) { show('请选择归属账号', 'error'); return }
     if (duplicateName) {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要重复添加吗？`)) return
     }
-    addSample({ name: name.trim(), account, status, receiveDate, deadline, remark, commission: Number(commission) })
+    addSample({ name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission) })
     show('已添加', 'success')
     navigate('/samples')
   }
@@ -67,12 +74,12 @@ export function NewSamplePage() {
             </p>
           )}
         </Field>
-        <Field label="所属账号">
+        <Field label="归属账号（可多选）">
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {ACCOUNTS.map(a => {
-              const selected = account === a
+              const selected = accounts.includes(a)
               return (
-                <button key={a} onClick={() => setAccount(a)} style={{
+                <button key={a} onClick={() => toggleAccount(a)} style={{
                   flex: '0 0 auto', minWidth: '92px',
                   padding: '10px 14px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',

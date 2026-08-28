@@ -3346,7 +3346,8 @@ export function StoreProvider({ children }) {
     const newSample = {
       id: uid(),
       name: sample.name || '',
-      account: sample.account || '',
+      account: sample.account || (Array.isArray(sample.accounts) && sample.accounts[0]) || '',
+      accounts: Array.isArray(sample.accounts) ? sample.accounts : [],
       receiveDate: sample.receiveDate || '',
       deadline: sample.deadline || '',
       remark: sample.remark || '',
