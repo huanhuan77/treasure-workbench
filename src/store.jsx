@@ -3151,6 +3151,26 @@ function migrateSample(s) {
   return { ...rest, status }
 }
 
+// 话题归一化：把文案自带话题对齐到所属产品的配置话题。
+// 仅修正「产品已配话题、且文案自带话题与之不一致」的文案；
+// 产品未配置话题（topics 为空）的产品保持原样，避免清空文案已有话题。
+function normalizeTopicsInProducts(products) {
+  let changed = 0
+  const next = products.map((p) => {
+    const pTopics = p.topics || []
+    if (pTopics.length === 0) return p
+    const copies = (p.copies || []).map((c) => {
+      const ct = c.topics || []
+      const same = ct.length === pTopics.length && ct.every((t, i) => t === pTopics[i])
+      if (same) return c
+      changed += 1
+      return { ...c, topics: [...pTopics] }
+    })
+    return { ...p, copies }
+  })
+  return { products: next, changed }
+}
+
 export function StoreProvider({ children }) {
   const [data, setData] = useState(loadData)
 
@@ -3299,6 +3319,28 @@ export function StoreProvider({ children }) {
       ),
     }))
   }, [])
+
+  // 话题归一化：把单个产品的文案话题对齐到产品配置话题
+  const normalizeProductCopyTopics = useCallback((productId) => {
+    const { products, changed } = normalizeTopicsInProducts(
+      data.products.filter((p) => p.id === productId)
+    )
+    if (changed > 0 && products[0]) {
+      const updated = products[0]
+      setData((d) => ({
+        ...d,
+        products: d.products.map((p) => (p.id === productId ? updated : p)),
+      }))
+    }
+    return changed
+  }, [data])
+
+  // 话题归一化：一次性对齐全部产品
+  const normalizeAllCopyTopics = useCallback(() => {
+    const { products, changed } = normalizeTopicsInProducts(data.products)
+    if (changed > 0) setData((d) => ({ ...d, products }))
+    return changed
+  }, [data])
 
   const deleteCopy = useCallback((productId, copyId) => {
     recordDelete('blogger_workbench_data_v1', copyId)
@@ -3451,6 +3493,7 @@ export function StoreProvider({ children }) {
     ...data,
     addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples, setProductTopics,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
+    normalizeProductCopyTopics, normalizeAllCopyTopics,
     addSample, deleteSample, updateSample,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord, resetData,

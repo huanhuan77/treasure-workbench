@@ -32,7 +32,7 @@ function displayTitle(p) {
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { products, addCopy, deleteCopy, updateCopy, addCopies, clearCopies, updateProduct, sensitiveWords } = useStore()
+  const { products, addCopy, deleteCopy, updateCopy, addCopies, clearCopies, updateProduct, sensitiveWords, normalizeProductCopyTopics } = useStore()
   const { show } = useToast()
   const product = products.find((p) => p.id === id)
 
@@ -315,6 +315,24 @@ export function ProductDetailPage() {
                 cursor: 'pointer',
               }}
             ># 话题</button>
+            {product.topics && product.topics.length > 0 && (
+              <button
+                onClick={() => {
+                  const n = normalizeProductCopyTopics(product.id)
+                  show(n > 0 ? `已归一化 ${n} 条文案话题` : '话题已一致，无需调整', n > 0 ? 'success' : 'info')
+                }}
+                style={{
+                  background: '#fff',
+                  color: '#7c3aed',
+                  border: '1px solid rgba(124, 58, 237, 0.35)',
+                  padding: '8px 14px',
+                  borderRadius: '12px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >归一化话题</button>
+            )}
             <button
               onClick={() => navigate(`/batch-import/${product.id}`)}
               style={{
