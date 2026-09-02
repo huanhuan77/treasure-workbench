@@ -32,7 +32,7 @@ function displayTitle(p) {
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { products, addCopy, deleteCopy, updateCopy, addCopies, clearCopies, updateProduct, sensitiveWords, normalizeProductCopyTopics } = useStore()
+  const { products, addCopy, deleteCopy, updateCopy, addCopies, clearCopies, updateProduct, sensitiveWords } = useStore()
   const { show } = useToast()
   const product = products.find((p) => p.id === id)
 
@@ -49,7 +49,6 @@ export function ProductDetailPage() {
   // 话题管理（话题统一从所有文案自带话题聚合，编辑时同步到所有文案）
   const [showTopics, setShowTopics] = useState(false)
   const [topicDraft, setTopicDraft] = useState([])
-  const [topicOriginals, setTopicOriginals] = useState([])  // 打开时的快照，用于计算 renames/added/removed
   const [newTopic, setNewTopic] = useState('')
   const [editTopicIdx, setEditTopicIdx] = useState(null)
   const [editTopicVal, setEditTopicVal] = useState('')
@@ -62,7 +61,6 @@ export function ProductDetailPage() {
     ;(product.copies || []).forEach((c) => (c.topics || []).forEach((t) => splitT(t).forEach((x) => allTopics.add(x))))
     const arr = [...allTopics]
     setTopicDraft(arr)
-    setTopicOriginals(arr)
     setNewTopic('')
     setEditTopicIdx(null)
     setShowTopics(true)
@@ -91,38 +89,13 @@ export function ProductDetailPage() {
     const next = [...topicDraft]; next[editTopicIdx] = t; setTopicDraft(next); setEditTopicIdx(null)
   }
   const saveTopics = () => {
-    // 计算 renames：按打开时的快照顺序，同位置改名
-    const orig = topicOriginals
-    const renames = []
-    topicDraft.forEach((t, i) => {
-      if (i < orig.length && orig[i] !== t) renames.push({ from: orig[i], to: t })
-    })
-    // 计算 added / removed：以"当前所有文案实际拥有的话题集合"为基准
-    // 这样如果某些文案缺了池里的话题，保存时会自动补回（修复）
-    const copiesOrig = new Set()
-    ;(product.copies || []).forEach((c) => (c.topics || []).forEach((t) => copiesOrig.add(t)))
-    const finalSet = new Set(topicDraft)
-    const removed = [...copiesOrig].filter((t) => !finalSet.has(t))
-    const added = topicDraft.filter((t) => !copiesOrig.has(t))
-
-    // 把变更同步到所有文案（norm 同时拆分 #a#b 双话题）
+    // 保存即归一化：产品话题池作为权威，所有文案话题统一对齐到该池（拆分 #a#b 双话题）
     const norm = (arr) => [...new Set((arr || []).flatMap((t) => (t || '').split('#').map((x) => x.trim()).filter(Boolean).map((x) => '#' + x)))]
-    const updatedCopies = (product.copies || []).map((c) => {
-      let topics = norm(c.topics)
-      topics = topics.filter((t) => !removed.includes(t))
-      renames.forEach(({ from, to }) => {
-        const idx = topics.indexOf(from)
-        if (idx >= 0) topics[idx] = to
-      })
-      added.forEach((t) => { if (!topics.includes(t)) topics.push(t) })
-      return { ...c, topics: norm(topics) }
-    })
-
-    // 写入 store：copies 同步 + product.topics 作为权威池（同样拆分）
-    updateProduct(product.id, { copies: updatedCopies, topics: norm(topicDraft) })
+    const pool = norm(topicDraft)
+    const updatedCopies = (product.copies || []).map((c) => ({ ...c, topics: [...pool] }))
+    updateProduct(product.id, { copies: updatedCopies, topics: pool })
     setShowTopics(false)
-    const msg = `已同步到 ${updatedCopies.length} 条文案${added.length ? `（+${added.length}）` : ''}${removed.length ? `（-${removed.length}）` : ''}${renames.length ? `（${renames.length} 处改名）` : ''}`
-    show(msg, 'success')
+    show(`已归一化 ${updatedCopies.length} 条文案话题`, 'success')
   }
 
   // 文案编辑
@@ -315,24 +288,6 @@ export function ProductDetailPage() {
                 cursor: 'pointer',
               }}
             ># 话题</button>
-            {product.topics && product.topics.length > 0 && (
-              <button
-                onClick={() => {
-                  const n = normalizeProductCopyTopics(product.id)
-                  show(n > 0 ? `已归一化 ${n} 条文案话题` : '话题已一致，无需调整', n > 0 ? 'success' : 'info')
-                }}
-                style={{
-                  background: '#fff',
-                  color: '#7c3aed',
-                  border: '1px solid rgba(124, 58, 237, 0.35)',
-                  padding: '8px 14px',
-                  borderRadius: '12px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >归一化话题</button>
-            )}
             <button
               onClick={() => navigate(`/batch-import/${product.id}`)}
               style={{

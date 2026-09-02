@@ -18,7 +18,7 @@ const LAST_SYNC_KEY = 'backup_last_sync_at'
 
 export function BackupPage() {
   const { show } = useToast()
-  const { applySyncResult, normalizeAllCopyTopics } = useStore()
+  const { applySyncResult } = useStore()
   const [syncing, setSyncing] = useState(false)
   const [token, setToken] = useState(() => localStorage.getItem('backup_github_token') || '')
   const [showToken, setShowToken] = useState(false)
@@ -350,23 +350,6 @@ export function BackupPage() {
               {syncing ? '同步中...' : '☁️ 从云端恢复'}
             </button>
           </div>
-        </div>
-
-        {/* 数据修复 */}
-        <div style={{ ...glassStyle, padding: '14px', marginBottom: '12px' }}>
-          <h3 style={{ margin: '0 0 8px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>🛠️ 数据修复</h3>
-          <p style={{ margin: '0 0 10px', fontSize: '12px', color: 'var(--text-sub)', lineHeight: 1.6 }}>
-            将每条文案自带的话题，统一对齐到所属产品的配置话题。仅修正「产品已配话题、但文案话题不一致」的文案；未配置话题的产品不受影响。修复后请点上方「立即同步」推送到云端生效。
-          </p>
-          <button onClick={() => {
-            const n = normalizeAllCopyTopics()
-            show(n > 0 ? `已归一化 ${n} 条文案话题` : '所有文案话题已一致，无需调整', n > 0 ? 'success' : 'info')
-          }} style={{
-            width: '100%', padding: '12px 0', borderRadius: '10px', border: '1.5px solid #7c3aed',
-            background: 'rgba(124,58,237,0.06)', color: '#7c3aed', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-          }}>
-            🔧 一键归一化全部文案话题
-          </button>
         </div>
 
         {/* 自动同步提示 */}
