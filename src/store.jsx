@@ -2982,23 +2982,64 @@ function sanitizeJiebitudu(products) {
   })
 }
 
+// 文案去重：按内容去重（忽略空白差异），保留信息更完整的一方并合并双方状态。
+// 背景：loadData 合并种子文案时按索引对齐，某下标用户无对应文案会注入纯种子条目，
+// 而种子内容可能与用户已导入的文案相同，从而产生重复。这里做统一自愈，
+// 每次加载都跑，既修历史脏数据，也防后续再注入。
+function dedupeCopies(copies) {
+  if (!Array.isArray(copies) || copies.length < 2) return copies
+  const score = (c) => (c && c.hasOrder ? 4 : 0) + (c && c.used ? 2 : 0) + (c && c.usedDate ? 1 : 0)
+  const norm = (s) => (s || '').replace(/\s+/g, '')
+  const out = []
+  const index = new Map() // 内容 key -> 在 out 中的下标
+  for (const c of copies) {
+    if (!c) { out.push(c); continue }
+    const k = norm(c.content)
+    if (!k) { out.push(c); continue } // 空内容不参与去重
+    if (!index.has(k)) { index.set(k, out.length); out.push(c); continue }
+    const idx = index.get(k)
+    const cur = out[idx]
+    const keep = score(c) > score(cur) ? c : cur
+    const other = keep === c ? cur : c
+    out[idx] = {
+      ...keep,
+      used: keep.used || other.used,
+      hasOrder: keep.hasOrder || other.hasOrder,
+      usedDate: keep.usedDate || other.usedDate,
+      title: keep.title || other.title,
+      topics: (keep.topics && keep.topics.length) ? keep.topics : other.topics,
+    }
+  }
+  return out
+}
+
+// 首次使用/数据损坏时返回种子数据（同样去重，避免种子内部重复）
+function dedupedDefaultData() {
+  return {
+    ...defaultData,
+    products: (defaultData.products || []).map((p) =>
+      Array.isArray(p.copies) ? { ...p, copies: dedupeCopies(p.copies) } : p
+    ),
+  }
+}
+
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) {
       localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
-      return defaultData
+      return dedupedDefaultData()
     }
     let old
     try {
       old = JSON.parse(raw)
     } catch (e) {
       localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
-      return defaultData
+      return dedupedDefaultData()
     }
     if (!old || !Array.isArray(old.products)) {
       localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
-      return defaultData
+      return dedupedDefaultData()
     }
     const versionMismatch = savedVersion() !== CURRENT_VERSION
     // 非破坏性加载：完整保留用户已有的产品与全部文案、样品、收支；
@@ -3095,6 +3136,14 @@ function loadData() {
         }
       })
     } catch(e) { console.warn('[loadData] 修复文案ID失败:', e) }
+    // 自愈：按内容去重文案（合并种子数据时可能注入与用户已有文案内容相同的条目）
+    try {
+      productsFinal = productsFinal.map((p) => {
+        if (!Array.isArray(p.copies)) return p
+        const deduped = dedupeCopies(p.copies)
+        return deduped.length === p.copies.length ? p : { ...p, copies: deduped }
+      })
+    } catch(e) { console.warn('[loadData] 文案去重失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
@@ -3117,7 +3166,7 @@ function loadData() {
     }
   } catch (e) {
     console.warn('[loadData] 加载数据异常，使用默认值:', e)
-    return defaultData
+    return dedupedDefaultData()
   }
 }
 
