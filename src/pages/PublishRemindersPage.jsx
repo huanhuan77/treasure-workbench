@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { needPublishReminder, daysSincePublish } from '../utils/publish'
+import { needPublishReminder, daysSincePublish, isOverdue } from '../utils/publish'
 import { getAccounts } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 
@@ -40,7 +40,9 @@ export function PublishRemindersPage() {
                     </span>
                   </div>
                   <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '5px', fontWeight: 600 }}>
-                    ⚠ {days === Infinity ? '从未发布视频' : `已 ${days} 天未发`}
+                    {isOverdue(s)
+                      ? `⚠ 已逾期（截止 ${s.deadline}）`
+                      : `⚠ ${(days === Infinity ? '从未发布过视频' : `已 ${days} 天没发视频`)}（出单品需持续发）`}
                   </div>
                   <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
                     <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{

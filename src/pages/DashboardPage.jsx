@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { needPublishReminder, daysSincePublish } from '../utils/publish'
+import { needPublishReminder, daysSincePublish, isOverdue } from '../utils/publish'
 import { getAccounts } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 
@@ -275,7 +275,9 @@ export function DashboardPage() {
                     <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                   </div>
                   <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px', fontWeight: 600 }}>
-                    ⚠ {daysSincePublish(s) === Infinity ? '从未发布视频' : `已 ${daysSincePublish(s)} 天未发`}
+                    {isOverdue(s)
+                      ? `⚠ 已逾期（截止 ${s.deadline}）`
+                      : `⚠ ${(daysSincePublish(s) === Infinity ? '从未发布过视频' : `已 ${daysSincePublish(s)} 天没发视频`)}（出单品需持续发）`}
                   </div>
                 </div>
                 <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{

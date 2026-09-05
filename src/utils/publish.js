@@ -1,5 +1,5 @@
 // 视频发布 / 出单关联 / N 天未发提醒 相关纯函数
-import { todayStr } from './helpers'
+import { todayStr, daysDiff } from './helpers'
 
 // 提醒阈值：超过该天数未发视频即提醒
 export const N_PUBLISH_DAYS = 7
@@ -31,13 +31,26 @@ export function daysSincePublish(sample) {
   return diff
 }
 
-// 是否需要提醒：处于可发布状态，且从未发布或已超过阈值天数
+// 是否逾期（有截止时间且已过今天）
+export function isOverdue(sample) {
+  const d = daysDiff(sample?.deadline)
+  return d !== null && d < 0
+}
+
+// 发布提醒规则：
+// 1) 放弃的样品不提醒；
+// 2) 逾期（截止时间已过）一律提醒；
+// 3) 已出单的样品（orderCount>0，即在出单记录列表中），在该账号下 7 天未发视频才提醒
+//    —— 未出单的样品（无论已拍摄/已发布）不再按「N 天未发」提醒，避免无关打扰。
 export function needPublishReminder(sample) {
   if (!sample) return false
-  if (sample.status === 'abandoned') return false // 放弃的样品不再提醒
-  if (!SHOOTABLE_STATES.includes(sample.status)) return false
-  const days = daysSincePublish(sample)
-  return days === Infinity || days > N_PUBLISH_DAYS
+  if (sample.status === 'abandoned') return false
+  if (isOverdue(sample)) return true
+  if ((Number(sample.orderCount) || 0) > 0) {
+    const days = daysSincePublish(sample)
+    if (days === Infinity || days > N_PUBLISH_DAYS) return true
+  }
+  return false
 }
 
 // 距上一次发布的友好文案
