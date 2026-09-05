@@ -12,6 +12,7 @@ const mainTabs = [
 // 更多侧边栏 tab
 const sideTabs = [
   { to: '/finance', label: '收支', icon: '💳' },
+  { to: '/publish-reminders', label: '发布提醒', icon: '⏰' },
   { to: '/publish-records', label: '视频发布记录', icon: '🎬' },
   { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/calendar', label: '日历', icon: '📅' },

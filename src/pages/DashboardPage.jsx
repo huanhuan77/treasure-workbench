@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { needPublishReminder, daysSincePublish } from '../utils/publish'
 import { getAccounts } from '../utils/accounts'
+import { SAMPLE_STATUS } from '../utils/sampleStatus'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -105,11 +106,13 @@ export function DashboardPage() {
     }
   }, [samples, transactions, orders])
 
-  // 发布提醒：可发布状态但超阈值未发（含从未发布）
-  const reminders = useMemo(
-    () => (samples || []).filter((s) => needPublishReminder(s)).slice(0, 8),
+  // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
+  const allReminders = useMemo(
+    () => (samples || []).filter((s) => needPublishReminder(s)),
     [samples],
   )
+  // 总览只展示前 5 条，其余进「查看全部」列表页
+  const reminders = allReminders.slice(0, 5)
   // 最近发布记录（总览摘要）
   const recentPublishes = useMemo(
     () => [...(publishRecords || [])]
@@ -252,10 +255,10 @@ export function DashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
             <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ef4444' }} />
             发布提醒
-            {reminders.length > 0 && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 7px', borderRadius: '8px' }}>{reminders.length}</span>}
+            {allReminders.length > 0 && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 7px', borderRadius: '8px' }}>{allReminders.length}</span>}
           </div>
-          {reminders.length > 0 && (
-            <button onClick={() => go('/samples')} style={{ fontSize: '12px', color: '#db2777', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>去样品库 ›</button>
+          {allReminders.length > 0 && (
+            <button onClick={() => go('/publish-reminders')} style={{ fontSize: '12px', color: '#db2777', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 {allReminders.length} 条 ›</button>
           )}
         </div>
         {reminders.length === 0 ? (
@@ -263,11 +266,14 @@ export function DashboardPage() {
             🎉 已发布的样品都按时发了视频
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto', paddingRight: '2px' }}>
             {reminders.map((s) => (
               <div key={s.id} style={{ background: '#fff', border: '1px solid #fecdd3', borderRadius: '12px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                    <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
+                  </div>
                   <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px', fontWeight: 600 }}>
                     ⚠ {daysSincePublish(s) === Infinity ? '从未发布视频' : `已 ${daysSincePublish(s)} 天未发`}
                   </div>

@@ -34,6 +34,7 @@ export function daysSincePublish(sample) {
 // 是否需要提醒：处于可发布状态，且从未发布或已超过阈值天数
 export function needPublishReminder(sample) {
   if (!sample) return false
+  if (sample.status === 'abandoned') return false // 放弃的样品不再提醒
   if (!SHOOTABLE_STATES.includes(sample.status)) return false
   const days = daysSincePublish(sample)
   return days === Infinity || days > N_PUBLISH_DAYS

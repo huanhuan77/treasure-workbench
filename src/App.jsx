@@ -30,6 +30,7 @@ import { NewProductPage, EditProductPage } from './pages/NewProductPage'
 import { DailyPlanPage } from './pages/DailyPlanPage'
 import { NewPublishRecordPage } from './pages/NewPublishRecordPage'
 import { PublishRecordsPage } from './pages/PublishRecordsPage'
+import { PublishRemindersPage } from './pages/PublishRemindersPage'
 
 // 自动云同步组件：双向同步（拉取云端 → 智能合并 → 写本地 → 推回云端）
 function AutoBackup() {
@@ -101,6 +102,7 @@ function App() {
             <Route path="/brands" element={<BrandContactsPage />} />
             <Route path="/daily" element={<DailyPlanPage />} />
             <Route path="/publish-records" element={<PublishRecordsPage />} />
+            <Route path="/publish-reminders" element={<PublishRemindersPage />} />
             <Route path="/publish-record/new" element={<NewPublishRecordPage />} />
             <Route path="/product/new" element={<NewProductPage />} />
             <Route path="/product/:id/edit" element={<EditProductPage />} />
