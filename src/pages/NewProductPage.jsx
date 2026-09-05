@@ -22,10 +22,11 @@ export function NewProductPage() {
   const [name, setName] = useState('')
   const [brand, setBrand] = useState('')
   const [category, setCategory] = useState('')
+  const [postedCount, setPostedCount] = useState(0)
 
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
-    addProduct({ name: name.trim(), brand: brand.trim(), category })
+    addProduct({ name: name.trim(), brand: brand.trim(), category, postedCount: Number(postedCount) || 0 })
     show('产品已添加', 'success')
     navigate('/products')
   }
@@ -55,6 +56,9 @@ export function NewProductPage() {
             ))}
           </div>
         </Field>
+        <Field label="已发视频数">
+          <input type="number" min="0" style={inputStyle} value={postedCount === 0 ? '' : postedCount} placeholder="0（默认）" onChange={e => setPostedCount(e.target.value === '' ? 0 : parseInt(e.target.value))} />
+        </Field>
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
           <button style={{ ...btnGhost, border: "1.5px solid rgba(0,0,0,0.1)", background: "#f9fafb" }} onClick={() => navigate('/products')}>取消</button>
@@ -75,6 +79,7 @@ export function EditProductPage() {
   const [name, setName] = useState(product?.name || '')
   const [brand, setBrand] = useState(product?.brand || '')
   const [category, setCategory] = useState(product?.category || '')
+  const [postedCount, setPostedCount] = useState(Number(product?.postedCount) || 0)
 
   if (!product) {
     return (
@@ -87,7 +92,7 @@ export function EditProductPage() {
 
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
-    updateProduct(id, { name: name.trim(), brand: brand.trim(), category })
+    updateProduct(id, { name: name.trim(), brand: brand.trim(), category, postedCount: Number(postedCount) || 0 })
     show('产品信息已更新', 'success')
     navigate(-1)
   }
@@ -121,9 +126,12 @@ export function EditProductPage() {
                 color: category === c ? 'var(--primary)' : 'var(--text-sub)',
                 boxShadow: category === c ? '0 4px 12px rgba(244,114,182,0.2)' : 'none',
                 transition: 'all 0.15s',
-              }}>{c}</button>
+              }}            >{c}</button>
             ))}
           </div>
+        </Field>
+        <Field label="已发视频数">
+          <input type="number" min="0" style={inputStyle} value={postedCount === 0 ? '' : postedCount} placeholder="0（默认）" onChange={e => setPostedCount(e.target.value === '' ? 0 : parseInt(e.target.value))} />
         </Field>
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
