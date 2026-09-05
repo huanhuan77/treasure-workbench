@@ -12,6 +12,8 @@ export const SYNC_KEYS = [
   'reading_growth_v1',
 ]
 
+import { dedupeCopies } from './dedupe'
+
 export const GIST_ID_KEY = 'backup_gist_id'
 export const LAST_SYNC_KEY = 'backup_last_sync_at'
 const TOMBSTONE_KEY = 'blogger_sync_meta_v1'
@@ -205,6 +207,9 @@ function mergeProducts(localArr, remoteArr, tombstones = {}) {
     } else {
       copies = (lv ? lv.copies : rv ? rv.copies : []) || []
     }
+    // 合并按 id 取并集：一端删掉的重复条目仍会被另一端"复活"。
+    // 这里在合并结果上按内容去重，使推送到云端的数据也是干净的（清理历史副本）。
+    try { copies = dedupeCopies(copies) } catch (e) {}
     result.push({ ...p, copies })
   }
   return result

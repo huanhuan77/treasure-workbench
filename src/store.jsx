@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { DEFAULT_SENSITIVE_WORDS, generateTitle, generateTopics } from './utils/copyGenerator'
 import { todayStr } from './utils/helpers'
 import { recordDelete, clearLocalMeta, clearDelete, setWordTime } from './utils/sync'
+import { dedupeCopies, dedupeProducts } from './utils/dedupe'
 
 const StoreContext = createContext(null)
 
@@ -2982,37 +2983,6 @@ function sanitizeJiebitudu(products) {
   })
 }
 
-// 文案去重：按内容去重（忽略空白差异），保留信息更完整的一方并合并双方状态。
-// 背景：loadData 合并种子文案时按索引对齐，某下标用户无对应文案会注入纯种子条目，
-// 而种子内容可能与用户已导入的文案相同，从而产生重复。这里做统一自愈，
-// 每次加载都跑，既修历史脏数据，也防后续再注入。
-function dedupeCopies(copies) {
-  if (!Array.isArray(copies) || copies.length < 2) return copies
-  const score = (c) => (c && c.hasOrder ? 4 : 0) + (c && c.used ? 2 : 0) + (c && c.usedDate ? 1 : 0)
-  const norm = (s) => (s || '').replace(/\s+/g, '')
-  const out = []
-  const index = new Map() // 内容 key -> 在 out 中的下标
-  for (const c of copies) {
-    if (!c) { out.push(c); continue }
-    const k = norm(c.content)
-    if (!k) { out.push(c); continue } // 空内容不参与去重
-    if (!index.has(k)) { index.set(k, out.length); out.push(c); continue }
-    const idx = index.get(k)
-    const cur = out[idx]
-    const keep = score(c) > score(cur) ? c : cur
-    const other = keep === c ? cur : c
-    out[idx] = {
-      ...keep,
-      used: keep.used || other.used,
-      hasOrder: keep.hasOrder || other.hasOrder,
-      usedDate: keep.usedDate || other.usedDate,
-      title: keep.title || other.title,
-      topics: (keep.topics && keep.topics.length) ? keep.topics : other.topics,
-    }
-  }
-  return out
-}
-
 // 首次使用/数据损坏时返回种子数据（同样去重，避免种子内部重复）
 function dedupedDefaultData() {
   return {
@@ -3055,28 +3025,32 @@ function loadData() {
       if (preset) {
         const seedCopies = preset.copies || []
         const userCopies = user.copies || []
-        const filledCopies = seedCopies.map((sc, i) => {
-          const uc = userCopies[i]
-          if (!uc) return sc
-          // 保留用户编辑过的文案内容（content/title/topics 以用户修改为准）
-          return {
-            ...sc,
-            content: uc.content && uc.content !== sc.content ? uc.content : sc.content,
-            title: uc.title && uc.title !== sc.title ? uc.title : sc.title,
-            topics: uc.topics && JSON.stringify(uc.topics) !== JSON.stringify(sc.topics) ? uc.topics : sc.topics,
-            used: uc.used,
-            hasOrder: uc.hasOrder,
-            usedDate: uc.usedDate || sc.usedDate,
-          }
-        })
-        const extraCopies = userCopies.slice(seedCopies.length)
+        // 以用户数据为准：种子仅用于补齐缺失字段（title/topics/style 等），
+        // 不再按索引对齐并把多出的种子条目追加进来——那会在每次加载时
+        // 注入与用户已有文案内容相同的副本，是文案重复的根因。
+        const filledCopies = userCopies
+          .map((uc, i) => {
+            if (!uc) return uc
+            const sc = seedCopies[i]
+            if (!sc) return uc
+            return {
+              ...uc,
+              id: uc.id || sc.id,
+              content: uc.content || sc.content,
+              title: uc.title || sc.title,
+              topics: (uc.topics && uc.topics.length) ? uc.topics : sc.topics,
+              style: uc.style || sc.style,
+              usedDate: uc.usedDate || sc.usedDate,
+            }
+          })
+          .filter(Boolean)
         products.push({
           ...user,
           // 保留用户已编辑的 name/brand/category，不再被种子数据覆盖
           name: user.name || preset.name,
           brand: user.brand || preset.brand,
           category: user.category || preset.category,
-          copies: [...filledCopies, ...extraCopies],
+          copies: filledCopies,
         })
       } else {
         products.push(user)
@@ -3136,14 +3110,8 @@ function loadData() {
         }
       })
     } catch(e) { console.warn('[loadData] 修复文案ID失败:', e) }
-    // 自愈：按内容去重文案（合并种子数据时可能注入与用户已有文案内容相同的条目）
-    try {
-      productsFinal = productsFinal.map((p) => {
-        if (!Array.isArray(p.copies)) return p
-        const deduped = dedupeCopies(p.copies)
-        return deduped.length === p.copies.length ? p : { ...p, copies: deduped }
-      })
-    } catch(e) { console.warn('[loadData] 文案去重失败:', e) }
+    // 自愈：按内容去重文案（同一产品下内容相同的条目合并为一条，保留用过/出单状态）
+    try { productsFinal = dedupeProducts(productsFinal) } catch(e) { console.warn('[loadData] 文案去重失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
@@ -3491,6 +3459,9 @@ export function StoreProvider({ children }) {
         savingsData: mergedMain.savingsData ?? d.savingsData,
         sensitiveWords: mergedMain.sensitiveWords ?? d.sensitiveWords,
       }
+      // 同步是「按 id 取并集」，云端残留的重复条目会把本地已删掉的再拉回来。
+      // 这里在写入本地前再兜一次底，保证合并结果里同一产品下不出现重复内容。
+      try { next.products = dedupeProducts(next.products) } catch (e) {}
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch (e) {}
       return next
     })
