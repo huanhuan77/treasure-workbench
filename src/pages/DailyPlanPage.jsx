@@ -120,7 +120,7 @@ export function DailyPlanPage() {
   const [data, setData] = useState(loadData)
   const today = getToday()
   const tomorrow = addDays(today, 1)
-  const [tab, setTab] = useState(0)  // 0=每日计划，1=发布计划
+  const [tab, setTab] = useState(1)  // 0=每日计划，1=发布计划
   const [dayTab, setDayTab] = useState(0)  // 每日计划 tab 内的子视图：0=今日，1=明日
   const viewDate = dayTab === 0 ? today : tomorrow
   const plan = data[viewDate] || { tasks: [] }
@@ -365,33 +365,6 @@ const ACCOUNT_CARD_COLOR = {
           )}
         </div>
 
-        {/* 每日计划 / 发布计划 切换 */}
-        <div style={{
-          display: 'flex', gap: '6px',
-          padding: '3px', borderRadius: '12px',
-          background: 'rgba(244,114,182,0.06)',
-        }}>
-          {[
-            { key: 0, label: '📣 发布计划' },
-            { key: 1, label: '📋 每日计划' },
-          ].map(item => {
-            const selected = tab === item.key
-            return (
-              <button key={item.key} onClick={() => setTab(item.key)} style={{
-                flex: 1, padding: '9px 0', border: 'none', borderRadius: '9px',
-                fontSize: '14px', fontWeight: selected ? 600 : 500,
-                color: selected ? '#fff' : 'var(--text-sub)',
-                background: selected
-                  ? 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)'
-                  : 'transparent',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: selected ? '0 2px 8px rgba(236,72,153,0.25)' : 'none',
-                whiteSpace: 'nowrap',
-              }}>{item.label}</button>
-            )
-          })}
-        </div>
       </header>
 
       {/* 每日计划 tab 内的今日/明日子切换 */}
@@ -417,81 +390,7 @@ const ACCOUNT_CARD_COLOR = {
         </div>
       )}
 
-      {tab === 0 ? (
-        /* ============ 发布计划视图（纯文本风格：按账号分组，同账号同产品合并数量） ============ */
-        <div style={{ padding: '16px 20px' }}>
-          {/* 日期切换：今天/明天/后天 */}
-          <div style={{ display: 'flex', gap: '6px', paddingBottom: '12px' }}>
-            {[{off:0,label:'今天'},{off:1,label:'明天'},{off:2,label:'后天'}].map(({off,label}) => (
-              <button key={off} onClick={() => setPublishOffset(off)} style={{
-                padding: '7px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
-                border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
-                whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                borderColor: publishOffset === off ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-                background: publishOffset === off ? 'rgba(244,114,182,0.1)' : '#fff',
-                color: publishOffset === off ? 'var(--primary)' : 'var(--text-sub)',
-              }}>{label}</button>
-            ))}
-          </div>
-          {aggregated.length === 0 ? (
-            <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--text-sub)' }}>
-              <p style={{ fontSize: '14px', margin: 0 }}>{publishOffset === 0 ? '今天' : publishOffset === 1 ? '明天' : '后天'}还没有发布计划</p>
-              <p style={{ fontSize: '12px', color: '#9ca3af', margin: '4px 0 0' }}>点右下角 + 记录「账号 × 产品」</p>
-            </div>
-          ) : (
-            <div style={{ paddingBottom: '12px' }}>
-              <div style={{ fontSize: '12px', color: 'var(--text-sub)', fontWeight: 600, marginBottom: '8px' }}>
-                发布时间 · {publishDate}（{publishOffset === 0 ? '今天' : publishOffset === 1 ? '明天' : '后天'}）
-              </div>
-              {Object.keys(groupedAgg).map((acc) => (
-                <div key={acc} style={{
-                  marginBottom: '10px',
-                  background: '#fff', borderRadius: '12px', padding: '12px',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.02)',
-                  border: '1px solid rgba(0,0,0,0.04)',
-                }}>
-                  {/* 卡片头部：账号名 */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', paddingBottom: '6px', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: '6px', height: '18px', borderRadius: '3px', background: (ACCOUNT_CARD_COLOR[acc] || '#8b6f7a') }} />
-                      <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)' }}>{acc}</span>
-                    </div>
-                    <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>{groupedAgg[acc].length} 项</span>
-                  </div>
-                  {/* 样品行：每行一个子项（带左侧色条 + 圆角） */}
-                  {groupedAgg[acc].map((p) => (
-                    <div key={p.sampleId} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '7px 10px', borderRadius: '8px',
-                      background: 'rgba(0,0,0,0.02)',
-                      marginBottom: '3px',
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                        <span style={{ width: '3px', alignSelf: 'stretch', borderRadius: '2px', background: (ACCOUNT_CARD_COLOR[acc] || '#8b6f7a'), opacity: 0.5 }} />
-                        <span style={{ fontSize: '14px', color: 'var(--text-main)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {p.productName}
-                        </span>
-                        {p.count > 1 && (
-                          <span style={{
-                            fontSize: '11px', fontWeight: 700, color: '#fff',
-                            background: 'linear-gradient(135deg, #f472b6, #ec4899)',
-                            padding: '2px 8px', borderRadius: '10px', minWidth: '22px', textAlign: 'center', flexShrink: 0,
-                          }}>×{p.count}</span>
-                        )}
-                      </div>
-                      <button onClick={() => deletePublishAgg(p.account, p.sampleId)} title="删除" style={{
-                        border: 'none', background: 'rgba(239,68,68,0.08)', color: '#ef4444',
-                        fontSize: '14px', cursor: 'pointer', padding: '4px 10px',
-                        borderRadius: '8px', lineHeight: 1, fontWeight: 600, flexShrink: 0,
-                      }}>×</button>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
+      {
         <div style={{ padding: '0 16px' }}>
         {/* 进度卡片 */}
         <div style={{ ...glassStyle, padding: '16px', marginBottom: '12px' }}>
@@ -529,7 +428,7 @@ const ACCOUNT_CARD_COLOR = {
           </DndContext>
         )}
         </div>
-      )}
+      }
 
       {/* 可拖动 + 浮动按钮 */}
       <button

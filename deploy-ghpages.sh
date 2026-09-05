@@ -27,7 +27,7 @@ if [ -z "$TOKEN" ]; then
 fi
 
 # 带 TLS 绕过的 git（应对沙箱网络：DNS 劫持 + gnutls 握手失败）
-GIT="git -c http.sslVerify=false -c http.version=HTTP/1.1"
+GIT="git -c http.sslVerify=false -c http.version=HTTP/1.1 -c http.curloptResolve=github.com:443:20.205.243.166"
 AUTH_URL="https://${TOKEN}@github.com/${REPO}.git"
 
 # ---- 1. 构建（相对路径，适配 GitHub Pages 子路径）----

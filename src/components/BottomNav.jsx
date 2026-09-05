@@ -4,14 +4,15 @@ import { NavLink, useNavigate } from 'react-router-dom'
 // 底部主 tab（4 个核心功能）
 const mainTabs = [
   { to: '/', label: '总览', icon: '🏠', end: true },
-  { to: '/products', label: '文案库', icon: '📝' },
   { to: '/samples', label: '样品', icon: '🏷️' },
+  { to: '/orders', label: '出单', icon: '🧾' },
   { to: '/finance', label: '收支', icon: '💳' },
 ]
 
-// 更多侧边栏 tab（文案库已在底部导航，这里不再重复）
+// 更多侧边栏 tab
 const sideTabs = [
-  { to: '/orders', label: '出单', icon: '💰' },
+  { to: '/products', label: '文案库', icon: '📝' },
+  { to: '/publish-records', label: '视频发布记录', icon: '🎬' },
   { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/reading', label: '读书成长', icon: '📚' },

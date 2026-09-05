@@ -8,16 +8,20 @@ import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { formatDate, todayStr, deadlineDesc, addDays } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
+import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
 
-// 样品状态：已发布拆为「出单 / 未出单」
+// 样品状态：已发布拆为「出单 / 未出单」；新增「已拍摄」态
 const STATUS = {
   unpublished:    { label: '未发布',     emoji: '⚪️',  color: '#64748b', bg: 'rgba(100,116,139,0.14)', stripe: '#cbd5e1' },
+  published_paid: { label: '已发布·出单', emoji: '🟢💰', color: '#059669', bg: 'rgba(16,185,129,0.14)',  stripe: '#34d399' },
+  published_free: { label: '已发布·未出单', emoji: '🟢',  color: '#0d9488', bg: 'rgba(20,184,166,0.14)', stripe: '#2dd4bf' },
+  shot:           { label: '已拍摄',     emoji: '📷',  color: '#0ea5e9', bg: 'rgba(14,165,233,0.14)',  stripe: '#38bdf8' },
   published_paid: { label: '已发布·出单', emoji: '🟢💰', color: '#059669', bg: 'rgba(16,185,129,0.14)',  stripe: '#34d399' },
   published_free: { label: '已发布·未出单', emoji: '🟢',  color: '#0d9488', bg: 'rgba(20,184,166,0.14)', stripe: '#2dd4bf' },
   hit:            { label: '🔥爆单',     emoji: '🔥',   color: '#e11d48', bg: 'rgba(244,63,94,0.13)',   stripe: '#fb7185' },
   abandoned:      { label: '放弃',       emoji: '🚫',   color: '#94a3b8', bg: 'rgba(148,163,184,0.16)', stripe: '#94a3b8' },
 }
-const STATUS_ORDER = ['unpublished', 'hit', 'published_paid', 'published_free', 'abandoned']
+const STATUS_ORDER = ['unpublished', 'shot', 'published_paid', 'published_free', 'hit', 'abandoned']
 const STATUS_LIST = STATUS_ORDER.map((k) => ({ key: k, ...STATUS[k] }))
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
@@ -82,6 +86,14 @@ export function SamplesPage() {
     const next = !hideAccount
     setHideAccount(next)
     setAccountsHidden(next)
+  }
+
+  // 补记发布快捷入口：跳到发布记录页并预填样品（及归属账号）
+  const handleQuickPublish = (s) => {
+    sessionStorage.setItem('samples_scroll', String(window.scrollY))
+    sessionStorage.setItem('samples_filter', filter)
+    sessionStorage.setItem('samples_account', accountFilter)
+    navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })
   }
 
   const sensors = useSensors(
@@ -198,19 +210,28 @@ export function SamplesPage() {
   return (
     <div className="app-container">
       <header style={{ padding: 'calc(16px + var(--safe-top)) 20px 10px' }}>
-        {/* 标题行：左侧标题，右侧搜索 + 隐藏账号按钮 */}
+        {/* 第一行：标题 + 搜索框 + 隐藏账号（搜索框旁边） */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>样品记录</h1>
           <div style={{ flex: 1 }} />
           <input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)}
             placeholder="搜索产品名称…"
-            style={{ width: 'min(40vw, 160px)', boxSizing:'border-box', padding:'6px 12px', borderRadius:'999px',
+            style={{ width: 'min(42vw, 180px)', boxSizing:'border-box', padding:'6px 12px', borderRadius:'999px',
               border:'1px solid rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.5)',
-              fontSize:'13px', outline:'none', fontFamily:'inherit', color:'var(--text-main)',
-              marginRight:'2px' }}
+              fontSize:'13px', outline:'none', fontFamily:'inherit', color:'var(--text-main)' }}
           />
+          <button onClick={toggleHideAccount} title={hideAccount ? '点击显示账号标签' : '点击隐藏账号标签'} style={{
+            padding: '5px 11px', borderRadius: '999px', border: '1px solid rgba(99,102,241,0.35)',
+            background: hideAccount ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.5)',
+            color: hideAccount ? '#4f46e5' : 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+          }}>
+            {hideAccount ? '🙈 隐藏' : '👁 显示'}
+          </button>
+        </div>
+        {/* 第二行：全部账号（首） + ⇅筛选 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
           <button onClick={() => { setAccountDraft(accountFilter); setAccountSearch(''); setAccountModalOpen(true) }} title="选择账号" style={{
-            padding: '5px 11px', borderRadius: '999px',
+            padding: '5px 13px', borderRadius: '999px',
             border: '1px solid rgba(244,114,182,0.35)',
             background: accountFilter === 'all' ? 'rgba(255,255,255,0.5)' : 'rgba(244,114,182,0.12)',
             color: accountFilter === 'all' ? 'var(--text-sub)' : '#ec4899',
@@ -221,21 +242,15 @@ export function SamplesPage() {
             <span>{accountFilter === 'all' ? '全部账号' : accountFilter}</span>
             <span style={{ fontSize: '9px', opacity: .7 }}>▾</span>
           </button>
-          <button onClick={toggleHideAccount} title={hideAccount ? '点击显示账号标签' : '点击隐藏账号标签'} style={{
-            padding: '5px 11px', borderRadius: '999px', border: '1px solid rgba(99,102,241,0.35)',
-            background: hideAccount ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.5)',
-            color: hideAccount ? '#4f46e5' : 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-          }}>
-            {hideAccount ? '🙈' : '👁'}
-          </button>
-          <button onClick={() => setFilterModalOpen(true)} title="排序" style={{
-            padding: '5px 9px', borderRadius: '999px', border: '1px solid rgba(244,114,182,0.35)',
+          <button onClick={() => setFilterModalOpen(true)} title="筛选 / 排序" style={{
+            padding: '5px 12px', borderRadius: '999px', border: '1px solid rgba(244,114,182,0.35)',
             background: 'rgba(244,114,182,0.08)', color: '#ec4899',
-            fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-            display: 'flex', alignItems: 'center', gap: '3px',
-          }}>⇅</button>
+            fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: '4px',
+          }}>⇅ 筛选</button>
+          <div style={{ flex: 1 }} />
         </div>
-        <p style={{ margin: '5px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>
+        <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>
           共 {Object.values(statusStats).reduce((a,b) => a + b, 0)} 个样品
           {' · '}{STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.emoji}${statusStats[s.key]}`).join('  ')}
         </p>
@@ -249,6 +264,7 @@ export function SamplesPage() {
           // 底部说明按状态语义
           const hint = {
             unpublished: '样品在途+待发',
+            shot: '已拍待发',
             hit: '爆单品·待售后',
             published_paid: '已发·已出单',
             published_free: '已发·未出单',
@@ -303,6 +319,7 @@ export function SamplesPage() {
                     swipedId={swipedId} setSwipedId={setSwipedId}
                     hideAccount={hideAccount}
                     dragEnabled={!isDateSort}
+                    onQuickPublish={handleQuickPublish}
                     onEdit={() => {
                       sessionStorage.setItem('samples_scroll', String(window.scrollY))
                       sessionStorage.setItem('samples_filter', filter)
@@ -353,43 +370,6 @@ export function SamplesPage() {
           WebkitUserSelect: 'none',
         }}
       >+</button>
-
-      {/* 排序筛选弹窗（外部只保留账号筛选+搜索，其他集中这里） */}
-      <Modal open={filterModalOpen} onClose={() => setFilterModalOpen(false)} title="排序与筛选">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '10px' }}>排序方式</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {SORT_OPTIONS.map((o) => {
-                const active = sortKey === o.key
-                return (
-                  <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
-                    padding: '12px 14px', borderRadius: '12px', textAlign: 'left',
-                    background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
-                    color: active ? '#fff' : 'var(--text-main)',
-                    border: active ? 'none' : '1px solid rgba(0,0,0,0.06)',
-                    fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span>{o.label}</span>
-                      {active && o.key !== 'custom' && <span style={{ fontSize: '12px', opacity: .85 }}>{sortDir === 'desc' ? '↓ 最新在前' : '↑ 最早在前'}</span>}
-                    </div>
-                    <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: 500, opacity: .75 }}>
-                      {o.key === 'custom' ? '按添加顺序显示，可手动拖动排序' :
-                       o.key === 'receiveDate' ? '按收到样品的日期排序' :
-                       '按截止日期排序，越早越紧急'}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <button onClick={() => setFilterModalOpen(false)} style={{
-            padding: '12px', borderRadius: '12px', border: 'none', background: '#ec4899', color: '#fff',
-            fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-          }}>完成</button>
-        </div>
-      </Modal>
 
       {/* 排序筛选弹窗（外部只保留账号筛选+搜索，其他集中这里） */}
       <Modal open={filterModalOpen} onClose={() => setFilterModalOpen(false)} title="排序与筛选">
@@ -526,7 +506,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, dragEnabled, onEdit, onDelete }) {
+function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, dragEnabled, onEdit, onDelete, onQuickPublish }) {
   const canDrag = dragEnabled !== false   // 按日期排序时禁止拖动（否则与排序结果冲突）
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id, disabled: !canDrag })
   const isSwiped = swipedId === s.id
@@ -601,6 +581,23 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
               {s.remark}
             </div>
           )}
+          {/* 发布信息 / N天未发提醒 / 补记发布快捷入口 */}
+          {(s.publishCount > 0 || needPublishReminder(s)) && (
+            <div style={{ paddingLeft: '28px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {s.publishCount > 0 && (
+                <span style={{ fontSize: '11px', color: 'var(--text-sub)', whiteSpace: 'nowrap', flexShrink: 0 }}>📹 已发 {s.publishCount} 次 · {lastPublishText(s)}</span>
+              )}
+              {needPublishReminder(s) && (
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>⚠ {daysSincePublish(s) === Infinity ? '从未发布' : `${daysSincePublish(s)}天未发`}</span>
+              )}
+              {needPublishReminder(s) && (
+                <button onClick={(e) => { e.stopPropagation(); onQuickPublish && onQuickPublish(s) }} style={{
+                  fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ec4899', border: 'none',
+                  padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                }}>补记发布</button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -608,6 +605,7 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
 }
 
 function SampleForm({ sample, onClose, onSave, onDelete }) {
+  const { products } = useStore()
   const [form, setForm] = useState({
     name: sample?.name || '',
     account: sample?.account || (Array.isArray(sample?.accounts) && sample.accounts[0]) || '',
@@ -618,6 +616,8 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
     remark: sample?.remark || '',
     commission: sample?.commission || 5,
     orderDate: sample?.orderDate || '',
+    productId: sample?.productId || '',
+    isArrived: sample?.isArrived ?? false,
   })
   // 截止时间是否被用户手动改过（未手动改时，随收货时间自动 +15 天）
   const [deadlineTouched, setDeadlineTouched] = useState(!!sample?.deadline)
@@ -644,6 +644,8 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
     if (!isOrder) f.orderDate = ''
     onSave(f)
   }
+
+  const productOptions = (products || []).slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
   return (
     <Modal
@@ -683,6 +685,31 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
                 <span style={{ fontSize: '13px', fontWeight: 600, color: selected ? '#fff' : 'var(--text-main)', whiteSpace: 'nowrap' }}>{a}</span>
                 {selected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>✓</span>}
               </button>
+            )
+          })}
+        </div>
+      </Field>
+
+      <Field label="关联产品（选填）">
+        <select value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })} style={{ ...inputStyle, appearance: 'none', backgroundImage: 'none' }}>
+          <option value="">未关联</option>
+          {productOptions.map((p) => (
+            <option key={p.id} value={p.id}>{p.name}</option>
+          ))}
+        </select>
+      </Field>
+
+      <Field label="到货状态">
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {[{ v: false, label: '未到货' }, { v: true, label: '已到货' }].map((o) => {
+            const active = form.isArrived === o.v
+            return (
+              <button key={String(o.v)} type="button" onClick={() => setForm({ ...form, isArrived: o.v })} style={{
+                flex: '1', padding: '11px 0', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+                border: active ? 'none' : '1.5px solid rgba(0,0,0,0.06)',
+                background: active ? (o.v ? '#16a34a' : '#94a3b8') : 'rgba(255,255,255,0.6)',
+                color: active ? '#fff' : 'var(--text-sub)', cursor: 'pointer',
+              }}>{o.label}</button>
             )
           })}
         </div>

@@ -3,16 +3,15 @@ import { DEFAULT_SENSITIVE_WORDS, generateTitle, generateTopics } from './utils/
 import { todayStr } from './utils/helpers'
 import { recordDelete, clearDelete, setWordTime } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
+import { ACCOUNT_MAP, mapAccount } from './utils/accounts'
 
 const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '21'
+const CURRENT_VERSION = '22'
 
-// 全局账号映射：旧代号 → 真实账号名（用户要求全局替换）
-const ACCOUNT_MAP = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
-const mapAccount = (a) => (a && ACCOUNT_MAP[a]) || a || ''
+// 全球账号映射已统一由 ./utils/accounts 提供（ACCOUNT_MAP / mapAccount）
 
 
 // 植研加睫毛胶水：用户整理后内置文案（thumb-up=出单，check=用过；末 # 行为指定话题
@@ -2876,7 +2875,8 @@ const defaultData = {
       '2026-12': { target: 270000, actual: 0, details: {} },
     }
   },
-  orders: [],  // 独立出单台账：{ id, name(品名), date(出单日期), account(账号), qty(件数), commissionPct(佣金%), remark }
+  orders: [],  // 独立出单台账：{ id, name(品名), date(出单日期), account(账号), qty(件数), commissionPct(佣金%), remark, sampleId, productId }
+  publishRecords: [],  // 视频发布记录：{ id, sampleId, productId, accounts[], publishDate, createdAt }
   sensitiveWords: DEFAULT_SENSITIVE_WORDS,
 }
 
@@ -3090,10 +3090,13 @@ function loadData() {
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
+    const loadedSamples = (old.samples || []).map((s) => migrateSample({ ...s, account: mapAccount(s.account) }))
+    const loadedPublishRecords = loadPublishRecords(old)
     return {
       products: productsFinal,
-      samples: (old.samples || []).map((s) => migrateSample({ ...s, account: mapAccount(s.account) })),
+      samples: aggregatePublish(loadedSamples, loadedPublishRecords),
       orders: Array.isArray(old.orders) ? old.orders : [],  // 独立出单台账（无则初始化为空）
+      publishRecords: loadedPublishRecords,
       transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
       savingsData: (() => {
         let sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
@@ -3132,20 +3135,77 @@ function uid() {
 // 已发布状态拆为「published_paid 出单 / published_free 未出单」后，旧 published 全部视为未出单
 function migrateSample(s) {
   if (!s) return s
-  // °Ѻ statusֱӸ
-  if (s.status) {
-    if (s.status === 'published') return { ...s, status: 'published_free' }
-    return s
+  let status
+  if (s.status === 'published') status = 'published_free'
+  else if (s.status) status = s.status
+  else if (s.isShot) status = 'shot'
+  else {
+    const published = !!s.published
+    const orderCount = Number(s.orderCount) || 0
+    const promoted = !!s.promoted
+    if (published && orderCount > 5) status = 'hit'
+    else if (published && !promoted) status = 'abandoned'
+    else if (published) status = 'published_free'
+    else status = 'unpublished'
   }
-  const published = !!s.published
-  const orderCount = Number(s.orderCount) || 0
-  const promoted = !!s.promoted
-  let status = 'unpublished'
-  if (published && orderCount > 5) status = 'hit'
-  else if (published && !promoted) status = 'abandoned'
-  else if (published) status = 'published_free'  // 兼容老字段
-  const { published: _p, orderCount: _o, promoted: _pr, adCost: _a, ...rest } = s
-  return { ...rest, status }
+  const { published: _p, promoted: _pr, adCost: _a, status: _old, isShot: _is, ...rest } = s
+  return {
+    ...rest,
+    status,
+    productId: rest.productId || '',
+    publishHistory: Array.isArray(rest.publishHistory) ? rest.publishHistory : [],
+    lastPublishAt: rest.lastPublishAt || '',
+    publishCount: Number(rest.publishCount) || 0,
+    orderCount: Number(rest.orderCount) || 0,
+    isArrived: !!rest.isArrived,
+  }
+}
+
+
+// 视频发布记录迁移：兼容旧 daily_publish_plan_v1（{ date: [ {id,account,sampleId,productName,createdAt} ] } ）
+function loadPublishRecords(old) {
+  let records = Array.isArray(old && old.publishRecords) ? old.publishRecords : []
+  try {
+    const raw = localStorage.getItem('daily_publish_plan_v1')
+    if (raw) {
+      const oldMap = JSON.parse(raw)
+      for (const date of Object.keys(oldMap)) {
+        for (const r of (oldMap[date] || [])) {
+          records.push({
+            id: r.id || uid(),
+            sampleId: r.sampleId || '',
+            productId: '',
+            accounts: r.account ? [r.account] : [],
+            publishDate: r.publishDate || date,
+            createdAt: r.createdAt || Date.now(),
+          })
+        }
+      }
+    }
+  } catch (e) {}
+  return records
+}
+
+// 由发布记录重算样品聚合字段（发布历史/最近发布/发布条数），纯函数
+function aggregatePublish(samples, records) {
+  const bySample = {}
+  for (const r of (records || [])) {
+    if (!r.sampleId) continue
+    if (!bySample[r.sampleId]) bySample[r.sampleId] = []
+    bySample[r.sampleId].push(r)
+  }
+  return (samples || []).map((s) => {
+    const list = bySample[s.id]
+    if (!list || !list.length) return s
+    const dates = list.map((r) => r.publishDate).filter(Boolean).sort()
+    const last = dates.length ? dates[dates.length - 1] : ''
+    return {
+      ...s,
+      publishHistory: list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [] })),
+      lastPublishAt: last,
+      publishCount: list.length,
+    }
+  })
 }
 
 export function StoreProvider({ children }) {
@@ -3342,6 +3402,12 @@ export function StoreProvider({ children }) {
       deadline: sample.deadline || '',
       remark: sample.remark || '',
       status: sample.status || 'unpublished',
+      productId: sample.productId || '',
+      isArrived: !!sample.isArrived,
+      publishHistory: [],
+      lastPublishAt: '',
+      publishCount: 0,
+      orderCount: 0,
       createdAt: now,
       updatedAt: now,
     }
@@ -3369,13 +3435,27 @@ export function StoreProvider({ children }) {
       name: (order.name || '').trim(),
       date: order.date || new Date().toISOString().slice(0, 10),
       account: order.account || '',
+      sampleId: order.sampleId || '',
+      productId: order.productId || '',
       qty: Number(order.qty) || 1,
       commissionPct: Number(order.commissionPct) || 0,
       remark: order.remark || '',
       createdAt: now,
       updatedAt: now,
     }
-    setData((d) => ({ ...d, orders: [newOrder, ...(d.orders || [])] }))
+    setData((d) => {
+      const next = { ...d, orders: [newOrder, ...(d.orders || [])] }
+      if (newOrder.sampleId) {
+        next.samples = d.samples.map((sm) => {
+          if (sm.id !== newOrder.sampleId) return sm
+          const orderCount = (Number(sm.orderCount) || 0) + 1
+          let status = sm.status
+          if (status === 'published_free') status = 'published_paid'
+          return { ...sm, orderCount, status }
+        })
+      }
+      return next
+    })
     return newOrder.id
   }, [])
 
@@ -3395,7 +3475,69 @@ export function StoreProvider({ children }) {
 
   const deleteOrder = useCallback((id) => {
     recordDelete('blogger_workbench_data_v1', id)
-    setData((d) => ({ ...d, orders: (d.orders || []).filter((o) => o.id !== id) }))
+    setData((d) => {
+      const target = (d.orders || []).find((o) => o.id === id)
+      const next = { ...d, orders: (d.orders || []).filter((o) => o.id !== id) }
+      if (target && target.sampleId) {
+        next.samples = d.samples.map((sm) => {
+          if (sm.id !== target.sampleId) return sm
+          const orderCount = Math.max(0, (Number(sm.orderCount) || 0) - 1)
+          let status = sm.status
+          if (orderCount === 0 && status === 'published_paid') status = 'published_free'
+          return { ...sm, orderCount, status }
+        })
+      }
+      return next
+    })
+  }, [])
+
+  // 由发布记录重算样品聚合字段（发布历史/最近发布/发布条数）
+  const recomputeSamplePublish = (samples, records) => {
+    const bySample = {}
+    for (const r of (records || [])) {
+      if (!r.sampleId) continue
+      if (!bySample[r.sampleId]) bySample[r.sampleId] = []
+      bySample[r.sampleId].push(r)
+    }
+    return (samples || []).map((sm) => {
+      const list = bySample[sm.id]
+      if (!list && !sm.publishCount) return sm
+      const dates = list ? list.map((r) => r.publishDate).filter(Boolean).sort() : []
+      const last = dates.length ? dates[dates.length - 1] : (sm.lastPublishAt || '')
+      const count = list ? list.length : (sm.publishCount || 0)
+      return {
+        ...sm,
+        publishHistory: list ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [] })) : (sm.publishHistory || []),
+        lastPublishAt: last,
+        publishCount: count,
+      }
+    })
+  }
+
+  const addPublishRecord = useCallback((record) => {
+    const now = Date.now()
+    const newRec = {
+      id: uid(),
+      sampleId: record.sampleId || '',
+      productId: record.productId || '',
+      accounts: Array.isArray(record.accounts) ? record.accounts : [],
+      publishDate: record.publishDate || new Date().toISOString().slice(0, 10),
+      createdAt: now,
+    }
+    setData((d) => {
+      const next = { ...d, publishRecords: [newRec, ...(d.publishRecords || [])] }
+      next.samples = recomputeSamplePublish(next.samples, next.publishRecords)
+      return next
+    })
+    return newRec.id
+  }, [])
+
+  const deletePublishRecord = useCallback((id) => {
+    setData((d) => {
+      const next = { ...d, publishRecords: (d.publishRecords || []).filter((r) => r.id !== id) }
+      next.samples = recomputeSamplePublish(next.samples, next.publishRecords)
+      return next
+    })
   }, [])
 
   const addTransaction = useCallback((tx) => {
@@ -3460,6 +3602,7 @@ export function StoreProvider({ children }) {
         transactions: mergedMain.transactions ?? d.transactions,
         savingsData: mergedMain.savingsData ?? d.savingsData,
         sensitiveWords: mergedMain.sensitiveWords ?? d.sensitiveWords,
+        publishRecords: mergedMain.publishRecords ?? d.publishRecords,
       }
       // 同步是「按 id 取并集」，云端残留的重复条目会把本地已删掉的再拉回来。
       // 这里在写入本地前再兜一次底，保证合并结果里同一产品下不出现重复内容。
@@ -3475,6 +3618,7 @@ export function StoreProvider({ children }) {
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample,
     addOrder, updateOrder, deleteOrder,
+    addPublishRecord, deletePublishRecord,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord,
     getSavings, updateSavings, setSavings,

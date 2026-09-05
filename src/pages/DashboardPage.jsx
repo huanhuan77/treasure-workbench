@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
+import { needPublishReminder, daysSincePublish } from '../utils/publish'
+import { getAccounts } from '../utils/accounts'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -31,7 +33,7 @@ function fmt(n) {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders } = useStore()
+  const { samples, transactions, orders, publishRecords } = useStore()
   const { show } = useToast()
 
   // 手动检查更新（主屏幕应用无刷新入口，检测到新版本时硬刷新加载）
@@ -102,6 +104,23 @@ export function DashboardPage() {
       orderTotal, orderQty,
     }
   }, [samples, transactions, orders])
+
+  // 发布提醒：可发布状态但超阈值未发（含从未发布）
+  const reminders = useMemo(
+    () => (samples || []).filter((s) => needPublishReminder(s)).slice(0, 8),
+    [samples],
+  )
+  // 最近发布记录（总览摘要）
+  const recentPublishes = useMemo(
+    () => [...(publishRecords || [])]
+      .sort((a, b) => String(b.publishDate || '').localeCompare(String(a.publishDate || '')))
+      .slice(0, 5),
+    [publishRecords],
+  )
+  const sampleNameMap = useMemo(
+    () => Object.fromEntries((samples || []).map((s) => [s.id, s.name])),
+    [samples],
+  )
 
   const now = new Date()
   const todayLabel = `${now.getMonth()+1}月${now.getDate()}日`
@@ -199,35 +218,67 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* 全部功能入口 */}
+      {/* 发布提醒（N 天未发的样品） */}
+      <div style={{ padding: '14px 16px 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
+            <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ef4444' }} />
+            发布提醒
+            {reminders.length > 0 && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 7px', borderRadius: '8px' }}>{reminders.length}</span>}
+          </div>
+          {reminders.length > 0 && (
+            <button onClick={() => go('/samples')} style={{ fontSize: '12px', color: '#db2777', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>去样品库 ›</button>
+          )}
+        </div>
+        {reminders.length === 0 ? (
+          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', color: '#16a34a' }}>
+            🎉 已发布的样品都按时发了视频
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {reminders.map((s) => (
+              <div key={s.id} style={{ background: '#fff', border: '1px solid #fecdd3', borderRadius: '12px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                  <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px', fontWeight: 600 }}>
+                    ⚠ {daysSincePublish(s) === Infinity ? '从未发布视频' : `已 ${daysSincePublish(s)} 天未发`}
+                  </div>
+                </div>
+                <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
+                  flexShrink: 0, padding: '8px 14px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
+                  fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                }}>补记发布</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 视频发布记录摘要 */}
       <div style={{ padding: '14px 16px calc(20px + var(--safe-bottom, 0px))' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111', marginBottom: '10px' }}>
-          <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ec4899' }} />
-          全部功能
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
+            <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ec4899' }} />
+            视频发布记录
+          </div>
+          <button onClick={() => go('/publish-records')} style={{ fontSize: '12px', color: '#db2777', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: '10px' }}>
-          {[
-            { to: '/products', label: '文案库', icon: '📝' },
-            { to: '/orders', label: '出单', icon: '💰' },
-            { to: '/calendar', label: '日历', icon: '📅' },
-            { to: '/reading', label: '读书成长', icon: '📚' },
-            { to: '/brands', label: '品牌方', icon: '🤝' },
-            { to: '/savings', label: '攒钱计划', icon: '🐷' },
-            { to: '/investment', label: '投资', icon: '📈' },
-            { to: '/sensitive-check', label: '违禁词检测', icon: '🚫' },
-            { to: '/sensitive', label: '词库', icon: '⚙️' },
-            { to: '/backup', label: '数据备份', icon: '💾' },
-          ].map((m) => (
-            <button key={m.to} onClick={() => go(m.to)} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-              padding: '14px 4px', background: '#fff', border: '1px solid #fce7ec',
-              borderRadius: '10px', cursor: 'pointer', color: '#111',
-            }}>
-              <span style={{ fontSize: '22px', lineHeight: 1 }}>{m.icon}</span>
-              <span style={{ fontSize: '11px', color: '#6b6670', whiteSpace: 'nowrap' }}>{m.label}</span>
-            </button>
-          ))}
-        </div>
+        {recentPublishes.length === 0 ? (
+          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', color: '#9ca3af' }}>
+            还没有视频发布记录
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {recentPublishes.map((r) => (
+              <div key={r.id} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '11px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sampleNameMap[r.sampleId] || '（样品已删除）'}</div>
+                  <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>📅 {r.publishDate}{r.accounts?.length ? ` · ${(r.accounts || []).join('、')}` : ''}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -3,14 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
+import { ACCOUNTS, ACCOUNT_COLOR } from '../utils/accounts'
+import { isSelectableForOrder } from '../utils/publish'
 
-// 归属账号（与样品/收支保持一致）
-const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
-const ACCOUNT_COLOR = {
-  '广东刘亦菲': { c: '#c2410c', bg: 'rgba(251,146,60,0.16)' },
-  '晚梨不吃梨': { c: '#1d4ed8', bg: 'rgba(59,130,246,0.16)' },
-  '努力成为富婆': { c: '#7e22ce', bg: 'rgba(168,85,247,0.16)' },
-}
 
 // 把 YYYY/MM/DD 或 YYYY-MM-DD 解析成可排序时间戳
 function parseTs(v) {
@@ -58,9 +53,9 @@ function dispDate(v) {
 
 function PageHeader({ title, onBack, right }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-      <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(167,139,250,0.12)', color: '#a78bfa', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
-      <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#f1f5f9', flex: 1 }}>{title}</h1>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(244,114,182,0.12)' }}>
+      <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.12)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
+      <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', flex: 1 }}>{title}</h1>
       {right}
     </div>
   )
@@ -73,14 +68,26 @@ function OrderFormModal({ open, onClose, editing, onSave }) {
   const [account, setAccount] = useState(editing?.account || '')
   const [qty, setQty] = useState(editing?.qty ? String(editing.qty) : '1')
   const [commissionPct, setCommissionPct] = useState(editing?.commissionPct ? String(editing.commissionPct) : '')
+  const { samples } = useStore()
+  const [sampleId, setSampleId] = useState(editing?.sampleId || '')
   const [remark, setRemark] = useState(editing?.remark || '')
+
+  const publishableSamples = (samples || []).filter((sm) => isSelectableForOrder(sm.status))
+  const onPickSample = (sid) => {
+    setSampleId(sid)
+    const sm = (samples || []).find((x) => x.id === sid)
+    if (sm) setName(sm.name)
+  }
 
   const handleSave = () => {
     if (!name.trim()) { return }
+    const sm = sampleId ? (samples || []).find((x) => x.id === sampleId) : null
     onSave({
       name: name.trim(),
       date,
       account,
+      sampleId: sampleId || '',
+      productId: sm?.productId || '',
       qty: Number(qty) || 1,
       commissionPct: commissionPct === '' ? 0 : (Number(commissionPct) || 0),
       remark: remark.trim(),
@@ -92,6 +99,15 @@ function OrderFormModal({ open, onClose, editing, onSave }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingTop: '4px' }}>
         <Field label="品名" required>
           <input style={inputStyle} placeholder="哪个产品出单了？" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        </Field>
+
+        <Field label="关联样品（仅已发布可选）">
+          <select value={sampleId} onChange={(e) => onPickSample(e.target.value)} style={{ ...inputStyle, width: '100%' }}>
+            <option value="">（不关联具体样品）</option>
+            {publishableSamples.map((sm) => (
+              <option key={sm.id} value={sm.id}>{sm.name}</option>
+            ))}
+          </select>
         </Field>
 
         <Field label="出单日期">
@@ -232,14 +248,14 @@ export function OrdersPage() {
   const accMeta = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
 
   return (
-    <div className="app-container" style={{ background: '#0f172a', minHeight: '100vh', color: '#e2e8f0' }}>
+    <div className="app-container" style={{ background: 'transparent', minHeight: '100vh', color: 'var(--text-main)' }}>
       <PageHeader
         title="出单记录"
         onBack={() => navigate('/')}
         right={
           <button onClick={openAdd} style={{
             padding: '8px 16px', borderRadius: '8px', border: 'none',
-            background: '#7c3aed', color: '#fff',
+            background: 'var(--primary)', color: '#fff',
             fontSize: '14px', fontWeight: 600, cursor: 'pointer',
           }}>＋ 记出单</button>
         }
@@ -247,16 +263,16 @@ export function OrdersPage() {
 
       {/* 顶部汇总 */}
       <div style={{ padding: '12px 16px 4px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: '#94a3b8' }}>总单数</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#fb7185', lineHeight: 1.2 }}>{summary.totalEntries}</div>
+        <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', padding: '12px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>总单数</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--primary-dark)', lineHeight: 1.2 }}>{summary.totalEntries}</div>
         </div>
-        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: '#94a3b8' }}>累计单量</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#f1f5f9', lineHeight: 1.2 }}>{summary.totalQty}</div>
+        <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', padding: '12px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>累计单量</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>{summary.totalQty}</div>
         </div>
-        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: '#94a3b8' }}>涉及产品</div>
+        <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', padding: '12px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>涉及产品</div>
           <div style={{ fontSize: '24px', fontWeight: 800, color: '#34d399', lineHeight: 1.2 }}>{groups.length}</div>
         </div>
       </div>
@@ -307,7 +323,7 @@ export function OrdersPage() {
 
       {/* 视图切换：按品名 / 流水 */}
       <div style={{ padding: '8px 16px 4px' }}>
-        <div style={{ display: 'flex', background: '#1e293b', borderRadius: '10px', padding: '3px' }}>
+        <div style={{ display: 'flex', background: '#fff', borderRadius: '10px', padding: '3px' }}>
           {[{ id: 'name', label: '按产品' }, { id: 'list', label: '按时间' }].map((v) => (
             <button key={v.id} onClick={() => setView(v.id)} style={{
               flex: 1, padding: '8px 0', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
@@ -320,9 +336,9 @@ export function OrdersPage() {
 
       <div style={{ padding: '8px 16px calc(20px + var(--safe-bottom, 0px))' }}>
         {filtered.length === 0 ? (
-          <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '14px', textAlign: 'center', padding: '60px 24px', color: '#94a3b8' }}>
+          <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', textAlign: 'center', padding: '60px 24px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>📦</div>
-            <p style={{ fontSize: '15px', margin: 0, color: '#e2e8f0' }}>
+            <p style={{ fontSize: '15px', margin: 0, color: 'var(--text-main)' }}>
               {orders.length === 0 ? '还没有出单记录' : (accountFilter || range !== 'all' ? '当前筛选下暂无出单' : '该账号下暂无出单')}
             </p>
             <p style={{ fontSize: '13px', margin: '6px 0 0' }}>点右上角「＋ 记出单」记下第一笔</p>
@@ -331,14 +347,14 @@ export function OrdersPage() {
           /* 按产品名分组 */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {groups.map((g) => (
-              <div key={g.name} style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid #334155', background: '#1e293b' }}>
+              <div key={g.name} style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(244,114,182,0.12)', background: '#fff' }}>
                 {/* 组头：品名 + 累计 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px 8px' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>累计出单 {g.count} 次 · {g.qty} 单{dispDate(g.latest) && ` · 最近 ${dispDate(g.latest)}`}</div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px' }}>累计出单 {g.count} 次 · {g.qty} 单{dispDate(g.latest) && ` · 最近 ${dispDate(g.latest)}`}</div>
                   </div>
-                  <span style={{ flexShrink: 0, padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, background: 'rgba(251,113,133,0.18)', color: '#fb7185' }}>{g.qty} 单</span>
+                  <span style={{ flexShrink: 0, padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, background: 'rgba(251,113,133,0.18)', color: 'var(--primary-dark)' }}>{g.qty} 单</span>
                 </div>
                 {/* 组内明细 */}
                 <div style={{ padding: '0 6px 6px' }}>
@@ -350,10 +366,10 @@ export function OrdersPage() {
                         borderRadius: '10px', cursor: 'pointer',
                       }} onClick={() => openEdit(o)}>
                         <span style={{ flexShrink: 0, width: '9px', height: '9px', borderRadius: '50%', background: meta.c }} />
-                        <span style={{ fontSize: '12px', color: '#94a3b8', flexShrink: 0, minWidth: '16px' }}>{dispDate(o.date)}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-sub)', flexShrink: 0, minWidth: '16px' }}>{dispDate(o.date)}</span>
                         <span style={{ fontSize: '12px', color: o.account ? meta.c : '#94a3b8', flexShrink: 0 }}>{o.account || '未选账号'}</span>
-                        <span style={{ flex: 1, fontSize: '12px', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.remark || ''}</span>
-                        <span style={{ flexShrink: 0, fontSize: '12px', color: '#94a3b8' }}>{fmtQty(o.qty)}</span>
+                        <span style={{ flex: 1, fontSize: '12px', color: 'var(--text-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.remark || ''}</span>
+                        <span style={{ flexShrink: 0, fontSize: '12px', color: 'var(--text-sub)' }}>{fmtQty(o.qty)}</span>
                         {o.commissionPct > 0 && <span style={{ flexShrink: 0, fontSize: '12px', fontWeight: 600, color: '#34d399' }}>{fmtPct(o.commissionPct)}</span>}
                         <button onClick={(e) => { e.stopPropagation(); handleDelete(o) }} style={{ flexShrink: 0, border: 'none', background: 'transparent', color: '#f87171', fontSize: '14px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' }}>🗑</button>
                       </div>
@@ -365,26 +381,26 @@ export function OrdersPage() {
           </div>
         ) : (
           /* 流水视图：每笔一行 */
-          <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid #334155', background: '#1e293b' }}>
+          <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(244,114,182,0.12)', background: '#fff' }}>
             {filtered.map((o, i) => {
               const meta = accMeta(o.account)
               return (
                 <div key={o.id} onClick={() => openEdit(o)} style={{
                   display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', cursor: 'pointer',
-                  borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.06)',
+                  borderTop: i === 0 ? 'none' : '1px solid rgba(244,114,182,0.10)',
                 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
                       {o.commissionPct > 0 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#34d399' }}>{fmtPct(o.commissionPct)}</span>}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <span>{dispDate(o.date)}</span>
                       {o.account && <span style={{ color: meta.c }}>{o.account}</span>}
                       {o.remark && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{o.remark}</span>}
                     </div>
                   </div>
-                  <span style={{ flexShrink: 0, fontSize: '13px', fontWeight: 700, color: '#fb7185' }}>{fmtQty(o.qty)}</span>
+                  <span style={{ flexShrink: 0, fontSize: '13px', fontWeight: 700, color: 'var(--primary-dark)' }}>{fmtQty(o.qty)}</span>
                   <button onClick={(e) => { e.stopPropagation(); handleDelete(o) }} style={{ flexShrink: 0, border: 'none', background: 'transparent', color: '#f87171', fontSize: '14px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' }}>🗑</button>
                 </div>
               )
