@@ -9,7 +9,7 @@ const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '22'
+const CURRENT_VERSION = '23'
 
 // 全球账号映射已统一由 ./utils/accounts 提供（ACCOUNT_MAP / mapAccount）
 
@@ -3092,11 +3092,17 @@ function loadData() {
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
     const loadedSamples = (old.samples || []).map((s) => migrateSample({ ...s, account: mapAccount(s.account) }))
     const loadedPublishRecords = loadPublishRecords(old)
+    // 样品多选归属 → 拆分为多条单账号样品，并把发布/出单记录重定向到对应账号的样品
+    const split = splitMultiAccountSamples(
+      loadedSamples,
+      loadedPublishRecords,
+      Array.isArray(old.orders) ? old.orders : [],
+    )
     return {
       products: productsFinal,
-      samples: aggregatePublish(loadedSamples, loadedPublishRecords),
-      orders: Array.isArray(old.orders) ? old.orders : [],  // 独立出单台账（无则初始化为空）
-      publishRecords: loadedPublishRecords,
+      samples: aggregatePublish(split.samples, split.publishRecords),
+      orders: split.orders,  // 独立出单台账
+      publishRecords: split.publishRecords,
       transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
       savingsData: (() => {
         let sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
@@ -3186,6 +3192,80 @@ function loadPublishRecords(old) {
   return records
 }
 
+// 多归属样品拆分：样品 accounts 多选 → 拆成多条「单账号」样品
+// 这样「这个账号 × 这个产品」的发布条数、最后发布时间、N天未发提醒才能按账号独立统计，
+// 否则一个样品归属 A、B 两账号时，A 刚发过会把 B 的 30 天未发给掩盖掉。
+function splitMultiAccountSamples(samples, publishRecords, orders) {
+  const idMap = {}     // 原样品 id → { 账号: 新样品 id }
+  const out = []
+  let changed = false
+
+  for (const s of (samples || [])) {
+    const accs = (Array.isArray(s.accounts) && s.accounts.length ? s.accounts : (s.account ? [s.account] : []))
+      .map((a) => mapAccount(a)).filter(Boolean)
+    // 去重
+    const uniq = accs.filter((a, i) => accs.indexOf(a) === i)
+    if (uniq.length <= 1) {
+      // 单归属（或无归属）：保持原样，但保证 account / accounts 一致
+      const acc = uniq[0] || ''
+      out.push(acc ? { ...s, account: acc, accounts: [acc] } : s)
+      idMap[s.id] = { [acc || '__none__']: s.id }
+      continue
+    }
+    changed = true
+    const map = {}
+    uniq.forEach((a, i) => {
+      if (i === 0) {
+        // 第一个账号沿用原 id，尽量不影响已有引用
+        out.push({ ...s, account: a, accounts: [a] })
+        map[a] = s.id
+      } else {
+        const nid = uid()
+        out.push({ ...s, id: nid, account: a, accounts: [a] })
+        map[a] = nid
+      }
+    })
+    idMap[s.id] = map
+  }
+
+  if (!changed) {
+    return { samples: out, publishRecords: publishRecords || [], orders: orders || [] }
+  }
+
+  // 发布记录：按 accounts 拆分/重定向到各自账号的样品
+  const newRecords = []
+  for (const r of (publishRecords || [])) {
+    const map = r.sampleId ? idMap[r.sampleId] : null
+    if (!map) { newRecords.push(r); continue }
+    const keys = Object.keys(map)
+    // 只按记录自身声明的账号拆分；记录没写账号时不 fan-out，避免同一条记录被复制到每个账号各算一次
+    const rAccs = (Array.isArray(r.accounts) ? r.accounts : [])
+      .map((a) => mapAccount(a)).filter((a) => map[a])
+    if (!rAccs.length) {
+      // 记录本身没账号：只归属到第一个账号（主样品）
+      const k = keys[0]
+      newRecords.push({ ...r, sampleId: map[k], accounts: k === '__none__' ? [] : [k] })
+      continue
+    }
+    rAccs.forEach((a, i) => {
+      newRecords.push(i === 0
+        ? { ...r, sampleId: map[a], accounts: [a] }
+        : { ...r, id: uid(), sampleId: map[a], accounts: [a] })
+    })
+  }
+
+  // 出单记录：按 account 重定向到对应账号的样品
+  const newOrders = (orders || []).map((o) => {
+    const map = o.sampleId ? idMap[o.sampleId] : null
+    if (!map) return o
+    const acc = mapAccount(o.account)
+    const target = map[acc] || map[Object.keys(map)[0]]
+    return target ? { ...o, sampleId: target } : o
+  })
+
+  return { samples: out, publishRecords: newRecords, orders: newOrders }
+}
+
 // 由发布记录重算样品聚合字段（发布历史/最近发布/发布条数），纯函数
 function aggregatePublish(samples, records) {
   const bySample = {}
@@ -3199,11 +3279,13 @@ function aggregatePublish(samples, records) {
     if (!list || !list.length) return s
     const dates = list.map((r) => r.publishDate).filter(Boolean).sort()
     const last = dates.length ? dates[dates.length - 1] : ''
+    // 视频条数 = 各记录 qty 累加（向下兼容无 qty 的旧记录视为 1 条）
+    const count = list.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
     return {
       ...s,
-      publishHistory: list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [] })),
+      publishHistory: list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: Number(r.qty) > 0 ? Number(r.qty) : 1 })),
       lastPublishAt: last,
-      publishCount: list.length,
+      publishCount: count,
     }
   })
 }
@@ -3393,11 +3475,14 @@ export function StoreProvider({ children }) {
 
   const addSample = useCallback((sample) => {
     const now = Date.now()
-    const newSample = {
-      id: uid(),
+    // 归属账号多选 → 拆分成多条单账号样品（保证「账号 × 产品」可独立统计发布/出单）
+    const accs = (Array.isArray(sample.accounts) && sample.accounts.length
+      ? sample.accounts
+      : (sample.account ? [sample.account] : [])).filter(Boolean)
+    const uniq = accs.length ? accs.filter((a, i) => accs.indexOf(a) === i) : ['']
+
+    const base = {
       name: sample.name || '',
-      account: sample.account || (Array.isArray(sample.accounts) && sample.accounts[0]) || '',
-      accounts: Array.isArray(sample.accounts) ? sample.accounts : [],
       receiveDate: sample.receiveDate || '',
       deadline: sample.deadline || '',
       remark: sample.remark || '',
@@ -3408,11 +3493,19 @@ export function StoreProvider({ children }) {
       lastPublishAt: '',
       publishCount: 0,
       orderCount: 0,
+    }
+
+    const created = uniq.map((a) => ({
+      ...base,
+      id: uid(),
+      account: a,
+      accounts: a ? [a] : [],
       createdAt: now,
       updatedAt: now,
-    }
-    setData((d) => ({ ...d, samples: [newSample, ...d.samples] }))
-    return newSample.id
+    }))
+
+    setData((d) => ({ ...d, samples: [...created, ...d.samples] }))
+    return created[0].id
   }, [])
 
   const deleteSample = useCallback((id) => {

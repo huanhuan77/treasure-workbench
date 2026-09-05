@@ -493,7 +493,8 @@ export function SamplesPage() {
               show('已更新', 'success')
             } else {
               addSample(data)
-              show('已添加', 'success')
+              const n = (Array.isArray(data.accounts) ? data.accounts : []).filter(Boolean).length
+              show(n > 1 ? `已按 ${n} 个账号拆分为 ${n} 条样品` : '已添加', 'success')
             }
             setShowAdd(false)
             setEditing(null)
@@ -622,11 +623,12 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
   // 截止时间是否被用户手动改过（未手动改时，随收货时间自动 +15 天）
   const [deadlineTouched, setDeadlineTouched] = useState(!!sample?.deadline)
 
+  // 新建时：多选账号=拆分成多条样品；编辑时：只能改这一条的归属（单选）
   const toggleAccountSel = (a) => {
-    setForm((f) => ({
-      ...f,
-      accounts: f.accounts.includes(a) ? f.accounts.filter((x) => x !== a) : [...f.accounts, a],
-    }))
+    setForm((f) => {
+      if (sample) return { ...f, accounts: f.accounts[0] === a ? [] : [a] }
+      return { ...f, accounts: f.accounts.includes(a) ? f.accounts.filter((x) => x !== a) : [...f.accounts, a] }
+    })
   }
 
   const onReceiveChange = (v) => {
@@ -667,7 +669,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
         <input style={inputStyle} placeholder="样品名称" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
       </Field>
 
-      <Field label="归属账号（可多选）">
+      <Field label={sample ? '归属账号（单条样品仅归属 1 个账号）' : '归属账号（可多选，选几个账号就生成几条样品）'}>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {ACCOUNTS.map((a) => {
             const selected = form.accounts.includes(a)
@@ -688,6 +690,15 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
             )
           })}
         </div>
+        {!sample && form.accounts.length > 1 && (
+          <div style={{
+            marginTop: '8px', fontSize: '12px', lineHeight: 1.5, fontWeight: 600, color: '#be185d',
+            background: 'rgba(244,114,182,0.12)', border: '1px solid rgba(244,114,182,0.3)',
+            borderRadius: '10px', padding: '8px 10px',
+          }}>
+            将拆分为 <b>{form.accounts.length}</b> 条样品（{form.accounts.join(' / ')}），各账号的发布条数与出单独立统计、互不干扰。
+          </div>
+        )}
       </Field>
 
       <Field label="关联产品（选填）">

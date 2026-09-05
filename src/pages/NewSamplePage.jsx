@@ -60,7 +60,7 @@ export function NewSamplePage() {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要重复添加吗？`)) return
     }
     addSample({ name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission), orderDate: isOrder ? orderDate : '' })
-    show('已添加', 'success')
+    show(accounts.length > 1 ? `已按 ${accounts.length} 个账号拆分为 ${accounts.length} 条样品` : '已添加', 'success')
     navigate('/samples')
   }
 
@@ -77,7 +77,7 @@ export function NewSamplePage() {
             </p>
           )}
         </Field>
-        <Field label="归属账号（可多选）">
+        <Field label="归属账号（可多选，选几个账号就生成几条样品）">
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {ACCOUNTS.map(a => {
               const selected = accounts.includes(a)
@@ -110,6 +110,15 @@ export function NewSamplePage() {
               )
             })}
           </div>
+          {accounts.length > 1 && (
+            <div style={{
+              marginTop: '8px', fontSize: '12px', lineHeight: 1.5, fontWeight: 600, color: '#be185d',
+              background: 'rgba(244,114,182,0.12)', border: '1px solid rgba(244,114,182,0.3)',
+              borderRadius: '10px', padding: '8px 10px',
+            }}>
+              将拆分为 <b>{accounts.length}</b> 条样品（{accounts.join(' / ')}），各账号的发布条数与出单独立统计、互不干扰。
+            </div>
+          )}
         </Field>
         <Field label="状态">
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
