@@ -6,10 +6,11 @@ import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../componen
 import { addDays } from '../utils/helpers'
 
 const STATUS = {
-  unpublished: { label: '未发布', emoji: '⚪️' },
-  published: { label: '已发布', emoji: '🟢' },
-  hit: { label: '🔥爆单', emoji: '🔥' },
-  abandoned: { label: '放弃', emoji: '🚫' },
+  unpublished:    { label: '未发布', emoji: '⚪️' },
+  published_paid: { label: '已发布·出单', emoji: '🟢💰' },
+  published_free: { label: '已发布·未出单', emoji: '🟢' },
+  hit:            { label: '🔥爆单', emoji: '🔥' },
+  abandoned:      { label: '放弃', emoji: '🚫' },
 }
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']

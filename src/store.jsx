@@ -8,7 +8,7 @@ const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '20'
+const CURRENT_VERSION = '21'
 
 // 全局账号映射：旧代号 → 真实账号名（用户要求全局替换）
 const ACCOUNT_MAP = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
@@ -3153,17 +3153,21 @@ function uid() {
 }
 
 // ɰƷ published/orderCount/promoted/adCostǨƵ°棨status
+// 已发布状态拆为「published_paid 出单 / published_free 未出单」后，旧 published 全部视为未出单
 function migrateSample(s) {
   if (!s) return s
   // °Ѻ statusֱӸ
-  if (s.status) return s
+  if (s.status) {
+    if (s.status === 'published') return { ...s, status: 'published_free' }
+    return s
+  }
   const published = !!s.published
   const orderCount = Number(s.orderCount) || 0
   const promoted = !!s.promoted
   let status = 'unpublished'
   if (published && orderCount > 5) status = 'hit'
   else if (published && !promoted) status = 'abandoned'
-  else if (published) status = 'published'
+  else if (published) status = 'published_free'  // 兼容老字段
   const { published: _p, orderCount: _o, promoted: _pr, adCost: _a, ...rest } = s
   return { ...rest, status }
 }
