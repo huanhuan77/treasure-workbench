@@ -27,12 +27,12 @@ export function NewProductPage() {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
     addProduct({ name: name.trim(), brand: brand.trim(), category })
     show('产品已添加', 'success')
-    navigate('/')
+    navigate('/products')
   }
 
   return (
     <div className="app-container">
-      <PageHeader title="添加产品" onBack={() => navigate('/')} />
+      <PageHeader title="添加产品" onBack={() => navigate('/products')} />
       <div style={{ padding: '16px', maxWidth: '100%', boxSizing: 'border-box' }}>
         <div style={{ ...glassStyle, padding: '16px', overflowX: 'hidden' }}>
         <Field label="产品名称" required>
@@ -57,7 +57,7 @@ export function NewProductPage() {
         </Field>
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-          <button style={{ ...btnGhost, border: "1.5px solid rgba(0,0,0,0.1)", background: "#f9fafb" }} onClick={() => navigate('/')}>取消</button>
+          <button style={{ ...btnGhost, border: "1.5px solid rgba(0,0,0,0.1)", background: "#f9fafb" }} onClick={() => navigate('/products')}>取消</button>
           <button style={{ ...btnPrimary, flex: 1 }} onClick={handleSave}>保存</button>
         </div>
       </div>
@@ -79,7 +79,7 @@ export function EditProductPage() {
   if (!product) {
     return (
       <div className="app-container">
-        <PageHeader title="编辑产品" onBack={() => navigate('/')} />
+        <PageHeader title="编辑产品" onBack={() => navigate('/products')} />
         <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-sub)' }}>产品不存在</div>
       </div>
     )
@@ -96,7 +96,7 @@ export function EditProductPage() {
     if (confirm('确定删除该产品及其所有文案吗？')) {
       deleteProduct(id)
       show('已删除', 'success')
-      navigate('/')
+      navigate('/products')
     }
   }
 
