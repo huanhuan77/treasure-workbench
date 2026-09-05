@@ -121,6 +121,13 @@ export function DashboardPage() {
     () => Object.fromEntries((samples || []).map((s) => [s.id, s.name])),
     [samples],
   )
+  // 近 7 天发布条数（按 qty 累加）
+  const last7Count = useMemo(() => {
+    const from = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10)
+    return (publishRecords || []).reduce((s, r) => (
+      String(r.publishDate || '') >= from ? s + (Number(r.qty) > 0 ? Number(r.qty) : 1) : s
+    ), 0)
+  }, [publishRecords])
 
   const now = new Date()
   const todayLabel = `${now.getMonth()+1}月${now.getDate()}日`
@@ -215,6 +222,25 @@ export function DashboardPage() {
           <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8' }}>
             共 {todo.tasks.length} 项
           </div>
+        </div>
+      </div>
+
+      {/* 视频发布记录快捷入口 */}
+      <div style={{ padding: '8px 16px 4px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <div onClick={() => go('/publish-records')} style={{ background: '#fff', border: '1.5px solid #fbcfe8', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(236,72,153,0.08)' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', marginBottom: '6px' }}>🎬 视频发布记录</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: '#111' }}>{(publishRecords || []).length}</span>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>条记录</span>
+          </div>
+          <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8' }}>近 7 天发布 {last7Count} 条 · 查看全部 ›</div>
+        </div>
+        <div onClick={() => go('/publish-record/new')} style={{ background: '#fff', border: '1.5px solid #ddd6fe', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(124,58,237,0.08)' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#7c3aed', marginBottom: '6px' }}>＋ 记视频发布</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: '#111' }}>补记 / 新增</span>
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '11px', color: '#94a3b8' }}>可多选账号 · 一次记多条</div>
         </div>
       </div>
 
