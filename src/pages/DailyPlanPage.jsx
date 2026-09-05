@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Modal, glassStyle, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
-import { useStore } from '../store'
+import { Modal, glassStyle } from '../components/Modal'
 import { useToast } from '../components/Toast'
 import { recordDelete } from '../utils/sync'
 
@@ -39,10 +38,6 @@ function loadPublish() {
 
 function savePublish(d) {
   localStorage.setItem(PUBLISH_KEY, JSON.stringify(d))
-}
-
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
 }
 
 // 用本地时区（不是 UTC）获取今天日期字符串 YYYY-MM-DD
@@ -121,7 +116,6 @@ function SortableTaskRow({ task, onToggle, onDelete }) {
 
 export function DailyPlanPage() {
   const navigate = useNavigate()
-  const { products, samples } = useStore()
   const { show } = useToast()
   const [data, setData] = useState(loadData)
   const today = getToday()
@@ -159,8 +153,6 @@ const ACCOUNT_CARD_COLOR = {
     return () => window.removeEventListener('publishPlanUpdated', reload)
   }, [])
 
-  // 账号预览：固定三个账号（广东刘亦菲 / 晚梨不吃梨 / 努力成为富婆）
-  const accountOptions = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
   const groupedPlans = {}
   pubPlans.forEach((p) => { (groupedPlans[p.account] = groupedPlans[p.account] || []).push(p) })
 

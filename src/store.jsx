@@ -2899,9 +2899,6 @@ const defaultData = {
   }
 })()
 
-// 种子样品按 id 索引，用于迁移时把乱码名称回填为干净名称（保留用户已设状态/日期）
-const SEED_SAMPLE_BY_ID = Object.fromEntries((defaultData.samples || []).map((s) => [s.id, s]))
-
 // 收支迁移（作用于已导入数据）：从备注提取账号；自然堂洗面奶归样品收入；稿费归稿费收入
 function migrateTransactions(txs) {
   if (!Array.isArray(txs)) return txs
@@ -2917,28 +2914,6 @@ function migrateTransactions(txs) {
     const rm = nt.remark || ''
     if (rm.includes('自然堂洗面奶')) nt.category = 'sample'
     return nt
-  })
-}
-
-// 标题迁移：把旧版乱码/空话标题（含已导入数据）按新逻辑重刷；保留用户手改的标题
-const OLD_TITLE_MARKERS = [
-  '眼神还是太超前了', '开箱测评', '句句好美', '没早睡没擦粉', '句句漂看了',
-  '天花板级别', '自由了，谁懂啊', '光泽感才是最显贵的', '界的天花板就是',
-  '别急着下结论', '整体的光泽感', '买对了',
-  // 上一版「香氛硬编码」错配标题（如把香水套到保健品）也一并重刷
-  '喷了什么香水', '自带蔓越莓清香', '不用香水也自带氛围感', '淡淡的果香十分好闻', '气味自然又温柔', '清新治愈的蔓越莓香气',
-]
-// 版本升级时，按最新逻辑一次性重刷所有标题（确定性生成，同一条文案结果稳定）；
-// 升级完成后版本号已更新，此后 loadData 不再触碰标题，用户手动改过的标题会被保留
-function refreshAllTitles(products) {
-  if (!Array.isArray(products)) return products
-  return products.map((p) => {
-    if (!p || !Array.isArray(p.copies) || !p.copies.length) return p
-    const copies = p.copies.map((c) => ({
-      ...c,
-      title: generateTitle(c.content, p.name, p.brand, DEFAULT_SENSITIVE_WORDS),
-    }))
-    return { ...p, copies }
   })
 }
 
@@ -3012,7 +2987,6 @@ function loadData() {
       localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
       return dedupedDefaultData()
     }
-    const versionMismatch = savedVersion() !== CURRENT_VERSION
     // 非破坏性加载：完整保留用户已有的产品与全部文案、样品、收支；
     // 版本变更时仅刷新「卡审词库」为最新默认，并补充缺失的示例产品
     // 以用户保存的顺序为主：用 old.products 的顺序重建，种子仅用于刷新名称/品牌/分类/文案，并补齐缺失的新产品

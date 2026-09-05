@@ -59,44 +59,6 @@ function loadData() {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      // 迁移：给内置条目补充简介/观看平台/搜索链接（新书单 - 来自视频）
-      const seedExtra = {
-        // 综艺（@云边 视频推荐的 8 部）
-        r1: { note: '不会吵架就看《奇葩说》：学会多角度思辨表达', watchWhere: '爱奇艺', category: '辩论' },
-        r2: { note: '格局太小就看《非正式会谈》：拓宽眼界认知', watchWhere: '哔哩哔哩', category: '访谈' },
-        r3: { note: '思维混乱就看《圆桌派》：理清逻辑，沉淀思考', watchWhere: '优酷 / 看理想', category: '文化' },
-        r4: { note: '不敢发言就看《超级演说家》：锻炼当众表达能力', watchWhere: '腾讯视频 / 哔哩哔哩', category: '辩论' },
-        r5: { note: '情商偏低就看《十三邀》：读懂人性，学会共情', watchWhere: '哔哩哔哩 / 腾讯视频', category: '访谈' },
-        r6: { note: '容易内耗就看《生命之旅》：和解自己，治愈内耗', watchWhere: '哔哩哔哩', category: '文化' },
-        r7: { note: '审美普通就看《局部》：培养独特审美品味', watchWhere: '哔哩哔哩 / 看理想 / 优酷', category: '文化' },
-        r8: { note: '文笔不好就看《朗读者》：积累文字，丰富语感', watchWhere: '央视一套 / 腾讯视频', category: '文化' },
-        // 书籍（视频推荐）
-        r9: { note: '看懂时事新闻，看透世界运行规则', category: '政治' },
-        r10: { note: '看懂中国的大战略', category: '政治' },
-        r11: { note: '从历史讲透中国为什么是现在这样', category: '政治' },
-        r12: { note: '理解中国地方政府运作', category: '政治' },
-        r13: { note: '两千年的治国理政智慧', category: '政治' },
-        r14: { note: '搞懂财富逻辑，做理性财务决策', category: '经济' },
-        r15: { note: '达里奥的人生/工作/决策原则', category: '经济' },
-        r16: { note: '巴菲特导师芒格的智慧集', category: '经济' },
-        r17: { note: '芒格的投资思维与多元思维模型', category: '经济' },
-        r18: { note: '用小岛故事讲清经济学原理', category: '经济' },
-        r19: { note: '两千年前的战略智慧，规划人生、破局成长', category: '军事' },
-        r20: { note: '全景式看二战全程', category: '军事' },
-        r21: { note: '理解大国兴衰背后的逻辑', category: '军事' },
-        r22: { note: '理解海洋对一个国家的意义', category: '军事' },
-        r23: { note: '从古到今人类战争的脉络', category: '军事' },
-        r24: { note: '从认知革命讲到科技革命，看懂人类怎么走到今天', category: '历史' },
-        r25: { note: '司马迁的史学巅峰之作', category: '历史' },
-        r26: { note: '伊恩·莫里斯的人类文明长卷', category: '历史' },
-        r27: { note: '从史前到现代的世界史教科书', category: '历史' },
-        r28: { note: '大历史观代表作，从一年看大明兴衰', category: '历史' },
-        r29: { note: '向内思辨，稳住内心内核', category: '哲学' },
-        r30: { note: '东方哲学源头五千言', category: '哲学' },
-        r31: { note: '柏拉图的政治哲学奠基之作', category: '哲学' },
-        r32: { note: '古罗马皇帝写给自己的话，焦虑时翻一翻', category: '哲学' },
-        r33: { note: '当代哲学入门，跟随日常问题思考', category: '哲学' },
-      }
       const items = (parsed.items || []).map(i => {
         let category = i.category
         // 仅对「缺失」或旧版单字符串『综艺』做兜底，其余任何分类（含用户自定义/旧版分类）一律保留原值，绝不乱改名

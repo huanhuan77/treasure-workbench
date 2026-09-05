@@ -35,7 +35,6 @@ export function FinancePage() {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(() => new Date().getFullYear())
   const [sortBy, setSortBy] = useState('date_desc')
-  const [showMoreCat, setShowMoreCat] = useState(false)
   // 隐藏账号（隐私/展示场景），与样品页共用全局开关
   const [hideAccount, setHideAccount] = useState(isAccountsHidden)
   const toggleHideAccount = () => {
@@ -200,7 +199,7 @@ export function FinancePage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {filtered.map((t, idx) => {
+            {filtered.map((t) => {
               const cat = CATEGORIES[t.category] || { label: t.category, color: 'var(--text-sub)', bg: 'rgba(255,255,255,0.5)', type: t.type }
               const isSwiped = swipedTxId === t.id
               return (

@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { SavingsButton } from '../components/SavingsButton'
 import { useToast } from '../components/Toast'
-import { Modal, Field, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
+import { ConfirmModal, glassStyle } from '../components/Modal'
 import { checkForUpdate } from '../main'
 import {
   DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter,
@@ -143,11 +142,10 @@ function SortableProductCard(props) {
 }
 
 export function HomePage() {
-  const { products, addProduct, deleteProduct, updateProduct, reorderProducts } = useStore()
+  const { products, deleteProduct, reorderProducts } = useStore()
   const { show } = useToast()
   const navigate = useNavigate()
   const [checking, setChecking] = useState(false)
-  const [editId, setEditId] = useState(null)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [swipedId, setSwipedId] = useState(null)
   const [delId, setDelId] = useState(null)

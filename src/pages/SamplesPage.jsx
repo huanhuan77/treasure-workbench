@@ -33,7 +33,7 @@ function getAccounts(s) {
   return s?.account ? [s.account] : []
 }
 
-function acctChipStyle(active, label, color, bg) {
+function acctChipStyle(active, label, color) {
   return {
     padding: '4px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
     background: active ? color : 'rgba(255,255,255,0.45)',
@@ -238,11 +238,11 @@ export function SamplesPage() {
       {/* 账号筛选：第一行 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 16px 4px', overflowX: 'auto' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>账号</span>
-        <button onClick={() => { setAccountFilter('all'); setFilter('unpublished') }} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899', 'rgba(244,114,182,0.16)')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
+        <button onClick={() => { setAccountFilter('all'); setFilter('unpublished') }} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
         {!hideAccount && ACCOUNTS.map((a) => {
           const col = ACCOUNT_COLOR[a]
           return (
-            <button key={a} onClick={() => { setAccountFilter(a); setFilter('unpublished'); sessionStorage.setItem('samples_account', a) }} style={acctChipStyle(accountFilter === a, a, col.c, col.bg)}>
+            <button key={a} onClick={() => { setAccountFilter(a); setFilter('unpublished'); sessionStorage.setItem('samples_account', a) }} style={acctChipStyle(accountFilter === a, a, col.c)}>
               {a} {acctStats[a] || 0}
             </button>
           )
@@ -312,7 +312,7 @@ export function SamplesPage() {
 
                   return <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
                     swipedId={swipedId} setSwipedId={setSwipedId}
-                    filter={filter} accountFilter={accountFilter} hideAccount={hideAccount}
+                    hideAccount={hideAccount}
                     dragEnabled={!isDateSort}
                     onEdit={() => {
                       sessionStorage.setItem('samples_scroll', String(window.scrollY))
@@ -388,7 +388,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, filter, accountFilter, hideAccount, dragEnabled, onEdit, onDelete }) {
+function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, dragEnabled, onEdit, onDelete }) {
   const canDrag = dragEnabled !== false   // 按日期排序时禁止拖动（否则与排序结果冲突）
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id, disabled: !canDrag })
   const isSwiped = swipedId === s.id

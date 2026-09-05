@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
@@ -204,21 +204,6 @@ function scanText(text, extraWords = []) {
   }
 
   return { found, stats }
-}
-
-function highlightText(text, found) {
-  if (!found.length) return text
-  const parts = []
-  let last = 0
-  const sorted = [...found].sort((a, b) => a.start - b.start)
-  for (const f of sorted) {
-    if (f.start > last) parts.push(text.slice(last, f.start))
-    const level = f.level
-    parts.push(`{{HIGHLIGHT_${level}|${text.slice(f.start, f.end)}|${encodeURIComponent(f.cat)}|${encodeURIComponent(f.hint)}}}`)
-    last = f.end
-  }
-  if (last < text.length) parts.push(text.slice(last))
-  return parts.join('')
 }
 
 // ── 组件 ──────────────────────────────────────────────────────────────────

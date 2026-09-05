@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useToast } from '../components/Toast'
-import { glassStyle } from '../components/Modal'
 import { recordDelete } from '../utils/sync'
 
 const STORAGE_KEY = 'blogger_calendar_v1'

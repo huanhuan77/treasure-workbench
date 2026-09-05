@@ -32,10 +32,6 @@ export function BrandContactsPage() {
     const ok = await copyText(text)
     show(ok ? `已复制：${text}` : '复制失败', ok ? 'success' : 'error')
   }
-  const copyWechat = async (item) => {
-    const ok = await copyText(item.wechat)
-    show(ok ? `已复制微信号：${item.wechat}` : '复制失败', ok ? 'success' : 'error')
-  }
 
   return (
     <div className="app-container">
@@ -77,7 +73,6 @@ export function BrandContactsPage() {
                 key={item.id}
                 item={item}
                 onCopyAll={() => copyAll(item)}
-                onCopyWechat={() => copyWechat(item)}
                 onEdit={() => setEditItem(item)}
                 onDelete={() => setDelId(item.id)}
                 onToggleAdded={() => { setList(list.map(i => i.id === item.id ? { ...i, added: !i.added } : i)); show(item.added ? '已改为「未添加」' : '已改为「已添加」', 'success') }}
@@ -150,7 +145,7 @@ export function BrandContactsPage() {
   )
 }
 
-function BrandContactCard({ item, onCopyAll, onCopyWechat, onEdit, onDelete, onToggleAdded }) {
+function BrandContactCard({ item, onCopyAll, onEdit, onDelete, onToggleAdded }) {
   const [swiped, setSwiped] = useState(false)
   return (
     <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '14px' }}>

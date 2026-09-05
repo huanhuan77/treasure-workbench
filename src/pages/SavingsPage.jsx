@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useStore } from '../store'
-import { useNavigate } from 'react-router-dom'
 
 const ACCOUNT_OPTIONS = ['支付宝1','支付宝2','博时','同花顺','华泰','东方','卡','中信','工行','微信','其他']
 
@@ -12,10 +11,9 @@ function formatNum(n) {
 function toNum(v) { const n = parseInt(String(v).replace(/,/g,'')); return isNaN(n) ? 0 : n }
 
 export function SavingsPage() {
-  const { getSavings, updateSavings, setSavings } = useStore()
+  const { getSavings, updateSavings } = useStore()
   const sd = getSavings() || {}
   const records = sd.records || {}
-  const navigate = useNavigate()
   const [editMonth, setEditMonth] = useState(null)
   const [expandedMonth, setExpandedMonth] = useState(null)
   const [editAccounts, setEditAccounts] = useState(null)
@@ -50,10 +48,6 @@ export function SavingsPage() {
       details,
     })
     setEditMonth(null)
-  }
-  const addAccount = () => {
-    const label = prompt('输入账户名称：')
-    if (label && label.trim()) setEditAccounts(prev => ({ ...prev, [label.trim()]: 0 }))
   }
 
   return (

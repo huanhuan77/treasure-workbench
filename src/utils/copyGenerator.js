@@ -238,7 +238,6 @@ export function generateTopics(content, productName, brand, sensitiveWords) {
     ;[unique[i], unique[j]] = [unique[j], unique[i]]
   }
   let topics = unique.slice(0, 5)
-  const { clean: cleaned } = sanitizeText(topics.join(' '), sensitiveWords)
   // 清洗后重新拆分回数组（话题格式 #xxx# 不受影响）
   return topics.map((t) => {
     const r = sanitizeText(t, sensitiveWords)

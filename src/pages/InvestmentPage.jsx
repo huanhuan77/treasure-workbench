@@ -16,12 +16,6 @@ function loadInvestments() {
   return []
 }
 
-function formatNum(n) {
-  if (!n && n !== 0) return ''
-  if (n >= 10000) return (n / 10000).toFixed(1) + 'w'
-  return n.toLocaleString()
-}
-
 export function InvestmentPage() {
   const { getSavings, setSavings } = useStore()
   const sd = getSavings() || {}

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Modal, Field, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
-import { copyText, formatDate, todayStr, daysDiff } from '../utils/helpers'
+import { Modal, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
+import { copyText, todayStr, daysDiff } from '../utils/helpers'
 import {
   generateTitle, generateTopics, generateSimilarCopy,
   getStyles, buildTitleWithTopics,
@@ -32,7 +32,7 @@ function displayTitle(p) {
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { products, addCopy, deleteCopy, updateCopy, addCopies, clearCopies, updateProduct, sensitiveWords } = useStore()
+  const { products, addCopy, deleteCopy, updateCopy, clearCopies, updateProduct, sensitiveWords } = useStore()
   const { show } = useToast()
   const product = products.find((p) => p.id === id)
 
@@ -100,13 +100,6 @@ export function ProductDetailPage() {
 
   // 文案编辑
   const openEditCopy = (c) => navigate(`/copy-edit/${product.id}/${c.id}`)
-  const saveEditCopy = () => {
-    if (!editCopy) return
-    if (!editCopy.content.trim()) { show('文案内容不能为空', 'error'); return }
-    updateCopy(product.id, editCopy.id, { content: editCopy.content })
-    setEditCopy(null); show('文案已更新', 'success')
-  }
-
 
   if (!product) {
     return (
@@ -135,13 +128,6 @@ export function ProductDetailPage() {
       return (b.createdAt || 0) - (a.createdAt || 0)
     })
   })()
-
-  // 打开生成相似弹窗（从某条文案触发）
-  const openGenModal = (copy) => {
-    setGenModal({ open: true, copy })
-    setSelectedStyles(['全部'])
-    setGenResults([])
-  }
 
   // 执行生成（多风格，结果不入库）
   const handleGenerate = () => {
@@ -188,18 +174,8 @@ export function ProductDetailPage() {
     if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
   }
 
-  const handleGenerateSimilar = (copyId, style) => {
-    const copy = product.copies.find((c) => c.id === copyId)
-    if (!copy) return
-    const newContent = generateSimilarCopy(copy.content, product.name, product.brand, style, sensitiveWords)
-    const title = generateTitle(newContent, product.name, product.brand, sensitiveWords)
-    const topics = generateTopics(newContent, product.name, product.brand, sensitiveWords)
-    addCopy(id, { content: newContent, title, topics, style })
-    show(`已生成「${style}」风格文案`, 'success')
-  }
-
   // 复制话题：合并产品级话题和该文案的话题（不标记用过）
-  const handleCopyTopics = async (topics, copyId) => {
+  const handleCopyTopics = async (topics) => {
     const merged = [...new Set([...(product.topics || []), ...(topics || [])])]
     const text = merged.join(' ')
     const ok = await copyText(text)
@@ -372,11 +348,8 @@ export function ProductDetailPage() {
               <CopyCard
                 key={copy.id}
                 copy={copy}
-                productName={product.name}
-                brand={product.brand}
-                productTopics={product.topics}
                 onCopyContent={() => handleCopyContent(copy.content, copy.id)}
-                onCopyTopics={() => handleCopyTopics(copy.topics, copy.id)}
+                onCopyTopics={() => handleCopyTopics(copy.topics)}
                 onEdit={() => openEditCopy(copy)}
                 onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder, copy.usedDate, (copy.content || '').replace(/\n/g, ' ').slice(0, 12))}
                 onToggleHot={() => toggleHot(copy.id, copy.hasHot)}
@@ -719,7 +692,7 @@ export function ProductDetailPage() {
 }
 
 function CopyCard({
-  copy, productName, brand, productTopics,
+  copy,
   onCopyContent, onCopyTopics,
   onEdit, onToggleOrder, onToggleHot, onToggleUsed, onDelete,
 }) {

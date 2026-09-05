@@ -28,7 +28,7 @@ function PageHeader({ title, onBack }) {
 
 export function NewTransactionPage() {
   const navigate = useNavigate()
-  const { transactions, addTransaction } = useStore()
+  const { addTransaction } = useStore()
   const { show } = useToast()
   const [type, setType] = useState('income')
   const [category, setCategory] = useState('sample')

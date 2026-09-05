@@ -20,7 +20,7 @@ const EXPENSE_TYPES = ['prop', 'other_expense', 'ad']
 export function EditTransactionPage() {
   const navigate = useNavigate()
   const { id } = useParams()
-  const { transactions, updateTransaction, deleteTransaction } = useStore()
+  const { transactions, updateTransaction } = useStore()
   const { show } = useToast()
   const tx = transactions.find(t => t.id === id)
 
