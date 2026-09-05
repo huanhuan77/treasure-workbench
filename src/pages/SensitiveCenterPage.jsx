@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
+import { ConfirmModal, glassStyle } from '../components/Modal'
 
 // ── 抖音违禁词库（纯前端，每日更新 ↓ 可自行增删） ─────────────────────────
-
 const WORD_LIB = [
   // ═══ 🔴 广告极限词 ═══
   { w: '最', cat: '广告极限', level: 1, hint: '改用"很/非常/特别"' },
@@ -169,63 +169,62 @@ const WORD_LIB = [
 // 排序：长词优先匹配，同级按字母
 const SORTED_LIB = [...WORD_LIB].sort((a, b) => b.w.length - a.w.length || a.w.localeCompare(b.w))
 
-// ── 检测引擎 ──
-
 function scanText(text, extraWords = []) {
   const allWords = [...SORTED_LIB, ...extraWords.map(w => ({ w, cat: '自定义', level: 1, hint: '' }))]
   const found = []
   const checked = new Set()
   let cleaned = text
-
   for (const entry of allWords) {
     if (checked.has(entry.w)) continue
     checked.add(entry.w)
     const idx = cleaned.indexOf(entry.w)
     if (idx !== -1) {
-      found.push({
-        ...entry,
-        start: idx,
-        end: idx + entry.w.length,
-        match: entry.w,
-      })
-      // 标记已处理位置避免重复匹配
+      found.push({ ...entry, start: idx, end: idx + entry.w.length, match: entry.w })
       cleaned = cleaned.replace(entry.w, '█'.repeat(entry.w.length))
     }
   }
-
-  // 按出现位置排序
   found.sort((a, b) => a.start - b.start)
-
-  // 统计
   const stats = { total: found.length, byLevel: { 1: 0, 2: 0, 3: 0 }, byCategory: {} }
   for (const f of found) {
     stats.byLevel[f.level] = (stats.byLevel[f.level] || 0) + 1
     stats.byCategory[f.cat] = (stats.byCategory[f.cat] || 0) + 1
   }
-
   return { found, stats }
 }
 
-// ── 组件 ──────────────────────────────────────────────────────────────────
+const TABS = [
+  { key: 'lib', label: '词库' },
+  { key: 'check', label: '违禁词检测' },
+]
 
-export function SensitiveCheckPage() {
+export function SensitiveCenterPage() {
   const navigate = useNavigate()
+  const { sensitiveWords, addSensitiveWord, deleteSensitiveWord } = useStore()
   const { show } = useToast()
-  const { sensitiveWords } = useStore()
+  const [tab, setTab] = useState('lib')
 
+  // 词库
   const [input, setInput] = useState('')
+  const [delWord, setDelWord] = useState(null)
+
+  // 检测
+  const [checkInput, setCheckInput] = useState('')
   const [result, setResult] = useState(null)
 
-  const handleCheck = () => {
-    const text = input.trim()
-    if (!text) { show('请输入待检测文案', 'error'); return }
+  const handleAddWord = () => {
+    const w = input.trim()
+    if (!w) { show('请输入卡审词', 'error'); return }
+    if (sensitiveWords.includes(w)) { show('该卡审词已存在', 'error'); return }
+    addSensitiveWord(w); setInput(''); show('已添加卡审词', 'success')
+  }
+  const handleDeleteWord = () => { deleteSensitiveWord(delWord); setDelWord(null); show('已删除卡审词', 'success') }
 
+  const handleCheck = () => {
+    const text = checkInput.trim()
+    if (!text) { show('请输入待检测文案', 'error'); return }
     const res = scanText(text, sensitiveWords)
-    if (res.found.length === 0) {
-      show('✅ 未检测到违禁词', 'success')
-    } else {
-      show(`⚠️ 发现 ${res.found.length} 个潜在违禁词`, 'info')
-    }
+    if (res.found.length === 0) show('✅ 未检测到违禁词', 'success')
+    else show(`⚠️ 发现 ${res.found.length} 个潜在违禁词`, 'info')
     setResult(res)
   }
 
@@ -240,173 +239,182 @@ export function SensitiveCheckPage() {
         display: 'flex', alignItems: 'center', gap: '12px',
       }}>
         <button onClick={() => navigate(-1)} style={{
-          border: 'none', background: 'rgba(236,72,182,0.10)', color: 'var(--primary)',
+          border: 'none', background: 'rgba(236,72,153,0.10)', color: 'var(--primary)',
           width: '36px', height: '36px', borderRadius: '50%', fontSize: '20px',
           cursor: 'pointer', flexShrink: 0,
         }}>←</button>
         <div>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
-            抖音违禁词检测
+            违禁词
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
-            纯前端检测 · 内置{SORTED_LIB.length}个词条 · 每日更新
+            词库管理 + 文案检测，合一使用
           </p>
         </div>
       </header>
 
-      <div style={{ padding: '0 16px 16px' }}>
-        {/* 统计卡片 */}
-        {result && (
-          <div style={{
-            display: 'flex', gap: '8px', marginBottom: '14px',
-          }}>
-            {[
-              { label: '违禁词', value: result.stats.total, color: '#ef4444' },
-              { label: '🔴 必改', value: result.stats.byLevel[1] || 0, color: '#ef4444' },
-              { label: '🟡 建议改', value: result.stats.byLevel[2] || 0, color: '#f59e0b' },
-              { label: '🟢 注意', value: result.stats.byLevel[3] || 0, color: '#10b981' },
-            ].map(s => (
-              <div key={s.label} style={{
-                flex: 1, background: 'rgba(255,255,255,0.5)', borderRadius: '12px',
-                padding: '10px 8px', textAlign: 'center',
-              }}>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginTop: '2px' }}>{s.label}</div>
+      {/* Tab 切换 */}
+      <div style={{ padding: '0 16px 8px', display: 'flex', gap: '8px' }}>
+        {TABS.map((t) => (
+          <button key={t.key} onClick={() => setTab(t.key)} style={{
+            flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+            cursor: 'pointer', border: 'none',
+            background: tab === t.key ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+            color: tab === t.key ? '#fff' : 'var(--text-sub)',
+            boxShadow: tab === t.key ? '0 2px 8px rgba(236,72,153,0.18)' : '0 1px 2px rgba(0,0,0,0.04)',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      <div style={{ padding: '8px 16px 16px' }}>
+        {tab === 'lib' ? (
+          <>
+            <div style={{ ...glassStyle, padding: '12px 14px', marginBottom: '14px', fontSize: '13px', color: 'var(--text-sub)', lineHeight: 1.6 }}>
+              🚫 平台会审核贬低、歧视、违规类词汇，命中后可能被扣分 / 罚没佣金 / 封号。下方词库在生成标题、话题和文案时会自动检测并替换。
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleAddWord() }}
+                placeholder="输入要添加的卡审词，如：黑奴"
+                style={{
+                  flex: 1, border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                  padding: '11px 14px', fontSize: '15px', color: 'var(--text-main)', outline: 'none', background: '#fff',
+                }}
+              />
+              <button onClick={handleAddWord} style={{
+                flexShrink: 0, padding: '0 18px', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+                color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', cursor: 'pointer',
+              }}>添加</button>
+            </div>
+            {sensitiveWords.length === 0 ? (
+              <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
+                <div style={{ fontSize: '40px', marginBottom: '10px' }}>🚫</div>
+                <p style={{ fontSize: '14px', margin: 0 }}>词库为空，添加你的第一个卡审词</p>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* 输入区 */}
-        <textarea value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder={`粘贴抖音文案/标题/话题进行违禁词检测...\n\n示例：\n"今天给大家推荐一款全网最好的产品，加我微信领取优惠券，百分百有效，无效退款！"`}
-          rows={6}
-          style={{
-            width: '100%', boxSizing: 'border-box',
-            border: '1px solid rgba(0,0,0,0.08)', borderRadius: '14px',
-            padding: '14px', fontSize: '14px', lineHeight: 1.6,
-            color: 'var(--text-main)', outline: 'none', background: '#fff',
-            resize: 'vertical', fontFamily: 'inherit',
-          }}
-        />
-
-        <button onClick={handleCheck}
-          disabled={!input.trim()}
-          style={{
-            width: '100%', marginTop: '12px', padding: '14px 0',
-            border: 'none', borderRadius: '14px', fontSize: '16px', fontWeight: 600, color: '#fff',
-            background: !input.trim()
-              ? 'linear-gradient(135deg,#ccc,#bbb)'
-              : 'linear-gradient(135deg,#f472b6,#ec4899)',
-            cursor: !input.trim() ? 'not-allowed' : 'pointer',
-          }}
-        >🔍 检测违禁词</button>
-
-        {/* 结果 */}
-        {result && (
-          <div style={{ marginTop: '14px' }}>
-            {/* 高亮预览 */}
-            {result.found.length > 0 && (
-              <div style={{
-                background: '#fff', borderRadius: '14px', padding: '16px',
-                border: '1px solid rgba(0,0,0,0.06)', marginBottom: '14px',
-                fontSize: '14px', lineHeight: 1.8, whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '10px' }}>
-                  📋 高亮预览
-                </div>
-                {(() => {
-                  // 渲染高亮文本
-                  const parts = []
-                  let last = 0
-                  const sorted = [...result.found].sort((a, b) => a.start - b.start)
-                  for (const f of sorted) {
-                    if (f.start > last) parts.push(input.slice(last, f.start))
-                    const colors = { 1: { bg: '#fecaca', text: '#991b1b' }, 2: { bg: '#fde68a', text: '#92400e' }, 3: { bg: '#bbf7d0', text: '#166534' } }
-                    const c = colors[f.level] || colors[1]
-                    parts.push(
-                      <mark key={f.start} style={{
-                        background: c.bg, color: c.text,
-                        padding: '2px 4px', borderRadius: '4px',
-                        borderBottom: `2px solid ${c.text}`,
-                        cursor: 'help',
-                        title: `${f.cat}: ${f.hint}`,
-                      }}>{input.slice(f.start, f.end)}</mark>
-                    )
-                    last = f.end
-                  }
-                  if (last < input.length) parts.push(input.slice(last))
-                  return parts
-                })()}
-              </div>
-            )}
-
-            {/* 详情列表 */}
-            {result.found.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {result.found.map((f, i) => (
-                  <div key={i} style={{
-                    background: levelBg(f.level), borderRadius: '12px', padding: '12px 14px',
-                    border: `1px solid ${levelBorder(f.level)}`,
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                {sensitiveWords.map((w) => (
+                  <div key={w} style={{
+                    display: 'flex', alignItems: 'center', gap: '8px', background: '#fff',
+                    border: '1px solid rgba(244,114,182,0.18)', borderRadius: '999px', padding: '8px 8px 8px 14px',
+                    fontSize: '14px', color: 'var(--text-main)', boxShadow: '0 2px 8px rgba(244,114,182,0.06)',
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-main)' }}>
-                        {f.match}
-                      </span>
-                      <span style={{
-                        fontSize: '11px', fontWeight: 600, padding: '2px 8px',
-                        borderRadius: '999px',
-                        background: levelBg(f.level),
-                        border: `1px solid ${levelBorder(f.level)}`,
-                        color: levelBorder(f.level) === '#fca5a5' ? '#991b1b' : levelBorder(f.level) === '#fcd34d' ? '#92400e' : '#166534',
-                      }}>
-                        {levelName(f.level)}
-                      </span>
-                    </div>
-                    <div style={{
-                      display: 'flex', gap: '8px', marginTop: '6px',
-                      fontSize: '12px', color: 'var(--text-sub)',
-                    }}>
-                      <span>🏷️ {f.cat}</span>
-                      {f.hint && <span>💡 {f.hint}</span>}
-                    </div>
+                    <span>{w}</span>
+                    <button onClick={() => setDelWord(w)} style={{
+                      border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',
+                      width: '22px', height: '22px', borderRadius: '50%', fontSize: '13px', lineHeight: 1, cursor: 'pointer', flexShrink: 0,
+                    }}>×</button>
                   </div>
                 ))}
               </div>
-            ) : (
-              <div style={{
-                textAlign: 'center', padding: '40px 20px',
-                background: '#f0fdf4', borderRadius: '14px',
-                border: '1px solid #86efac',
-              }}>
-                <div style={{ fontSize: '40px', marginBottom: '10px' }}>✅</div>
-                <div style={{ fontSize: '15px', fontWeight: 600, color: '#166534' }}>
-                  未检测到违禁词
-                </div>
-                <div style={{ fontSize: '13px', color: '#15803d', marginTop: '4px' }}>
-                  文案内容安全，可以放心发布
-                </div>
+            )}
+          </>
+        ) : (
+          <>
+            {result && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                {[
+                  { label: '违禁词', value: result.stats.total, color: '#ef4444' },
+                  { label: '🔴 必改', value: result.stats.byLevel[1] || 0, color: '#ef4444' },
+                  { label: '🟡 建议改', value: result.stats.byLevel[2] || 0, color: '#f59e0b' },
+                  { label: '🟢 注意', value: result.stats.byLevel[3] || 0, color: '#10b981' },
+                ].map(s => (
+                  <div key={s.label} style={{ flex: 1, background: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: s.color }}>{s.value}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginTop: '2px' }}>{s.label}</div>
+                  </div>
+                ))}
               </div>
             )}
-          </div>
-        )}
+            <textarea value={checkInput}
+              onChange={e => setCheckInput(e.target.value)}
+              placeholder={`粘贴抖音文案/标题/话题进行违禁词检测...\n\n示例：\n"今天给大家推荐一款全网最好的产品，加我微信领取优惠券，百分百有效，无效退款！"`}
+              rows={6}
+              style={{
+                width: '100%', boxSizing: 'border-box', border: '1px solid rgba(0,0,0,0.08)',
+                borderRadius: '14px', padding: '14px', fontSize: '14px', lineHeight: 1.6,
+                color: 'var(--text-main)', outline: 'none', background: '#fff', resize: 'vertical', fontFamily: 'inherit',
+              }}
+            />
+            <button onClick={handleCheck}
+              disabled={!checkInput.trim()}
+              style={{
+                width: '100%', marginTop: '12px', padding: '14px 0', border: 'none', borderRadius: '14px',
+                fontSize: '16px', fontWeight: 600, color: '#fff',
+                background: !checkInput.trim() ? 'linear-gradient(135deg,#ccc,#bbb)' : 'linear-gradient(135deg,#f472b6,#ec4899)',
+                cursor: !checkInput.trim() ? 'not-allowed' : 'pointer',
+              }}>🔍 检测违禁词</button>
 
-        {/* 词库说明 */}
-        <div style={{
-          marginTop: '16px', padding: '14px',
-          background: 'rgba(255,255,255,0.4)', borderRadius: '14px',
-          fontSize: '12px', color: 'var(--text-sub)', lineHeight: 1.6,
-        }}>
-          <strong>📚 词库说明</strong><br />
-          • 内置 {SORTED_LIB.length} 条违禁词，覆盖广告极限/引流违禁/夸大宣传/医疗/金融等类别<br />
-          • 🔴 必改：平台严格禁止，命中可能导致限流/扣分/封号<br />
-          • 🟡 建议改：平台限制较严，建议替换为安全表述<br />
-          • 🟢 注意：需在适当语境中使用<br />
-          • 自定义词：可在「词库」页添加个人卡审词，此处自动参与检测
-        </div>
+            {result && (
+              <div style={{ marginTop: '14px' }}>
+                {result.found.length > 0 && (
+                  <div style={{ background: '#fff', borderRadius: '14px', padding: '16px', border: '1px solid rgba(0,0,0,0.06)', marginBottom: '14px', fontSize: '14px', lineHeight: 1.8, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', marginBottom: '10px' }}>📋 高亮预览</div>
+                    {(() => {
+                      const parts = []
+                      let last = 0
+                      const sorted = [...result.found].sort((a, b) => a.start - b.start)
+                      for (const f of sorted) {
+                        if (f.start > last) parts.push(checkInput.slice(last, f.start))
+                        const colors = { 1: { bg: '#fecaca', text: '#991b1b' }, 2: { bg: '#fde68a', text: '#92400e' }, 3: { bg: '#bbf7d0', text: '#166534' } }
+                        const c = colors[f.level] || colors[1]
+                        parts.push(
+                          <mark key={f.start} style={{ background: c.bg, color: c.text, padding: '2px 4px', borderRadius: '4px', borderBottom: `2px solid ${c.text}`, cursor: 'help', title: `${f.cat}: ${f.hint}` }}>{checkInput.slice(f.start, f.end)}</mark>
+                        )
+                        last = f.end
+                      }
+                      if (last < checkInput.length) parts.push(checkInput.slice(last))
+                      return parts
+                    })()}
+                  </div>
+                )}
+                {result.found.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {result.found.map((f, i) => (
+                      <div key={i} style={{ background: levelBg(f.level), borderRadius: '12px', padding: '12px 14px', border: `1px solid ${levelBorder(f.level)}` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-main)' }}>{f.match}</span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', background: levelBg(f.level), border: `1px solid ${levelBorder(f.level)}`, color: levelBorder(f.level) === '#fca5a5' ? '#991b1b' : levelBorder(f.level) === '#fcd34d' ? '#92400e' : '#166534' }}>{levelName(f.level)}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px', fontSize: '12px', color: 'var(--text-sub)' }}>
+                          <span>🏷️ {f.cat}</span>
+                          {f.hint && <span>💡 {f.hint}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '40px 20px', background: '#f0fdf4', borderRadius: '14px', border: '1px solid #86efac' }}>
+                    <div style={{ fontSize: '40px', marginBottom: '10px' }}>✅</div>
+                    <div style={{ fontSize: '15px', fontWeight: 600, color: '#166534' }}>未检测到违禁词</div>
+                    <div style={{ fontSize: '13px', color: '#15803d', marginTop: '4px' }}>文案内容安全，可以放心发布</div>
+                  </div>
+                )}
+              </div>
+            )}
+            <div style={{ marginTop: '16px', padding: '14px', background: 'rgba(255,255,255,0.4)', borderRadius: '14px', fontSize: '12px', color: 'var(--text-sub)', lineHeight: 1.6 }}>
+              <strong>📚 词库说明</strong><br />
+              • 内置 {SORTED_LIB.length} 条违禁词，覆盖广告极限/引流违禁/夸大宣传/医疗/金融等类别<br />
+              • 🔴 必改：平台严格禁止，命中可能导致限流/扣分/封号<br />
+              • 🟡 建议改：平台限制较严，建议替换为安全表述<br />
+              • 🟢 注意：需在适当语境中使用<br />
+              • 自定义词：可在「词库」页添加个人卡审词，此处自动参与检测
+            </div>
+          </>
+        )}
       </div>
+
+      <ConfirmModal
+        open={!!delWord}
+        onClose={() => setDelWord(null)}
+        onConfirm={handleDeleteWord}
+        title="删除卡审词"
+        message={`确定删除「${delWord || ''}」吗？`}
+        confirmText="删除"
+        danger
+      />
     </div>
   )
 }

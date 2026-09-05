@@ -6,7 +6,7 @@ const mainTabs = [
   { to: '/', label: '总览', icon: '🏠', end: true },
   { to: '/products', label: '文案库', icon: '📝' },
   { to: '/samples', label: '样品', icon: '🏷️' },
-  { to: '/orders', label: '出单', icon: '🧾' },
+  { to: '/orders', label: '出单', icon: '💰' },
 ]
 
 // 更多侧边栏 tab
@@ -21,8 +21,8 @@ const sideTabs = [
   { to: '/savings', label: '攒钱计划', icon: '🐷' },
   { to: '/investment', label: '投资跟踪', icon: '📈' },
   { to: '/backup', label: '数据备份', icon: '💾' },
-  { to: '/sensitive', label: '词库', icon: '📚' },
-  { to: '/sensitive-check', label: '违禁词检测', icon: '🚫' },
+  { to: '/sensitive', label: '违禁词', icon: '🚫' },
+  { to: '/dramas', label: '追剧', icon: '📺' },
 ]
 
 function TabItem({ to, label, icon, end, onClick, badge }) {

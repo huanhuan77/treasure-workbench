@@ -215,8 +215,8 @@ export function SamplesPage() {
             {hideAccount ? '🙈 隐藏' : '👁 显示'}
           </button>
         </div>
-        {/* 第二行：全部账号（首），其余排序条件外置到第三行常显 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+        {/* 第二行：全部账号 + 排序方式 同一行横滚 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', overflowX: 'auto' }}>
           <button onClick={() => { setAccountDraft(accountFilter); setAccountSearch(''); setAccountModalOpen(true) }} title="选择账号" style={{
             padding: '5px 13px', borderRadius: '999px',
             border: '1px solid rgba(244,114,182,0.35)',
@@ -229,10 +229,6 @@ export function SamplesPage() {
             <span>{accountFilter === 'all' ? '全部账号' : accountFilter}</span>
             <span style={{ fontSize: '9px', opacity: .7 }}>▾</span>
           </button>
-          <div style={{ flex: 1 }} />
-        </div>
-        {/* 第三行：排序方式（从弹窗外置，常显） */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', overflowX: 'auto' }}>
           {SORT_OPTIONS.map((o) => {
             const active = sortKey === o.key
             const dateActive = active && o.key !== 'custom'
@@ -243,14 +239,13 @@ export function SamplesPage() {
                 background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
                 color: active ? '#fff' : 'var(--text-sub)',
                 fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-                display: 'flex', alignItems: 'center', gap: '3px',
+                display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0,
               }}>
                 <span>{o.label}</span>
                 {dateActive && <span style={{ fontSize: '10px', opacity: .9 }}>{sortDir === 'desc' ? '↓' : '↑'}</span>}
               </button>
             )
           })}
-          <div style={{ flex: 1 }} />
         </div>
         <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>
           共 {Object.values(statusStats).reduce((a,b) => a + b, 0)} 个样品
@@ -377,25 +372,10 @@ export function SamplesPage() {
       {/* 账号选择弹窗（仿抖音选号样式：标题居中+取消/确定+搜索框+单选列表） */}
       <Modal open={accountModalOpen} onClose={() => setAccountModalOpen(false)} title="账号">
         <div style={{ margin: '-8px -22px 0' }}>
-          <div style={{ padding: '0 22px 12px' }}>
-            <input value={accountSearch} onChange={(e) => setAccountSearch(e.target.value)}
-              placeholder="请输入账号昵称搜索"
-              style={{
-                width: '100%', padding: '10px 14px 10px 38px',
-                borderRadius: '999px', border: '1px solid rgba(0,0,0,0.08)',
-                background: '#f5f5f7', fontSize: '14px', outline: 'none', fontFamily: 'inherit',
-                color: 'var(--text-main)', boxSizing: 'border-box',
-                backgroundImage: 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>\')',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: '14px center',
-                backgroundSize: '16px',
-              }} />
-          </div>
           {/* 列表 */}
           <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
             {[{ key: 'all', name: '全部账号', color: '#ec4899', initial: '全' },
               ...ACCOUNTS.map((a) => ({ key: a, name: a, color: ACCOUNT_COLOR[a].c, initial: a.slice(0, 1) }))]
-              .filter((o) => !accountSearch.trim() || o.name.includes(accountSearch.trim()))
               .map((o, idx, arr) => (
                 <button key={o.key} onClick={() => setAccountDraft(o.key)} style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: '12px',

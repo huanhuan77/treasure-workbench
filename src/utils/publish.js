@@ -10,6 +10,9 @@ export const PUBLISHED_STATES = ['published']
 // 可记视频发布的状态（已拍摄未发布 / 已发布 都可发；未到货、已到货未拍摄、放弃 不可发）
 export const SHOOTABLE_STATES = ['shot', 'published']
 
+// 逾期提醒仅针对仍需处理的待发状态；已发布（截止日对发布提醒无意义）、放弃 不计入
+export const OVERDUE_STATES = ['un_arrived', 'arrived', 'shot']
+
 // 样品是否可作为「出单」关联对象（仅已发布）
 export function isSelectableForOrder(status) {
   return PUBLISHED_STATES.includes(status)
@@ -45,7 +48,9 @@ export function isOverdue(sample) {
 export function needPublishReminder(sample) {
   if (!sample) return false
   if (sample.status === 'abandoned') return false
-  if (isOverdue(sample)) return true
+  // 逾期：仅仍需处理的待发状态（未到货/已到货未拍摄/已拍摄未发布）才提醒，已发布的过去截止日不计
+  if (isOverdue(sample) && OVERDUE_STATES.includes(sample.status)) return true
+  // 已出单的样品：7 天未发视频才提醒
   if ((Number(sample.orderCount) || 0) > 0) {
     const days = daysSincePublish(sample)
     if (days === Infinity || days > N_PUBLISH_DAYS) return true

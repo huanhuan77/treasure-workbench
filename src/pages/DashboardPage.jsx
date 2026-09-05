@@ -163,27 +163,25 @@ export function DashboardPage() {
         </div>
       </header>
 
-      {/* 出单台账主入口（白底 + 粉点强调） */}
-      <div style={{ padding: '14px 16px 4px' }}>
+      {/* 出单台账主入口（白底 + 粉点强调，紧凑布局） */}
+      <div style={{ padding: '12px 16px 2px' }}>
         <div onClick={() => go('/orders')} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '16px 18px', cursor: 'pointer',
+          background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '11px 14px', cursor: 'pointer',
           boxShadow: '0 1px 2px rgba(236,72,153,0.06)',
         }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ec4899' }} />
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', letterSpacing: '0.3px' }}>出单记录</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '28px', fontWeight: 700, color: '#111', lineHeight: 1 }}>{fmt(stat.orderTotal)}</span>
-              <span style={{ fontSize: '12px', color: '#c9a3ab' }}>笔出单 · 累计 {stat.orderQty} 单</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ec4899', flexShrink: 0 }} />
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', letterSpacing: '0.3px' }}>出单</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+              <span style={{ fontSize: '20px', fontWeight: 700, color: '#111', lineHeight: 1 }}>{fmt(stat.orderTotal)}</span>
+              <span style={{ fontSize: '11px', color: '#c9a3ab' }}>笔 · 累计 {stat.orderQty} 单</span>
             </div>
           </div>
-          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: '12px', color: '#c9a3ab' }}>记出单</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <span style={{ fontSize: '12px', color: '#db2777', fontWeight: 600 }}>记出单</span>
+            <span style={{ fontSize: '16px', color: '#f9a8d4' }}>›</span>
           </div>
-          <span style={{ marginLeft: '12px', fontSize: '18px', color: '#f9a8d4', flexShrink: 0 }}>›</span>
         </div>
       </div>
 
@@ -250,8 +248,8 @@ export function DashboardPage() {
       </div>
 
       {/* 发布提醒（N 天未发的样品） */}
-      <div style={{ padding: '14px 16px 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+      <div style={{ padding: '12px 16px 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
             <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ef4444' }} />
             发布提醒
@@ -262,27 +260,27 @@ export function DashboardPage() {
           )}
         </div>
         {reminders.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', color: '#16a34a' }}>
+          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 16px', fontSize: '12px', color: '#16a34a' }}>
             🎉 已发布的样品都按时发了视频
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto', paddingRight: '2px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto', paddingRight: '2px' }}>
             {reminders.map((s) => (
-              <div key={s.id} style={{ background: '#fff', border: '1px solid #fecdd3', borderRadius: '12px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div key={s.id} style={{ background: '#fff', border: '1px solid #fecdd3', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                    <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                    <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px', fontWeight: 600 }}>
+                  <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '2px', fontWeight: 600 }}>
                     {isOverdue(s)
                       ? `⚠ 已逾期（截止 ${s.deadline}）`
                       : `⚠ ${(daysSincePublish(s) === Infinity ? '从未发布过视频' : `已 ${daysSincePublish(s)} 天没发视频`)}（出单品需持续发）`}
                   </div>
                 </div>
                 <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
-                  flexShrink: 0, padding: '8px 14px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
-                  fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                  flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
+                  fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                 }}>补记发布</button>
               </div>
             ))}

@@ -2878,6 +2878,7 @@ const defaultData = {
   orders: [],  // 独立出单台账：{ id, name(品名), date(出单日期), account(账号), qty(件数), commissionPct(佣金%), remark, sampleId, productId }
   publishRecords: [],  // 视频发布记录：{ id, sampleId, productId, accounts[], publishDate, createdAt }
   sensitiveWords: DEFAULT_SENSITIVE_WORDS,
+  dramas: [],  // 追剧：{ id, name, year, cast, status(在追/已看完/弃剧), remark, createdAt }
 }
 
 // 清理文案末尾 👍/ 标注（用户用于标记「用 / 出单」），转 used / hasOrder
@@ -3116,6 +3117,7 @@ function loadData() {
         return sd
       })(),
       sensitiveWords: old.sensitiveWords || DEFAULT_SENSITIVE_WORDS,  // 版本升级不再替换用户自定义词库
+      dramas: Array.isArray(old.dramas) ? old.dramas : [],
     }
   } catch (e) {
     console.warn('[loadData] 加载数据异常，使用默认值:', e)
@@ -3687,6 +3689,37 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, sensitiveWords: d.sensitiveWords.filter((w) => w !== word) }))
   }, [])
 
+  // ── 追剧模块 ──
+  const addDrama = useCallback((drama) => {
+    const now = Date.now()
+    const newDrama = {
+      id: uid(),
+      name: String(drama.name || '').trim(),
+      year: drama.year || '',
+      cast: drama.cast || '',
+      status: drama.status || 'watching',  // watching=在追 / done=已看完 / dropped=弃剧
+      remark: drama.remark || '',
+      createdAt: now,
+      updatedAt: now,
+    }
+    setData((d) => ({ ...d, dramas: [newDrama, ...(d.dramas || [])] }))
+    return newDrama.id
+  }, [])
+
+  const updateDrama = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      dramas: (d.dramas || []).map((dr) =>
+        dr.id === id ? { ...dr, ...patch, updatedAt: Date.now() } : dr
+      ),
+    }))
+  }, [])
+
+  const deleteDrama = useCallback((id) => {
+    recordDelete('blogger_workbench_data_v1', id)
+    setData((d) => ({ ...d, dramas: (d.dramas || []).filter((dr) => dr.id !== id) }))
+  }, [])
+
   // 同步引擎合并结果应用到本机（主数据模块）
   const applySyncResult = useCallback((mergedMain) => {
     if (!mergedMain) return
@@ -3699,6 +3732,7 @@ export function StoreProvider({ children }) {
         savingsData: mergedMain.savingsData ?? d.savingsData,
         sensitiveWords: mergedMain.sensitiveWords ?? d.sensitiveWords,
         publishRecords: mergedMain.publishRecords ?? d.publishRecords,
+        dramas: mergedMain.dramas ?? d.dramas,
       }
       // 同步是「按 id 取并集」，云端残留的重复条目会把本地已删掉的再拉回来。
       // 这里在写入本地前再兜一次底，保证合并结果里同一产品下不出现重复内容。
@@ -3717,6 +3751,7 @@ export function StoreProvider({ children }) {
     addPublishRecord, deletePublishRecord,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord,
+    addDrama, updateDrama, deleteDrama,
     getSavings, updateSavings, setSavings,
     applySyncResult,
   }

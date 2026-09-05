@@ -11,8 +11,8 @@ import { OrdersPage } from './pages/OrdersPage'
 import { FinancePage } from './pages/FinancePage'
 import { SavingsPage } from './pages/SavingsPage'
 import { ProductDetailPage } from './pages/ProductDetailPage'
-import { SensitiveWordsPage } from './pages/SensitiveWordsPage'
-import { SensitiveCheckPage } from './pages/SensitiveCheckPage'
+import { SensitiveCenterPage } from './pages/SensitiveCenterPage'
+import { DramaPage } from './pages/DramaPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { CalendarDetailPage } from './pages/CalendarDetailPage'
 import { BackupPage } from './pages/BackupPage'
@@ -91,8 +91,7 @@ function App() {
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/savings" element={<SavingsPage />} />
             <Route path="/finance" element={<FinancePage />} />
-            <Route path="/sensitive" element={<SensitiveWordsPage />} />
-            <Route path="/sensitive-check" element={<SensitiveCheckPage />} />
+            <Route path="/sensitive" element={<SensitiveCenterPage />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/calendar/:date" element={<CalendarDetailPage />} />
             <Route path="/backup" element={<BackupPage />} />
@@ -108,6 +107,7 @@ function App() {
             <Route path="/product/:id/edit" element={<EditProductPage />} />
             <Route path="/batch-import/:id" element={<BatchImportPage />} />
             <Route path="/copy-edit/:productId/:copyId" element={<EditCopyPage />} />
+            <Route path="/dramas" element={<DramaPage />} />
             <Route path="/samples/new" element={<NewSamplePage />} />
             <Route path="/samples/:id/edit" element={<EditSamplePage />} />
             <Route path="/finance/new" element={<NewTransactionPage />} />
