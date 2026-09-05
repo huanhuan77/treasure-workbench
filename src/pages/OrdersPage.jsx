@@ -22,7 +22,31 @@ function todayStr() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
-// 佣金(元)估算：按 件数 × 单价? —— 无单价字段，这里佣金% 作为附加信息展示即可，不强行算金额
+// 时间筛选区间：返回 [startTs, endTs)；'all' 返回 null（不过滤）
+function rangeBounds(range) {
+  const now = new Date()
+  if (range === 'today') {
+    const s = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    return [s, s + 86400000]
+  }
+  if (range === 'yesterday') {
+    const s = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime()
+    return [s, s + 86400000]
+  }
+  if (range === '7d') {
+    const s = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).getTime()
+    return [s, Date.now() + 86400000] // 含今天
+  }
+  if (range === '30d') {
+    const s = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29).getTime()
+    return [s, Date.now() + 86400000]
+  }
+  if (range === 'month') {
+    const s = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+    return [s, Date.now() + 86400000]
+  }
+  return null // all
+}
 // 统一显示佣金率：X%
 const fmtPct = (p) => (p ? `${p}%` : '—')
 const fmtQty = (q) => (q && q > 1 ? `${q}单` : '1单')
@@ -122,6 +146,7 @@ export function OrdersPage() {
   const [formSeq, setFormSeq] = useState(0)      // 每次打开自增，作 key 强制重建表单以清空上次输入
   const [accountFilter, setAccountFilter] = useState('')  // ''=全部
   const [view, setView] = useState('name')  // name=按品名分组 | list=流水
+  const [range, setRange] = useState('all')  // all/today/yesterday/7d/30d/month
 
   const list = useMemo(() => {
     // 排序：无日期的排最后，其余按日期新→旧
@@ -133,20 +158,31 @@ export function OrdersPage() {
     })
   }, [orders])
 
-  const filtered = useMemo(
-    () => (accountFilter ? list.filter((o) => o.account === accountFilter) : list),
-    [list, accountFilter]
-  )
+  // 按时间筛选 + 账号筛选
+  const filtered = useMemo(() => {
+    let arr = list
+    if (accountFilter) arr = arr.filter((o) => o.account === accountFilter)
+    const bounds = rangeBounds(range)
+    if (bounds) {
+      const [s, e] = bounds
+      arr = arr.filter((o) => {
+        const t = parseTs(o?.date)
+        // 无日期的在非"全部"时不显示，避免归类困难
+        return t !== null && t >= s && t < e
+      })
+    }
+    return arr
+  }, [list, accountFilter, range])
 
-  // 汇总：总单数(条)、累计件数、涉及账号
+  // 汇总：跟着 range+accountFilter 走
   const summary = useMemo(() => {
-    const totalEntries = list.length
-    const totalQty = list.reduce((s, o) => s + (Number(o.qty) || 0), 0)
+    const totalEntries = filtered.length
+    const totalQty = filtered.reduce((s, o) => s + (Number(o.qty) || 0), 0)
     const perAccount = {}
     for (const a of ACCOUNTS) perAccount[a] = 0
-    for (const o of list) { if (perAccount[o.account] !== undefined) perAccount[o.account]++ }
+    for (const o of filtered) { if (perAccount[o.account] !== undefined) perAccount[o.account]++ }
     return { totalEntries, totalQty, perAccount }
-  }, [list])
+  }, [filtered])
 
   // 按品名分组（仅当 view==='name' 且未选账号时，按品名看累计；选了账号也按品名看该账号下的）
   const groups = useMemo(() => {
@@ -226,6 +262,28 @@ export function OrdersPage() {
         </div>
       </div>
 
+      {/* 时间筛选 tab */}
+      <div style={{ padding: '10px 16px 2px', display: 'flex', gap: '6px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+        {[
+          { id: 'all', label: '全部' },
+          { id: 'today', label: '今天' },
+          { id: 'yesterday', label: '昨天' },
+          { id: '7d', label: '近7天' },
+          { id: '30d', label: '近30天' },
+          { id: 'month', label: '本月' },
+        ].map((r) => {
+          const sel = range === r.id
+          return (
+            <button key={r.id} onClick={() => setRange(r.id)} style={{
+              padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', flexShrink: 0,
+              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.6)',
+              color: sel ? '#fff' : 'var(--text-sub)',
+              boxShadow: sel ? '0 2px 8px rgba(244,114,182,0.35)' : 'none',
+            }}>{r.label}</button>
+          )
+        })}
+      </div>
+
       {/* 账号筛选 */}
       <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <button onClick={() => setAccountFilter('')} style={{
@@ -265,7 +323,9 @@ export function OrdersPage() {
         {filtered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '60px 24px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>📦</div>
-            <p style={{ fontSize: '15px', margin: 0, color: 'var(--text-main)' }}>{orders.length === 0 ? '还没有出单记录' : '该账号下暂无出单'}</p>
+            <p style={{ fontSize: '15px', margin: 0, color: 'var(--text-main)' }}>
+              {orders.length === 0 ? '还没有出单记录' : (accountFilter || range !== 'all' ? '当前筛选下暂无出单' : '该账号下暂无出单')}
+            </p>
             <p style={{ fontSize: '13px', margin: '6px 0 0' }}>点右上角「＋ 记出单」记下第一笔</p>
           </div>
         ) : view === 'name' ? (
