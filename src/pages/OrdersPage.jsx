@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
+import { Modal, Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
 
 // 归属账号（与样品/收支保持一致）
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
@@ -58,9 +58,9 @@ function dispDate(v) {
 
 function PageHeader({ title, onBack, right }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-      <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
-      <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', flex: 1 }}>{title}</h1>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(167,139,250,0.12)', color: '#a78bfa', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
+      <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#f1f5f9', flex: 1 }}>{title}</h1>
       {right}
     </div>
   )
@@ -232,33 +232,32 @@ export function OrdersPage() {
   const accMeta = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ background: '#0f172a', minHeight: '100vh', color: '#e2e8f0' }}>
       <PageHeader
         title="出单记录"
         onBack={() => navigate('/')}
         right={
           <button onClick={openAdd} style={{
-            padding: '8px 16px', borderRadius: '999px', border: 'none',
-            background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+            padding: '8px 16px', borderRadius: '8px', border: 'none',
+            background: '#7c3aed', color: '#fff',
             fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(244,114,182,0.3)',
           }}>＋ 记出单</button>
         }
       />
 
       {/* 顶部汇总 */}
       <div style={{ padding: '12px 16px 4px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-        <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>总单数</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#e11d48', lineHeight: 1.2 }}>{summary.totalEntries}</div>
+        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '14px', padding: '12px' }}>
+          <div style={{ fontSize: '11px', color: '#94a3b8' }}>总单数</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: '#fb7185', lineHeight: 1.2 }}>{summary.totalEntries}</div>
         </div>
-        <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>累计单量</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>{summary.totalQty}</div>
+        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '14px', padding: '12px' }}>
+          <div style={{ fontSize: '11px', color: '#94a3b8' }}>累计单量</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: '#f1f5f9', lineHeight: 1.2 }}>{summary.totalQty}</div>
         </div>
-        <div style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>涉及产品</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#059669', lineHeight: 1.2 }}>{groups.length}</div>
+        <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '14px', padding: '12px' }}>
+          <div style={{ fontSize: '11px', color: '#94a3b8' }}>涉及产品</div>
+          <div style={{ fontSize: '24px', fontWeight: 800, color: '#34d399', lineHeight: 1.2 }}>{groups.length}</div>
         </div>
       </div>
 
@@ -275,10 +274,10 @@ export function OrdersPage() {
           const sel = range === r.id
           return (
             <button key={r.id} onClick={() => setRange(r.id)} style={{
-              padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer', flexShrink: 0,
-              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.6)',
-              color: sel ? '#fff' : 'var(--text-sub)',
-              boxShadow: sel ? '0 2px 8px rgba(244,114,182,0.35)' : 'none',
+              padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+              border: sel ? 'none' : '1px solid #334155',
+              background: sel ? '#7c3aed' : '#1e293b',
+              color: sel ? '#fff' : '#94a3b8', cursor: 'pointer', flexShrink: 0,
             }}>{r.label}</button>
           )
         })}
@@ -287,19 +286,20 @@ export function OrdersPage() {
       {/* 账号筛选 */}
       <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <button onClick={() => setAccountFilter('')} style={{
-          padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer',
-          background: accountFilter === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.6)',
-          color: accountFilter === '' ? '#fff' : 'var(--text-sub)',
+          padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+          border: accountFilter === '' ? 'none' : '1px solid #334155',
+          background: accountFilter === '' ? '#7c3aed' : '#1e293b',
+          color: accountFilter === '' ? '#fff' : '#94a3b8', cursor: 'pointer',
         }}>全部 {summary.totalEntries}</button>
         {ACCOUNTS.map((a) => {
           const col = accMeta(a)
           const sel = accountFilter === a
           return (
             <button key={a} onClick={() => setAccountFilter(a)} style={{
-              padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, border: 'none', cursor: 'pointer',
-              background: sel ? col.c : 'rgba(255,255,255,0.6)',
-              color: sel ? '#fff' : col.c,
-              boxShadow: sel ? `0 2px 8px ${col.c}55` : 'none',
+              padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+              border: sel ? 'none' : '1px solid #334155',
+              background: sel ? col.c : '#1e293b',
+              color: sel ? '#fff' : col.c, cursor: 'pointer',
             }}>{a} {summary.perAccount[a] || 0}</button>
           )
         })}
@@ -307,13 +307,12 @@ export function OrdersPage() {
 
       {/* 视图切换：按品名 / 流水 */}
       <div style={{ padding: '8px 16px 4px' }}>
-        <div style={{ display: 'flex', background: 'rgba(244,114,182,0.06)', borderRadius: '10px', padding: '3px' }}>
+        <div style={{ display: 'flex', background: '#1e293b', borderRadius: '10px', padding: '3px' }}>
           {[{ id: 'name', label: '按产品' }, { id: 'list', label: '按时间' }].map((v) => (
             <button key={v.id} onClick={() => setView(v.id)} style={{
               flex: 1, padding: '8px 0', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-              background: view === v.id ? '#fff' : 'transparent',
-              color: view === v.id ? 'var(--primary)' : 'var(--text-sub)',
-              boxShadow: view === v.id ? '0 1px 6px rgba(0,0,0,0.08)' : 'none',
+              background: view === v.id ? '#7c3aed' : 'transparent',
+              color: view === v.id ? '#fff' : '#94a3b8',
             }}>{v.label}</button>
           ))}
         </div>
@@ -321,9 +320,9 @@ export function OrdersPage() {
 
       <div style={{ padding: '8px 16px calc(20px + var(--safe-bottom, 0px))' }}>
         {filtered.length === 0 ? (
-          <div style={{ ...glassStyle, textAlign: 'center', padding: '60px 24px', color: 'var(--text-sub)' }}>
+          <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: '14px', textAlign: 'center', padding: '60px 24px', color: '#94a3b8' }}>
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>📦</div>
-            <p style={{ fontSize: '15px', margin: 0, color: 'var(--text-main)' }}>
+            <p style={{ fontSize: '15px', margin: 0, color: '#e2e8f0' }}>
               {orders.length === 0 ? '还没有出单记录' : (accountFilter || range !== 'all' ? '当前筛选下暂无出单' : '该账号下暂无出单')}
             </p>
             <p style={{ fontSize: '13px', margin: '6px 0 0' }}>点右上角「＋ 记出单」记下第一笔</p>
@@ -332,14 +331,14 @@ export function OrdersPage() {
           /* 按产品名分组 */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {groups.map((g) => (
-              <div key={g.name} style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.55)' }}>
+              <div key={g.name} style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid #334155', background: '#1e293b' }}>
                 {/* 组头：品名 + 累计 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px 8px' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px' }}>累计出单 {g.count} 次 · {g.qty} 单{dispDate(g.latest) && ` · 最近 ${dispDate(g.latest)}`}</div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>累计出单 {g.count} 次 · {g.qty} 单{dispDate(g.latest) && ` · 最近 ${dispDate(g.latest)}`}</div>
                   </div>
-                  <span style={{ flexShrink: 0, padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, background: 'rgba(225,29,72,0.10)', color: '#e11d48' }}>{g.qty} 单</span>
+                  <span style={{ flexShrink: 0, padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 700, background: 'rgba(251,113,133,0.18)', color: '#fb7185' }}>{g.qty} 单</span>
                 </div>
                 {/* 组内明细 */}
                 <div style={{ padding: '0 6px 6px' }}>
@@ -351,12 +350,12 @@ export function OrdersPage() {
                         borderRadius: '10px', cursor: 'pointer',
                       }} onClick={() => openEdit(o)}>
                         <span style={{ flexShrink: 0, width: '9px', height: '9px', borderRadius: '50%', background: meta.c }} />
-                        <span style={{ fontSize: '12px', color: 'var(--text-sub)', flexShrink: 0, minWidth: '16px' }}>{dispDate(o.date)}</span>
-                        <span style={{ fontSize: '12px', color: o.account ? meta.c : 'var(--text-sub)', flexShrink: 0 }}>{o.account || '未选账号'}</span>
-                        <span style={{ flex: 1, fontSize: '12px', color: 'var(--text-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.remark || ''}</span>
-                        <span style={{ flexShrink: 0, fontSize: '12px', color: 'var(--text-sub)' }}>{fmtQty(o.qty)}</span>
-                        {o.commissionPct > 0 && <span style={{ flexShrink: 0, fontSize: '12px', fontWeight: 600, color: '#059669' }}>{fmtPct(o.commissionPct)}</span>}
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(o) }} style={{ flexShrink: 0, border: 'none', background: 'transparent', color: '#ef4444', fontSize: '14px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' }}>🗑</button>
+                        <span style={{ fontSize: '12px', color: '#94a3b8', flexShrink: 0, minWidth: '16px' }}>{dispDate(o.date)}</span>
+                        <span style={{ fontSize: '12px', color: o.account ? meta.c : '#94a3b8', flexShrink: 0 }}>{o.account || '未选账号'}</span>
+                        <span style={{ flex: 1, fontSize: '12px', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.remark || ''}</span>
+                        <span style={{ flexShrink: 0, fontSize: '12px', color: '#94a3b8' }}>{fmtQty(o.qty)}</span>
+                        {o.commissionPct > 0 && <span style={{ flexShrink: 0, fontSize: '12px', fontWeight: 600, color: '#34d399' }}>{fmtPct(o.commissionPct)}</span>}
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(o) }} style={{ flexShrink: 0, border: 'none', background: 'transparent', color: '#f87171', fontSize: '14px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' }}>🗑</button>
                       </div>
                     )
                   })}
@@ -366,27 +365,27 @@ export function OrdersPage() {
           </div>
         ) : (
           /* 流水视图：每笔一行 */
-          <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.55)' }}>
+          <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid #334155', background: '#1e293b' }}>
             {filtered.map((o, i) => {
               const meta = accMeta(o.account)
               return (
                 <div key={o.id} onClick={() => openEdit(o)} style={{
                   display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 14px', cursor: 'pointer',
-                  borderTop: i === 0 ? 'none' : '1px solid rgba(0,0,0,0.04)',
+                  borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.06)',
                 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
-                      {o.commissionPct > 0 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#059669' }}>{fmtPct(o.commissionPct)}</span>}
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#f1f5f9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</span>
+                      {o.commissionPct > 0 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#34d399' }}>{fmtPct(o.commissionPct)}</span>}
                     </div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <span>{dispDate(o.date)}</span>
                       {o.account && <span style={{ color: meta.c }}>{o.account}</span>}
                       {o.remark && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '160px' }}>{o.remark}</span>}
                     </div>
                   </div>
-                  <span style={{ flexShrink: 0, fontSize: '13px', fontWeight: 700, color: '#e11d48' }}>{fmtQty(o.qty)}</span>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(o) }} style={{ flexShrink: 0, border: 'none', background: 'transparent', color: '#ef4444', fontSize: '14px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' }}>🗑</button>
+                  <span style={{ flexShrink: 0, fontSize: '13px', fontWeight: 700, color: '#fb7185' }}>{fmtQty(o.qty)}</span>
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(o) }} style={{ flexShrink: 0, border: 'none', background: 'transparent', color: '#f87171', fontSize: '14px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' }}>🗑</button>
                 </div>
               )
             })}

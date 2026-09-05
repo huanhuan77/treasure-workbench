@@ -33,15 +33,6 @@ function getAccounts(s) {
   return s?.account ? [s.account] : []
 }
 
-function acctChipStyle(active, label, color) {
-  return {
-    padding: '4px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
-    background: active ? color : 'rgba(255,255,255,0.45)',
-    color: active ? '#fff' : 'var(--text-sub)',
-    border: active ? 'none' : '1px solid rgba(255,255,255,0.5)',
-  }
-}
-
 // 排序方式：custom=默认（可拖动自定义顺序），其余按日期字段排序
 // defaultDir：收货日期默认最新在前；截止日期默认最紧急（最早）在前
 const SORT_OPTIONS = [
@@ -58,6 +49,12 @@ export function SamplesPage() {
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
   const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'unpublished')
+  // 排序/筛选弹窗（外部只留账号筛选 + 搜索，其他筛选项集中在弹窗）
+  const [filterModalOpen, setFilterModalOpen] = useState(false)
+  // 账号选择弹窗
+  const [accountModalOpen, setAccountModalOpen] = useState(false)
+  const [accountDraft, setAccountDraft] = useState('all')
+  const [accountSearch, setAccountSearch] = useState('')
   const [accountFilter, setAccountFilter] = useState(() => {
     const v = sessionStorage.getItem('samples_account') || ''
     const map = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
@@ -78,10 +75,7 @@ export function SamplesPage() {
     setSortDir(opt?.defaultDir || 'desc')
   }
   const isDateSort = sortKey !== 'custom'
-  // 当前排序效果的文字说明（避免 ↓↑ 含义歧义）
-  const sortHint = sortKey === 'receiveDate'
-    ? (sortDir === 'desc' ? '最新收货在前' : '最早收货在前')
-    : (sortDir === 'asc' ? '最紧急在前' : '最晚截止在前')
+  // 排序已迁移到弹窗内，外部不再需要 sortHint 变量
   // 隐藏样品卡上的账号标签（隐私/展示场景），全局开关持久化到本地
   const [hideAccount, setHideAccount] = useState(isAccountsHidden)
   const toggleHideAccount = () => {
@@ -149,12 +143,6 @@ export function SamplesPage() {
     })
   }, [accountFiltered, sortKey, sortDir])
 
-  const acctStats = useMemo(() => {
-    const stats = {}
-    for (const a of ACCOUNTS) stats[a] = samples.filter((s) => getAccounts(s).includes(a)).length
-    return stats
-  }, [samples])
-
   const statusStats = useMemo(() => {
     const stats = {}
     for (const k of STATUS_ORDER) stats[k] = 0
@@ -216,11 +204,23 @@ export function SamplesPage() {
           <div style={{ flex: 1 }} />
           <input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)}
             placeholder="搜索产品名称…"
-            style={{ width: 'min(52vw, 200px)', boxSizing:'border-box', padding:'6px 12px', borderRadius:'999px',
+            style={{ width: 'min(40vw, 160px)', boxSizing:'border-box', padding:'6px 12px', borderRadius:'999px',
               border:'1px solid rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.5)',
               fontSize:'13px', outline:'none', fontFamily:'inherit', color:'var(--text-main)',
               marginRight:'2px' }}
           />
+          <button onClick={() => { setAccountDraft(accountFilter); setAccountSearch(''); setAccountModalOpen(true) }} title="选择账号" style={{
+            padding: '5px 11px', borderRadius: '999px',
+            border: '1px solid rgba(244,114,182,0.35)',
+            background: accountFilter === 'all' ? 'rgba(255,255,255,0.5)' : 'rgba(244,114,182,0.12)',
+            color: accountFilter === 'all' ? 'var(--text-sub)' : '#ec4899',
+            fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0,
+          }}>
+            <span style={{ fontSize: '11px' }}>👤</span>
+            <span>{accountFilter === 'all' ? '全部账号' : accountFilter}</span>
+            <span style={{ fontSize: '9px', opacity: .7 }}>▾</span>
+          </button>
           <button onClick={toggleHideAccount} title={hideAccount ? '点击显示账号标签' : '点击隐藏账号标签'} style={{
             padding: '5px 11px', borderRadius: '999px', border: '1px solid rgba(99,102,241,0.35)',
             background: hideAccount ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.5)',
@@ -228,6 +228,12 @@ export function SamplesPage() {
           }}>
             {hideAccount ? '🙈' : '👁'}
           </button>
+          <button onClick={() => setFilterModalOpen(true)} title="排序" style={{
+            padding: '5px 9px', borderRadius: '999px', border: '1px solid rgba(244,114,182,0.35)',
+            background: 'rgba(244,114,182,0.08)', color: '#ec4899',
+            fontSize: '14px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: '3px',
+          }}>⇅</button>
         </div>
         <p style={{ margin: '5px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>
           共 {Object.values(statusStats).reduce((a,b) => a + b, 0)} 个样品
@@ -235,58 +241,41 @@ export function SamplesPage() {
         </p>
       </header>
 
-      {/* 账号筛选：第一行 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 16px 4px', overflowX: 'auto' }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>账号</span>
-        <button onClick={() => { setAccountFilter('all'); setFilter('unpublished') }} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
-        {!hideAccount && ACCOUNTS.map((a) => {
-          const col = ACCOUNT_COLOR[a]
-          return (
-            <button key={a} onClick={() => { setAccountFilter(a); setFilter('unpublished'); sessionStorage.setItem('samples_account', a) }} style={acctChipStyle(accountFilter === a, a, col.c)}>
-              {a} {acctStats[a] || 0}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* 状态筛选：第二行 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 16px 4px', overflowX: 'auto' }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>状态</span>
-        {[{ key: 'all', label: '全部', color: '#ec4899' }, ...STATUS_LIST].map((f) => {
+      {/* 状态分组卡：一排横滚，每张显示该状态汇总（点选切换 filter） */}
+      <div style={{ display: 'flex', gap: '8px', padding: '2px 16px 6px', overflowX: 'auto' }}>
+        {STATUS_LIST.map((f) => {
+          const cnt = statusStats[f.key] || 0
           const active = filter === f.key
-          const cnt = f.key === 'all' ? Object.values(statusStats).reduce((a,b) => a + b, 0) : (statusStats[f.key] || 0)
+          // 底部说明按状态语义
+          const hint = {
+            unpublished: '样品在途+待发',
+            hit: '爆单品·待售后',
+            published_paid: '已发·已出单',
+            published_free: '已发·未出单',
+            abandoned: '已放弃',
+          }[f.key] || ''
           return (
-            <button key={f.key} onClick={() => setFilter(f.key)} style={{
-              padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
-              background: active ? (f.key === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : STATUS[f.key].color) : 'rgba(255,255,255,0.5)',
-              color: active ? '#fff' : 'var(--text-sub)',
-              border: active ? 'none' : '1px solid rgba(255,255,255,0.6)',
-              boxShadow: active ? `0 3px 8px ${f.key === 'all' ? '#ec4899' : STATUS[f.key].color}33` : 'none',
-            }}>{f.label} {cnt}</button>
-          )
-        })}
-      </div>
-
-      {/* 排序：一行小胶囊 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 16px 2px', overflowX: 'auto' }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>排序</span>
-        {SORT_OPTIONS.map((o) => {
-          const active = sortKey === o.key
-          return (
-            <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
-              padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
-              whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
-              background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
-              color: active ? '#fff' : 'var(--text-sub)',
-              border: active ? 'none' : '1px solid rgba(255,255,255,0.6)',
-            }}>
-              {o.label}{active && o.key !== 'custom' ? (sortDir === 'desc' ? ' ↓' : ' ↑') : ''}
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              style={{
+                flex: '0 0 auto', minWidth: '124px',
+                padding: '10px 12px', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
+                background: 'rgba(255,255,255,0.65)',
+                border: active ? `1.5px solid ${f.color}` : '1px solid rgba(255,255,255,0.7)',
+                boxShadow: active ? `0 4px 12px ${f.color}26` : '0 2px 8px rgba(0,0,0,0.04)',
+                transition: 'all 0.15s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: f.color, flexShrink: 0 }} />
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)' }}>{f.label.replace('🔥', '')}</span>
+              </div>
+              <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{cnt}</div>
+              <div style={{ marginTop: '4px', fontSize: '10px', color: 'var(--text-sub)' }}>{hint}</div>
             </button>
           )
         })}
-        <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0 }}>
-          {sortKey === 'custom' ? '按住 ⇕ 拖动排序' : `${sortHint} · 再点切升降`}
-        </span>
       </div>
 
       <div style={{ padding: '4px 16px calc(88px + var(--safe-bottom, 0px))' }}>
@@ -364,6 +353,155 @@ export function SamplesPage() {
           WebkitUserSelect: 'none',
         }}
       >+</button>
+
+      {/* 排序筛选弹窗（外部只保留账号筛选+搜索，其他集中这里） */}
+      <Modal open={filterModalOpen} onClose={() => setFilterModalOpen(false)} title="排序与筛选">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '10px' }}>排序方式</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {SORT_OPTIONS.map((o) => {
+                const active = sortKey === o.key
+                return (
+                  <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
+                    padding: '12px 14px', borderRadius: '12px', textAlign: 'left',
+                    background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
+                    color: active ? '#fff' : 'var(--text-main)',
+                    border: active ? 'none' : '1px solid rgba(0,0,0,0.06)',
+                    fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>{o.label}</span>
+                      {active && o.key !== 'custom' && <span style={{ fontSize: '12px', opacity: .85 }}>{sortDir === 'desc' ? '↓ 最新在前' : '↑ 最早在前'}</span>}
+                    </div>
+                    <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: 500, opacity: .75 }}>
+                      {o.key === 'custom' ? '按添加顺序显示，可手动拖动排序' :
+                       o.key === 'receiveDate' ? '按收到样品的日期排序' :
+                       '按截止日期排序，越早越紧急'}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <button onClick={() => setFilterModalOpen(false)} style={{
+            padding: '12px', borderRadius: '12px', border: 'none', background: '#ec4899', color: '#fff',
+            fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+          }}>完成</button>
+        </div>
+      </Modal>
+
+      {/* 排序筛选弹窗（外部只保留账号筛选+搜索，其他集中这里） */}
+      <Modal open={filterModalOpen} onClose={() => setFilterModalOpen(false)} title="排序与筛选">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '10px' }}>排序方式</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {SORT_OPTIONS.map((o) => {
+                const active = sortKey === o.key
+                return (
+                  <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
+                    padding: '12px 14px', borderRadius: '12px', textAlign: 'left',
+                    background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
+                    color: active ? '#fff' : 'var(--text-main)',
+                    border: active ? 'none' : '1px solid rgba(0,0,0,0.06)',
+                    fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span>{o.label}</span>
+                      {active && o.key !== 'custom' && <span style={{ fontSize: '12px', opacity: .85 }}>{sortDir === 'desc' ? '↓ 最新在前' : '↑ 最早在前'}</span>}
+                    </div>
+                    <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: 500, opacity: .75 }}>
+                      {o.key === 'custom' ? '按添加顺序显示，可手动拖动排序' :
+                       o.key === 'receiveDate' ? '按收到样品的日期排序' :
+                       '按截止日期排序，越早越紧急'}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <button onClick={() => setFilterModalOpen(false)} style={{
+            padding: '12px', borderRadius: '12px', border: 'none', background: '#ec4899', color: '#fff',
+            fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+          }}>完成</button>
+        </div>
+      </Modal>
+
+      {/* 账号选择弹窗（仿抖音选号样式：标题居中+取消/确定+搜索框+单选列表） */}
+      <Modal open={accountModalOpen} onClose={() => setAccountModalOpen(false)} title="账号">
+        <div style={{ margin: '-8px -22px 0' }}>
+          <div style={{ padding: '0 22px 12px' }}>
+            <input value={accountSearch} onChange={(e) => setAccountSearch(e.target.value)}
+              placeholder="请输入账号昵称搜索"
+              style={{
+                width: '100%', padding: '10px 14px 10px 38px',
+                borderRadius: '999px', border: '1px solid rgba(0,0,0,0.08)',
+                background: '#f5f5f7', fontSize: '14px', outline: 'none', fontFamily: 'inherit',
+                color: 'var(--text-main)', boxSizing: 'border-box',
+                backgroundImage: 'url(\'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23999" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>\')',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: '14px center',
+                backgroundSize: '16px',
+              }} />
+          </div>
+          {/* 列表 */}
+          <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+            {[{ key: 'all', name: '全部账号', color: '#ec4899', initial: '全' },
+              ...ACCOUNTS.map((a) => ({ key: a, name: a, color: ACCOUNT_COLOR[a].c, initial: a.slice(0, 1) }))]
+              .filter((o) => !accountSearch.trim() || o.name.includes(accountSearch.trim()))
+              .map((o, idx, arr) => (
+                <button key={o.key} onClick={() => setAccountDraft(o.key)} style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '12px 22px', background: 'transparent', border: 'none',
+                  cursor: 'pointer', textAlign: 'left',
+                  borderTop: idx > 0 ? '1px solid rgba(0,0,0,0.04)' : 'none',
+                }}>
+                  <span style={{
+                    width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                    background: o.color, color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '16px', fontWeight: 700,
+                  }}>{o.initial}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {o.name}
+                      {o.key !== 'all' && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(124,58,237,0.12)', color: '#7c3aed', fontWeight: 700 }}>LV1</span>}
+                    </div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>
+                      {o.key === 'all' ? `共 ${Object.values(statusStats).reduce((a, b) => a + b, 0)} 个样品` : `共 ${(samples || []).filter((s) => getAccounts(s).includes(o.key)).length} 个样品`}
+                    </div>
+                  </div>
+                  {/* 右侧圆圈单选 */}
+                  <span style={{
+                    width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
+                    border: accountDraft === o.key ? `6px solid ${o.color}` : '2px solid #d1d5db',
+                    boxSizing: 'border-box',
+                    transition: 'border 0.15s',
+                  }} />
+                </button>
+              ))}
+          </div>
+          <div style={{ display: 'flex', gap: '10px', padding: '12px 22px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+            <button onClick={() => setAccountModalOpen(false)} style={{
+              flex: 1, padding: '12px', borderRadius: '12px',
+              background: 'rgba(0,0,0,0.04)', color: 'var(--text-sub)', border: 'none',
+              fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+            }}>取消</button>
+            <button onClick={() => {
+              setAccountFilter(accountDraft)
+              setFilter('unpublished')
+              sessionStorage.setItem('samples_account', accountDraft)
+              setAccountModalOpen(false)
+            }} style={{
+              flex: 1, padding: '12px', borderRadius: '12px',
+              background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff', border: 'none',
+              fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(244,114,182,0.3)',
+            }}>确定</button>
+          </div>
+        </div>
+      </Modal>
 
       {(showAdd || editing) && (
         <SampleForm
