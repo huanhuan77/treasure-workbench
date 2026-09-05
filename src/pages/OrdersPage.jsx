@@ -291,9 +291,9 @@ export function OrdersPage() {
           return (
             <button key={r.id} onClick={() => setRange(r.id)} style={{
               padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
-              border: sel ? 'none' : '1px solid #334155',
-              background: sel ? '#7c3aed' : '#1e293b',
-              color: sel ? '#fff' : '#94a3b8', cursor: 'pointer', flexShrink: 0,
+              border: sel ? 'none' : '1px solid rgba(244,114,182,0.35)',
+              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+              color: sel ? '#fff' : 'var(--text-main)', cursor: 'pointer', flexShrink: 0,
             }}>{r.label}</button>
           )
         })}
@@ -303,9 +303,9 @@ export function OrdersPage() {
       <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <button onClick={() => setAccountFilter('')} style={{
           padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
-          border: accountFilter === '' ? 'none' : '1px solid #334155',
-          background: accountFilter === '' ? '#7c3aed' : '#1e293b',
-          color: accountFilter === '' ? '#fff' : '#94a3b8', cursor: 'pointer',
+          border: accountFilter === '' ? 'none' : '1px solid rgba(244,114,182,0.35)',
+          background: accountFilter === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+          color: accountFilter === '' ? '#fff' : 'var(--text-main)', cursor: 'pointer',
         }}>全部 {summary.totalEntries}</button>
         {ACCOUNTS.map((a) => {
           const col = accMeta(a)
@@ -313,8 +313,8 @@ export function OrdersPage() {
           return (
             <button key={a} onClick={() => setAccountFilter(a)} style={{
               padding: '6px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
-              border: sel ? 'none' : '1px solid #334155',
-              background: sel ? col.c : '#1e293b',
+              border: sel ? 'none' : `1px solid ${col.c}`,
+              background: sel ? col.c : '#fff',
               color: sel ? '#fff' : col.c, cursor: 'pointer',
             }}>{a} {summary.perAccount[a] || 0}</button>
           )
