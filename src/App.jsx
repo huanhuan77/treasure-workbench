@@ -4,6 +4,7 @@ import { StoreProvider, useStore } from './store'
 import { ToastProvider, useToast } from './components/Toast'
 import { syncAll, GIST_ID_KEY, LAST_SYNC_KEY } from './utils/sync'
 import { BottomNav } from './components/BottomNav'
+import { DashboardPage } from './pages/DashboardPage'
 import { HomePage } from './pages/HomePage'
 import { SamplesPage } from './pages/SamplesPage'
 import { FinancePage } from './pages/FinancePage'
@@ -81,7 +82,8 @@ function App() {
         <AutoBackup />
         <HashRouter>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/products" element={<HomePage />} />
             <Route path="/samples" element={<SamplesPage />} />
             <Route path="/savings" element={<SavingsPage />} />
             <Route path="/finance" element={<FinancePage />} />
