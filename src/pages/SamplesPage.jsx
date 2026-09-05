@@ -9,20 +9,9 @@ import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../c
 import { formatDate, todayStr, deadlineDesc, addDays } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
+import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST } from '../utils/sampleStatus'
 
-// 样品状态：已发布拆为「出单 / 未出单」；新增「已拍摄」态
-const STATUS = {
-  unpublished:    { label: '未发布',     emoji: '⚪️',  color: '#64748b', bg: 'rgba(100,116,139,0.14)', stripe: '#cbd5e1' },
-  published_paid: { label: '已发布·出单', emoji: '🟢💰', color: '#059669', bg: 'rgba(16,185,129,0.14)',  stripe: '#34d399' },
-  published_free: { label: '已发布·未出单', emoji: '🟢',  color: '#0d9488', bg: 'rgba(20,184,166,0.14)', stripe: '#2dd4bf' },
-  shot:           { label: '已拍摄',     emoji: '📷',  color: '#0ea5e9', bg: 'rgba(14,165,233,0.14)',  stripe: '#38bdf8' },
-  published_paid: { label: '已发布·出单', emoji: '🟢💰', color: '#059669', bg: 'rgba(16,185,129,0.14)',  stripe: '#34d399' },
-  published_free: { label: '已发布·未出单', emoji: '🟢',  color: '#0d9488', bg: 'rgba(20,184,166,0.14)', stripe: '#2dd4bf' },
-  hit:            { label: '🔥爆单',     emoji: '🔥',   color: '#e11d48', bg: 'rgba(244,63,94,0.13)',   stripe: '#fb7185' },
-  abandoned:      { label: '放弃',       emoji: '🚫',   color: '#94a3b8', bg: 'rgba(148,163,184,0.16)', stripe: '#94a3b8' },
-}
-const STATUS_ORDER = ['unpublished', 'shot', 'published_paid', 'published_free', 'hit', 'abandoned']
-const STATUS_LIST = STATUS_ORDER.map((k) => ({ key: k, ...STATUS[k] }))
+// 状态枚举统一从 sampleStatus.js 导入（SAMPLE_STATUS / SAMPLE_STATUS_ORDER / SAMPLE_STATUS_LIST）
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 const ACCOUNT_COLOR = {
@@ -52,7 +41,7 @@ export function SamplesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
-  const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'unpublished')
+  const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'un_arrived')
   // 账号选择弹窗
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const [accountDraft, setAccountDraft] = useState('all')
@@ -155,10 +144,10 @@ export function SamplesPage() {
 
   const statusStats = useMemo(() => {
     const stats = {}
-    for (const k of STATUS_ORDER) stats[k] = 0
+    for (const k of SAMPLE_STATUS_ORDER) stats[k] = 0
     // 只统计当前所选账号的数据
     const ss = accountFilter === 'all' ? samples : samples.filter((s) => getAccounts(s).includes(accountFilter))
-    ss.forEach((s) => { if (STATUS[s.status]) stats[s.status]++ })
+    ss.forEach((s) => { if (SAMPLE_STATUS[s.status]) stats[s.status]++ })
     return stats
   }, [samples, accountFilter])
 
@@ -265,22 +254,21 @@ export function SamplesPage() {
         </div>
         <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>
           共 {Object.values(statusStats).reduce((a,b) => a + b, 0)} 个样品
-          {' · '}{STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.emoji}${statusStats[s.key]}`).join('  ')}
+          {' · '}{SAMPLE_STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.icon}${statusStats[s.key]}`).join('  ')}
         </p>
       </header>
 
       {/* 状态分组卡：一排横滚，每张显示该状态汇总（点选切换 filter） */}
       <div style={{ display: 'flex', gap: '8px', padding: '2px 16px 6px', overflowX: 'auto' }}>
-        {STATUS_LIST.map((f) => {
+        {SAMPLE_STATUS_LIST.map((f) => {
           const cnt = statusStats[f.key] || 0
           const active = filter === f.key
           // 底部说明按状态语义
           const hint = {
-            unpublished: '样品在途+待发',
-            shot: '已拍待发',
-            hit: '爆单品·待售后',
-            published_paid: '已发·已出单',
-            published_free: '已发·未出单',
+            un_arrived: '还在路上',
+            arrived: '已到货·未拍摄',
+            shot: '已拍·待发',
+            published: '已发视频',
             abandoned: '已放弃',
           }[f.key] || ''
           return (
@@ -298,7 +286,7 @@ export function SamplesPage() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
                 <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: f.color, flexShrink: 0 }} />
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)' }}>{f.label.replace('🔥', '')}</span>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)' }}>{f.icon} {f.label}</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{cnt}</div>
               <div style={{ marginTop: '4px', fontSize: '10px', color: 'var(--text-sub)' }}>{hint}</div>
@@ -318,7 +306,7 @@ export function SamplesPage() {
             <SortableContext items={displayed.map(s => s.id)} strategy={verticalListSortingStrategy}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {displayed.map((s) => {
-                  const st = STATUS[s.status] || STATUS.unpublished
+                  const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.un_arrived
                   const dl = deadlineDesc(s.deadline)
                   const dlMatch = dl && dl.match(/(\d+)天/)
                   const dlDays = dlMatch ? parseInt(dlMatch[1], 10) : (dl && dl.includes('今天') ? 0 : null)
@@ -448,7 +436,7 @@ export function SamplesPage() {
             }}>取消</button>
             <button onClick={() => {
               setAccountFilter(accountDraft)
-              setFilter('unpublished')
+              setFilter('un_arrived')
               sessionStorage.setItem('samples_account', accountDraft)
               setAccountModalOpen(false)
             }} style={{
@@ -551,7 +539,7 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
           {/* 第二行：日期 + 截止时间 */}
           <div style={{ paddingLeft: '28px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', color: 'var(--text-sub)' }}>
             {s.receiveDate && <span style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>📅{formatDate(s.receiveDate)}</span>}
-            {s.deadline && s.status === 'unpublished' && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
+            {s.deadline && (s.status === 'un_arrived' || s.status === 'arrived') && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
             {(s.commission || 5) > 5 && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
           </div>
           {/* 备注 */}
@@ -589,7 +577,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
     name: sample?.name || '',
     account: sample?.account || (Array.isArray(sample?.accounts) && sample.accounts[0]) || '',
     accounts: Array.isArray(sample?.accounts) && sample.accounts.length ? sample.accounts : (sample?.account ? [sample.account] : []),
-    status: sample?.status || 'unpublished',
+    status: sample?.status || 'un_arrived',
     receiveDate: sample?.receiveDate || todayStr(),
     deadline: sample?.deadline || (sample ? '' : addDays(todayStr(), 15)),
     remark: sample?.remark || '',
@@ -619,7 +607,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
 
   const handleSave = () => {
     if (!form.name.trim()) return
-    const isOrder = form.status === 'published_paid' || form.status === 'hit'
+    const isOrder = form.status === 'published'
     const f = { ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] }
     if (!isOrder) f.orderDate = ''
     onSave(f)
@@ -688,22 +676,6 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
         </select>
       </Field>
 
-      <Field label="到货状态">
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {[{ v: false, label: '未到货' }, { v: true, label: '已到货' }].map((o) => {
-            const active = form.isArrived === o.v
-            return (
-              <button key={String(o.v)} type="button" onClick={() => setForm({ ...form, isArrived: o.v })} style={{
-                flex: '1', padding: '11px 0', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                border: active ? 'none' : '1.5px solid rgba(0,0,0,0.06)',
-                background: active ? (o.v ? '#16a34a' : '#94a3b8') : 'rgba(255,255,255,0.6)',
-                color: active ? '#fff' : 'var(--text-sub)', cursor: 'pointer',
-              }}>{o.label}</button>
-            )
-          })}
-        </div>
-      </Field>
-
       <Field label="佣金（%）">
         <input type="number" value={form.commission === 5 ? '' : form.commission} onChange={(e) => {
           const v = e.target.value === '' ? 5 : parseInt(e.target.value)
@@ -714,11 +686,11 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
 
       <Field label="状态">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          {STATUS_LIST.map((s) => (
+          {SAMPLE_STATUS_LIST.map((s) => (
             <button
               key={s.key}
               onClick={() => setForm((f) => {
-                const order = s.key === 'published_paid' || s.key === 'hit'
+                const order = s.key === 'published'
                 return { ...f, status: s.key, orderDate: order ? f.orderDate : '' }
               })}
               style={{
@@ -727,12 +699,12 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
                 color: form.status === s.key ? '#fff' : 'var(--text-sub)',
                 border: form.status === s.key ? 'none' : '1px solid rgba(255,255,255,0.6)',
               }}
-            >{s.emoji} {s.label.replace('🔥 ', '')}</button>
+            >{s.icon} {s.label.replace('🔥 ', '')}</button>
           ))}
         </div>
       </Field>
 
-      {(form.status === 'published_paid' || form.status === 'hit') && (
+      {(form.status === 'published') && (
         <Field label="出单日期（选填，用于近出单统计）">
           <input type="date" style={inputStyle} value={form.orderDate || ''} onChange={(e) => setForm({ ...form, orderDate: e.target.value })} />
         </Field>

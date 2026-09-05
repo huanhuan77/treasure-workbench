@@ -41,7 +41,7 @@ export function NewPublishRecordPage() {
   const [qty, setQty] = useState('1')                           // 发布数量（≥1）
   const [showSamples, setShowSamples] = useState(false)
 
-  // 可选样品：仅「已拍摄 / 已发布」状态（与发布记录板块对齐）
+  // 可选样品：仅「未发布 / 已发布」状态（与发布记录板块对齐）
   const sampleList = useMemo(
     () => (samples || []).filter((s) => isSelectableForPublish(s.status)),
     [samples],
@@ -115,9 +115,9 @@ export function NewPublishRecordPage() {
           </div>
         </div>
 
-        {/* 关联样品：仅已拍摄/已发布 */}
+        {/* 关联样品：仅未发布/已发布 */}
         <div style={{ marginBottom: '14px' }}>
-          <div style={sectionTitle}>关联样品（仅已拍摄 / 已发布可选）</div>
+          <div style={sectionTitle}>关联样品（仅未发布 / 已发布可选）</div>
           <div style={fieldBox} onClick={() => setShowSamples(true)}>
             <span style={{ color: chosen ? 'var(--text-main)' : '#9ca3af', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {chosen ? (
@@ -178,11 +178,11 @@ export function NewPublishRecordPage() {
         }}>保存发布记录</button>
       </div>
 
-      {/* 样品选择弹层（仅已拍摄/已发布） */}
+      {/* 样品选择弹层（仅未发布/已发布） */}
       <Modal open={showSamples} onClose={() => setShowSamples(false)} title="选择样品">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '60vh', overflowY: 'auto' }}>
           {sampleList.length === 0 ? (
-            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>暂无可发布的样品（需已拍摄或已发布）</div>
+            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>暂无可发布的样品（需未发布或已发布）</div>
           ) : (
             sampleList.map((s) => {
               const sel = s.id === sampleId

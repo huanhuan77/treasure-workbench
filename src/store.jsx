@@ -9,7 +9,7 @@ const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '23'
+const CURRENT_VERSION = '24'
 
 // 全球账号映射已统一由 ./utils/accounts 提供（ACCOUNT_MAP / mapAccount）
 
@@ -2575,26 +2575,26 @@ const defaultData = {
     { id: 'p_olly', name: 'olly女维', brand: 'OLLY', category: '保健品', createdAt: Date.now(), copies: ollySeed }
   ],
   samples: [
-  { id:'s_001', name:'冰格', account:'广东刘亦菲', receiveDate:'2026/4/17', deadline:'2026-05-02', remark:'', status:'unpublished' },
-  { id:'s_002', name:'口罩', account:'广东刘亦菲', receiveDate:'2026/4/18', deadline:'2026-05-03', remark:'', status:'unpublished' },
-  { id:'s_003', name:'柳丝木洁面乳', account:'广东刘亦菲', receiveDate:'2026/5/7', deadline:'2026-05-22', remark:'', status:'unpublished' },
-  { id:'s_004', name:'柳丝木洁颜油', account:'广东刘亦菲', receiveDate:'2026/5/20', deadline:'2026-06-04', remark:'', status:'unpublished' },
-  { id:'s_005', name:'雾犀牙膏', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_001', name:'冰格', account:'广东刘亦菲', receiveDate:'2026/4/17', deadline:'2026-05-02', remark:'', status:'un_arrived' },
+  { id:'s_002', name:'口罩', account:'广东刘亦菲', receiveDate:'2026/4/18', deadline:'2026-05-03', remark:'', status:'un_arrived' },
+  { id:'s_003', name:'柳丝木洁面乳', account:'广东刘亦菲', receiveDate:'2026/5/7', deadline:'2026-05-22', remark:'', status:'un_arrived' },
+  { id:'s_004', name:'柳丝木洁颜油', account:'广东刘亦菲', receiveDate:'2026/5/20', deadline:'2026-06-04', remark:'', status:'un_arrived' },
+  { id:'s_005', name:'雾犀牙膏', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
   { id:'s_006', name:'植研加睫毛胶水新', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'3条', status:'published' },
   { id:'s_007', name:'造物者 小美', account:'广东刘亦菲', receiveDate:'2026/5/13', deadline:'2026-05-28', remark:'3条', status:'published' },
   { id:'s_008', name:'一次性内裤', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_009', name:'珀芙研等渗面膜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'hit' },
+  { id:'s_009', name:'珀芙研等渗面膜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_010', name:'珀芙研蛋白胶原面膜', account:'广东刘亦菲', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
   { id:'s_011', name:'珀芙研油敏霜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_012', name:'珀芙研闪光棒', account:'广东刘亦菲', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
   { id:'s_013', name:'珀芙研修护霜小样', account:'广东刘亦菲', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'', status:'published' },
-  { id:'s_014', name:'珀芙研冷膜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'hit' },
-  { id:'s_015', name:'珀芙研修护霜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'hit' },
-  { id:'s_016', name:'衣物香氛挂件', account:'广东刘亦菲', receiveDate:'2026/4/24', deadline:'2026-05-09', remark:'', status:'hit' },
-  { id:'s_017', name:'浮汀遮瑕液', account:'广东刘亦菲', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'出单 佣金10%', status:'hit' },
-  { id:'s_018', name:'护魔手机壳', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'出单 佣金10%', status:'hit' },
-  { id:'s_019', name:'祛湿清', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'hit' },
-  { id:'s_020', name:'植研加睫毛胶水旧', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'hit' },
+  { id:'s_014', name:'珀芙研冷膜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_015', name:'珀芙研修护霜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_016', name:'衣物香氛挂件', account:'广东刘亦菲', receiveDate:'2026/4/24', deadline:'2026-05-09', remark:'', status:'published' },
+  { id:'s_017', name:'浮汀遮瑕液', account:'广东刘亦菲', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'出单 佣金10%', status:'published' },
+  { id:'s_018', name:'护魔手机壳', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'出单 佣金10%', status:'published' },
+  { id:'s_019', name:'祛湿清', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_020', name:'植研加睫毛胶水旧', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_021', name:'讯姆钢化膜', account:'广东刘亦菲', receiveDate:'2026/3/16', deadline:'2026-03-31', remark:'', status:'published' },
   { id:'s_022', name:'袋鼠妈妈沐浴露洗发水', account:'广东刘亦菲', receiveDate:'2026/4/27', deadline:'2026-05-12', remark:'', status:'published' },
   { id:'s_023', name:'手持风扇', account:'广东刘亦菲', receiveDate:'2026/3/23', deadline:'2026-04-07', remark:'', status:'published' },
@@ -2602,9 +2602,9 @@ const defaultData = {
   { id:'s_025', name:'完美日记唇釉', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_026', name:'纽益宝鱼油', account:'广东刘亦菲', receiveDate:'2026-04-28', deadline:'2026-05-13', remark:'', status:'published' },
   { id:'s_027', name:'宝玑米脱毛膏', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_028', name:'生理盐水', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
-  { id:'s_029', name:'无界香水', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
-  { id:'s_030', name:'ph咖啡', account:'广东刘亦菲', receiveDate:'2026-05-07', deadline:'2026-05-22', remark:'', status:'unpublished' },
+  { id:'s_028', name:'生理盐水', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
+  { id:'s_029', name:'无界香水', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
+  { id:'s_030', name:'ph咖啡', account:'广东刘亦菲', receiveDate:'2026-05-07', deadline:'2026-05-22', remark:'', status:'un_arrived' },
   { id:'s_031', name:'宁心', account:'广东刘亦菲', receiveDate:'2026-05-01', deadline:'2026-05-16', remark:'', status:'published' },
   { id:'s_032', name:'倍加洁牙刷', account:'晚梨不吃梨', receiveDate:'2026/5/11', deadline:'2026-05-26', remark:'', status:'published' },
   { id:'s_033', name:'脆升升礼盒', account:'晚梨不吃梨', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'', status:'published' },
@@ -2628,15 +2628,15 @@ const defaultData = {
   { id:'s_051', name:'一页精华', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
   { id:'s_052', name:'丹泊沐浴露', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
   { id:'s_053', name:'生理盐水湿巾', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
-  { id:'s_054', name:'衣物香氛挂件', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'hit' },
-  { id:'s_055', name:'祛湿轻', account:'晚梨不吃梨', receiveDate:'2026/3/1', deadline:'2026-03-16', remark:'', status:'hit' },
-  { id:'s_056', name:'洁比兔 湿巾', account:'晚梨不吃梨', receiveDate:'2026-03-24', deadline:'2026-04-08', remark:'', status:'hit' },
-  { id:'s_057', name:'洁比兔益生菌洗液', account:'晚梨不吃梨', receiveDate:'2026/3/24', deadline:'2026-04-08', remark:'', status:'hit' },
+  { id:'s_054', name:'衣物香氛挂件', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
+  { id:'s_055', name:'祛湿轻', account:'晚梨不吃梨', receiveDate:'2026/3/1', deadline:'2026-03-16', remark:'', status:'published' },
+  { id:'s_056', name:'洁比兔 湿巾', account:'晚梨不吃梨', receiveDate:'2026-03-24', deadline:'2026-04-08', remark:'', status:'published' },
+  { id:'s_057', name:'洁比兔益生菌洗液', account:'晚梨不吃梨', receiveDate:'2026/3/24', deadline:'2026-04-08', remark:'', status:'published' },
   { id:'s_058', name:'绵绵的羊', account:'晚梨不吃梨', receiveDate:'2026/4/28', deadline:'2026-05-13', remark:'', status:'published' },
   { id:'s_059', name:'宝玑米脱毛膏', account:'晚梨不吃梨', receiveDate:'2026/4/28', deadline:'2026-05-13', remark:'', status:'published' },
   { id:'s_060', name:'纯耕六味地黄丸', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
   { id:'s_061', name:'纯耕黄精人参', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
-  { id:'s_062', name:'珀芙研等渗面膜', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'hit' },
+  { id:'s_062', name:'珀芙研等渗面膜', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
   { id:'s_063', name:'珀芙研蛋白胶原面膜', account:'晚梨不吃梨', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
   { id:'s_064', name:'珀芙研冷膜', account:'晚梨不吃梨', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
   { id:'s_065', name:'珀芙研修护霜', account:'晚梨不吃梨', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
@@ -2655,20 +2655,20 @@ const defaultData = {
   { id:'s_078', name:'苏卡咖啡', account:'晚梨不吃梨', receiveDate:'2026/5/5', deadline:'2026-05-20', remark:'', status:'published' },
   { id:'s_079', name:'ph咖啡', account:'晚梨不吃梨', receiveDate:'2026/4/18', deadline:'2026-05-03', remark:'', status:'published' },
   { id:'s_080', name:'斯维诗液体钙', account:'晚梨不吃梨', receiveDate:'2026/3/26', deadline:'2026-04-10', remark:'', status:'abandoned' },
-  { id:'s_094', name:'祛湿清', account:'努力成为富婆', receiveDate:'2026-03-01', deadline:'2026-03-16', remark:'', status:'unpublished' },
-  { id:'s_114', name:'olly女维', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'hit' },
-  { id:'s_115', name:'无糖清凉糖', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'hit' },
+  { id:'s_094', name:'祛湿清', account:'努力成为富婆', receiveDate:'2026-03-01', deadline:'2026-03-16', remark:'', status:'un_arrived' },
+  { id:'s_114', name:'olly女维', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
+  { id:'s_115', name:'无糖清凉糖', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_116', name:'香体糖', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_117', name:'olly褪黑素', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_119', name:'西梅软糖', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_120', name:'红花贴', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_121', name:'巧尼芙', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
-  { id:'s_123', name:'健美生复合维B', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_121', name:'巧尼芙', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
+  { id:'s_123', name:'健美生复合维B', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
   { id:'s_124', name:'洛神月褪黑素', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_125', name:'重颜纪面膜', account:'晚梨不吃梨', receiveDate:'2026/6/26', deadline:'2026-07-11', remark:'', status:'unpublished' },
+  { id:'s_125', name:'重颜纪面膜', account:'晚梨不吃梨', receiveDate:'2026/6/26', deadline:'2026-07-11', remark:'', status:'un_arrived' },
   { id:'s_126', name:'珀芙研油敏霜', account:'晚梨不吃梨', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_127', name:'洁比兔湿厕纸', account:'晚梨不吃梨', receiveDate:'2026/3/24', deadline:'2026-04-08', remark:'', status:'hit' },
-  { id:'s_128', name:'南瓜茶', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'unpublished' },
+  { id:'s_127', name:'洁比兔湿厕纸', account:'晚梨不吃梨', receiveDate:'2026/3/24', deadline:'2026-04-08', remark:'', status:'published' },
+  { id:'s_128', name:'南瓜茶', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
   { id:'s_129', name:'香蕉饮', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' }
 ],
   transactions: [
@@ -3142,17 +3142,21 @@ function uid() {
 function migrateSample(s) {
   if (!s) return s
   let status
-  if (s.status === 'published') status = 'published_free'
-  else if (s.status) status = s.status
-  else if (s.isShot) status = 'shot'
-  else {
-    const published = !!s.published
-    const orderCount = Number(s.orderCount) || 0
-    const promoted = !!s.promoted
-    if (published && orderCount > 5) status = 'hit'
-    else if (published && !promoted) status = 'abandoned'
-    else if (published) status = 'published_free'
-    else status = 'unpublished'
+  const st = s.status
+  // 旧 6 态 → 新 5 态（未到货 / 已到货未拍摄 / 已拍摄未发布 / 已发布 / 放弃）
+  if (st === 'published' || st === 'published_free' || st === 'published_paid' || st === 'hit') {
+    status = 'published'
+  } else if (st === 'shot') {
+    status = 'shot'
+  } else if (st === 'abandoned') {
+    status = 'abandoned'
+  } else if (st === 'unpublished') {
+    // 旧「未发布」按到货情况拆成未到货 / 已到货未拍摄
+    status = s.isArrived ? 'arrived' : 'un_arrived'
+  } else if (st) {
+    status = st // 已是新 key，原样保留
+  } else {
+    status = s.isArrived ? 'arrived' : 'un_arrived'
   }
   const { published: _p, promoted: _pr, adCost: _a, status: _old, isShot: _is, ...rest } = s
   return {
@@ -3163,7 +3167,6 @@ function migrateSample(s) {
     lastPublishAt: rest.lastPublishAt || '',
     publishCount: Number(rest.publishCount) || 0,
     orderCount: Number(rest.orderCount) || 0,
-    isArrived: !!rest.isArrived,
   }
 }
 
@@ -3486,7 +3489,7 @@ export function StoreProvider({ children }) {
       receiveDate: sample.receiveDate || '',
       deadline: sample.deadline || '',
       remark: sample.remark || '',
-      status: sample.status || 'unpublished',
+      status: sample.status || 'un_arrived',
       productId: sample.productId || '',
       isArrived: !!sample.isArrived,
       publishHistory: [],
@@ -3542,9 +3545,7 @@ export function StoreProvider({ children }) {
         next.samples = d.samples.map((sm) => {
           if (sm.id !== newOrder.sampleId) return sm
           const orderCount = (Number(sm.orderCount) || 0) + 1
-          let status = sm.status
-          if (status === 'published_free') status = 'published_paid'
-          return { ...sm, orderCount, status }
+          return { ...sm, orderCount }
         })
       }
       return next
@@ -3575,9 +3576,7 @@ export function StoreProvider({ children }) {
         next.samples = d.samples.map((sm) => {
           if (sm.id !== target.sampleId) return sm
           const orderCount = Math.max(0, (Number(sm.orderCount) || 0) - 1)
-          let status = sm.status
-          if (orderCount === 0 && status === 'published_paid') status = 'published_free'
-          return { ...sm, orderCount, status }
+          return { ...sm, orderCount }
         })
       }
       return next

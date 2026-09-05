@@ -4,14 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { addDays } from '../utils/helpers'
-
-const STATUS = {
-  unpublished:    { label: '未发布', emoji: '⚪️' },
-  published_paid: { label: '已发布·出单', emoji: '🟢💰' },
-  published_free: { label: '已发布·未出单', emoji: '🟢' },
-  hit:            { label: '🔥爆单', emoji: '🔥' },
-  abandoned:      { label: '放弃', emoji: '🚫' },
-}
+import { SAMPLE_STATUS_LIST } from '../utils/sampleStatus'
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 
@@ -36,13 +29,13 @@ export function EditSamplePage() {
     ? sample.accounts
     : (sample?.account ? [_mapAcc(sample.account)] : [])
   const [accounts, setAccounts] = useState(initialAccounts)
-  const [status, setStatus] = useState(sample?.status || 'unpublished')
+  const [status, setStatus] = useState(sample?.status || 'un_arrived')
   const [receiveDate, setReceiveDate] = useState(sample?.receiveDate || new Date().toISOString().slice(0,10))
   const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0,10), 15))
   const [remark, setRemark] = useState(sample?.remark || '')
   const [commission, setCommission] = useState(sample?.commission || 5)
   const [orderDate, setOrderDate] = useState(sample?.orderDate || '')
-  const isOrder = status === 'published_paid' || status === 'hit'
+  const isOrder = status === 'published'
 
   // 同名检测（排除当前编辑的，按所选账号交集判断，仅保存时）
   const getAccounts = (s) => Array.isArray(s?.accounts) && s.accounts.length ? s.accounts : (s?.account ? [s.account] : [])
@@ -127,11 +120,11 @@ export function EditSamplePage() {
         </Field>
         <Field label="状态">
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {Object.entries(STATUS).map(([k, s]) => (
-              <button key={k} onClick={() => setStatus(k)} style={{
+            {SAMPLE_STATUS_LIST.map((s) => (
+              <button key={s.key} onClick={() => setStatus(s.key)} style={{
                 padding: '7px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: status === k ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.5)',
-                color: status === k ? '#fff' : 'var(--text-sub)' }}>{s.emoji} {s.label}</button>
+                background: status === s.key ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.5)',
+                color: status === s.key ? '#fff' : 'var(--text-sub)' }}>{s.icon} {s.label}</button>
             ))}
           </div>
         </Field>
