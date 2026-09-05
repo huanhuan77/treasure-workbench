@@ -41,18 +41,13 @@ function acctChipStyle(active, label, color, bg) {
   }
 }
 
-// 排序：按状态优先级，同状态按收货时间倒序、再按名称
-function sortSamples(samples) {
-  return [...samples].sort((a, b) => {
-    const ia = STATUS_ORDER.indexOf(a.status)
-    const ib = STATUS_ORDER.indexOf(b.status)
-    if (ia !== ib) return ia - ib
-    const ra = a.receiveDate || ''
-    const rb = b.receiveDate || ''
-    if (ra !== rb) return rb.localeCompare(ra)
-    return (a.name || '').localeCompare(b.name || '')
-  })
-}
+// 排序方式：custom=默认（可拖动自定义顺序），其余按日期字段排序
+// defaultDir：收货日期默认最新在前；截止日期默认最紧急（最早）在前
+const SORT_OPTIONS = [
+  { key: 'custom', label: '默认' },
+  { key: 'receiveDate', label: '收货日期', defaultDir: 'desc' },
+  { key: 'deadline', label: '截止日期', defaultDir: 'asc' },
+]
 
 export function SamplesPage() {
   const navigate = useNavigate()
@@ -68,6 +63,24 @@ export function SamplesPage() {
     return map[v] || v || 'all'
   })
   const [searchKeyword, setSearchKeyword] = useState('')
+  // 排序：默认＝自定义顺序（可拖动）；也可按收货日期/截止日期排序
+  const [sortKey, setSortKey] = useState('custom')
+  const [sortDir, setSortDir] = useState('desc')
+  const handleSortClick = (key) => {
+    if (key === 'custom') { setSortKey('custom'); setSortDir('desc'); return }
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'))  // 再点一次切换升降序
+      return
+    }
+    const opt = SORT_OPTIONS.find((o) => o.key === key)
+    setSortKey(key)
+    setSortDir(opt?.defaultDir || 'desc')
+  }
+  const isDateSort = sortKey !== 'custom'
+  // 当前排序效果的文字说明（避免 ↓↑ 含义歧义）
+  const sortHint = sortKey === 'receiveDate'
+    ? (sortDir === 'desc' ? '最新收货在前' : '最早收货在前')
+    : (sortDir === 'asc' ? '最紧急在前' : '最晚截止在前')
   // 隐藏样品卡上的账号标签（隐私/展示场景），全局开关持久化到本地
   const [hideAccount, setHideAccount] = useState(isAccountsHidden)
   const toggleHideAccount = () => {
@@ -84,10 +97,10 @@ export function SamplesPage() {
   const handleDragEnd = (event) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
-    const oldIndex = accountFiltered.findIndex(s => s.id === active.id)
-    const newIndex = accountFiltered.findIndex(s => s.id === over.id)
+    const oldIndex = displayed.findIndex(s => s.id === active.id)
+    const newIndex = displayed.findIndex(s => s.id === over.id)
     if (oldIndex < 0 || newIndex < 0) return
-    reorderSamples(arrayMove(accountFiltered.map(s => s.id), oldIndex, newIndex))
+    reorderSamples(arrayMove(displayed.map(s => s.id), oldIndex, newIndex))
   }
 
   // 恢复滚动位置和筛选状态（从编辑/新增页返回时）
@@ -120,6 +133,20 @@ export function SamplesPage() {
     if (searchKeyword.trim()) r = r.filter((s) => s.name.toLowerCase().includes(searchKeyword.trim().toLowerCase()))
     return r
   }, [filtered, accountFilter, searchKeyword])
+
+  // 按所选方式排序；custom 时保持 store 顺序（可拖动自定义）
+  const displayed = useMemo(() => {
+    if (sortKey === 'custom') return accountFiltered
+    const dir = sortDir === 'asc' ? 1 : -1
+    return [...accountFiltered].sort((a, b) => {
+      const va = a[sortKey] || ''
+      const vb = b[sortKey] || ''
+      if (!va && !vb) return (a.name || '').localeCompare(b.name || '')
+      if (!va) return 1   // 缺日期的排最后
+      if (!vb) return -1
+      return va.localeCompare(vb) * dir
+    })
+  }, [accountFiltered, sortKey, sortDir])
 
   const acctStats = useMemo(() => {
     const stats = {}
@@ -239,6 +266,31 @@ export function SamplesPage() {
         />
       </div>
 
+      {/* 排序 */}
+      <div style={{ padding: '0 16px 10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-sub)', flexShrink: 0 }}>排序</span>
+          {SORT_OPTIONS.map((o) => {
+            const active = sortKey === o.key
+            return (
+              <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
+                padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+                whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
+                background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
+                color: active ? '#fff' : 'var(--text-sub)',
+                border: active ? 'none' : '1px solid rgba(255,255,255,0.6)',
+                boxShadow: active ? '0 3px 10px rgba(244,114,182,0.25)' : 'none',
+              }}>
+                {o.label}{active && o.key !== 'custom' ? (sortDir === 'desc' ? ' ↓' : ' ↑') : ''}
+              </button>
+            )
+          })}
+        </div>
+        <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-sub)' }}>
+          {sortKey === 'custom' ? '默认顺序，按住 ⇕ 可拖动调整' : `${sortHint} · 再点一次可切换升降序 · 此时不可拖动`}
+        </div>
+      </div>
+
       <div style={{ padding: '4px 16px calc(90px + var(--safe-bottom, 0px))' }}>
         {accountFiltered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
@@ -247,9 +299,9 @@ export function SamplesPage() {
           </div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={accountFiltered.map(s => s.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={displayed.map(s => s.id)} strategy={verticalListSortingStrategy}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {accountFiltered.map((s) => {
+                {displayed.map((s) => {
                   const st = STATUS[s.status] || STATUS.unpublished
                   const dl = deadlineDesc(s.deadline)
                   const dlMatch = dl && dl.match(/(\d+)天/)
@@ -263,6 +315,7 @@ export function SamplesPage() {
                   return <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
                     swipedId={swipedId} setSwipedId={setSwipedId}
                     filter={filter} accountFilter={accountFilter} hideAccount={hideAccount}
+                    dragEnabled={!isDateSort}
                     onEdit={() => {
                       sessionStorage.setItem('samples_scroll', String(window.scrollY))
                       sessionStorage.setItem('samples_filter', filter)
@@ -337,8 +390,9 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, filter, accountFilter, hideAccount, onEdit, onDelete }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id })
+function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, filter, accountFilter, hideAccount, dragEnabled, onEdit, onDelete }) {
+  const canDrag = dragEnabled !== false   // 按日期排序时禁止拖动（否则与排序结果冲突）
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id, disabled: !canDrag })
   const isSwiped = swipedId === s.id
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -369,18 +423,21 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
         >
           {/* ⇕ 拖动按钮（左侧边缘） */}
           <button
-            {...attributes}
-            {...listeners}
-            onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
-            onTouchStart={(e) => { e.stopPropagation(); listeners?.onTouchStart?.(e) }}
+            {...(canDrag ? attributes : {})}
+            {...(canDrag ? listeners : {})}
+            onPointerDown={(e) => { e.stopPropagation(); if (canDrag) listeners?.onPointerDown?.(e) }}
+            onTouchStart={(e) => { e.stopPropagation(); if (canDrag) listeners?.onTouchStart?.(e) }}
             aria-label="拖动排序"
+            disabled={!canDrag}
+            title={canDrag ? '拖动排序' : '按日期排序时不可拖动'}
             style={{
               position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)',
               width: '24px', height: '32px',
               border: 'none', background: 'transparent', color: 'var(--gray-400)',
-              fontSize: '20px', lineHeight: 1, cursor: 'grab', touchAction: 'none',
+              fontSize: '20px', lineHeight: 1, cursor: canDrag ? 'grab' : 'default',
+              touchAction: canDrag ? 'none' : 'auto',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderRadius: '6px',
+              borderRadius: '6px', opacity: canDrag ? 1 : 0.25,
             }}
           >⇕</button>
           {/* 第一行：产品名 + 账号 + 状态 */}
