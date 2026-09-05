@@ -75,15 +75,13 @@ export function DashboardPage() {
   const stat = useMemo(() => {
     // 样品：仅统计总数、逾期、临期
     let sTotal = 0
-    const urgent = []  // 已过期
-    const recent = []  // 过期 + 3天内到期
+    const urgent = []  // 已过期 (dd <= 0)
+    const recent = []  // 未逾期但3天内到期 (0 < dd <= 3)，与 urgent 不重叠
     ;(samples || []).forEach((s) => {
       sTotal++
       const dd = daysUntil(s.deadline)
-      if (dd !== null && dd <= 3) {
-        recent.push(s)
-        if (dd <= 0) urgent.push(s)
-      }
+      if (dd !== null && dd <= 0) urgent.push(s)
+      else if (dd !== null && dd <= 3) recent.push(s)
     })
     // 收支：本月
     const now = new Date()
@@ -116,7 +114,7 @@ export function DashboardPage() {
       <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', background: 'transparent', borderBottom: '1px solid rgba(236,72,153,0.12)' }}>
         <p style={{ margin: 0, fontSize: '13px', color: '#b3888f' }}>{greeting()} · {todayLabel}</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#db2777', letterSpacing: '-0.4px' }}>工作台总览</h1>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px' }}>工作台总览</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button
               onClick={handleCheckUpdate}
@@ -211,9 +209,6 @@ export function DashboardPage() {
           {[
             { to: '/products', label: '文案库', icon: '📝' },
             { to: '/orders', label: '出单', icon: '💰' },
-            { to: '/samples', label: '样品', icon: '🏷️' },
-            { to: '/daily', label: '每日计划', icon: '📋' },
-            { to: '/finance', label: '收支', icon: '💳' },
             { to: '/calendar', label: '日历', icon: '📅' },
             { to: '/reading', label: '读书成长', icon: '📚' },
             { to: '/brands', label: '品牌方', icon: '🤝' },
