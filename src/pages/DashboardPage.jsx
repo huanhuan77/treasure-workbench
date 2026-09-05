@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
+import { useToast } from '../components/Toast'
+import { checkForUpdate } from '../main'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -30,6 +32,22 @@ function fmt(n) {
 export function DashboardPage() {
   const navigate = useNavigate()
   const { products, samples, transactions, orders } = useStore()
+  const { show } = useToast()
+
+  // 手动检查更新（主屏幕应用无刷新入口，检测到新版本时硬刷新加载）
+  const [checking, setChecking] = useState(false)
+  const handleCheckUpdate = async () => {
+    setChecking(true)
+    const result = await checkForUpdate(true)
+    setChecking(false)
+    if (result === 'latest') {
+      show('已是最新版本', 'success')
+      const standalone =
+        window.navigator.standalone === true ||
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+      if (standalone) setTimeout(() => location.reload(true), 800)
+    } else if (result === 'error') show('检查更新失败，请重试', 'error')
+  }
 
   // ── 今日待办（读 daily_plan_v1，与 BottomNav 徽标一致）
   const [todo, setTodo] = useState({ tasks: [], undone: 0 })
@@ -104,12 +122,23 @@ export function DashboardPage() {
         <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-sub)' }}>{greeting()} · {todayLabel}</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '2px' }}>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.4px' }}>工作台总览</h1>
-          <button onClick={() => go('/product/new')} style={{
-            padding: '7px 14px', borderRadius: '999px', border: 'none',
-            background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
-            fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-            boxShadow: '0 4px 12px rgba(244,114,182,0.3)',
-          }}>＋ 新建产品</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <button
+              onClick={handleCheckUpdate}
+              disabled={checking}
+              style={{
+                padding: '7px 12px', borderRadius: '999px', border: '1px solid rgba(236,72,182,0.28)',
+                background: 'rgba(236,72,182,0.08)', color: '#ec4899',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >{checking ? '检查中…' : '↻ 检查更新'}</button>
+            <button onClick={() => go('/product/new')} style={{
+              padding: '7px 14px', borderRadius: '999px', border: 'none',
+              background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+              fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              boxShadow: '0 4px 12px rgba(244,114,182,0.3)',
+            }}>＋ 新建产品</button>
+          </div>
         </div>
       </header>
 

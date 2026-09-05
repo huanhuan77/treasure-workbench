@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ConfirmModal, glassStyle } from '../components/Modal'
-import { checkForUpdate } from '../main'
 import {
   DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter,
 } from '@dnd-kit/core'
@@ -145,7 +144,6 @@ export function HomePage() {
   const { products, deleteProduct, reorderProducts } = useStore()
   const { show } = useToast()
   const navigate = useNavigate()
-  const [checking, setChecking] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [swipedId, setSwipedId] = useState(null)
   const [delId, setDelId] = useState(null)
@@ -206,23 +204,6 @@ export function HomePage() {
     if (oldIndex < 0 || newIndex < 0) return
     reorderProducts(arrayMove(products.map((p) => p.id), oldIndex, newIndex))
   }
-
-  // 是否以「添加到主屏幕」的独立应用方式打开（无地址栏、无刷新入口）
-  const isStandalone = () =>
-    window.navigator.standalone === true ||
-    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
-
-  const handleCheckUpdate = async () => {
-    setChecking(true)
-    const result = await checkForUpdate(true)
-    setChecking(false)
-    if (result === 'latest') {
-      show('已是最新版本', 'success')
-      // 主屏幕应用无刷新入口：已是最新也顺手硬刷新一次，确保资源最新
-      if (isStandalone()) setTimeout(() => location.reload(true), 800)
-    } else if (result === 'error') show('检查更新失败，请重试', 'error')
-  }
-
 
   // 悬浮 + 按钮可拖动
   const [fabPos, setFabPos] = useState(() => {
@@ -292,17 +273,6 @@ export function HomePage() {
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.3px' }}>宝藏工作台</h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{products.length}个产品 · {(products || []).reduce((s, p) => s + (p.copies?.length || 0), 0)}条文案</p>
         </div>
-        <button
-          onClick={handleCheckUpdate}
-          disabled={checking}
-          style={{
-            flexShrink: 0, marginLeft: '12px', padding: '8px 12px', border: 'none',
-            borderRadius: '999px', fontSize: '12px', fontWeight: 600, color: '#ec4899',
-            background: 'rgba(236, 72, 182, 0.10)', cursor: 'pointer',
-          }}
-        >
-          {checking ? '检查中…' : '↻ 检查更新'}
-        </button>
       </header>
 
       <div style={{ padding: '8px 16px 4px' }}>
