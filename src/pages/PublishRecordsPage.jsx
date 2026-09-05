@@ -83,11 +83,15 @@ export function PublishRecordsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {filtered.map((r) => {
               const sm = sampleMap[r.sampleId]
+              const q = Number(r.qty) > 0 ? Number(r.qty) : 1
               return (
                 <div key={r.id} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '15px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sm ? sm.name : '（样品已删除）'}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sm ? sm.name : '（样品已删除）'}</span>
+                        {q > 1 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px' }}>×{q}</span>}
+                      </div>
                       <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>📅 {r.publishDate}</div>
                     </div>
                     <button onClick={() => handleDelete(r)} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecdd3', background: '#fff', color: '#f43f5e', fontSize: '12px', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>删除</button>

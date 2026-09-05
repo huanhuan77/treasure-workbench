@@ -38,6 +38,7 @@ export function NewPublishRecordPage() {
   const [publishDate, setPublishDate] = useState(() => init.publishDate || new Date().toISOString().slice(0, 10))
   const [accounts, setAccounts] = useState(initAccounts)        // 发布账号：多选
   const [sampleId, setSampleId] = useState(initSample)
+  const [qty, setQty] = useState('1')                           // 发布数量（≥1）
   const [showSamples, setShowSamples] = useState(false)
 
   // 可选样品：仅「已拍摄 / 已发布」状态（与发布记录板块对齐）
@@ -58,6 +59,7 @@ export function NewPublishRecordPage() {
       productId: chosen?.productId || '',
       accounts: [...accounts],
       publishDate,
+      qty: Math.max(1, Number(qty) || 1),
     })
     show('已记录发布', 'success')
     navigate(-1)
@@ -114,7 +116,7 @@ export function NewPublishRecordPage() {
         </div>
 
         {/* 关联样品：仅已拍摄/已发布 */}
-        <div style={{ marginBottom: '12px' }}>
+        <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>关联样品（仅已拍摄 / 已发布可选）</div>
           <div style={fieldBox} onClick={() => setShowSamples(true)}>
             <span style={{ color: chosen ? 'var(--text-main)' : '#9ca3af', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -128,6 +130,35 @@ export function NewPublishRecordPage() {
               ) : '点击选择样品'}
             </span>
             <span style={{ color: '#c4c9d0', fontSize: '13px' }}>▾</span>
+          </div>
+        </div>
+
+        {/* 发布数量 */}
+        <div style={{ marginBottom: '12px' }}>
+          <div style={sectionTitle}>发布数量（一次记多条视频时填写实际条数）</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button type="button" onClick={() => setQty((v) => String(Math.max(1, (Number(v) || 1) - 1)))} style={{
+              width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid rgba(0,0,0,0.08)',
+              background: '#fff', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', flexShrink: 0,
+            }}>−</button>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={qty}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10)
+                if (Number.isNaN(n) || n < 1) setQty('')
+                else setQty(String(n))
+              }}
+              onBlur={() => setQty((v) => (Number(v) >= 1 ? v : '1'))}
+              style={{ ...fieldBox, flex: 1, textAlign: 'center', fontWeight: 700 }}
+            />
+            <button type="button" onClick={() => setQty((v) => String((Number(v) || 1) + 1))} style={{
+              width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid rgba(0,0,0,0.08)',
+              background: '#fff', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', flexShrink: 0,
+            }}>＋</button>
+            <span style={{ fontSize: '12px', color: 'var(--text-sub)', whiteSpace: 'nowrap' }}>条视频</span>
           </div>
         </div>
       </div>

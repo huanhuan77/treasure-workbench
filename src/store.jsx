@@ -3504,10 +3504,13 @@ export function StoreProvider({ children }) {
       if (!list && !sm.publishCount) return sm
       const dates = list ? list.map((r) => r.publishDate).filter(Boolean).sort() : []
       const last = dates.length ? dates[dates.length - 1] : (sm.lastPublishAt || '')
-      const count = list ? list.length : (sm.publishCount || 0)
+      // 视频条数 = 每条记录的 qty 累加（向下兼容无 qty 字段的旧记录视为 1 条）
+      const count = list
+        ? list.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
+        : (sm.publishCount || 0)
       return {
         ...sm,
-        publishHistory: list ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [] })) : (sm.publishHistory || []),
+        publishHistory: list ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: Number(r.qty) > 0 ? Number(r.qty) : 1 })) : (sm.publishHistory || []),
         lastPublishAt: last,
         publishCount: count,
       }
@@ -3522,6 +3525,7 @@ export function StoreProvider({ children }) {
       productId: record.productId || '',
       accounts: Array.isArray(record.accounts) ? record.accounts : [],
       publishDate: record.publishDate || new Date().toISOString().slice(0, 10),
+      qty: Number(record.qty) > 0 ? Number(record.qty) : 1,
       createdAt: now,
     }
     setData((d) => {
