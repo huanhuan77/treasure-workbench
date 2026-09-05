@@ -7,6 +7,7 @@ import { BottomNav } from './components/BottomNav'
 import { DashboardPage } from './pages/DashboardPage'
 import { HomePage } from './pages/HomePage'
 import { SamplesPage } from './pages/SamplesPage'
+import { RecentOrdersPage } from './pages/RecentOrdersPage'
 import { FinancePage } from './pages/FinancePage'
 import { SavingsPage } from './pages/SavingsPage'
 import { ProductDetailPage } from './pages/ProductDetailPage'
@@ -85,6 +86,7 @@ function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/products" element={<HomePage />} />
             <Route path="/samples" element={<SamplesPage />} />
+            <Route path="/recent-orders" element={<RecentOrdersPage />} />
             <Route path="/savings" element={<SavingsPage />} />
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/sensitive" element={<SensitiveWordsPage />} />

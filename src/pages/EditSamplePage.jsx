@@ -41,6 +41,8 @@ export function EditSamplePage() {
   const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0,10), 15))
   const [remark, setRemark] = useState(sample?.remark || '')
   const [commission, setCommission] = useState(sample?.commission || 5)
+  const [orderDate, setOrderDate] = useState(sample?.orderDate || '')
+  const isOrder = status === 'published_paid' || status === 'hit'
 
   // 同名检测（排除当前编辑的，按所选账号交集判断，仅保存时）
   const getAccounts = (s) => Array.isArray(s?.accounts) && s.accounts.length ? s.accounts : (s?.account ? [s.account] : [])
@@ -67,7 +69,7 @@ export function EditSamplePage() {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要保存为重复名称吗？`)) return
     }
     if (accounts.length === 0) { show('请选择归属账号', 'error'); return }
-    updateSample(id, { name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission) })
+    updateSample(id, { name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission), orderDate: isOrder ? orderDate : '' })
     show('已更新', 'success')
     navigate('/samples')
   }
@@ -133,6 +135,11 @@ export function EditSamplePage() {
             ))}
           </div>
         </Field>
+        {isOrder && (
+          <Field label="出单日期（选填，用于近出单统计）">
+            <input type="date" style={inputStyle} value={orderDate} onChange={e => setOrderDate(e.target.value)} />
+          </Field>
+        )}
         <div style={{ display: 'flex', gap: '10px' }}>
           <div style={{ flex: 1 }}>
             <Field label="收货日期">

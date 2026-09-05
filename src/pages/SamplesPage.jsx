@@ -479,6 +479,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
     deadline: sample?.deadline || (sample ? '' : addDays(todayStr(), 15)),
     remark: sample?.remark || '',
     commission: sample?.commission || 5,
+    orderDate: sample?.orderDate || '',
   })
   // 截止时间是否被用户手动改过（未手动改时，随收货时间自动 +15 天）
   const [deadlineTouched, setDeadlineTouched] = useState(!!sample?.deadline)
@@ -500,7 +501,10 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
 
   const handleSave = () => {
     if (!form.name.trim()) return
-    onSave({ ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] })
+    const isOrder = form.status === 'published_paid' || form.status === 'hit'
+    const f = { ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] }
+    if (!isOrder) f.orderDate = ''
+    onSave(f)
   }
 
   return (
@@ -559,7 +563,10 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
           {STATUS_LIST.map((s) => (
             <button
               key={s.key}
-              onClick={() => setForm({ ...form, status: s.key })}
+              onClick={() => setForm((f) => {
+                const order = s.key === 'published_paid' || s.key === 'hit'
+                return { ...f, status: s.key, orderDate: order ? f.orderDate : '' }
+              })}
               style={{
                 padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
                 background: form.status === s.key ? s.color : 'rgba(255,255,255,0.5)',
@@ -570,6 +577,12 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
           ))}
         </div>
       </Field>
+
+      {(form.status === 'published_paid' || form.status === 'hit') && (
+        <Field label="出单日期（选填，用于近出单统计）">
+          <input type="date" style={inputStyle} value={form.orderDate || ''} onChange={(e) => setForm({ ...form, orderDate: e.target.value })} />
+        </Field>
+      )}
 
       <Field label="收货时间">
         <input type="date" style={inputStyle} value={form.receiveDate} onChange={(e) => onReceiveChange(e.target.value)} />

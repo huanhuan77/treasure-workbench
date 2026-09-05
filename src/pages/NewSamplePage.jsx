@@ -40,6 +40,8 @@ export function NewSamplePage() {
   const [deadline, setDeadline] = useState(() => addDays(new Date().toISOString().slice(0, 10), 15))
   const [remark, setRemark] = useState('')
   const [commission, setCommission] = useState(5)
+  const [orderDate, setOrderDate] = useState('')
+  const isOrder = status === 'published_paid' || status === 'hit'
 
   // 同名检测（按所选账号交集判断）
   const getAccounts = (s) => Array.isArray(s?.accounts) && s.accounts.length ? s.accounts : (s?.account ? [s.account] : [])
@@ -57,7 +59,7 @@ export function NewSamplePage() {
     if (duplicateName) {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要重复添加吗？`)) return
     }
-    addSample({ name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission) })
+    addSample({ name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission), orderDate: isOrder ? orderDate : '' })
     show('已添加', 'success')
     navigate('/samples')
   }
@@ -119,6 +121,11 @@ export function NewSamplePage() {
             ))}
           </div>
         </Field>
+        {isOrder && (
+          <Field label="出单日期（选填，用于近出单统计）">
+            <input type="date" style={inputStyle} value={orderDate} onChange={e => setOrderDate(e.target.value)} />
+          </Field>
+        )}
         <div style={{ display: 'flex', gap: '10px' }}>
           <div style={{ flex: 1 }}>
             <Field label="收货日期">
