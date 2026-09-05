@@ -112,90 +112,90 @@ export function DashboardPage() {
   const go = (p) => navigate(p)
 
   return (
-    <div className="app-container" style={{ background: '#f8f9fa', minHeight: '100vh', color: '#1a1a1a' }}>
-      <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', background: '#fff', borderBottom: '1px solid #eef0f2' }}>
-        <p style={{ margin: 0, fontSize: '13px', color: '#8b95a1' }}>{greeting()} · {todayLabel}</p>
+    <div className="app-container" style={{ background: '#fff5f6', minHeight: '100vh', color: '#1a1a1a' }}>
+      <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', background: '#fff', borderBottom: '1px solid #fce7ec' }}>
+        <p style={{ margin: 0, fontSize: '13px', color: '#b3888f' }}>{greeting()} · {todayLabel}</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px' }}>工作台总览</h1>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#db2777', letterSpacing: '-0.4px' }}>工作台总览</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button
               onClick={handleCheckUpdate}
               disabled={checking}
               style={{
                 padding: '7px 12px', borderRadius: '8px',
-                border: '1px solid #e5e7eb', background: '#fff', color: '#4b5563',
-                fontSize: '12px', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap',
+                border: '1px solid #fbcfe8', background: '#fff', color: '#db2777',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >{checking ? '检查中…' : '↻ 检查更新'}</button>
             <button onClick={() => go('/product/new')} style={{
               padding: '7px 14px', borderRadius: '8px', border: 'none',
-              background: '#111', color: '#fff',
+              background: '#ec4899', color: '#fff',
               fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
             }}>＋ 新建产品</button>
           </div>
         </div>
       </header>
 
-      {/* 出单台账主入口（白底 + 红点强调） */}
+      {/* 出单台账主入口（白底 + 粉点强调） */}
       <div style={{ padding: '14px 16px 4px' }}>
         <div onClick={() => go('/orders')} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: '#fff', border: '1px solid #eef0f2', borderRadius: '12px', padding: '16px 18px', cursor: 'pointer',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+          background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '16px 18px', cursor: 'pointer',
+          boxShadow: '0 1px 2px rgba(236,72,153,0.06)',
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#dc2626' }} />
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#6b7280', letterSpacing: '0.3px' }}>出单记录</span>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ec4899' }} />
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', letterSpacing: '0.3px' }}>出单记录</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
               <span style={{ fontSize: '28px', fontWeight: 700, color: '#111', lineHeight: 1 }}>{fmt(stat.orderTotal)}</span>
-              <span style={{ fontSize: '12px', color: '#9ca3af' }}>笔出单 · 累计 {stat.orderQty} 单</span>
+              <span style={{ fontSize: '12px', color: '#c9a3ab' }}>笔出单 · 累计 {stat.orderQty} 单</span>
             </div>
           </div>
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontSize: '12px', color: '#9ca3af' }}>记出单</div>
+            <div style={{ fontSize: '12px', color: '#c9a3ab' }}>记出单</div>
           </div>
-          <span style={{ marginLeft: '12px', fontSize: '18px', color: '#cbd5e1', flexShrink: 0 }}>›</span>
+          <span style={{ marginLeft: '12px', fontSize: '18px', color: '#f9a8d4', flexShrink: 0 }}>›</span>
         </div>
       </div>
 
-      {/* 次要统计卡：样品 / 收支 / 今日待办（白底浅灰描边） */}
+      {/* 次要统计卡：样品 / 收支 / 今日待办（白底浅粉描边） */}
       <div style={{ padding: '8px 16px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
 
         {/* 样品 */}
-        <div onClick={() => go('/samples')} style={{ background: '#fff', border: '1px solid #eef0f2', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '6px' }}>样品</div>
+        <div onClick={() => go('/samples')} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(236,72,153,0.06)' }}>
+          <div style={{ fontSize: '12px', color: '#c9a3ab', marginBottom: '6px' }}>样品</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
             <span style={{ fontSize: '24px', fontWeight: 700, color: '#111' }}>{stat.sTotal}</span>
-            <span style={{ fontSize: '11px', color: '#9ca3af' }}>个</span>
+            <span style={{ fontSize: '11px', color: '#c9a3ab' }}>个</span>
           </div>
           <div style={{ marginTop: '6px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {stat.urgent.length > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#dc2626' }}>{stat.urgent.length} 逾期</span>}
-            {stat.recent.length > 0 && <span style={{ fontSize: '11px', color: '#ea580c' }}>{stat.recent.length} 临期</span>}
-            {stat.urgent.length === 0 && stat.recent.length === 0 && <span style={{ fontSize: '11px', color: '#9ca3af' }}>无临期</span>}
+            {stat.urgent.length > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#ec4899' }}>{stat.urgent.length} 逾期</span>}
+            {stat.recent.length > 0 && <span style={{ fontSize: '11px', color: '#db2777' }}>{stat.recent.length} 临期</span>}
+            {stat.urgent.length === 0 && stat.recent.length === 0 && <span style={{ fontSize: '11px', color: '#c9a3ab' }}>无临期</span>}
           </div>
         </div>
 
         {/* 收支 */}
-        <div onClick={() => go('/finance')} style={{ background: '#fff', border: '1px solid #eef0f2', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '6px' }}>收支</div>
+        <div onClick={() => go('/finance')} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(236,72,153,0.06)' }}>
+          <div style={{ fontSize: '12px', color: '#c9a3ab', marginBottom: '6px' }}>收支</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '22px', fontWeight: 700, color: stat.net >= 0 ? '#059669' : '#dc2626' }}>¥{fmt(stat.net)}</span>
+            <span style={{ fontSize: '22px', fontWeight: 700, color: stat.net >= 0 ? '#ec4899' : '#dc2626' }}>¥{fmt(stat.net)}</span>
           </div>
-          <div style={{ marginTop: '6px', fontSize: '11px', color: '#9ca3af' }}>
+          <div style={{ marginTop: '6px', fontSize: '11px', color: '#c9a3ab' }}>
             入 ¥{fmt(stat.income)} · 出 ¥{fmt(stat.expense)}
           </div>
         </div>
 
         {/* 今日待办 */}
-        <div onClick={() => go('/daily')} style={{ background: '#fff', border: '1px solid #eef0f2', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-          <div style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '6px' }}>今日待办</div>
+        <div onClick={() => go('/daily')} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(236,72,153,0.06)' }}>
+          <div style={{ fontSize: '12px', color: '#c9a3ab', marginBottom: '6px' }}>今日待办</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: todo.undone > 0 ? '#111' : '#059669' }}>{todo.undone}</span>
-            <span style={{ fontSize: '11px', color: '#9ca3af' }}>未完成</span>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: todo.undone > 0 ? '#111' : '#ec4899' }}>{todo.undone}</span>
+            <span style={{ fontSize: '11px', color: '#c9a3ab' }}>未完成</span>
           </div>
-          <div style={{ marginTop: '6px', fontSize: '11px', color: '#9ca3af' }}>
+          <div style={{ marginTop: '6px', fontSize: '11px', color: '#c9a3ab' }}>
             共 {todo.tasks.length} 项
           </div>
         </div>
@@ -203,7 +203,10 @@ export function DashboardPage() {
 
       {/* 全部功能入口 */}
       <div style={{ padding: '14px 16px calc(20px + var(--safe-bottom, 0px))' }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', marginBottom: '10px' }}>全部功能</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111', marginBottom: '10px' }}>
+          <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ec4899' }} />
+          全部功能
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: '10px' }}>
           {[
             { to: '/products', label: '文案库', icon: '📝' },
@@ -222,11 +225,11 @@ export function DashboardPage() {
           ].map((m) => (
             <button key={m.to} onClick={() => go(m.to)} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-              padding: '14px 4px', background: '#fff', border: '1px solid #eef0f2',
+              padding: '14px 4px', background: '#fff', border: '1px solid #fce7ec',
               borderRadius: '10px', cursor: 'pointer', color: '#111',
             }}>
               <span style={{ fontSize: '22px', lineHeight: 1 }}>{m.icon}</span>
-              <span style={{ fontSize: '11px', color: '#4b5563', whiteSpace: 'nowrap' }}>{m.label}</span>
+              <span style={{ fontSize: '11px', color: '#6b6670', whiteSpace: 'nowrap' }}>{m.label}</span>
             </button>
           ))}
         </div>
