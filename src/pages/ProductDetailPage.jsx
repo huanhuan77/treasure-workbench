@@ -113,7 +113,7 @@ export function ProductDetailPage() {
       <div className="app-container">
         <div style={{ textAlign: 'center', padding: '60px' }}>
           <p>产品不存在</p>
-          <button onClick={() => navigate('/')} style={{ color: 'var(--primary)' }}>返回首页</button>
+          <button onClick={() => navigate('/products')} style={{ color: 'var(--primary)' }}>返回文案库</button>
         </div>
       </div>
     )
@@ -252,7 +252,7 @@ export function ProductDetailPage() {
         gap: '12px',
       }}>
         <button
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/products')}
           style={{
             width: '36px', height: '36px', borderRadius: '50%',
             background: 'rgba(255,255,255,0.6)',
