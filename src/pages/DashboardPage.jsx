@@ -112,8 +112,8 @@ export function DashboardPage() {
   const go = (p) => navigate(p)
 
   return (
-    <div className="app-container" style={{ background: '#fff5f6', minHeight: '100vh', color: '#1a1a1a' }}>
-      <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', background: '#fff', borderBottom: '1px solid #fce7ec' }}>
+    <div className="app-container" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', minHeight: '100vh', color: '#1a1a1a' }}>
+      <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', background: 'transparent', borderBottom: '1px solid rgba(236,72,153,0.12)' }}>
         <p style={{ margin: 0, fontSize: '13px', color: '#b3888f' }}>{greeting()} · {todayLabel}</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#db2777', letterSpacing: '-0.4px' }}>工作台总览</h1>
@@ -163,39 +163,39 @@ export function DashboardPage() {
       {/* 次要统计卡：样品 / 收支 / 今日待办（白底浅粉描边） */}
       <div style={{ padding: '8px 16px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
 
-        {/* 样品 */}
-        <div onClick={() => go('/samples')} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(236,72,153,0.06)' }}>
-          <div style={{ fontSize: '12px', color: '#c9a3ab', marginBottom: '6px' }}>样品</div>
+        {/* 样品（绿色边框） */}
+        <div onClick={() => go('/samples')} style={{ background: '#fff', border: '1.5px solid #a7f3d0', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(5,150,105,0.08)' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#059669', marginBottom: '6px' }}>样品</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
             <span style={{ fontSize: '24px', fontWeight: 700, color: '#111' }}>{stat.sTotal}</span>
-            <span style={{ fontSize: '11px', color: '#c9a3ab' }}>个</span>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>个</span>
           </div>
           <div style={{ marginTop: '6px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {stat.urgent.length > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#ec4899' }}>{stat.urgent.length} 逾期</span>}
-            {stat.recent.length > 0 && <span style={{ fontSize: '11px', color: '#db2777' }}>{stat.recent.length} 临期</span>}
-            {stat.urgent.length === 0 && stat.recent.length === 0 && <span style={{ fontSize: '11px', color: '#c9a3ab' }}>无临期</span>}
+            {stat.urgent.length > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#dc2626' }}>{stat.urgent.length} 逾期</span>}
+            {stat.recent.length > 0 && <span style={{ fontSize: '11px', color: '#ea580c' }}>{stat.recent.length} 临期</span>}
+            {stat.urgent.length === 0 && stat.recent.length === 0 && <span style={{ fontSize: '11px', color: '#94a3b8' }}>无临期</span>}
           </div>
         </div>
 
-        {/* 收支 */}
-        <div onClick={() => go('/finance')} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(236,72,153,0.06)' }}>
-          <div style={{ fontSize: '12px', color: '#c9a3ab', marginBottom: '6px' }}>收支</div>
+        {/* 收支（蓝色边框） */}
+        <div onClick={() => go('/finance')} style={{ background: '#fff', border: '1.5px solid #bfdbfe', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(37,99,235,0.08)' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#2563eb', marginBottom: '6px' }}>收支</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '22px', fontWeight: 700, color: stat.net >= 0 ? '#ec4899' : '#dc2626' }}>¥{fmt(stat.net)}</span>
+            <span style={{ fontSize: '22px', fontWeight: 700, color: stat.net >= 0 ? '#2563eb' : '#dc2626' }}>¥{fmt(stat.net)}</span>
           </div>
-          <div style={{ marginTop: '6px', fontSize: '11px', color: '#c9a3ab' }}>
+          <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8' }}>
             入 ¥{fmt(stat.income)} · 出 ¥{fmt(stat.expense)}
           </div>
         </div>
 
-        {/* 今日待办 */}
-        <div onClick={() => go('/daily')} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 2px rgba(236,72,153,0.06)' }}>
-          <div style={{ fontSize: '12px', color: '#c9a3ab', marginBottom: '6px' }}>今日待办</div>
+        {/* 今日待办（紫色边框） */}
+        <div onClick={() => go('/daily')} style={{ background: '#fff', border: '1.5px solid #ddd6fe', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(124,58,237,0.08)' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: '#7c3aed', marginBottom: '6px' }}>今日待办</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: todo.undone > 0 ? '#111' : '#ec4899' }}>{todo.undone}</span>
-            <span style={{ fontSize: '11px', color: '#c9a3ab' }}>未完成</span>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: todo.undone > 0 ? '#7c3aed' : '#059669' }}>{todo.undone}</span>
+            <span style={{ fontSize: '11px', color: '#94a3b8' }}>未完成</span>
           </div>
-          <div style={{ marginTop: '6px', fontSize: '11px', color: '#c9a3ab' }}>
+          <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8' }}>
             共 {todo.tasks.length} 项
           </div>
         </div>
