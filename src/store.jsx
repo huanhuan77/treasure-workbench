@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { DEFAULT_SENSITIVE_WORDS, generateTitle, generateTopics } from './utils/copyGenerator'
 import { todayStr } from './utils/helpers'
-import { recordDelete, clearLocalMeta, clearDelete, setWordTime } from './utils/sync'
+import { recordDelete, clearDelete, setWordTime } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
 
 const StoreContext = createContext(null)
@@ -3183,13 +3183,6 @@ export function StoreProvider({ children }) {
     }))
   }, [])
 
-  const setProductTopics = useCallback((productId, topics) => {
-    setData((d) => ({
-      ...d,
-      products: d.products.map((p) => (p.id === productId ? { ...p, topics, updatedAt: Date.now() } : p)),
-    }))
-  }, [])
-
   const getSavings = useCallback(() => {
     return data.savingsData || { monthlyGoal: 6000, records: {} }
   }, [data.savingsData])
@@ -3456,15 +3449,6 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, sensitiveWords: d.sensitiveWords.filter((w) => w !== word) }))
   }, [])
 
-  const resetData = useCallback(() => {
-    try {
-      clearLocalMeta()
-      localStorage.removeItem(STORAGE_KEY)
-      localStorage.removeItem(VERSION_KEY)
-    } catch (e) {}
-    if (typeof window !== 'undefined') window.location.reload()
-  }, [])
-
   // 同步引擎合并结果应用到本机（主数据模块）
   const applySyncResult = useCallback((mergedMain) => {
     if (!mergedMain) return
@@ -3487,12 +3471,12 @@ export function StoreProvider({ children }) {
 
   const value = {
     ...data,
-    addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples, setProductTopics,
+    addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample,
     addOrder, updateOrder, deleteOrder,
     addTransaction, deleteTransaction, updateTransaction,
-    addSensitiveWord, deleteSensitiveWord, resetData,
+    addSensitiveWord, deleteSensitiveWord,
     getSavings, updateSavings, setSavings,
     applySyncResult,
   }
