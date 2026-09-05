@@ -55,6 +55,10 @@ export function DashboardPage() {
 
   // ── 统计计算
   const stat = useMemo(() => {
+    // 文案库：产品数 / 文案总数 / 出单数
+    const prodCount = (products || []).length
+    const allCopies = (products || []).reduce((s, p) => s + (p.copies?.length || 0), 0)
+    const orderCopies = (products || []).reduce((s, p) => s + (p.copies || []).filter((c) => c.hasOrder).length, 0)
     // 样品：仅统计总数、逾期、临期
     let sTotal = 0
     const urgent = []  // 已过期
@@ -78,8 +82,9 @@ export function DashboardPage() {
       else expense += n
     })
     return {
+      prodCount, allCopies, orderCopies,
       sTotal, recent, urgent,
-      ym, income, expense, net: income - expense,
+      income, expense, net: income - expense,
     }
   }, [products, samples, transactions])
 
@@ -104,30 +109,52 @@ export function DashboardPage() {
         </div>
       </header>
 
-      {/* 3 张统计主卡（文案库通过下方"全部功能"入口进入） */}
-      <div style={{ padding: '4px 16px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+      {/* 文案库主入口（最常用，整行突出显示） */}
+      <div style={{ padding: '4px 16px 2px' }}>
+        <div onClick={() => go('/products')} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'linear-gradient(135deg, rgba(16,185,129,0.16), rgba(16,185,129,0.05))',
+          border: '1px solid rgba(16,185,129,0.28)', borderRadius: '16px', padding: '16px 18px', cursor: 'pointer',
+        }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#059669', marginBottom: '4px' }}>文案库</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{fmt(stat.allCopies)}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>条文案 · {stat.prodCount} 个产品</span>
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: '#e11d48', lineHeight: 1.1 }}>{fmt(stat.orderCopies)}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px' }}>出单</div>
+          </div>
+          <span style={{ marginLeft: '12px', fontSize: '18px', color: '#059669', flexShrink: 0 }}>›</span>
+        </div>
+      </div>
+
+      {/* 次要统计卡：样品 / 收支 / 今日待办 */}
+      <div style={{ padding: '6px 16px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
 
         {/* 样品 */}
         <div onClick={() => go('/samples')} style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginBottom: '6px' }}>样品</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-            <span style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-main)' }}>{stat.sTotal}</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>个</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-main)' }}>{stat.sTotal}</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>个</span>
           </div>
           <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {stat.urgent.length > 0 && <span style={{ fontSize: '12px', fontWeight: 600, color: '#ef4444' }}>{stat.urgent.length} 逾期</span>}
-            {stat.recent.length > 0 && <span style={{ fontSize: '12px', color: '#ea580c' }}>{stat.recent.length} 临期</span>}
-            {stat.urgent.length === 0 && stat.recent.length === 0 && <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>无临期</span>}
+            {stat.urgent.length > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#ef4444' }}>{stat.urgent.length}逾期</span>}
+            {stat.recent.length > 0 && <span style={{ fontSize: '11px', color: '#ea580c' }}>{stat.recent.length}临期</span>}
+            {stat.urgent.length === 0 && stat.recent.length === 0 && <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>无临期</span>}
           </div>
         </div>
 
         {/* 收支 */}
         <div onClick={() => go('/finance')} style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginBottom: '6px' }}>{stat.ym} 收支</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-            <span style={{ fontSize: '26px', fontWeight: 700, color: stat.net >= 0 ? '#059669' : '#e11d48' }}>¥{fmt(stat.net)}</span>
+          <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginBottom: '6px' }}>收支</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            <span style={{ fontSize: '22px', fontWeight: 700, color: stat.net >= 0 ? '#059669' : '#e11d48' }}>¥{fmt(stat.net)}</span>
           </div>
-          <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-sub)' }}>
+          <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)' }}>
             入 ¥{fmt(stat.income)} · 出 ¥{fmt(stat.expense)}
           </div>
         </div>
@@ -135,11 +162,11 @@ export function DashboardPage() {
         {/* 今日待办 */}
         <div onClick={() => go('/daily')} style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginBottom: '6px' }}>今日待办</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-            <span style={{ fontSize: '26px', fontWeight: 700, color: todo.undone > 0 ? '#7c3aed' : '#059669' }}>{todo.undone}</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>未完成</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            <span style={{ fontSize: '24px', fontWeight: 700, color: todo.undone > 0 ? '#7c3aed' : '#059669' }}>{todo.undone}</span>
+            <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>未完成</span>
           </div>
-          <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-sub)' }}>
+          <div style={{ marginTop: '4px', fontSize: '11px', color: 'var(--text-sub)' }}>
             共 {todo.tasks.length} 项
           </div>
         </div>
