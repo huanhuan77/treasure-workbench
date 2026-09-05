@@ -64,10 +64,6 @@ export function DashboardPage() {
 
   // ── 统计计算
   const stat = useMemo(() => {
-    // 产品 / 文案 / 爆单
-    const prodCount = (products || []).length
-    const allCopies = (products || []).reduce((s, p) => s + (p.copies?.length || 0), 0)
-    const orderCopies = (products || []).reduce((s, p) => s + (p.copies || []).filter((c) => c.hasOrder).length, 0)
     // 样品
     const ss = {}
     let sTotal = 0
@@ -93,7 +89,7 @@ export function DashboardPage() {
       else expense += n
     })
     return {
-      prodCount, allCopies, orderCopies, ss, sTotal, recent, urgent,
+      ss, sTotal, recent, urgent,
       ym, income, expense, net: income - expense,
     }
   }, [products, samples, transactions])
@@ -125,20 +121,8 @@ export function DashboardPage() {
         </div>
       </header>
 
-      {/* 4 张统计主卡 */}
+      {/* 3 张统计主卡（文案库通过下方"全部功能"入口进入） */}
       <div style={{ padding: '4px 16px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-
-        {/* 产品 / 文案 */}
-        <div onClick={() => go('/products')} style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginBottom: '6px' }}>文案库</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-            <span style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-main)' }}>{stat.prodCount}</span>
-            <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>产品</span>
-          </div>
-          <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-sub)' }}>
-            {fmt(stat.allCopies)} 条文案 · <span style={{ color: '#e11d48' }}>{stat.orderCopies} 出单</span>
-          </div>
-        </div>
 
         {/* 样品 */}
         <div onClick={() => go('/samples')} style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)', borderRadius: '16px', padding: '14px', cursor: 'pointer' }}>
