@@ -1,18 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
-// 底部主 tab（5 个核心功能）
+// 底部主 tab（4 个核心功能）
 const mainTabs = [
   { to: '/', label: '总览', icon: '🏠', end: true },
+  { to: '/products', label: '文案库', icon: '📝' },
   { to: '/samples', label: '样品', icon: '🏷️' },
-  { to: '/daily', label: '每日计划', icon: '📋', badgeKey: 'plan' },
   { to: '/finance', label: '收支', icon: '💳' },
 ]
 
-// 更多侧边栏 tab
+// 更多侧边栏 tab（文案库已在底部导航，这里不再重复）
 const sideTabs = [
-  { to: '/products', label: '文案库', icon: '📝' },
   { to: '/orders', label: '出单', icon: '💰' },
+  { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/reading', label: '读书成长', icon: '📚' },
   { to: '/brands', label: '品牌方', icon: '🤝' },
@@ -90,30 +90,6 @@ export function BottomNav() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
 
-  // 每日计划未完成数（实时同步）
-  const [planBadge, setPlanBadge] = useState(0)
-  useEffect(() => {
-    const calc = () => {
-      try {
-        const d = new Date()
-        const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-        const raw = localStorage.getItem('daily_plan_v1')
-        if (!raw) { setPlanBadge(0); return }
-        const data = JSON.parse(raw)
-        const tasks = data[today]?.tasks || []
-        const undone = tasks.filter(t => !t.done).length
-        setPlanBadge(undone)
-      } catch { setPlanBadge(0) }
-    }
-    calc()
-    window.addEventListener('dailyPlanUpdated', calc)
-    window.addEventListener('storage', calc)
-    return () => {
-      window.removeEventListener('dailyPlanUpdated', calc)
-      window.removeEventListener('storage', calc)
-    }
-  }, [])
-
   const handleSideNav = (to) => {
     navigate(to)
     setSidebarOpen(false)
@@ -141,7 +117,7 @@ export function BottomNav() {
         }}
       >
         {mainTabs.map((tab) => (
-          <TabItem key={tab.to} {...tab} badge={tab.badgeKey === 'plan' ? planBadge : 0} />
+          <TabItem key={tab.to} {...tab} badge={0} />
         ))}
         {/* 更多按钮 */}
         <button
