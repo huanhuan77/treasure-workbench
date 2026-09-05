@@ -12,6 +12,7 @@ const mainTabs = [
 // 更多侧边栏 tab
 const sideTabs = [
   { to: '/products', label: '文案库', icon: '📝' },
+  { to: '/orders', label: '出单', icon: '💰' },
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/reading', label: '读书成长', icon: '📚' },
   { to: '/brands', label: '品牌方', icon: '🤝' },

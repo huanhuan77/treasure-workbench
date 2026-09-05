@@ -266,6 +266,11 @@ export function ProductDetailPage() {
         >‹</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayTitle(product)}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>📋 {product.copies?.length || 0} 文案</span>
+            <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: 500 }}>🎬 已发 {Number(product.postedCount) || 0}</span>
+            <span style={{ fontSize: '12px', color: '#e11d48', fontWeight: 500 }}>🔥 {(product.copies || []).filter((c) => c.hasOrder).length} 出单</span>
+          </div>
         </div>
       </header>
 

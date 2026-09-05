@@ -2876,6 +2876,7 @@ const defaultData = {
       '2026-12': { target: 270000, actual: 0, details: {} },
     }
   },
+  orders: [],  // 独立出单台账：{ id, name(品名), date(出单日期), account(账号), qty(件数), commissionPct(佣金%), remark }
   sensitiveWords: DEFAULT_SENSITIVE_WORDS,
 }
 
@@ -3118,6 +3119,7 @@ function loadData() {
     return {
       products: productsFinal,
       samples: (old.samples || []).map((s) => migrateSample({ ...s, account: mapAccount(s.account) })),
+      orders: Array.isArray(old.orders) ? old.orders : [],  // 独立出单台账（无则初始化为空）
       transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
       savingsData: (() => {
         let sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
@@ -3392,6 +3394,43 @@ export function StoreProvider({ children }) {
     }))
   }, [])
 
+  // ── 独立出单台账 ──────────────────────────────────────
+  const addOrder = useCallback((order) => {
+    const now = Date.now()
+    const newOrder = {
+      id: uid(),
+      name: (order.name || '').trim(),
+      date: order.date || new Date().toISOString().slice(0, 10),
+      account: order.account || '',
+      qty: Number(order.qty) || 1,
+      commissionPct: Number(order.commissionPct) || 0,
+      remark: order.remark || '',
+      createdAt: now,
+      updatedAt: now,
+    }
+    setData((d) => ({ ...d, orders: [newOrder, ...(d.orders || [])] }))
+    return newOrder.id
+  }, [])
+
+  const updateOrder = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      orders: (d.orders || []).map((o) => {
+        if (o.id !== id) return o
+        const next = { ...o, ...patch, updatedAt: Date.now() }
+        if ('name' in patch) next.name = String(patch.name || '').trim()
+        if ('qty' in patch) next.qty = Number(patch.qty) || 1
+        if ('commissionPct' in patch) next.commissionPct = Number(patch.commissionPct) || 0
+        return next
+      }),
+    }))
+  }, [])
+
+  const deleteOrder = useCallback((id) => {
+    recordDelete('blogger_workbench_data_v1', id)
+    setData((d) => ({ ...d, orders: (d.orders || []).filter((o) => o.id !== id) }))
+  }, [])
+
   const addTransaction = useCallback((tx) => {
     const now = Date.now()
     const newTx = {
@@ -3459,6 +3498,7 @@ export function StoreProvider({ children }) {
       const next = {
         products: mergedMain.products ?? d.products,
         samples: mergedMain.samples ?? d.samples,
+        orders: mergedMain.orders ?? d.orders,
         transactions: mergedMain.transactions ?? d.transactions,
         savingsData: mergedMain.savingsData ?? d.savingsData,
         sensitiveWords: mergedMain.sensitiveWords ?? d.sensitiveWords,
@@ -3476,6 +3516,7 @@ export function StoreProvider({ children }) {
     addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples, setProductTopics,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample,
+    addOrder, updateOrder, deleteOrder,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord, resetData,
     getSavings, updateSavings, setSavings,

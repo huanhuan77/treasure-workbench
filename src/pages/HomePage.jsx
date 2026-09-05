@@ -63,7 +63,6 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
   const iconInfo = getIconInfo(p.name, p.category)
   const copies = p.copies?.length || 0
   const orders = (p.copies || []).filter((c) => c.hasOrder).length
-  const posted = Number(p.postedCount) || 0
   const isSwiped = swipedId === p.id
 
   return (
@@ -106,7 +105,6 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-sub)' }}>📋{copies}</span>
-            <span style={{ fontSize: '13px', color: '#2563eb', fontWeight: 500 }}>已发 {posted}</span>
             <span style={{ fontSize: '13px', color: '#e11d48', fontWeight: 500 }}>🔥{orders}</span>
           </div>
         </div>

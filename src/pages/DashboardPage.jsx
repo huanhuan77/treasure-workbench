@@ -2,17 +2,6 @@ import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 
-const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
-const ACCOUNT_COLOR = {
-  '广东刘亦菲': { c: '#c2410c', bg: 'rgba(251,146,60,0.16)' },
-  '晚梨不吃梨': { c: '#1d4ed8', bg: 'rgba(59,130,246,0.16)' },
-  '努力成为富婆': { c: '#7e22ce', bg: 'rgba(168,85,247,0.16)' },
-}
-function getSampleAccounts(s) {
-  if (Array.isArray(s?.accounts) && s.accounts.length) return s.accounts
-  return s?.account ? [s.account] : []
-}
-
 // 顶部问候（按时段）
 function greeting() {
   const h = new Date().getHours()
@@ -40,7 +29,7 @@ function fmt(n) {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { products, samples, transactions } = useStore()
+  const { products, samples, transactions, orders } = useStore()
 
   // ── 今日待办（读 daily_plan_v1，与 BottomNav 徽标一致）
   const [todo, setTodo] = useState({ tasks: [], undone: 0 })
@@ -92,21 +81,16 @@ export function DashboardPage() {
       if (t.type === 'income') income += n
       else expense += n
     })
-    // 每账号出单样品数（爆单 / 已发布·出单）
-    const orderByAcc = {}
-    for (const a of ACCOUNTS) orderByAcc[a] = 0
-    let totalOrder = 0
-    ;(samples || []).forEach((s) => {
-      if (!(s.status === 'hit' || s.status === 'published_paid')) return
-      getSampleAccounts(s).filter((a) => ACCOUNTS.includes(a)).forEach((a) => { orderByAcc[a]++; totalOrder++ })
-    })
+    // 独立出单台账
+    const orderTotal = (orders || []).length
+    const orderQty = (orders || []).reduce((s, o) => s + (Number(o.qty) || 0), 0)
     return {
       prodCount, allCopies, orderCopies,
       sTotal, recent, urgent,
       income, expense, net: income - expense,
-      orderByAcc, totalOrder,
+      orderTotal, orderQty,
     }
-  }, [products, samples, transactions])
+  }, [products, samples, transactions, orders])
 
   const now = new Date()
   const todayLabel = `${now.getMonth()+1}月${now.getDate()}日`
@@ -151,28 +135,24 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* 每账号近出单（按账号分组，点击看全部） */}
+      {/* 出单台账主入口（独立记录每个产品出了几单） */}
       <div style={{ padding: '6px 16px 2px' }}>
-        <div onClick={() => go('/recent-orders')} style={{
+        <div onClick={() => go('/orders')} style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.8)',
-          borderRadius: '16px', padding: '12px 16px', cursor: 'pointer',
+          background: 'linear-gradient(135deg, rgba(225,29,72,0.14), rgba(225,29,72,0.04))',
+          border: '1px solid rgba(225,29,72,0.26)', borderRadius: '16px', padding: '16px 18px', cursor: 'pointer',
         }}>
           <div>
-            <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginBottom: '6px' }}>每账号近出单</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {ACCOUNTS.map((a) => {
-                const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
-                return (
-                  <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 9px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, background: col.bg, color: col.c }}>
-                    {a}
-                    <b style={{ fontSize: '13px' }}>{stat.orderByAcc[a] || 0}</b>
-                  </span>
-                )
-              })}
+            <div style={{ fontSize: '13px', fontWeight: 700, color: '#e11d48', marginBottom: '4px' }}>出单记录</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{fmt(stat.orderTotal)}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>笔出单 · 累计 {stat.orderQty} 单</span>
             </div>
           </div>
-          <span style={{ marginLeft: '10px', fontSize: '18px', color: 'var(--text-sub)', flexShrink: 0 }}>›</span>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-sub)' }}>记出单</div>
+          </div>
+          <span style={{ marginLeft: '12px', fontSize: '18px', color: '#e11d48', flexShrink: 0 }}>›</span>
         </div>
       </div>
 
@@ -223,6 +203,7 @@ export function DashboardPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', gap: '10px' }}>
           {[
             { to: '/products', label: '文案库', color: '#059669', bg: 'rgba(16,185,129,0.14)' },
+            { to: '/orders', label: '出单', color: '#e11d48', bg: 'rgba(225,29,72,0.12)' },
             { to: '/samples', label: '样品', color: '#e11d48', bg: 'rgba(244,63,94,0.13)' },
             { to: '/daily', label: '每日计划', color: '#7c3aed', bg: 'rgba(139,92,246,0.14)' },
             { to: '/finance', label: '收支', color: '#0284c7', bg: 'rgba(14,165,233,0.14)' },

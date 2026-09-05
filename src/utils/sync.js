@@ -299,6 +299,7 @@ function mergeModule(key, localVal, remoteVal, tombstones, wordTimes, lastSync) 
       return {
         products: mergeProducts(localVal.products, remoteVal.products, t),
         samples: mergeArrayById(localVal.samples, remoteVal.samples, t),
+        orders: mergeArrayById(localVal.orders, remoteVal.orders, t),
         transactions: mergeArrayById(localVal.transactions, remoteVal.transactions, t),
         savingsData: mergeSavings(localVal.savingsData, remoteVal.savingsData, t),
         sensitiveWords: mergeWords(localVal.sensitiveWords, remoteVal.sensitiveWords, t, wordTimes, lastSync),
