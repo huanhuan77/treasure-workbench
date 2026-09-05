@@ -1,15 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { deadlineDesc } from '../utils/helpers'
-
-// 统计卡片配色（与各模块一致）
-const STATUS_META = {
-  unpublished: { label: '待发布', color: '#64748b', bg: 'rgba(100,116,139,0.14)' },
-  hit:         { label: '爆单',   color: '#e11d48', bg: 'rgba(244,63,94,0.13)' },
-  published:   { label: '已发布', color: '#059669', bg: 'rgba(16,185,129,0.14)' },
-  abandoned:   { label: '放弃',   color: '#94a3b8', bg: 'rgba(148,163,184,0.16)' },
-}
 
 // 顶部问候（按时段）
 function greeting() {
@@ -64,13 +55,11 @@ export function DashboardPage() {
 
   // ── 统计计算
   const stat = useMemo(() => {
-    // 样品
-    const ss = {}
+    // 样品：仅统计总数、逾期、临期
     let sTotal = 0
-    const urgent = []  // 即将截止（<=3天或过期）
-    const recent = []  // 今天截止 / 过期 / 3天内
+    const urgent = []  // 已过期
+    const recent = []  // 过期 + 3天内到期
     ;(samples || []).forEach((s) => {
-      ss[s.status] = (ss[s.status] || 0) + 1
       sTotal++
       const dd = daysUntil(s.deadline)
       if (dd !== null && dd <= 3) {
@@ -89,16 +78,10 @@ export function DashboardPage() {
       else expense += n
     })
     return {
-      ss, sTotal, recent, urgent,
+      sTotal, recent, urgent,
       ym, income, expense, net: income - expense,
     }
   }, [products, samples, transactions])
-
-  // 今日到期标签文字
-  const deadlineLabel = (s) => {
-    const d = deadlineDesc(s.deadline)
-    return { text: d, urgent: (s && daysUntil(s.deadline) !== null && daysUntil(s.deadline) <= 3) }
-  }
 
   const now = new Date()
   const todayLabel = `${now.getMonth()+1}月${now.getDate()}日`
@@ -160,37 +143,6 @@ export function DashboardPage() {
             共 {todo.tasks.length} 项
           </div>
         </div>
-      </div>
-
-      {/* 样品速览 */}
-      <div style={{ padding: '12px 16px 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>样品状态速览</span>
-          <button onClick={() => go('/samples')} style={{ border: 'none', background: 'transparent', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer' }}>查看全部 ›</button>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {Object.entries(STATUS_META).map(([k, m]) => (
-            <button key={k} onClick={() => go('/samples')} style={{
-              flex: 1, textAlign: 'center', padding: '10px 4px', borderRadius: '12px',
-              background: m.bg, color: m.color, border: 'none', cursor: 'pointer',
-            }}>
-              <div style={{ fontSize: '20px', fontWeight: 700, lineHeight: 1.2 }}>{stat.ss[k] || 0}</div>
-              <div style={{ fontSize: '11px', marginTop: '2px' }}>{m.label}</div>
-            </button>
-          ))}
-        </div>
-        {/* 临期样品提醒 */}
-        {stat.recent.length > 0 && (
-          <div style={{ marginTop: '8px', borderRadius: '10px', background: 'rgba(251,191,36,0.10)', padding: '8px 12px', fontSize: '12px', color: '#92400e' }}>
-            {stat.recent.slice(0, 3).map((s) => (
-              <div key={s.id} style={{ display: 'flex', gap: '6px', padding: '2px 0' }}>
-                <span style={{ flexShrink: 0, color: '#ef4444' }}>{deadlineLabel(s).text}</span>
-                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                <span style={{ flexShrink: 0, color: 'var(--text-sub)' }}>{s.account || ''}</span>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* 全部功能入口 */}
