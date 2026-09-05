@@ -53,8 +53,6 @@ export function SamplesPage() {
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
   const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'unpublished')
-  // 排序/筛选弹窗（外部只留账号筛选 + 搜索，其他筛选项集中在弹窗）
-  const [filterModalOpen, setFilterModalOpen] = useState(false)
   // 账号选择弹窗
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const [accountDraft, setAccountDraft] = useState('all')
@@ -228,7 +226,7 @@ export function SamplesPage() {
             {hideAccount ? '🙈 隐藏' : '👁 显示'}
           </button>
         </div>
-        {/* 第二行：全部账号（首） + ⇅筛选 */}
+        {/* 第二行：全部账号（首），其余排序条件外置到第三行常显 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
           <button onClick={() => { setAccountDraft(accountFilter); setAccountSearch(''); setAccountModalOpen(true) }} title="选择账号" style={{
             padding: '5px 13px', borderRadius: '999px',
@@ -242,12 +240,27 @@ export function SamplesPage() {
             <span>{accountFilter === 'all' ? '全部账号' : accountFilter}</span>
             <span style={{ fontSize: '9px', opacity: .7 }}>▾</span>
           </button>
-          <button onClick={() => setFilterModalOpen(true)} title="筛选 / 排序" style={{
-            padding: '5px 12px', borderRadius: '999px', border: '1px solid rgba(244,114,182,0.35)',
-            background: 'rgba(244,114,182,0.08)', color: '#ec4899',
-            fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-            display: 'flex', alignItems: 'center', gap: '4px',
-          }}>⇅ 筛选</button>
+          <div style={{ flex: 1 }} />
+        </div>
+        {/* 第三行：排序方式（从弹窗外置，常显） */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', overflowX: 'auto' }}>
+          {SORT_OPTIONS.map((o) => {
+            const active = sortKey === o.key
+            const dateActive = active && o.key !== 'custom'
+            return (
+              <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
+                flex: '0 0 auto', padding: '5px 12px', borderRadius: '999px',
+                border: active ? '1.5px solid var(--primary)' : '1px solid rgba(244,114,182,0.3)',
+                background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
+                color: active ? '#fff' : 'var(--text-sub)',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                display: 'flex', alignItems: 'center', gap: '3px',
+              }}>
+                <span>{o.label}</span>
+                {dateActive && <span style={{ fontSize: '10px', opacity: .9 }}>{sortDir === 'desc' ? '↓' : '↑'}</span>}
+              </button>
+            )
+          })}
           <div style={{ flex: 1 }} />
         </div>
         <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>
@@ -371,42 +384,7 @@ export function SamplesPage() {
         }}
       >+</button>
 
-      {/* 排序筛选弹窗（外部只保留账号筛选+搜索，其他集中这里） */}
-      <Modal open={filterModalOpen} onClose={() => setFilterModalOpen(false)} title="排序与筛选">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '10px' }}>排序方式</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {SORT_OPTIONS.map((o) => {
-                const active = sortKey === o.key
-                return (
-                  <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
-                    padding: '12px 14px', borderRadius: '12px', textAlign: 'left',
-                    background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
-                    color: active ? '#fff' : 'var(--text-main)',
-                    border: active ? 'none' : '1px solid rgba(0,0,0,0.06)',
-                    fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span>{o.label}</span>
-                      {active && o.key !== 'custom' && <span style={{ fontSize: '12px', opacity: .85 }}>{sortDir === 'desc' ? '↓ 最新在前' : '↑ 最早在前'}</span>}
-                    </div>
-                    <div style={{ marginTop: '4px', fontSize: '11px', fontWeight: 500, opacity: .75 }}>
-                      {o.key === 'custom' ? '按添加顺序显示，可手动拖动排序' :
-                       o.key === 'receiveDate' ? '按收到样品的日期排序' :
-                       '按截止日期排序，越早越紧急'}
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <button onClick={() => setFilterModalOpen(false)} style={{
-            padding: '12px', borderRadius: '12px', border: 'none', background: '#ec4899', color: '#fff',
-            fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-          }}>完成</button>
-        </div>
-      </Modal>
+      {/* 排序方式已外置为头部第三行常显 chips（见 header） */}
 
       {/* 账号选择弹窗（仿抖音选号样式：标题居中+取消/确定+搜索框+单选列表） */}
       <Modal open={accountModalOpen} onClose={() => setAccountModalOpen(false)} title="账号">
