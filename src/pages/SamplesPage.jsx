@@ -234,7 +234,7 @@ export function SamplesPage() {
         </p>
       </header>
 
-      {/* 单行筛选条：账号（左）+ 状态（右），横向可滚动 */}
+      {/* 账号筛选：第一行 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 16px 4px', overflowX: 'auto' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>账号</span>
         <button onClick={() => { setAccountFilter('all'); setFilter('unpublished') }} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899', 'rgba(244,114,182,0.16)')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
@@ -246,7 +246,10 @@ export function SamplesPage() {
             </button>
           )
         })}
-        <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.08)', flexShrink: 0, margin: '0 4px' }} />
+      </div>
+
+      {/* 状态筛选：第二行 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 16px 4px', overflowX: 'auto' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>状态</span>
         {[{ key: 'all', label: '全部', color: '#ec4899' }, ...STATUS_LIST].map((f) => {
           const active = filter === f.key
