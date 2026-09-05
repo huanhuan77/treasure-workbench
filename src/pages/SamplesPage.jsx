@@ -34,7 +34,7 @@ function getAccounts(s) {
 
 function acctChipStyle(active, label, color, bg) {
   return {
-    padding: '6px 13px', borderRadius: '18px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
+    padding: '4px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
     background: active ? color : 'rgba(255,255,255,0.45)',
     color: active ? '#fff' : 'var(--text-sub)',
     border: active ? 'none' : '1px solid rgba(255,255,255,0.5)',
@@ -208,43 +208,35 @@ export function SamplesPage() {
 
   return (
     <div className="app-container">
-      <header style={{ padding: 'calc(20px + var(--safe-top)) 20px 12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)' }}>样品记录</h1>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 20px 10px' }}>
+        {/* 标题行：左侧标题，右侧搜索 + 隐藏账号按钮 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>样品记录</h1>
+          <div style={{ flex: 1 }} />
+          <input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)}
+            placeholder="搜索产品名称…"
+            style={{ width: 'min(52vw, 200px)', boxSizing:'border-box', padding:'6px 12px', borderRadius:'999px',
+              border:'1px solid rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.5)',
+              fontSize:'13px', outline:'none', fontFamily:'inherit', color:'var(--text-main)',
+              marginRight:'2px' }}
+          />
           <button onClick={toggleHideAccount} title={hideAccount ? '点击显示账号标签' : '点击隐藏账号标签'} style={{
-            padding: '5px 12px', borderRadius: '999px', border: '1px solid rgba(99,102,241,0.35)',
+            padding: '5px 11px', borderRadius: '999px', border: '1px solid rgba(99,102,241,0.35)',
             background: hideAccount ? 'rgba(99,102,241,0.12)' : 'rgba(255,255,255,0.5)',
             color: hideAccount ? '#4f46e5' : 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
           }}>
-            {hideAccount ? '🙈 显示账号' : '👁 隐藏账号'}
+            {hideAccount ? '🙈' : '👁'}
           </button>
         </div>
-        <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
+        <p style={{ margin: '5px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>
           共 {Object.values(statusStats).reduce((a,b) => a + b, 0)} 个样品
           {' · '}{STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.emoji}${statusStats[s.key]}`).join('  ')}
         </p>
       </header>
 
-      {/* 状态筛选 */}
-      <div style={{ display: 'flex', gap: '8px', padding: '8px 16px 6px', overflowX: 'auto' }}>
-        {[{ key: 'all', label: '全部', color: '#ec4899' }, ...STATUS_LIST].map((f) => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            style={{
-              flex: 1, minWidth: 0,
-              padding: '6px 4px', borderRadius: '999px', fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap',
-              background: filter === f.key ? (f.key === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : STATUS[f.key].color) : 'rgba(255,255,255,0.5)',
-              color: filter === f.key ? '#fff' : 'var(--text-sub)',
-              border: filter === f.key ? 'none' : '1px solid rgba(255,255,255,0.6)',
-              boxShadow: filter === f.key ? '0 4px 12px rgba(244,114,182,0.25)' : 'none',
-            }}
-          >{f.label}{f.key !== 'all' ? ` ${statusStats[f.key] || 0}` : ` ${Object.values(statusStats).reduce((a,b) => a + b, 0)}`}</button>
-        ))}
-      </div>
-
-      {/* 账号筛选 */}
-      <div style={{ display: 'flex', gap: '8px', padding: '6px 16px 12px', overflowX: 'auto' }}>
+      {/* 单行筛选条：账号（左）+ 状态（右），横向可滚动 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 16px 4px', overflowX: 'auto' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>账号</span>
         <button onClick={() => { setAccountFilter('all'); setFilter('unpublished') }} style={acctChipStyle(accountFilter === 'all', '全部', '#ec4899', 'rgba(244,114,182,0.16)')}>全部 {Object.values(statusStats).reduce((a,b) => a + b, 0)}</button>
         {!hideAccount && ACCOUNTS.map((a) => {
           const col = ACCOUNT_COLOR[a]
@@ -254,44 +246,46 @@ export function SamplesPage() {
             </button>
           )
         })}
+        <span style={{ width: 1, height: 18, background: 'rgba(0,0,0,0.08)', flexShrink: 0, margin: '0 4px' }} />
+        <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>状态</span>
+        {[{ key: 'all', label: '全部', color: '#ec4899' }, ...STATUS_LIST].map((f) => {
+          const active = filter === f.key
+          const cnt = f.key === 'all' ? Object.values(statusStats).reduce((a,b) => a + b, 0) : (statusStats[f.key] || 0)
+          return (
+            <button key={f.key} onClick={() => setFilter(f.key)} style={{
+              padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
+              background: active ? (f.key === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : STATUS[f.key].color) : 'rgba(255,255,255,0.5)',
+              color: active ? '#fff' : 'var(--text-sub)',
+              border: active ? 'none' : '1px solid rgba(255,255,255,0.6)',
+              boxShadow: active ? `0 3px 8px ${f.key === 'all' ? '#ec4899' : STATUS[f.key].color}33` : 'none',
+            }}>{f.label} {cnt}</button>
+          )
+        })}
       </div>
 
-      {/* 搜索 */}
-      <div style={{ padding: '0 16px 10px' }}>
-        <input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)}
-          placeholder="🔍 搜索产品名称…"
-          style={{ width:'100%', boxSizing:'border-box', padding:'10px 14px', borderRadius:'14px',
-            border:'1px solid rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.45)',
-            fontSize:'13px', outline:'none', fontFamily:'inherit', color:'var(--text-main)' }}
-        />
+      {/* 排序：一行小胶囊 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 16px 2px', overflowX: 'auto' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0, opacity: .7 }}>排序</span>
+        {SORT_OPTIONS.map((o) => {
+          const active = sortKey === o.key
+          return (
+            <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
+              padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+              whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
+              background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
+              color: active ? '#fff' : 'var(--text-sub)',
+              border: active ? 'none' : '1px solid rgba(255,255,255,0.6)',
+            }}>
+              {o.label}{active && o.key !== 'custom' ? (sortDir === 'desc' ? ' ↓' : ' ↑') : ''}
+            </button>
+          )
+        })}
+        <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--text-sub)', flexShrink: 0 }}>
+          {sortKey === 'custom' ? '按住 ⇕ 拖动排序' : `${sortHint} · 再点切升降`}
+        </span>
       </div>
 
-      {/* 排序 */}
-      <div style={{ padding: '0 16px 10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflowX: 'auto' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-sub)', flexShrink: 0 }}>排序</span>
-          {SORT_OPTIONS.map((o) => {
-            const active = sortKey === o.key
-            return (
-              <button key={o.key} onClick={() => handleSortClick(o.key)} style={{
-                padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
-                whiteSpace: 'nowrap', flexShrink: 0, cursor: 'pointer',
-                background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.5)',
-                color: active ? '#fff' : 'var(--text-sub)',
-                border: active ? 'none' : '1px solid rgba(255,255,255,0.6)',
-                boxShadow: active ? '0 3px 10px rgba(244,114,182,0.25)' : 'none',
-              }}>
-                {o.label}{active && o.key !== 'custom' ? (sortDir === 'desc' ? ' ↓' : ' ↑') : ''}
-              </button>
-            )
-          })}
-        </div>
-        <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-sub)' }}>
-          {sortKey === 'custom' ? '默认顺序，按住 ⇕ 可拖动调整' : `${sortHint} · 再点一次可切换升降序 · 此时不可拖动`}
-        </div>
-      </div>
-
-      <div style={{ padding: '4px 16px calc(90px + var(--safe-bottom, 0px))' }}>
+      <div style={{ padding: '4px 16px calc(88px + var(--safe-bottom, 0px))' }}>
         {accountFiltered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏷️</div>
