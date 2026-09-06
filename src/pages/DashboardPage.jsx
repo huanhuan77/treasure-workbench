@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
+import { OrderFormModal } from '../components/OrderFormModal'
 import { checkForUpdate } from '../main'
 import { needPublishReminder, daysSincePublish, isOverdue, OVERDUE_STATES } from '../utils/publish'
 import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
@@ -34,8 +35,15 @@ function fmt(n) {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders, publishRecords } = useStore()
+  const { samples, transactions, orders, publishRecords, addOrder } = useStore()
   const { show } = useToast()
+  const [orderModalOpen, setOrderModalOpen] = useState(false)
+  const handleSaveOrder = (payload) => {
+    if (!payload.name) { show('请填写品名', 'error'); return }
+    addOrder(payload)
+    setOrderModalOpen(false)
+    show('已记一笔出单', 'success')
+  }
 
   // 手动检查更新（主屏幕应用无刷新入口，检测到新版本时硬刷新加载）
   const [checking, setChecking] = useState(false)
@@ -169,7 +177,10 @@ export function DashboardPage() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <span style={{ fontSize: '12px', color: '#db2777', fontWeight: 600 }}>记出单</span>
+            <button onClick={(e) => { e.stopPropagation(); setOrderModalOpen(true) }} style={{
+              border: 'none', background: 'transparent', padding: 0, cursor: 'pointer',
+              fontSize: '12px', color: '#db2777', fontWeight: 700,
+            }}>＋ 记出单</button>
             <span style={{ fontSize: '16px', color: '#f9a8d4' }}>›</span>
           </div>
         </div>
@@ -292,6 +303,9 @@ export function DashboardPage() {
           🎬 视频发布需手动记，点击去「视频发布记录」补记 / 查看
         </div>
       </div>
+
+      {/* 记出单弹窗：总览直接弹出，无需跳转出单页 */}
+      <OrderFormModal open={orderModalOpen} onClose={() => setOrderModalOpen(false)} editing={null} onSave={handleSaveOrder} />
     </div>
   )
 }
