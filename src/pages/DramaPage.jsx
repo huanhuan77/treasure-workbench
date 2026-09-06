@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ConfirmModal, glassStyle } from '../components/Modal'
-import { DRAMA_LIB, findDramaExact, searchDramas } from '../utils/dramaLib'
+import { DRAMA_LIB, findDramaExact, searchDramas, lookupDramaOnline } from '../utils/dramaLib'
 
 const STATUS = {
   want: { label: '想看', color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
@@ -23,14 +23,16 @@ export function DramaPage() {
   const [cast, setCast] = useState('')
   const [remark, setRemark] = useState('')
   const [showSuggest, setShowSuggest] = useState(false)
+  const [looking, setLooking] = useState(false)
   const [delId, setDelId] = useState(null)
+  const lookupSeq = useRef(0)
 
   const list = dramas || []
 
   // 实时联想：输入时匹配剧名库
   const suggestions = useMemo(() => (showSuggest ? searchDramas(name) : []), [showSuggest, name])
 
-  // 输入剧名：精确命中自动带出年份 + 主演
+  // 输入剧名：内置库精确命中自动带出年份 + 主演；未命中则联网兜底查询
   const handleNameChange = (v) => {
     setName(v)
     setShowSuggest(true)
@@ -38,7 +40,23 @@ export function DramaPage() {
     if (hit) {
       if (!year) setYear(String(hit.year))
       if (!cast) setCast(hit.cast)
+      setLooking(false)
+      return
     }
+    const q = v.trim()
+    if (!q) { setLooking(false); return }
+    const seq = ++lookupSeq.current
+    setLooking(true)
+    lookupDramaOnline(q)
+      .then((r) => {
+        if (seq !== lookupSeq.current) return  // 已有更新的输入，丢弃旧结果
+        setLooking(false)
+        if (r) {
+          setYear((y) => y || r.year)
+          setCast((c) => c || r.cast)
+        }
+      })
+      .catch(() => { if (seq === lookupSeq.current) setLooking(false) })
   }
 
   const pick = (d) => {
@@ -63,6 +81,8 @@ export function DramaPage() {
       remark: remark.trim(),
     })
     setName(''); setYear(''); setCast(''); setRemark(''); setShowSuggest(false)
+    lookupSeq.current++  // 作废进行中的联网查询，避免回填旧剧名
+    setLooking(false)
     show('已加入追剧列表', 'success')
   }
 
@@ -159,6 +179,13 @@ export function DramaPage() {
               }}
             />
           </div>
+
+          {looking && (
+            <div style={{ marginTop: '8px', fontSize: '12px', color: '#db2777', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', border: '2px solid #fbcfe8', borderTopColor: '#ec4899', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+              联网查询年份 / 主演中…
+            </div>
+          )}
 
           <button onClick={handleAdd}
             style={{

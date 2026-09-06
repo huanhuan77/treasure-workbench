@@ -258,14 +258,6 @@ export function SamplesPage() {
         {SAMPLE_STATUS_LIST.map((f) => {
           const cnt = statusStats[f.key] || 0
           const active = filter === f.key
-          // 底部说明按状态语义
-          const hint = {
-            un_arrived: '还在路上',
-            arrived: '已到货·未拍摄',
-            shot: '已拍·待发',
-            published: '已发视频',
-            abandoned: '已放弃',
-          }[f.key] || ''
           return (
             <button
               key={f.key}
@@ -284,7 +276,6 @@ export function SamplesPage() {
                 <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)' }}>{f.icon} {f.label}</span>
               </div>
               <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{cnt}</div>
-              <div style={{ marginTop: '4px', fontSize: '10px', color: 'var(--text-sub)' }}>{hint}</div>
             </button>
           )
         })}

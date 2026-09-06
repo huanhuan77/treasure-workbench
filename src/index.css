@@ -116,6 +116,11 @@ a {
   50% { transform: translateY(-3px); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* 移动端容器 — 透明，让 body 渐变透出 */
 .app-container {
   max-width: 480px;
