@@ -249,6 +249,24 @@ export function DashboardPage() {
         </div>
       </div>
 
+      {/* 追剧入口 */}
+      <div style={{ padding: '8px 16px 2px' }}>
+        <div onClick={() => go('/dramas')} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: '#fff', border: '1.5px solid #fbcfe8', borderRadius: '12px',
+          padding: '11px 14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(236,72,153,0.08)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '22px', flexShrink: 0 }}>📺</span>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>追剧</div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>记新剧 · 想追就加个剧名</div>
+            </div>
+          </div>
+          <span style={{ fontSize: '16px', color: '#f9a8d4', flexShrink: 0 }}>›</span>
+        </div>
+      </div>
+
       {/* 发布提醒（N 天未发的样品） */}
       <div style={{ padding: '12px 16px 4px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>

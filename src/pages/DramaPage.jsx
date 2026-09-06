@@ -4,22 +4,28 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ConfirmModal, glassStyle } from '../components/Modal'
 
-const STATUS = {
-  want: { label: '想看', color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
-  watching: { label: '在追', color: '#ec4899', bg: 'rgba(236,72,153,0.12)' },
-  done: { label: '已看完', color: '#16a34a', bg: 'rgba(22,163,74,0.12)' },
-  dropped: { label: '弃剧', color: '#9ca3af', bg: 'rgba(156,163,175,0.14)' },
-}
-const STATUS_ORDER = ['want', 'watching', 'done', 'dropped']
-
+// 追剧：极简版，只记录剧名（需要时再加回其他字段）
 export function DramaPage() {
   const navigate = useNavigate()
-  const { dramas, updateDrama, deleteDrama } = useStore()
+  const { dramas, addDrama, deleteDrama } = useStore()
   const { show } = useToast()
 
+  const [name, setName] = useState('')
   const [delId, setDelId] = useState(null)
 
   const list = dramas || []
+
+  const handleAdd = () => {
+    const n = name.trim()
+    if (!n) { show('请输入剧名', 'error'); return }
+    if (list.some((d) => (d.name || '').trim() === n)) {
+      show('这部剧已经在列表里了', 'error')
+      return
+    }
+    addDrama({ name: n })
+    setName('')
+    show('已加入追剧', 'success')
+  }
 
   const handleDelete = () => {
     deleteDrama(delId)
@@ -38,60 +44,60 @@ export function DramaPage() {
           width: '36px', height: '36px', borderRadius: '50%', fontSize: '20px',
           cursor: 'pointer', flexShrink: 0,
         }}>←</button>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
             追剧
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
-            在追 {list.filter((d) => d.status === 'watching').length} 部 · 内置剧名库自动带出年份与主演
+            共 {list.length} 部 · 想追就记个剧名
           </p>
         </div>
-        <button onClick={() => navigate('/dramas/new')} style={{
-          flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none',
-          background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
-          fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-        }}>＋ 新增追剧</button>
       </header>
 
-      <div style={{ padding: '8px 16px 16px' }}>
+      <div style={{ padding: '8px 16px calc(96px + var(--safe-bottom, 0px))' }}>
+        {/* 新增区：只填剧名 */}
+        <div style={{ ...glassStyle, padding: '14px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
+              placeholder="输入剧名，如：狂飙"
+              style={{
+                flex: 1, minWidth: 0, boxSizing: 'border-box',
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                padding: '12px 14px', fontSize: '15px', color: 'var(--text-main)',
+                outline: 'none', background: '#fff',
+              }}
+            />
+            <button onClick={handleAdd} style={{
+              flexShrink: 0, padding: '0 20px', border: 'none', borderRadius: '12px',
+              fontSize: '15px', fontWeight: 600, color: '#fff',
+              background: 'linear-gradient(135deg,#f472b6,#ec4899)', cursor: 'pointer',
+            }}>＋ 加入</button>
+          </div>
+        </div>
+
         {/* 列表 */}
         {list.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '10px' }}>📺</div>
-            <p style={{ fontSize: '14px', margin: 0 }}>还没有在追的剧，添加第一部吧</p>
+            <p style={{ fontSize: '14px', margin: 0 }}>还没有追剧记录，先加一部吧</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {list.map((d) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {list.map((d, i) => (
               <div key={d.id} style={{
-                background: '#fff', borderRadius: '14px', padding: '14px',
-                border: '1px solid rgba(244,114,182,0.16)', boxShadow: '0 2px 8px rgba(244,114,182,0.06)',
+                display: 'flex', alignItems: 'center', gap: '10px',
+                background: '#fff', borderRadius: '12px', padding: '12px 14px',
+                border: '1px solid rgba(244,114,182,0.16)',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                    <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-                    {d.year && <span style={{ fontSize: '12px', color: '#9ca3af', flexShrink: 0 }}>{d.year}</span>}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                    <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 9px', borderRadius: '999px', color: STATUS[d.status]?.color, background: STATUS[d.status]?.bg }}>{STATUS[d.status]?.label}</span>
-                    <button onClick={() => setDelId(d.id)} style={{
-                      border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',
-                      width: '22px', height: '22px', borderRadius: '50%', fontSize: '13px', lineHeight: 1, cursor: 'pointer',
-                    }}>×</button>
-                  </div>
-                </div>
-                {d.cast && <div style={{ fontSize: '13px', color: '#c9a3ab', marginTop: '6px' }}>主演：{d.cast}</div>}
-                {/* 状态切换 */}
-                <div style={{ display: 'flex', gap: '6px', marginTop: '10px' }}>
-                  {STATUS_ORDER.map((k) => (
-                    <button key={k} onClick={() => updateDrama(d.id, { status: k })} style={{
-                      padding: '5px 11px', borderRadius: '999px', fontSize: '12px', cursor: 'pointer',
-                      border: '1px solid #eee',
-                      background: d.status === k ? STATUS[k].bg : 'transparent',
-                      color: d.status === k ? STATUS[k].color : '#9ca3af', fontWeight: d.status === k ? 600 : 500,
-                    }}>{STATUS[k].label}</button>
-                  ))}
-                </div>
+                <span style={{ flexShrink: 0, fontSize: '12px', color: '#c9a3ab', fontWeight: 600, width: '20px' }}>{i + 1}</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                <button onClick={() => setDelId(d.id)} style={{
+                  flexShrink: 0, border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',
+                  width: '26px', height: '26px', borderRadius: '50%', fontSize: '14px', lineHeight: 1, cursor: 'pointer',
+                }}>×</button>
               </div>
             ))}
           </div>
