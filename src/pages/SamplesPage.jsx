@@ -255,6 +255,30 @@ export function SamplesPage() {
 
       {/* 状态分组卡：一排横滚，每张显示该状态汇总（点选切换 filter） */}
       <div style={{ display: 'flex', gap: '6px', padding: '2px 16px 6px', overflowX: 'auto' }}>
+        {/* 全部 */}
+        {(() => {
+          const allCnt = Object.values(statusStats).reduce((a, b) => a + b, 0)
+          const active = filter === 'all'
+          return (
+            <button
+              onClick={() => setFilter('all')}
+              style={{
+                flex: '1 0 auto', minWidth: '88px', maxWidth: '110px',
+                padding: '7px 9px', borderRadius: '10px', textAlign: 'left', cursor: 'pointer',
+                background: 'rgba(255,255,255,0.65)',
+                border: active ? '1.5px solid #64748b' : '1px solid rgba(255,255,255,0.7)',
+                boxShadow: active ? '0 4px 12px rgba(100,116,139,0.18)' : '0 2px 8px rgba(0,0,0,0.04)',
+                transition: 'all 0.15s',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#64748b', flexShrink: 0 }} />
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-sub)', overflow: 'hidden', textOverflow: 'ellipsis' }}>🗂 全部</span>
+              </div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{allCnt}</div>
+            </button>
+          )
+        })()}
         {SAMPLE_STATUS_LIST.map((f) => {
           const cnt = statusStats[f.key] || 0
           const active = filter === f.key

@@ -115,6 +115,16 @@ export function DashboardPage() {
     }
   }, [samples, transactions, orders])
 
+  // 出单统计 · 本月（本月出单笔数 / 本月单量 / 涉及产品数）
+  const monthOrderStat = useMemo(() => {
+    const now = new Date()
+    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const list = (orders || []).filter((o) => String(o?.date || '').slice(0, 7) === ym)
+    const qty = list.reduce((s, o) => s + (Number(o.qty) || 0), 0)
+    const products = new Set(list.map((o) => (o?.name || '').trim()).filter(Boolean)).size
+    return { count: list.length, qty, products }
+  }, [orders])
+
   // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
   const allReminders = useMemo(
     () => (samples || []).filter((s) => needPublishReminder(s)),
@@ -190,6 +200,29 @@ export function DashboardPage() {
             }}>＋ 记出单</button>
             <span style={{ fontSize: '16px', color: '#f9a8d4' }}>›</span>
           </div>
+        </div>
+      </div>
+
+      {/* 出单统计 · 本月 */}
+      <div style={{ padding: '8px 16px 2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', letterSpacing: '0.3px' }}>出单统计 · 本月</span>
+          <button onClick={() => go('/orders')} style={{ fontSize: '11px', color: '#db2777', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+          {[
+            { label: '本月出单', value: monthOrderStat.count, color: 'var(--primary-dark)' },
+            { label: '累计数量', value: monthOrderStat.qty, color: '#111' },
+            { label: '涉及产品', value: monthOrderStat.products, color: '#34d399' },
+          ].map((c) => (
+            <div key={c.label} onClick={() => go('/orders')} style={{
+              background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px',
+              padding: '12px', cursor: 'pointer',
+            }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>{c.label}</div>
+              <div style={{ fontSize: '24px', fontWeight: 800, color: c.color, lineHeight: 1.2 }}>{c.value}</div>
+            </div>
+          ))}
         </div>
       </div>
 
