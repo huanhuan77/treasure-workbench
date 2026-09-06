@@ -3093,6 +3093,15 @@ function loadData() {
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
     const loadedSamples = (old.samples || []).map((s) => migrateSample({ ...s, account: mapAccount(s.account) }))
     const loadedPublishRecords = loadPublishRecords(old)
+    // 一次性迁移：清空历史产生的重复视频发布记录（手机上曾出现 28 条完全重复的数据）。
+    // 仅在首个版本运行一次；之后用户手动记的发布记录不受影响。
+    try {
+      if (!localStorage.getItem('mig_publish_clear_v1')) {
+        loadedPublishRecords.length = 0
+        localStorage.setItem('mig_publish_clear_v1', '1')
+        console.log('[migrate] 已清空历史重复视频发布记录')
+      }
+    } catch (e) {}
     // 样品多选归属 → 拆分为多条单账号样品，并把发布/出单记录重定向到对应账号的样品
     const split = splitMultiAccountSamples(
       loadedSamples,
@@ -3638,14 +3647,6 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
-  const clearPublishRecords = useCallback(() => {
-    setData((d) => {
-      const next = { ...d, publishRecords: [] }
-      next.samples = recomputeSamplePublish(next.samples, next.publishRecords)
-      return next
-    })
-  }, [])
-
   const addTransaction = useCallback((tx) => {
     const now = Date.now()
     const newTx = {
@@ -3756,7 +3757,7 @@ export function StoreProvider({ children }) {
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample,
     addOrder, updateOrder, deleteOrder,
-    addPublishRecord, deletePublishRecord, clearPublishRecords,
+    addPublishRecord, deletePublishRecord,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord,
     addDrama, updateDrama, deleteDrama,

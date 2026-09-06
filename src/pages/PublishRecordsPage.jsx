@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../utils/accounts'
 
@@ -11,7 +12,7 @@ const chipBase = {
 
 export function PublishRecordsPage() {
   const navigate = useNavigate()
-  const { publishRecords, samples, deletePublishRecord, clearPublishRecords } = useStore()
+  const { publishRecords, samples, deletePublishRecord } = useStore()
   const { show } = useToast()
   const [accFilter, setAccFilter] = useState([])   // 账号多选筛选
 
@@ -31,16 +32,6 @@ export function PublishRecordsPage() {
     if (confirm('删除该发布记录？')) { deletePublishRecord(r.id); show('已删除', 'success') }
   }
 
-  const handleClearAll = () => {
-    const count = (publishRecords || []).length
-    if (!count) return
-    if (confirm(`确认清空全部 ${count} 条视频发布记录？清空后不可恢复。`)) {
-      clearPublishRecords()
-      setAccFilter([])
-      show('已清空全部视频发布记录', 'success')
-    }
-  }
-
   return (
     <div className="app-container" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', minHeight: '100vh', color: '#1a1a1a' }}>
       <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(236,72,153,0.12)' }}>
@@ -54,18 +45,10 @@ export function PublishRecordsPage() {
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#111' }}>视频发布记录</h1>
           <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#b3888f' }}>共 {records.length} 条 · 仅关联已拍摄 / 已发布的样品</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          {records.length > 0 && (
-            <button onClick={handleClearAll} style={{
-              padding: '8px 13px', borderRadius: '8px', border: '1.5px solid #fecdd3', background: '#fff', color: '#f43f5e',
-              fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>清空</button>
-          )}
-          <button onClick={() => navigate('/publish-record/new')} style={{
-            padding: '8px 14px', borderRadius: '8px', border: 'none', background: '#ec4899', color: '#fff',
-            fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-          }}>+ 记发布</button>
-        </div>
+        <button onClick={() => navigate('/publish-record/new')} style={{
+          padding: '8px 14px', borderRadius: '8px', border: 'none', background: '#ec4899', color: '#fff',
+          fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+        }}>+ 记发布</button>
       </header>
 
       {/* 账号筛选 */}
