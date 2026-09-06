@@ -1,9 +1,8 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ConfirmModal, glassStyle } from '../components/Modal'
-import { DRAMA_LIB, findDramaExact, searchDramas, lookupDramaOnline } from '../utils/dramaLib'
 
 const STATUS = {
   want: { label: '想看', color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
@@ -15,76 +14,12 @@ const STATUS_ORDER = ['want', 'watching', 'done', 'dropped']
 
 export function DramaPage() {
   const navigate = useNavigate()
-  const { dramas, addDrama, updateDrama, deleteDrama } = useStore()
+  const { dramas, updateDrama, deleteDrama } = useStore()
   const { show } = useToast()
 
-  const [name, setName] = useState('')
-  const [year, setYear] = useState('')
-  const [cast, setCast] = useState('')
-  const [remark, setRemark] = useState('')
-  const [showSuggest, setShowSuggest] = useState(false)
-  const [looking, setLooking] = useState(false)
   const [delId, setDelId] = useState(null)
-  const lookupSeq = useRef(0)
 
   const list = dramas || []
-
-  // 实时联想：输入时匹配剧名库
-  const suggestions = useMemo(() => (showSuggest ? searchDramas(name) : []), [showSuggest, name])
-
-  // 输入剧名：内置库精确命中自动带出年份 + 主演；未命中则联网兜底查询
-  const handleNameChange = (v) => {
-    setName(v)
-    setShowSuggest(true)
-    const hit = findDramaExact(v)
-    if (hit) {
-      if (!year) setYear(String(hit.year))
-      if (!cast) setCast(hit.cast)
-      setLooking(false)
-      return
-    }
-    const q = v.trim()
-    if (!q) { setLooking(false); return }
-    const seq = ++lookupSeq.current
-    setLooking(true)
-    lookupDramaOnline(q)
-      .then((r) => {
-        if (seq !== lookupSeq.current) return  // 已有更新的输入，丢弃旧结果
-        setLooking(false)
-        if (r) {
-          setYear((y) => y || r.year)
-          setCast((c) => c || r.cast)
-        }
-      })
-      .catch(() => { if (seq === lookupSeq.current) setLooking(false) })
-  }
-
-  const pick = (d) => {
-    setName(d.name)
-    setYear(String(d.year))
-    setCast(d.cast)
-    setShowSuggest(false)
-  }
-
-  const handleAdd = () => {
-    const n = name.trim()
-    if (!n) {
-      show('请输入在追的剧名', 'error')
-      return
-    }
-    // 提交时再尝试用剧名库补全年份 / 主演（用户没手填的情况下）
-    const hit = findDramaExact(n)
-    addDrama({
-      name: n,
-      year: year.trim() || (hit ? String(hit.year) : ''),
-      cast: cast.trim() || (hit ? hit.cast : ''),
-      remark: remark.trim(),
-    })
-    setName(''); setYear(''); setCast(''); setRemark(''); setShowSuggest(false)
-    lookupSeq.current++  // 作废进行中的联网查询，避免回填旧剧名
-    setLooking(false)
-    show('已加入追剧列表', 'success')
-  }
 
   const handleDelete = () => {
     deleteDrama(delId)
@@ -103,7 +38,7 @@ export function DramaPage() {
           width: '36px', height: '36px', borderRadius: '50%', fontSize: '20px',
           cursor: 'pointer', flexShrink: 0,
         }}>←</button>
-        <div>
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
             追剧
           </h1>
@@ -111,90 +46,14 @@ export function DramaPage() {
             在追 {list.filter((d) => d.status === 'watching').length} 部 · 内置剧名库自动带出年份与主演
           </p>
         </div>
+        <button onClick={() => navigate('/dramas/new')} style={{
+          flexShrink: 0, padding: '8px 14px', borderRadius: '999px', border: 'none',
+          background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+          fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+        }}>＋ 新增追剧</button>
       </header>
 
       <div style={{ padding: '8px 16px 16px' }}>
-        {/* 新增区 */}
-        <div style={{ ...glassStyle, padding: '14px', marginBottom: '16px' }}>
-          {/* 剧名 + 联想 */}
-          <div style={{ position: 'relative' }}>
-            <input
-              value={name}
-              onChange={(e) => handleNameChange(e.target.value)}
-              onFocus={() => setShowSuggest(true)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-              placeholder="输入剧名，如：狂飙"
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
-                padding: '11px 14px', fontSize: '15px', color: 'var(--text-main)',
-                outline: 'none', background: '#fff',
-              }}
-            />
-            {suggestions.length > 0 && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 20,
-                background: '#fff', borderRadius: '12px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                border: '1px solid rgba(0,0,0,0.06)', maxHeight: '220px', overflowY: 'auto',
-              }}>
-                {suggestions.map((d) => (
-                  <button key={d.name} onClick={() => pick(d)} style={{
-                    width: '100%', textAlign: 'left', border: 'none', background: 'transparent',
-                    padding: '10px 14px', cursor: 'pointer', display: 'flex', gap: '10px',
-                    alignItems: 'center', borderBottom: '1px solid #f3f4f6', fontSize: '14px',
-                  }}>
-                    <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{d.name}</span>
-                    <span style={{ fontSize: '12px', color: '#9ca3af' }}>{d.year}</span>
-                    <span style={{ fontSize: '12px', color: '#c9a3ab', marginLeft: 'auto', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '45%' }}>{d.cast}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 年份 + 主演 */}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-            <input
-              value={year}
-              onChange={(e) => setYear(e.target.value.replace(/[^\d]/g, '').slice(0, 4))}
-              placeholder="年份"
-              inputMode="numeric"
-              style={{
-                width: '96px', flexShrink: 0, boxSizing: 'border-box',
-                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
-                padding: '11px 14px', fontSize: '15px', color: 'var(--text-main)',
-                outline: 'none', background: '#fff',
-              }}
-            />
-            <input
-              value={cast}
-              onChange={(e) => setCast(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-              placeholder="主演（可自动带出）"
-              style={{
-                flex: 1, boxSizing: 'border-box',
-                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
-                padding: '11px 14px', fontSize: '15px', color: 'var(--text-main)',
-                outline: 'none', background: '#fff',
-              }}
-            />
-          </div>
-
-          {looking && (
-            <div style={{ marginTop: '8px', fontSize: '12px', color: '#db2777', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '12px', border: '2px solid #fbcfe8', borderTopColor: '#ec4899', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
-              联网查询年份 / 主演中…
-            </div>
-          )}
-
-          <button onClick={handleAdd}
-            style={{
-              width: '100%', marginTop: '12px', padding: '13px 0', border: 'none',
-              borderRadius: '12px', fontSize: '15px', fontWeight: 600, color: '#fff',
-              background: 'linear-gradient(135deg,#f472b6,#ec4899)', cursor: 'pointer',
-            }}>＋ 加入追剧</button>
-        </div>
-
         {/* 列表 */}
         {list.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>

@@ -13,6 +13,7 @@ import { SavingsPage } from './pages/SavingsPage'
 import { ProductDetailPage } from './pages/ProductDetailPage'
 import { SensitiveCenterPage } from './pages/SensitiveCenterPage'
 import { DramaPage } from './pages/DramaPage'
+import { NewDramaPage } from './pages/NewDramaPage'
 import { CalendarPage } from './pages/CalendarPage'
 import { CalendarDetailPage } from './pages/CalendarDetailPage'
 import { BackupPage } from './pages/BackupPage'
@@ -108,6 +109,7 @@ function App() {
             <Route path="/batch-import/:id" element={<BatchImportPage />} />
             <Route path="/copy-edit/:productId/:copyId" element={<EditCopyPage />} />
             <Route path="/dramas" element={<DramaPage />} />
+            <Route path="/dramas/new" element={<NewDramaPage />} />
             <Route path="/samples/new" element={<NewSamplePage />} />
             <Route path="/samples/:id/edit" element={<EditSamplePage />} />
             <Route path="/finance/new" element={<NewTransactionPage />} />
