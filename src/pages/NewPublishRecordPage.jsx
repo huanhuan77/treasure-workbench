@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, glassStyle } from '../components/Modal'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
 import { isSelectableForPublish } from '../utils/publish'
 
 function getDateLabel(dateStr) {
@@ -40,20 +40,44 @@ export function NewPublishRecordPage() {
   const [sampleId, setSampleId] = useState(initSample)
   const [qty, setQty] = useState('1')                           // 发布数量（≥1）
   const [showSamples, setShowSamples] = useState(false)
+  const [sampleQuery, setSampleQuery] = useState('')            // 样品搜索关键词
 
-  // 可选样品：仅「未发布 / 已发布」状态（与发布记录板块对齐）
-  const sampleList = useMemo(
-    () => (samples || []).filter((s) => isSelectableForPublish(s.status)),
-    [samples],
-  )
+  // 可选样品：仅「所选发布账号下 + 未发布(已拍摄未发布) / 已发布」状态（与出单/发布板块对齐）
+  const sampleList = useMemo(() => {
+    if (accounts.length === 0) return []
+    return (samples || []).filter(
+      (s) => isSelectableForPublish(s.status) && accounts.some((a) => hasAccount(s, a)),
+    )
+  }, [samples, accounts])
+  // 按名称模糊匹配；已选样品置顶
+  const filteredSamples = useMemo(() => {
+    const q = sampleQuery.trim().toLowerCase()
+    const list = q ? sampleList.filter((s) => (s.name || '').toLowerCase().includes(q)) : sampleList
+    return [...list].sort((a, b) => {
+      if (a.id === sampleId) return -1
+      if (b.id === sampleId) return 1
+      return 0
+    })
+  }, [sampleList, sampleQuery, sampleId])
+
+  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery('') }
+  const openSamplePicker = () => {
+    if (accounts.length === 0) { show('请先选择发布账号', 'error'); return }
+    setShowSamples(true)
+  }
+
+  const toggleAccount = (a) => {
+    const next = accounts.includes(a) ? accounts.filter((x) => x !== a) : [...accounts, a]
+    // 切换账号后，若已选样品不属于新的账号组合 → 清空，避免误关联
+    const sm = sampleId ? (samples || []).find((x) => x.id === sampleId) : null
+    if (sm && !next.some((acc) => hasAccount(sm, acc))) setSampleId('')
+    setAccounts(next)
+  }
   const chosen = sampleList.find((s) => s.id === sampleId) || null
-
-  const toggleAccount = (a) =>
-    setAccounts((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))
 
   const handleSave = () => {
     if (accounts.length === 0) { show('请选择至少一个发布账号', 'error'); return }
-    if (!sampleId) { show('请选择关联样品', 'error'); return }
+    if (!sampleId || !chosen) { show('请选择所选账号下的关联样品', 'error'); return }
     addPublishRecord({
       sampleId,
       productId: chosen?.productId || '',
@@ -115,10 +139,10 @@ export function NewPublishRecordPage() {
           </div>
         </div>
 
-        {/* 关联样品：仅未发布/已发布 */}
+        {/* 关联样品：所选发布账号下、未发布/已发布 */}
         <div style={{ marginBottom: '14px' }}>
-          <div style={sectionTitle}>关联样品（仅未发布 / 已发布可选）</div>
-          <div style={fieldBox} onClick={() => setShowSamples(true)}>
+          <div style={sectionTitle}>关联样品（仅所选账号下 · 未发布 / 已发布可选）</div>
+          <div style={fieldBox} onClick={openSamplePicker}>
             <span style={{ color: chosen ? 'var(--text-main)' : '#9ca3af', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               {chosen ? (
                 <>
@@ -127,7 +151,7 @@ export function NewPublishRecordPage() {
                     <span key={a} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600 }}>{a}</span>
                   ))}
                 </>
-              ) : '点击选择样品'}
+              ) : accounts.length === 0 ? '请先在上方选择发布账号' : '点击选择样品'}
             </span>
             <span style={{ color: '#c4c9d0', fontSize: '13px' }}>▾</span>
           </div>
@@ -179,15 +203,27 @@ export function NewPublishRecordPage() {
       </div>
 
       {/* 样品选择弹层（仅未发布/已发布） */}
-      <Modal open={showSamples} onClose={() => setShowSamples(false)} title="选择样品">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '60vh', overflowY: 'auto' }}>
+      <Modal open={showSamples} onClose={closeSamplePicker} title="选择样品">
+        {/* 搜索框 */}
+        <div style={{ padding: '0 0 10px' }}>
+          <input
+            autoFocus
+            placeholder="搜索样品名称…"
+            value={sampleQuery}
+            onChange={(e) => setSampleQuery(e.target.value)}
+            style={{ ...fieldBox, borderColor: sampleQuery ? 'rgba(244,114,182,0.6)' : 'rgba(0,0,0,0.08)' }}
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '55vh', overflowY: 'auto' }}>
           {sampleList.length === 0 ? (
-            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>暂无可发布的样品（需未发布或已发布）</div>
+            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>所选账号下暂无可发布的样品（需未发布 / 已发布）</div>
+          ) : filteredSamples.length === 0 ? (
+            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>没有匹配的样品</div>
           ) : (
-            sampleList.map((s) => {
+            filteredSamples.map((s) => {
               const sel = s.id === sampleId
               return (
-                <button key={s.id} onClick={() => { setSampleId(s.id); setShowSamples(false) }} style={{
+                <button key={s.id} onClick={() => { setSampleId(s.id); closeSamplePicker() }} style={{
                   display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
                   padding: '11px 6px', borderRadius: '8px', border: 'none',
                   background: sel ? 'rgba(244,114,182,0.1)' : 'transparent', color: 'var(--text-main)',

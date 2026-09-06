@@ -254,7 +254,7 @@ export function SamplesPage() {
       </header>
 
       {/* 状态分组卡：一排横滚，每张显示该状态汇总（点选切换 filter） */}
-      <div style={{ display: 'flex', gap: '8px', padding: '2px 16px 6px', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: '6px', padding: '2px 16px 6px', overflowX: 'auto' }}>
         {SAMPLE_STATUS_LIST.map((f) => {
           const cnt = statusStats[f.key] || 0
           const active = filter === f.key
@@ -263,19 +263,19 @@ export function SamplesPage() {
               key={f.key}
               onClick={() => setFilter(f.key)}
               style={{
-                flex: '0 0 auto', minWidth: '124px',
-                padding: '10px 12px', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
+                flex: '1 0 auto', minWidth: '88px', maxWidth: '110px',
+                padding: '7px 9px', borderRadius: '10px', textAlign: 'left', cursor: 'pointer',
                 background: 'rgba(255,255,255,0.65)',
                 border: active ? `1.5px solid ${f.color}` : '1px solid rgba(255,255,255,0.7)',
                 boxShadow: active ? `0 4px 12px ${f.color}26` : '0 2px 8px rgba(0,0,0,0.04)',
                 transition: 'all 0.15s',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
-                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: f.color, flexShrink: 0 }} />
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)' }}>{f.icon} {f.label}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: f.color, flexShrink: 0 }} />
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-sub)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.icon} {f.label}</span>
               </div>
-              <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{cnt}</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1 }}>{cnt}</div>
             </button>
           )
         })}
