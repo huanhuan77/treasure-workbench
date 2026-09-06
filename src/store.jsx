@@ -3638,6 +3638,14 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
+  const clearPublishRecords = useCallback(() => {
+    setData((d) => {
+      const next = { ...d, publishRecords: [] }
+      next.samples = recomputeSamplePublish(next.samples, next.publishRecords)
+      return next
+    })
+  }, [])
+
   const addTransaction = useCallback((tx) => {
     const now = Date.now()
     const newTx = {
@@ -3748,7 +3756,7 @@ export function StoreProvider({ children }) {
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample,
     addOrder, updateOrder, deleteOrder,
-    addPublishRecord, deletePublishRecord,
+    addPublishRecord, deletePublishRecord, clearPublishRecords,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord,
     addDrama, updateDrama, deleteDrama,
