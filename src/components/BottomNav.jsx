@@ -20,7 +20,6 @@ const sideTabs = [
   { to: '/brands', label: '品牌方', icon: '🤝' },
   { to: '/savings', label: '攒钱计划', icon: '🐷' },
   { to: '/investment', label: '投资跟踪', icon: '📈' },
-  { to: '/backup', label: '数据备份', icon: '💾' },
   { to: '/sensitive', label: '违禁词', icon: '🚫' },
   { to: '/dramas', label: '追剧', icon: '📺' },
 ]

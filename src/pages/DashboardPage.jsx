@@ -143,6 +143,13 @@ export function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px' }}>工作台总览</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <button onClick={() => go('/backup')} title="数据备份"
+              style={{
+                width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
+                border: '1px solid #fbcfe8', background: '#fff', color: '#db2777',
+                fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >💾</button>
             <button
               onClick={handleCheckUpdate}
               disabled={checking}
