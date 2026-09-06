@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { needPublishReminder, daysSincePublish, isOverdue, OVERDUE_STATES } from '../utils/publish'
-import { getAccounts } from '../utils/accounts'
+import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 
 // 顶部问候（按时段）
@@ -114,17 +114,6 @@ export function DashboardPage() {
   )
   // 总览只展示前 5 条，其余进「查看全部」列表页
   const reminders = allReminders.slice(0, 5)
-  // 最近发布记录（总览摘要）
-  const recentPublishes = useMemo(
-    () => [...(publishRecords || [])]
-      .sort((a, b) => String(b.publishDate || '').localeCompare(String(a.publishDate || '')))
-      .slice(0, 5),
-    [publishRecords],
-  )
-  const sampleNameMap = useMemo(
-    () => Object.fromEntries((samples || []).map((s) => [s.id, s.name])),
-    [samples],
-  )
   // 近 7 天发布条数（按 qty 累加）
   const last7Count = useMemo(() => {
     const from = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10)
@@ -229,22 +218,23 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* 视频发布记录快捷入口 */}
-      <div style={{ padding: '8px 16px 4px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-        <div onClick={() => go('/publish-records')} style={{ background: '#fff', border: '1.5px solid #fbcfe8', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(236,72,153,0.08)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', marginBottom: '6px' }}>🎬 视频发布记录</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#111' }}>{(publishRecords || []).length}</span>
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>条记录</span>
+      {/* 视频发布记录快捷入口（合并为单卡：点卡看全部，按钮直接记发布） */}
+      <div style={{ padding: '8px 16px 4px' }}>
+        <div onClick={() => go('/publish-records')} style={{ background: '#fff', border: '1.5px solid #fbcfe8', borderRadius: '12px', padding: '12px 14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(236,72,153,0.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', marginBottom: '4px' }}>🎬 视频发布记录</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                <span style={{ fontSize: '22px', fontWeight: 700, color: '#111' }}>{(publishRecords || []).length}</span>
+                <span style={{ fontSize: '11px', color: '#94a3b8' }}>条记录 · 近 7 天 {last7Count} 条</span>
+              </div>
+              <div style={{ marginTop: '4px', fontSize: '11px', color: '#94a3b8' }}>可多选账号 · 一次记多条 · 查看全部 ›</div>
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); go('/publish-record/new') }} style={{
+              flexShrink: 0, padding: '9px 16px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+              fontSize: '13px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>＋ 记发布</button>
           </div>
-          <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8' }}>近 7 天发布 {last7Count} 条 · 查看全部 ›</div>
-        </div>
-        <div onClick={() => go('/publish-record/new')} style={{ background: '#fff', border: '1.5px solid #ddd6fe', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(124,58,237,0.08)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#7c3aed', marginBottom: '6px' }}>＋ 记视频发布</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: '#111' }}>补记 / 新增</span>
-          </div>
-          <div style={{ marginTop: '8px', fontSize: '11px', color: '#94a3b8' }}>可多选账号 · 一次记多条</div>
         </div>
       </div>
 
@@ -278,6 +268,13 @@ export function DashboardPage() {
                       ? `⚠ 已逾期（截止 ${s.deadline}）`
                       : `⚠ ${(daysSincePublish(s) === Infinity ? '从未发布过视频' : `已 ${daysSincePublish(s)} 天没发视频`)}（出单品需持续发）`}
                   </div>
+                  {getAccounts(s).length > 0 && (
+                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '5px' }}>
+                      {getAccounts(s).map((a) => (
+                        <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
                   flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
@@ -289,31 +286,11 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* 视频发布记录摘要 */}
+      {/* 视频发布记录摘要已移至「视频发布记录」独立页，总览不再列具体记录 */}
       <div style={{ padding: '14px 16px calc(20px + var(--safe-bottom, 0px))' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
-            <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ec4899' }} />
-            视频发布记录
-          </div>
-          <button onClick={() => go('/publish-records')} style={{ fontSize: '12px', color: '#db2777', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
+        <div style={{ background: 'linear-gradient(135deg,#fce7ec,#fff0f3)', border: '1px dashed #fbcfe8', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', color: '#db2777', textAlign: 'center', cursor: 'pointer' }} onClick={() => go('/publish-records')}>
+          🎬 视频发布需手动记，点击去「视频发布记录」补记 / 查看
         </div>
-        {recentPublishes.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', color: '#9ca3af' }}>
-            还没有视频发布记录
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {recentPublishes.map((r) => (
-              <div key={r.id} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '11px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sampleNameMap[r.sampleId] || '（样品已删除）'}</div>
-                  <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>📅 {r.publishDate}{r.accounts?.length ? ` · ${(r.accounts || []).join('、')}` : ''}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   )

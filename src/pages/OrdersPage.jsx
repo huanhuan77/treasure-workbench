@@ -271,6 +271,7 @@ export function OrdersPage() {
   const [quick, setQuick] = useState('')  // ''=全部 / today/yesterday/week/month/lastMonth
   const [month, setMonth] = useState('')  // ''=全部 / 'YYYY-MM'=指定月（与 quick 互斥）
   const [monthOpen, setMonthOpen] = useState(false)  // 月份下拉展开态
+  const [sortKey, setSortKey] = useState('most')      // 'most'=出单最多 / 'recent'=最近出单
   const [monthPos, setMonthPos] = useState(null)     // 月份下拉锚点 {top,left}，fixed 定位用
   const monthBtnRef = useRef(null)
 
@@ -362,12 +363,20 @@ export function OrdersPage() {
         count: entries.length,
         qty: entries.reduce((s, e) => s + (Number(e.qty) || 0), 0),
         latest: entries.find((e) => e.date)?.date || '',
+        accounts: [...new Set(entries.map((e) => e.account).filter(Boolean))],
       })
     }
-    // 组按出单数量降序：出单次数 → 累计单量 → 最近出单日期 → 名称兜底
+    // 排序：出单最多（累计单量 → 出单笔数 → 最近出单）/ 最近出单（最近日期）
     arr.sort((a, b) => {
-      if (a.count !== b.count) return b.count - a.count
+      if (sortKey === 'recent') {
+        const ta = a.latest ? parseTs(a.latest) : null
+        const tb = b.latest ? parseTs(b.latest) : null
+        if (ta !== null && tb !== null) return tb - ta
+        if (ta === null && tb === null) return a.name.localeCompare(b.name, 'zh')
+        return ta === null ? 1 : -1
+      }
       if (a.qty !== b.qty) return b.qty - a.qty
+      if (a.count !== b.count) return b.count - a.count
       const ta = a.latest ? parseTs(a.latest) : null
       const tb = b.latest ? parseTs(b.latest) : null
       if (ta !== null && tb !== null) return tb - ta
@@ -375,7 +384,7 @@ export function OrdersPage() {
       return ta === null ? 1 : -1
     })
     return arr
-  }, [filtered])
+  }, [filtered, sortKey])
 
   // 展开的产品卡（默认收起，点卡片头展开看每天明细）
   const [openGroups, setOpenGroups] = useState(() => new Set())
@@ -533,6 +542,25 @@ export function OrdersPage() {
         })}
       </div>
 
+      {/* 排序切换：出单最多 / 最近出单 */}
+      <div style={{ padding: '4px 16px 2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
+        {[
+          { id: 'most', label: '出单最多' },
+          { id: 'recent', label: '最近出单' },
+        ].map((s) => {
+          const sel = sortKey === s.id
+          return (
+            <button key={s.id} onClick={() => setSortKey(s.id)} style={{
+              padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+              border: sel ? 'none' : '1px solid rgba(244,114,182,0.35)',
+              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+              color: sel ? '#fff' : 'var(--text-main)', cursor: 'pointer',
+            }}>{s.label}</button>
+          )
+        })}
+      </div>
+
       <div style={{ padding: '8px 16px calc(20px + var(--safe-bottom, 0px))' }}>
         {filtered.length === 0 ? (
           <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', textAlign: 'center', padding: '60px 24px', color: 'var(--text-sub)' }}>
@@ -557,6 +585,16 @@ export function OrdersPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
                       <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px' }}>共记 {g.count} 笔{dispDate(g.latest) && ` · 最近 ${dispDate(g.latest)}`}</div>
+                      {g.accounts.length > 0 && (
+                        <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '6px' }}>
+                          {g.accounts.map((a) => {
+                            const col = accMeta(a)
+                            return (
+                              <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px', flexShrink: 0 }}>
                       <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--primary-dark)', lineHeight: 1 }}>{g.qty}</span>

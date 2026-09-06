@@ -100,6 +100,25 @@ async function fetchGist(token, gistId) {
   return res.json()
 }
 
+// 按 token 在 Gist 列表中查找本项目备份（用于第二台手机首次打通）
+async function findBackupGist(token) {
+  try {
+    let page = 1
+    while (page <= 5) {
+      const res = await fetch(`https://api.github.com/gists?per_page=100&page=${page}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      })
+      if (!res.ok) return null
+      const gists = await res.json()
+      if (!Array.isArray(gists) || gists.length === 0) return null
+      const found = gists.find((g) => g.files?.[GIST_FILENAME])
+      if (found) return found
+      page++
+    }
+  } catch (e) {}
+  return null
+}
+
 async function saveGist(token, gistId, payload) {
   const url = gistId
     ? `https://api.github.com/gists/${gistId}`
@@ -373,6 +392,14 @@ export async function syncAll(token, gistId, { forcePush = false } = {}) {
   let remoteData = null
   let remoteMeta = null
   let resolvedGistId = gistId || null
+  // 无本地 gistId 时（第二台手机首次使用）：按 token 查找云端已有备份
+  if (!resolvedGistId) {
+    const existing = await findBackupGist(token)
+    if (existing) {
+      resolvedGistId = existing.id
+      localStorage.setItem(GIST_ID_KEY, existing.id)
+    }
+  }
   if (!forcePush && resolvedGistId) {
     const gist = await fetchGist(token, resolvedGistId)
     if (gist?.files?.[GIST_FILENAME]?.content) {
