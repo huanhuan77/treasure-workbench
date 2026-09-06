@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { needPublishReminder, daysSincePublish, isOverdue } from '../utils/publish'
+import { needPublishReminder, daysSincePublish, isOverdue, OVERDUE_STATES } from '../utils/publish'
 import { getAccounts } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 
@@ -78,13 +78,14 @@ export function DashboardPage() {
   const stat = useMemo(() => {
     // 样品：仅统计总数、逾期、临期
     let sTotal = 0
-    const urgent = []  // 已过期 (dd <= 0)
-    const recent = []  // 未逾期但3天内到期 (0 < dd <= 3)，与 urgent 不重叠
+    const urgent = []  // 已过期：只看仍需处理的待发状态（未到货/已到货未拍摄/已拍摄未发布）
+    const recent = []  // 临期（3 天内到期），同上排除已发布/放弃
     ;(samples || []).forEach((s) => {
       sTotal++
       const dd = daysUntil(s.deadline)
-      if (dd !== null && dd <= 0) urgent.push(s)
-      else if (dd !== null && dd <= 3) recent.push(s)
+      const active = OVERDUE_STATES.includes(s.status)
+      if (active && dd !== null && dd <= 0) urgent.push(s)
+      else if (active && dd !== null && dd <= 3) recent.push(s)
     })
     // 收支：本月
     const now = new Date()
