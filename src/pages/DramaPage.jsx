@@ -6,11 +6,12 @@ import { ConfirmModal, glassStyle } from '../components/Modal'
 import { DRAMA_LIB, findDramaExact, searchDramas } from '../utils/dramaLib'
 
 const STATUS = {
+  want: { label: '想看', color: '#6366f1', bg: 'rgba(99,102,241,0.12)' },
   watching: { label: '在追', color: '#ec4899', bg: 'rgba(236,72,153,0.12)' },
   done: { label: '已看完', color: '#16a34a', bg: 'rgba(22,163,74,0.12)' },
   dropped: { label: '弃剧', color: '#9ca3af', bg: 'rgba(156,163,175,0.14)' },
 }
-const STATUS_ORDER = ['watching', 'done', 'dropped']
+const STATUS_ORDER = ['want', 'watching', 'done', 'dropped']
 
 export function DramaPage() {
   const navigate = useNavigate()
@@ -20,7 +21,6 @@ export function DramaPage() {
   const [name, setName] = useState('')
   const [year, setYear] = useState('')
   const [cast, setCast] = useState('')
-  const [status, setStatus] = useState('watching')
   const [remark, setRemark] = useState('')
   const [showSuggest, setShowSuggest] = useState(false)
   const [delId, setDelId] = useState(null)
@@ -60,10 +60,9 @@ export function DramaPage() {
       name: n,
       year: year.trim() || (hit ? String(hit.year) : ''),
       cast: cast.trim() || (hit ? hit.cast : ''),
-      status,
       remark: remark.trim(),
     })
-    setName(''); setYear(''); setCast(''); setRemark(''); setStatus('watching'); setShowSuggest(false)
+    setName(''); setYear(''); setCast(''); setRemark(''); setShowSuggest(false)
     show('已加入追剧列表', 'success')
   }
 
@@ -104,7 +103,7 @@ export function DramaPage() {
               onChange={(e) => handleNameChange(e.target.value)}
               onFocus={() => setShowSuggest(true)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-              placeholder="输入在追的剧名，如：狂飙"
+              placeholder="输入剧名，如：狂飙"
               style={{
                 width: '100%', boxSizing: 'border-box',
                 border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
@@ -159,18 +158,6 @@ export function DramaPage() {
                 outline: 'none', background: '#fff',
               }}
             />
-          </div>
-
-          {/* 状态 */}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-            {STATUS_ORDER.map((k) => (
-              <button key={k} onClick={() => setStatus(k)} style={{
-                padding: '7px 14px', borderRadius: '999px', fontSize: '13px', cursor: 'pointer',
-                border: `1px solid ${STATUS[k].color}`,
-                background: status === k ? STATUS[k].bg : 'transparent',
-                color: STATUS[k].color, fontWeight: status === k ? 600 : 500,
-              }}>{STATUS[k].label}</button>
-            ))}
           </div>
 
           <button onClick={handleAdd}

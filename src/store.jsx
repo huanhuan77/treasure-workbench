@@ -3697,7 +3697,7 @@ export function StoreProvider({ children }) {
       name: String(drama.name || '').trim(),
       year: drama.year || '',
       cast: drama.cast || '',
-      status: drama.status || 'watching',  // watching=在追 / done=已看完 / dropped=弃剧
+      status: drama.status || 'want',  // want=想看 / watching=在追 / done=已看完 / dropped=弃剧
       remark: drama.remark || '',
       createdAt: now,
       updatedAt: now,
