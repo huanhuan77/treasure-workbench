@@ -1,5 +1,5 @@
-import { useEffect, useCallback } from 'react'
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { useEffect, useCallback, useRef } from 'react'
+import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { StoreProvider, useStore } from './store'
 import { ToastProvider, useToast } from './components/Toast'
 import { syncAll, GIST_ID_KEY, LAST_SYNC_KEY } from './utils/sync'
@@ -80,12 +80,29 @@ function AutoBackup() {
   return null
 }
 
+// 启动强制落地「总览」：忽略 URL 里的 hash（#/reading 等），每次进来都从 / 开始。
+// 仅首次挂载时执行一次，不干扰应用内正常导航。
+function LaunchRedirect() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const done = useRef(false)
+  useEffect(() => {
+    if (done.current) return
+    done.current = true
+    if (location.pathname !== '/') {
+      navigate('/', { replace: true })
+    }
+  }, [])
+  return null
+}
+
 function App() {
   return (
     <StoreProvider>
       <ToastProvider>
         <AutoBackup />
         <HashRouter>
+          <LaunchRedirect />
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/products" element={<HomePage />} />
