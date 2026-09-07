@@ -28,6 +28,7 @@ export function FinancePage() {
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterAccount, setFilterAccount] = useState('all')
   const [filterType, setFilterType] = useState('all')
+  const [filterPending, setFilterPending] = useState(false)
   const [filterMonth, setFilterMonth] = useState(() => {
     const d = new Date()
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
@@ -70,7 +71,8 @@ export function FinancePage() {
 
   const filtered = useMemo(() => {
     let result = [...transactions]
-    if (filterType !== 'all') result = result.filter((t) => t.type === filterType)
+    if (filterPending) result = result.filter((t) => t.type === 'income' && t.received === false)
+    else if (filterType !== 'all') result = result.filter((t) => t.type === filterType)
     if (filterCategory !== 'all') result = result.filter((t) => t.category === filterCategory)
     if (filterAccount !== 'all') result = result.filter((t) => t.account === filterAccount)
     if (filterMonth !== 'all') result = result.filter((t) => (t.date || '').slice(0, 7) === filterMonth)
@@ -82,17 +84,19 @@ export function FinancePage() {
       case 'amount_asc': result.sort((a, b) => a.amount - b.amount); break
     }
     return result
-  }, [transactions, filterType, filterCategory, filterAccount, filterMonth, sortBy])
+  }, [transactions, filterPending, filterType, filterCategory, filterAccount, filterMonth, sortBy])
 
   // 合计
   const totals = useMemo(() => {
-    let income = 0, expense = 0
+    let income = 0, expense = 0, receivable = 0
     filtered.forEach((t) => {
       const n = Number(t.amount) || 0
-      if (t.type === 'income') income += n
-      else expense += n
+      if (t.type === 'income') {
+        income += n
+        if (t.received === false) receivable += n
+      } else expense += n
     })
-    return { income, expense, net: income - expense, count: filtered.length }
+    return { income, expense, receivable, net: income - expense, count: filtered.length }
   }, [filtered])
 
   return (
@@ -130,6 +134,15 @@ export function FinancePage() {
             <div style={{ fontSize: '18px', fontWeight: 700, color: '#e11d48', marginTop: '4px', whiteSpace: 'nowrap' }}>
               +¥{totals.income.toFixed(2)}
             </div>
+            {totals.receivable > 0 ? (
+              <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 600, marginTop: '4px', whiteSpace: 'nowrap' }}>
+                其中待收款 ¥{totals.receivable.toFixed(2)}
+              </div>
+            ) : (
+              <div style={{ fontSize: '11px', color: 'var(--text-sub)', opacity: 0.55, fontWeight: 500, marginTop: '4px', whiteSpace: 'nowrap' }}>
+                待收款 ¥0.00
+              </div>
+            )}
           </div>
           <div>
             <div style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 500 }}>支出合计</div>
@@ -167,9 +180,10 @@ export function FinancePage() {
 
         {/* 收/支 筛选 */}
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '8px' }}>
-          <FilterChip active={filterType === 'all'} onClick={() => setFilterType('all')}>全部</FilterChip>
-          <FilterChip active={filterType === 'income'} onClick={() => setFilterType('income')}>收入</FilterChip>
-          <FilterChip active={filterType === 'expense'} onClick={() => setFilterType('expense')}>支出</FilterChip>
+          <FilterChip active={!filterPending && filterType === 'all'} onClick={() => { setFilterPending(false); setFilterType('all') }}>全部</FilterChip>
+          <FilterChip active={!filterPending && filterType === 'income'} onClick={() => { setFilterPending(false); setFilterType('income') }}>收入</FilterChip>
+          <FilterChip active={!filterPending && filterType === 'expense'} onClick={() => { setFilterPending(false); setFilterType('expense') }}>支出</FilterChip>
+          <FilterChip active={filterPending} onClick={() => { setFilterPending(p => !p); setFilterType('all'); setFilterCategory('all') }}>⏳ 待收款</FilterChip>
         </div>
 
         {/* 月份 + 账号 + 排序 同行对齐 */}
