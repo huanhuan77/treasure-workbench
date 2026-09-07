@@ -108,8 +108,11 @@ export function PublishRecordsPage() {
         )}
       </div>
 
-      <DraggableFab storageKey="publish-record" onClick={() => navigate('/publish-record/new')}>
-        ＋ 记发布
+      <DraggableFab storageKey="publish-record" onClick={() => navigate('/publish-record/new')} round>
+        {/* 加号+圆圈：与待办页一致，用 SVG 而非文字「＋」，避免圆内偏位 */}
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" style={{ display: 'block' }}>
+          <path d="M12 5v14M5 12h14" />
+        </svg>
       </DraggableFab>
     </div>
   )
