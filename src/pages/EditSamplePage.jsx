@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { addDays } from '../utils/helpers'
 import { SAMPLE_STATUS_LIST } from '../utils/sampleStatus'
+import { LinksEditor } from '../components/LinksEditor'
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 
@@ -35,6 +36,9 @@ export function EditSamplePage() {
   const [remark, setRemark] = useState(sample?.remark || '')
   const [commission, setCommission] = useState(sample?.commission || 5)
   const [orderDate, setOrderDate] = useState(sample?.orderDate || '')
+  const [links, setLinks] = useState(() =>
+    (Array.isArray(sample?.links) ? sample.links : []).map((l) => ({ id: l.id || 'L' + Math.random().toString(36).slice(2, 6), url: l.url || '', note: l.note || '' }))
+  )
   const isOrder = status === 'published'
 
   // 同名检测（排除当前编辑的，按所选账号交集判断，仅保存时）
@@ -62,7 +66,11 @@ export function EditSamplePage() {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要保存为重复名称吗？`)) return
     }
     if (accounts.length === 0) { show('请选择归属账号', 'error'); return }
-    updateSample(id, { name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission), orderDate: isOrder ? orderDate : '' })
+    updateSample(id, {
+      name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark,
+      commission: Number(commission), orderDate: isOrder ? orderDate : '',
+      links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), note: (l.note || '').trim() })),
+    })
     show('已更新', 'success')
     navigate('/samples')
   }
@@ -151,6 +159,7 @@ export function EditSamplePage() {
         <Field label="备注">
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={remark} onChange={e => setRemark(e.target.value)} />
         </Field>
+        <LinksEditor links={links} onChange={setLinks} />
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
           <button style={{ ...btnGhost, color: '#fb7185' }} onClick={handleDelete}>删除</button>

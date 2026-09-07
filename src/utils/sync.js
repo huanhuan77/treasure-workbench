@@ -322,6 +322,7 @@ function mergeModule(key, localVal, remoteVal, tombstones, wordTimes, lastSync) 
         transactions: mergeArrayById(localVal.transactions, remoteVal.transactions, t),
         savingsData: mergeSavings(localVal.savingsData, remoteVal.savingsData, t),
         sensitiveWords: mergeWords(localVal.sensitiveWords, remoteVal.sensitiveWords, t, wordTimes, lastSync),
+        todos: mergeArrayById(localVal.todos, remoteVal.todos, t),
       }
     case 'blogger_investments_v1':
       return mergeArrayById(localVal, remoteVal, t)

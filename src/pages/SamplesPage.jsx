@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
-import { formatDate, todayStr, deadlineDesc, addDays } from '../utils/helpers'
+import { formatDate, todayStr, deadlineDesc, addDays, copyText } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
 import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST } from '../utils/sampleStatus'
@@ -26,6 +26,11 @@ function getAccounts(s) {
   return s?.account ? [s.account] : []
 }
 
+// 样品的定向链接列表
+function getLinks(s) {
+  return Array.isArray(s?.links) ? s.links.filter((l) => l && l.url) : []
+}
+
 // 排序方式：custom=默认（可拖动自定义顺序），其余按日期字段排序
 // defaultDir：收货日期默认最新在前；截止日期默认最紧急（最早）在前
 const SORT_OPTIONS = [
@@ -41,6 +46,8 @@ export function SamplesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
+  // 当前要查看/复制链接的样品 id（null=关闭弹窗）
+  const [linksSampleId, setLinksSampleId] = useState(null)
   const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'un_arrived')
   // 账号选择弹窗
   const [accountModalOpen, setAccountModalOpen] = useState(false)
@@ -331,6 +338,7 @@ export function SamplesPage() {
                     hideAccount={hideAccount}
                     dragEnabled={!isDateSort}
                     onQuickPublish={handleQuickPublish}
+                    onOpenLinks={() => setLinksSampleId(s.id)}
                     onEdit={() => {
                       sessionStorage.setItem('samples_scroll', String(window.scrollY))
                       sessionStorage.setItem('samples_filter', filter)
@@ -444,6 +452,41 @@ export function SamplesPage() {
         </div>
       </Modal>
 
+      {/* 定向链接查看/复制弹窗 */}
+      {(() => {
+        const ls = linksSampleId ? samples.find((x) => x.id === linksSampleId) : null
+        if (!ls) return null
+        const ll = getLinks(ls)
+        return (
+          <Modal open onClose={() => setLinksSampleId(null)} title={`定向链接 · ${ls.name || ''}`}>
+            {ll.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-sub)', fontSize: '13px' }}>该样品暂无链接</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {ll.map((lk, i) => (
+                  <div key={lk.id || i} style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.16)', borderRadius: '12px', padding: '10px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginBottom: '2px' }}>{lk.note ? `📝 ${lk.note}` : `链接 ${i + 1}`}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-main)', wordBreak: 'break-all', lineHeight: 1.4 }}>{lk.url}</div>
+                      </div>
+                      <button onClick={async () => {
+                        const ok = await copyText(lk.url)
+                        show(ok ? '已复制' : '复制失败', ok ? 'success' : 'error')
+                      }} style={{
+                        flexShrink: 0, border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700,
+                        background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+                        padding: '8px 14px', borderRadius: '9px',
+                      }}>复制</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Modal>
+        )
+      })()}
+
       {(showAdd || editing) && (
         <SampleForm
           sample={editing}
@@ -468,7 +511,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, dragEnabled, onEdit, onDelete, onQuickPublish }) {
+function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, dragEnabled, onEdit, onDelete, onQuickPublish, onOpenLinks }) {
   const canDrag = dragEnabled !== false   // 按日期排序时禁止拖动（否则与排序结果冲突）
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id, disabled: !canDrag })
   const isSwiped = swipedId === s.id
@@ -534,6 +577,16 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
             )}
             {s.deadline && (s.status === 'un_arrived' || s.status === 'arrived') && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
             {(s.commission || 5) > 5 && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
+            {(() => {
+              const n = getLinks(s).length
+              if (!n) return null
+              return (
+                <button
+                  onClick={(e) => { e.stopPropagation(); if (isSwiped) setSwipedId(null); onOpenLinks && onOpenLinks() }}
+                  style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '5px', background: 'rgba(99,102,241,0.12)', color: '#4f46e5', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, border: 'none', cursor: 'pointer' }}
+                >🔗 {n}个链接</button>
+              )
+            })()}
           </div>
           {/* 备注 */}
           {s.remark && (

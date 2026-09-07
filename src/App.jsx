@@ -29,6 +29,7 @@ import { NewSamplePage } from './pages/NewSamplePage'
 import { EditSamplePage } from './pages/EditSamplePage'
 import { NewProductPage, EditProductPage } from './pages/NewProductPage'
 import { DailyPlanPage } from './pages/DailyPlanPage'
+import { TodoPage } from './pages/TodoPage'
 import { NewPublishRecordPage } from './pages/NewPublishRecordPage'
 import { PublishRecordsPage } from './pages/PublishRecordsPage'
 import { PublishRemindersPage } from './pages/PublishRemindersPage'
@@ -101,6 +102,7 @@ function App() {
             <Route path="/reading/:id/notes" element={<NotePage />} />
             <Route path="/brands" element={<BrandContactsPage />} />
             <Route path="/daily" element={<DailyPlanPage />} />
+            <Route path="/todos" element={<TodoPage />} />
             <Route path="/publish-records" element={<PublishRecordsPage />} />
             <Route path="/publish-reminders" element={<PublishRemindersPage />} />
             <Route path="/publish-record/new" element={<NewPublishRecordPage />} />

@@ -20,6 +20,7 @@ const mainTabs = [
 // 更多侧边栏 tab（总览已有入口的不重复列出）
 const sideTabs = [
   { to: '/calendar', label: '日历', icon: '📅' },
+  { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/reading', label: '读书成长', icon: '📚' },
   { to: '/brands', label: '品牌方', icon: '🤝' },
   { to: '/savings', label: '攒钱计划', icon: '🐷' },

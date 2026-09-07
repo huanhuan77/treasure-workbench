@@ -85,10 +85,10 @@ export function OrdersPage() {
   const [editing, setEditing] = useState(null)   // null=新增
   const [formSeq, setFormSeq] = useState(0)      // 每次打开自增，作 key 强制重建表单以清空上次输入
   const [accountFilter, setAccountFilter] = useState('')  // ''=全部
-  const [quick, setQuick] = useState('')  // ''=全部 / today/yesterday/week/month/lastMonth
+  const [quick, setQuick] = useState('today')  // ''=全部 / today/yesterday/week/month/lastMonth（默认今天）
   const [month, setMonth] = useState('')  // ''=全部 / 'YYYY-MM'=指定月（与 quick 互斥）
   const [monthOpen, setMonthOpen] = useState(false)  // 月份下拉展开态
-  const [sortKey, setSortKey] = useState('most')      // 'most'=出单最多 / 'recent'=最近出单
+  const [sortKey, setSortKey] = useState('mostDesc')  // 'mostDesc'=出单最多(降序) / 'mostAsc'=出单最少(升序)
   const [monthPos, setMonthPos] = useState(null)     // 月份下拉锚点 {top,left}，fixed 定位用
   const monthBtnRef = useRef(null)
 
@@ -158,9 +158,15 @@ export function OrdersPage() {
   const summary = useMemo(() => {
     const totalEntries = filtered.length
     const totalQty = filtered.reduce((s, o) => s + (Number(o.qty) || 0), 0)
+    // 每个账号：件数(qty 累加) + 笔数(条目数)
     const perAccount = {}
-    for (const a of ACCOUNTS) perAccount[a] = 0
-    for (const o of filtered) { if (perAccount[o.account] !== undefined) perAccount[o.account]++ }
+    for (const a of ACCOUNTS) perAccount[a] = { count: 0, qty: 0 }
+    for (const o of filtered) {
+      if (perAccount[o.account] !== undefined) {
+        perAccount[o.account].count += 1
+        perAccount[o.account].qty += Number(o.qty) || 0
+      }
+    }
     return { totalEntries, totalQty, perAccount }
   }, [filtered])
 
@@ -183,20 +189,14 @@ export function OrdersPage() {
         accounts: [...new Set(entries.map((e) => e.account).filter(Boolean))],
       })
     }
-    // 排序：出单最多（累计单量 → 出单笔数 → 最近出单）/ 最近出单（最近日期）
+    // 排序：按出单量升降序（次级：笔数 → 最近日期 → 名称）
+    const dir = sortKey === 'mostAsc' ? 1 : -1  // mostDesc: 多→少, mostAsc: 少→多
     arr.sort((a, b) => {
-      if (sortKey === 'recent') {
-        const ta = a.latest ? parseTs(a.latest) : null
-        const tb = b.latest ? parseTs(b.latest) : null
-        if (ta !== null && tb !== null) return tb - ta
-        if (ta === null && tb === null) return a.name.localeCompare(b.name, 'zh')
-        return ta === null ? 1 : -1
-      }
-      if (a.qty !== b.qty) return b.qty - a.qty
-      if (a.count !== b.count) return b.count - a.count
+      if (a.qty !== b.qty) return (a.qty - b.qty) * dir
+      if (a.count !== b.count) return (a.count - b.count) * dir
       const ta = a.latest ? parseTs(a.latest) : null
       const tb = b.latest ? parseTs(b.latest) : null
-      if (ta !== null && tb !== null) return tb - ta
+      if (ta !== null && tb !== null) return (tb - ta) * dir
       if (ta === null && tb === null) return a.name.localeCompare(b.name, 'zh')
       return ta === null ? 1 : -1
     })
@@ -245,19 +245,47 @@ export function OrdersPage() {
         }
       />
 
-      {/* 顶部汇总 */}
-      <div style={{ padding: '12px 16px 4px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-        <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>记录笔数</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--primary-dark)', lineHeight: 1.2 }}>{summary.totalEntries}</div>
-        </div>
-        <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>累计出单</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>{summary.totalQty}</div>
-        </div>
-        <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', padding: '12px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>涉及产品</div>
-          <div style={{ fontSize: '24px', fontWeight: 800, color: '#34d399', lineHeight: 1.2 }}>{groups.length}</div>
+      {/* 顶部汇总：白底+浅边框 2×3 卡；账号行做成 chip 风格单行不换行 */}
+      <div style={{ padding: '10px 16px 4px' }}>
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '4px', rowGap: '6px',
+          background: '#fff',
+          border: '1px solid rgba(244,114,182,0.18)',
+          borderRadius: '12px', padding: '8px 4px 10px',
+        }}>
+          {/* 第 1 行：累计出单 / 涉及产品 / 总笔数 */}
+          {[
+            { label: '累计出单', value: summary.totalQty, unit: '件' },
+            { label: '涉及产品', value: groups.length, unit: '款' },
+            { label: '总笔数', value: summary.totalEntries, unit: '笔' },
+          ].map((c, i) => (
+            <div key={i} style={{ padding: '4px 8px', minWidth: 0, textAlign: 'center' }}>
+              <div style={{ fontSize: '10.5px', color: 'var(--text-sub)' }}>{c.label}</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--primary-dark)', lineHeight: 1.15, marginTop: '2px' }}>
+                {c.value}<span style={{ fontSize: '10.5px', fontWeight: 500, marginLeft: '2px', color: 'var(--text-sub)' }}>{c.unit}</span>
+              </div>
+            </div>
+          ))}
+          {/* 分隔线：横向贯穿三格 */}
+          <div style={{ gridColumn: '1 / -1', height: '1px', background: 'rgba(244,114,182,0.14)', margin: '2px 4px 0' }} />
+          {/* 第 2 行：三账号件数，用账号主色 chip 风格、账号名单行省略不换行 */}
+          {ACCOUNTS.map((a) => {
+            const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+            const stat = summary.perAccount[a] || { count: 0, qty: 0 }
+            return (
+              <div key={a} style={{ padding: '4px 6px 0', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+                <span style={{
+                  fontSize: '10.5px', fontWeight: 700,
+                  padding: '2px 8px', borderRadius: '999px',
+                  background: col.bg, color: col.c,
+                  whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>{a}</span>
+                <div style={{ fontSize: '18px', fontWeight: 800, color: col.c, lineHeight: 1.15 }}>
+                  {stat.qty}<span style={{ fontSize: '10.5px', fontWeight: 500, marginLeft: '2px', color: 'var(--text-sub)' }}>件</span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -335,58 +363,65 @@ export function OrdersPage() {
         )}
       </div>
 
-      {/* 账号筛选：单行平均分布 + 紧凑尺寸，小手机也能一行装下 */}
-      <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '5px' }}>
+      {/* 账号筛选：chip 自适应内容宽度（不带数字） */}
+      <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
         <button onClick={() => setAccountFilter('')} style={{
-          flex: '1 1 0', minWidth: 0, padding: '5px 4px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
+          flex: '0 0 auto', padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
           border: accountFilter === '' ? 'none' : '1px solid rgba(244,114,182,0.35)',
           background: accountFilter === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
           color: accountFilter === '' ? '#fff' : 'var(--text-main)', cursor: 'pointer',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>全部 {summary.totalEntries}</button>
+          whiteSpace: 'nowrap',
+        }}>全部</button>
         {ACCOUNTS.map((a) => {
           const col = accMeta(a)
           const sel = accountFilter === a
           return (
             <button key={a} onClick={() => setAccountFilter(a)} style={{
-              flex: '1 1 0', minWidth: 0, padding: '5px 4px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
+              flex: '0 0 auto', padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
               border: sel ? 'none' : `1px solid ${col.c}`,
               background: sel ? col.c : '#fff',
               color: sel ? '#fff' : col.c, cursor: 'pointer',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>{a} {summary.perAccount[a] || 0}</button>
+              whiteSpace: 'nowrap',
+            }}>{a}</button>
           )
         })}
       </div>
 
-      {/* 排序切换：出单最多 / 最近出单 */}
+      {/* 排序：按出单量，点按钮在降序/升序之间切换 */}
       <div style={{ padding: '4px 16px 2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
-        {[
-          { id: 'most', label: '出单最多' },
-          { id: 'recent', label: '最近出单' },
-        ].map((s) => {
-          const sel = sortKey === s.id
-          return (
-            <button key={s.id} onClick={() => setSortKey(s.id)} style={{
-              padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
-              border: sel ? 'none' : '1px solid rgba(244,114,182,0.35)',
-              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-              color: sel ? '#fff' : 'var(--text-main)', cursor: 'pointer',
-            }}>{s.label}</button>
-          )
-        })}
+        <button onClick={() => setSortKey(sortKey === 'mostDesc' ? 'mostAsc' : 'mostDesc')} style={{
+          display: 'inline-flex', alignItems: 'center', gap: '4px',
+          padding: '4px 10px 4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+          border: 'none',
+          background: 'linear-gradient(135deg,#f472b6,#ec4899)',
+          color: '#fff', cursor: 'pointer',
+        }}>
+          <span>出单最多</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, opacity: 0.92 }}>{sortKey === 'mostDesc' ? '↓' : '↑'}</span>
+        </button>
       </div>
 
       <div style={{ padding: '8px 16px calc(20px + var(--safe-bottom, 0px))' }}>
         {filtered.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', textAlign: 'center', padding: '60px 24px', color: 'var(--text-sub)' }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>📦</div>
-            <p style={{ fontSize: '15px', margin: 0, color: 'var(--text-main)' }}>
-              {orders.length === 0 ? '还没有出单记录' : (accountFilter || quick || month ? '当前筛选下暂无出单' : '该账号下暂无出单')}
-            </p>
-            <p style={{ fontSize: '13px', margin: '6px 0 0' }}>点右上角「＋ 记出单」记下第一笔</p>
-          </div>
+          orders.length === 0 ? (
+            <button onClick={openAdd} style={{
+              width: '100%', background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px',
+              textAlign: 'center', padding: '40px 24px', color: 'var(--text-sub)', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+            }}>
+              <div style={{ fontSize: '40px', marginBottom: '4px' }}>📦</div>
+              <p style={{ fontSize: '15px', margin: 0, color: 'var(--text-main)' }}>还没有出单记录</p>
+              <p style={{ fontSize: '13px', margin: '6px 0 0' }}>点此<span style={{ color: 'var(--primary)', fontWeight: 700 }}>＋ 记出单</span>记下第一笔</p>
+            </button>
+          ) : (
+            <div style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px', textAlign: 'center', padding: '60px 24px', color: 'var(--text-sub)' }}>
+              <div style={{ fontSize: '40px', marginBottom: '12px' }}>📦</div>
+              <p style={{ fontSize: '15px', margin: 0, color: 'var(--text-main)' }}>
+                {accountFilter || quick || month ? '当前筛选下暂无出单' : '该账号下暂无出单'}
+              </p>
+            </div>
+          )
         ) : (
           /* 按产品聚合的产品卡：大字累计出单量，点卡片展开每天明细 */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

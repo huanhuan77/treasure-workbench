@@ -8,6 +8,7 @@ import { needPublishReminder, daysSincePublish, isOverdue, OVERDUE_STATES } from
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 import { DRAMA_STATUS } from '../utils/dramaLib'
+import { DueTag } from '../components/DueTag'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -36,7 +37,7 @@ function fmt(n) {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders, publishRecords, dramas, addOrder } = useStore()
+  const { samples, transactions, orders, publishRecords, dramas, todos, addOrder } = useStore()
   const { show } = useToast()
   const [orderModalOpen, setOrderModalOpen] = useState(false)
   const handleSaveOrder = (payload) => {
@@ -47,6 +48,14 @@ export function DashboardPage() {
   }
 
   // 手动检查更新（主屏幕应用无刷新入口，检测到新版本时硬刷新加载）
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (document.getElementById('dash-todo-scroll-style')) return
+    const s = document.createElement('style')
+    s.id = 'dash-todo-scroll-style'
+    s.textContent = `.dashTodoScroll::-webkit-scrollbar{width:5px}.dashTodoScroll::-webkit-scrollbar-thumb{background:rgba(244,114,182,0.45);border-radius:3px}.dashTodoScroll::-webkit-scrollbar-thumb:hover{background:rgba(244,114,182,0.7)}`
+    document.head.appendChild(s)
+  }, [])
   const [checking, setChecking] = useState(false)
   const handleCheckUpdate = async () => {
     setChecking(true)
@@ -61,27 +70,18 @@ export function DashboardPage() {
     } else if (result === 'error') show('检查更新失败，请重试', 'error')
   }
 
-  // ── 今日待办（读 daily_plan_v1，与 BottomNav 徽标一致）
-  const [todo, setTodo] = useState({ tasks: [], undone: 0 })
-  useEffect(() => {
-    const calc = () => {
-      try {
-        const d = new Date()
-        const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-        const raw = localStorage.getItem('daily_plan_v1')
-        if (!raw) { setTodo({ tasks: [], undone: 0 }); return }
-        const tasks = (JSON.parse(raw)[today]?.tasks) || []
-        setTodo({ tasks, undone: tasks.filter((t) => !t.done).length })
-      } catch { setTodo({ tasks: [], undone: 0 }) }
-    }
-    calc()
-    window.addEventListener('dailyPlanUpdated', calc)
-    window.addEventListener('storage', calc)
-    return () => {
-      window.removeEventListener('dailyPlanUpdated', calc)
-      window.removeEventListener('storage', calc)
-    }
-  }, [])
+  // ── 待办清单：独立事项池（截止日期可有可无），管理页 /todos
+  // 排序：未完成在前 → 有截止日的按日期升序在前 → 无截止日的在后
+  const todoList = useMemo(() => {
+    return [...(todos || [])].sort((a, b) => {
+      if (!!a.done !== !!b.done) return a.done ? 1 : -1
+      if (a.due && b.due) return a.due < b.due ? -1 : a.due > b.due ? 1 : 0
+      if (a.due) return -1
+      if (b.due) return 1
+      return (b.createdAt || 0) - (a.createdAt || 0)
+    })
+  }, [todos])
+  const todoUndone = (todos || []).filter((t) => !t.done).length
 
   // ── 统计计算
   const stat = useMemo(() => {
@@ -224,8 +224,8 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* 次要统计卡：样品 / 收支 / 待办（统一白底素描边） */}
-      <div style={{ padding: '8px 16px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+      {/* 次要统计卡：样品 / 收支（统一白底素描边） */}
+      <div style={{ padding: '8px 16px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
 
         {/* 样品 */}
         <div onClick={() => go('/samples')} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
@@ -252,16 +252,62 @@ export function DashboardPage() {
             <span style={{ color: '#16a34a', fontWeight: 600 }}>出 ¥{fmt(stat.expense)}</span>
           </div>
         </div>
+      </div>
 
-        {/* 待办（点进每日计划页操作） */}
-        <div onClick={() => go('/daily')} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#8a8588', marginBottom: '6px' }}>待办</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#111' }}>{todo.undone}</span>
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>未完成</span>
+      {/* 待办清单（独立事项池：截止日期可有可无；管理入口 /todos） */}
+      <div style={{ padding: '12px 16px 4px' }}>
+        <div style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+          {/* 标题行 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>待办清单</span>
+              {(todos || []).length > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: 700, color: todoUndone > 0 ? '#d97706' : '#059669', padding: '1px 7px', borderRadius: '8px', background: todoUndone > 0 ? '#fef3c7' : '#d1fae5' }}>{todoUndone} 未完成</span>
+              )}
+            </div>
+            <span style={{ fontSize: '11px', color: '#9ca3af' }}>共 {(todos || []).length} 条</span>
           </div>
-          <div style={{ marginTop: '6px', fontSize: '11px', color: '#94a3b8' }}>
-            共 {(todo.tasks || []).length} 项
+
+          {/* 事项列表：全部显示，溢出可滚动；点空白区也能跳 /todos */}
+          {todoList.length === 0 ? (
+            <div
+              onClick={() => go('/todos')}
+              style={{ padding: '16px 2px 2px', fontSize: '12px', color: '#94a3b8', cursor: 'pointer' }}
+            >
+              还没有待办，点此去添加一条
+            </div>
+          ) : (
+            <div
+              className="dashTodoScroll"
+              onClick={() => go('/todos')}
+              style={{
+                display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '8px',
+                maxHeight: '110px', overflowY: 'auto', paddingRight: '6px', cursor: 'pointer',
+                scrollbarWidth: 'thin', scrollbarColor: 'rgba(244,114,182,0.4) transparent',
+              }}
+            >
+              {todoList.map((t) => (
+                <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '3px 2px', minHeight: '22px' }}>
+                  <span style={{
+                    width: '14px', height: '14px', borderRadius: '50%', flexShrink: 0,
+                    border: `1.5px solid ${t.done ? '#10b981' : '#c4b5fd'}`,
+                    background: t.done ? '#10b981' : 'transparent',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', fontSize: '9px', fontWeight: 700, lineHeight: 1,
+                  }}>{t.done ? '✓' : ''}</span>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: '12.5px', color: t.done ? '#94a3b8' : '#111', textDecoration: t.done ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+                  <DueTag due={t.due} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 去待办清单管理 */}
+          <div style={{ marginTop: '10px', borderTop: '1px dashed #eee', paddingTop: '9px', textAlign: 'center' }}>
+            <button onClick={() => go('/todos')} style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              fontSize: '12px', color: '#db2777', fontWeight: 600,
+            }}>＋ 管理待办（新增 / 勾选 / 删除）›</button>
           </div>
         </div>
       </div>

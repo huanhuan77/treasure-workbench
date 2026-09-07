@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { addDays } from '../utils/helpers'
 import { SAMPLE_STATUS_LIST } from '../utils/sampleStatus'
+import { LinksEditor } from '../components/LinksEditor'
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 
@@ -34,6 +35,7 @@ export function NewSamplePage() {
   const [remark, setRemark] = useState('')
   const [commission, setCommission] = useState(5)
   const [orderDate, setOrderDate] = useState('')
+  const [links, setLinks] = useState([])
   const isOrder = status === 'published'
 
   // 同名检测（按所选账号交集判断）
@@ -52,7 +54,11 @@ export function NewSamplePage() {
     if (duplicateName) {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要重复添加吗？`)) return
     }
-    addSample({ name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark, commission: Number(commission), orderDate: isOrder ? orderDate : '' })
+    addSample({
+      name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark,
+      commission: Number(commission), orderDate: isOrder ? orderDate : '',
+      links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), note: (l.note || '').trim() })),
+    })
     show(accounts.length > 1 ? `已按 ${accounts.length} 个账号拆分为 ${accounts.length} 条样品` : '已添加', 'success')
     navigate('/samples')
   }
@@ -146,6 +152,7 @@ export function NewSamplePage() {
         <Field label="备注（选填）">
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="备注" value={remark} onChange={e => setRemark(e.target.value)} />
         </Field>
+        <LinksEditor links={links} onChange={setLinks} />
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
           <button style={{ ...btnGhost, border: "1.5px solid rgba(0,0,0,0.1)", background: "#f9fafb" }} onClick={() => navigate('/samples')}>取消</button>
