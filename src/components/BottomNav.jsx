@@ -1,12 +1,20 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
-// 底部主 tab（4 个核心功能）
+// 简单线性图标（SVG，跟随文字颜色）
+const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+const HomeIcon = () => (<svg {...iconProps}><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9.5V21h13V9.5" /><path d="M10 21v-5h4v5" /></svg>)
+const PenIcon = () => (<svg {...iconProps}><path d="M4 20l1-4L16.5 4.5a2.12 2.12 0 0 1 3 3L8 19l-4 1Z" /><path d="M14.5 6.5l3 3" /></svg>)
+const TagIcon = () => (<svg {...iconProps}><path d="M20.6 12.4 12.4 20.6a2 2 0 0 1-2.8 0l-6.2-6.2a2 2 0 0 1-.6-1.4V5.2a2 2 0 0 1 2-2h7.8a2 2 0 0 1 1.4.6l6.6 6.6a2 2 0 0 1 0 2Z" /><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none" /></svg>)
+const MoneyIcon = () => (<svg {...iconProps}><circle cx="12" cy="12" r="9" /><path d="M12 7v10" /><path d="M14.6 9.6c-.5-.8-1.5-1.2-2.6-1.2-1.4 0-2.5.9-2.5 2s1.1 2 2.5 2 2.5.9 2.5 2-1.1 2-2.5 2c-1.1 0-2.1-.4-2.6-1.2" /></svg>)
+const MoreIcon = () => (<svg {...iconProps}><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none" /></svg>)
+
+// 底部主 tab（4 个核心功能 + 更多）
 const mainTabs = [
-  { to: '/', label: '总览', icon: '🏠', end: true },
-  { to: '/products', label: '文案库', icon: '📝' },
-  { to: '/samples', label: '样品', icon: '🏷️' },
-  { to: '/orders', label: '出单', icon: '💰' },
+  { to: '/', label: '总览', Icon: HomeIcon, end: true },
+  { to: '/products', label: '文案库', Icon: PenIcon },
+  { to: '/samples', label: '样品', Icon: TagIcon },
+  { to: '/orders', label: '出单', Icon: MoneyIcon },
 ]
 
 // 更多侧边栏 tab
@@ -24,7 +32,7 @@ const sideTabs = [
   { to: '/dramas', label: '追剧', icon: '📺' },
 ]
 
-function TabItem({ to, label, icon, end, onClick, badge }) {
+function TabItem({ to, label, Icon, end, onClick, badge }) {
   return (
     <NavLink
       to={to}
@@ -48,11 +56,11 @@ function TabItem({ to, label, icon, end, onClick, badge }) {
         <>
           <div style={{ position: 'relative', display: 'inline-block' }}>
             <span style={{
-              fontSize: '22px',
+              display: 'block',
+              width: '22px', height: '22px',
               transform: isActive ? 'scale(1.1)' : 'scale(1)',
               transition: 'transform 0.2s',
-              display: 'block',
-            }}>{icon}</span>
+            }}><Icon /></span>
             {badge > 0 && (
               <span style={{
                 position: 'absolute',
@@ -117,8 +125,8 @@ export function BottomNav() {
           boxShadow: '0 -4px 20px rgba(244, 114, 182, 0.06)',
         }}
       >
-        {mainTabs.map((tab) => (
-          <TabItem key={tab.to} {...tab} badge={0} />
+        {mainTabs.map(({ Icon, ...tab }) => (
+          <TabItem key={tab.to} {...tab} Icon={Icon} badge={0} />
         ))}
         {/* 更多按钮 */}
         <button
@@ -138,7 +146,7 @@ export function BottomNav() {
             position: 'relative',
           }}
         >
-          <span style={{ fontSize: '22px', display: 'block' }}>☰</span>
+          <span style={{ display: 'block', width: '22px', height: '22px' }}><MoreIcon /></span>
           <span style={{ fontWeight: 500 }}>更多</span>
         </button>
       </nav>

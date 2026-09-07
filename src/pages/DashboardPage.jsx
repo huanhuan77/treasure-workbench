@@ -5,8 +5,9 @@ import { useToast } from '../components/Toast'
 import { OrderFormModal } from '../components/OrderFormModal'
 import { checkForUpdate } from '../main'
 import { needPublishReminder, daysSincePublish, isOverdue, OVERDUE_STATES } from '../utils/publish'
-import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
+import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
+import { DRAMA_STATUS } from '../utils/dramaLib'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -35,7 +36,7 @@ function fmt(n) {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders, publishRecords, addOrder } = useStore()
+  const { samples, transactions, orders, publishRecords, dramas, addOrder } = useStore()
   const { show } = useToast()
   const [orderModalOpen, setOrderModalOpen] = useState(false)
   const handleSaveOrder = (payload) => {
@@ -108,22 +109,19 @@ export function DashboardPage() {
     // 独立出单台账
     const orderTotal = (orders || []).length
     const orderQty = (orders || []).reduce((s, o) => s + (Number(o.qty) || 0), 0)
+    // 按账号分组出单数
+    const orderPerAccount = {}
+    ;(orders || []).forEach((o) => {
+      const a = mapAccount((o.account || '').trim())
+      if (!a) return
+      orderPerAccount[a] = (orderPerAccount[a] || 0) + 1
+    })
     return {
       sTotal, recent, urgent,
       income, expense, net: income - expense,
-      orderTotal, orderQty,
+      orderTotal, orderQty, orderPerAccount,
     }
   }, [samples, transactions, orders])
-
-  // 出单统计 · 本月（本月出单笔数 / 本月单量 / 涉及产品数）
-  const monthOrderStat = useMemo(() => {
-    const now = new Date()
-    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const list = (orders || []).filter((o) => String(o?.date || '').slice(0, 7) === ym)
-    const qty = list.reduce((s, o) => s + (Number(o.qty) || 0), 0)
-    const products = new Set(list.map((o) => (o?.name || '').trim()).filter(Boolean)).size
-    return { count: list.length, qty, products }
-  }, [orders])
 
   // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
   const allReminders = useMemo(
@@ -153,13 +151,13 @@ export function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px' }}>工作台总览</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <button onClick={() => go('/backup')} title="数据备份"
+            <button onClick={() => go('/backup')}
               style={{
-                width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
+                padding: '7px 12px', borderRadius: '8px',
                 border: '1px solid #fbcfe8', background: '#fff', color: '#db2777',
-                fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
-            >💾</button>
+            >💾 数据备份</button>
             <button
               onClick={handleCheckUpdate}
               disabled={checking}
@@ -169,11 +167,6 @@ export function DashboardPage() {
                 fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >{checking ? '检查中…' : '↻ 检查更新'}</button>
-            <button onClick={() => go('/product/new')} style={{
-              padding: '7px 14px', borderRadius: '8px', border: 'none',
-              background: '#ec4899', color: '#fff',
-              fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>＋ 新建产品</button>
           </div>
         </div>
       </header>
@@ -181,48 +174,43 @@ export function DashboardPage() {
       {/* 出单台账主入口（白底 + 粉点强调，紧凑布局） */}
       <div style={{ padding: '12px 16px 2px' }}>
         <div onClick={() => go('/orders')} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '11px 14px', cursor: 'pointer',
           boxShadow: '0 1px 2px rgba(236,72,153,0.06)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ec4899', flexShrink: 0 }} />
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', letterSpacing: '0.3px' }}>出单</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-              <span style={{ fontSize: '20px', fontWeight: 700, color: '#111', lineHeight: 1 }}>{fmt(stat.orderTotal)}</span>
-              <span style={{ fontSize: '11px', color: '#c9a3ab' }}>笔 · 累计 {stat.orderQty} 单</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ec4899', flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', letterSpacing: '0.3px' }}>出单</span>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 700, color: '#111', lineHeight: 1 }}>{fmt(stat.orderTotal)}</span>
+                <span style={{ fontSize: '11px', color: '#c9a3ab' }}>笔 · 累计 {stat.orderQty} 单</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+              <button onClick={(e) => { e.stopPropagation(); setOrderModalOpen(true) }} style={{
+                border: 'none', background: 'transparent', padding: 0, cursor: 'pointer',
+                fontSize: '12px', color: '#db2777', fontWeight: 700,
+              }}>＋ 记出单</button>
+              <span style={{ fontSize: '16px', color: '#f9a8d4' }}>›</span>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <button onClick={(e) => { e.stopPropagation(); setOrderModalOpen(true) }} style={{
-              border: 'none', background: 'transparent', padding: 0, cursor: 'pointer',
-              fontSize: '12px', color: '#db2777', fontWeight: 700,
-            }}>＋ 记出单</button>
-            <span style={{ fontSize: '16px', color: '#f9a8d4' }}>›</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 出单统计 · 本月 */}
-      <div style={{ padding: '8px 16px 2px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', letterSpacing: '0.3px' }}>出单统计 · 本月</span>
-          <button onClick={() => go('/orders')} style={{ fontSize: '11px', color: '#db2777', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-          {[
-            { label: '本月出单', value: monthOrderStat.count, color: 'var(--primary-dark)' },
-            { label: '累计数量', value: monthOrderStat.qty, color: '#111' },
-            { label: '涉及产品', value: monthOrderStat.products, color: '#34d399' },
-          ].map((c) => (
-            <div key={c.label} onClick={() => go('/orders')} style={{
-              background: '#fff', border: '1px solid rgba(244,114,182,0.12)', borderRadius: '14px',
-              padding: '12px', cursor: 'pointer',
+          {/* 按账号分列（固定三个账号，各显示单数 + 总计） */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+            {ACCOUNTS.map((a) => (
+              <span key={a} style={{
+                fontSize: '11px', color: '#666', background: ACCOUNT_COLOR[a]?.bg || '#fdf2f7',
+                padding: '2px 8px', borderRadius: '10px', whiteSpace: 'nowrap',
+              }}>
+                {a} <b style={{ color: ACCOUNT_COLOR[a]?.c || '#db2777' }}>{fmt(stat.orderPerAccount[a] || 0)}</b>
+              </span>
+            ))}
+            <span style={{
+              fontSize: '11px', color: '#db2777', background: '#fdf2f7',
+              padding: '2px 8px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 700,
             }}>
-              <div style={{ fontSize: '11px', color: 'var(--text-sub)' }}>{c.label}</div>
-              <div style={{ fontSize: '24px', fontWeight: 800, color: c.color, lineHeight: 1.2 }}>{c.value}</div>
-            </div>
-          ))}
+              共 {fmt(stat.orderTotal)} 单
+            </span>
+          </div>
         </div>
       </div>
 
@@ -248,7 +236,6 @@ export function DashboardPage() {
           <div style={{ fontSize: '12px', fontWeight: 600, color: '#db2777', marginBottom: '6px' }}>收支</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
             <span style={{ fontSize: '22px', fontWeight: 700, color: '#111' }}>¥{fmt(stat.net)}</span>
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>净额</span>
           </div>
           <div style={{ marginTop: '6px', fontSize: '11px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <span style={{ color: '#dc2626', fontWeight: 600 }}>入 ¥{fmt(stat.income)}</span>
@@ -286,24 +273,6 @@ export function DashboardPage() {
               fontSize: '13px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
             }}>＋ 记发布</button>
           </div>
-        </div>
-      </div>
-
-      {/* 追剧入口 */}
-      <div style={{ padding: '8px 16px 2px' }}>
-        <div onClick={() => go('/dramas')} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          background: '#fff', border: '1.5px solid #fbcfe8', borderRadius: '12px',
-          padding: '11px 14px', cursor: 'pointer', boxShadow: '0 2px 6px rgba(236,72,153,0.08)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '22px', flexShrink: 0 }}>📺</span>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>追剧</div>
-              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>记新剧 · 想追就加个剧名</div>
-            </div>
-          </div>
-          <span style={{ fontSize: '16px', color: '#f9a8d4', flexShrink: 0 }}>›</span>
         </div>
       </div>
 
@@ -355,10 +324,37 @@ export function DashboardPage() {
         )}
       </div>
 
-      {/* 视频发布记录摘要已移至「视频发布记录」独立页，总览不再列具体记录 */}
-      <div style={{ padding: '14px 16px calc(20px + var(--safe-bottom, 0px))' }}>
-        <div style={{ background: 'linear-gradient(135deg,#fce7ec,#fff0f3)', border: '1px dashed #fbcfe8', borderRadius: '12px', padding: '14px 16px', fontSize: '13px', color: '#db2777', textAlign: 'center', cursor: 'pointer' }} onClick={() => go('/publish-records')}>
-          🎬 视频发布需手动记，点击去「视频发布记录」补记 / 查看
+      {/* 追剧（放最下面）：直接显示剧名列表 + 状态操作 */}
+      <div style={{ padding: '8px 16px 2px' }}>
+        <div style={{ background: '#fff', border: '1.5px solid #fbcfe8', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 2px 6px rgba(236,72,153,0.08)' }}>
+          <div onClick={() => go('/dramas')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '20px', flexShrink: 0 }}>📺</span>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>追剧</div>
+                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>共 {(dramas || []).length} 部 · 点此添加 / 管理</div>
+              </div>
+            </div>
+            <span style={{ fontSize: '16px', color: '#f9a8d4', flexShrink: 0 }}>›</span>
+          </div>
+          {(dramas || []).length > 0 && (
+            <div style={{ marginTop: '6px' }}>
+              {(dramas || []).slice(0, 5).map((d, i) => (
+                <div key={d.id} style={{ borderTop: '1px solid #fdf2f8', padding: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ flexShrink: 0, fontSize: '11px', color: '#c9a3ab', fontWeight: 600, width: '16px' }}>{i + 1}</span>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: '14px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                  <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 600, color: (DRAMA_STATUS.find((s) => s.key === (d.status || 'want')) || DRAMA_STATUS[0]).c }}>
+                    {(DRAMA_STATUS.find((s) => s.key === (d.status || 'want')) || DRAMA_STATUS[0]).label}
+                  </span>
+                </div>
+              ))}
+              {(dramas || []).length > 5 && (
+                <div style={{ borderTop: '1px solid #fdf2f8', padding: '8px 0 2px', fontSize: '11px', color: '#c9a3ab', textAlign: 'center' }}>
+                  还有 {(dramas || []).length - 5} 部，点此上方查看全部
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

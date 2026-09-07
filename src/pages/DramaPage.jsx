@@ -3,11 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ConfirmModal, glassStyle } from '../components/Modal'
+import { DRAMA_STATUS } from '../utils/dramaLib'
+
+// 追剧：记录剧名 + 状态（想看/在看/看完/放弃）
 
 // 追剧：极简版，只记录剧名（需要时再加回其他字段）
 export function DramaPage() {
   const navigate = useNavigate()
-  const { dramas, addDrama, deleteDrama } = useStore()
+  const { dramas, addDrama, updateDrama, deleteDrama } = useStore()
   const { show } = useToast()
 
   const [name, setName] = useState('')
@@ -88,16 +91,30 @@ export function DramaPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {list.map((d, i) => (
               <div key={d.id} style={{
-                display: 'flex', alignItems: 'center', gap: '10px',
-                background: '#fff', borderRadius: '12px', padding: '12px 14px',
+                background: '#fff', borderRadius: '12px', padding: '10px 12px',
                 border: '1px solid rgba(244,114,182,0.16)',
               }}>
-                <span style={{ flexShrink: 0, fontSize: '12px', color: '#c9a3ab', fontWeight: 600, width: '20px' }}>{i + 1}</span>
-                <span style={{ flex: 1, minWidth: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-                <button onClick={() => setDelId(d.id)} style={{
-                  flexShrink: 0, border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',
-                  width: '26px', height: '26px', borderRadius: '50%', fontSize: '14px', lineHeight: 1, cursor: 'pointer',
-                }}>×</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ flexShrink: 0, fontSize: '12px', color: '#c9a3ab', fontWeight: 600, width: '20px' }}>{i + 1}</span>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                  <button onClick={() => setDelId(d.id)} style={{
+                    flexShrink: 0, border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',
+                    width: '26px', height: '26px', borderRadius: '50%', fontSize: '14px', lineHeight: 1, cursor: 'pointer',
+                  }}>×</button>
+                </div>
+                <div style={{ display: 'flex', gap: '6px', marginTop: '8px', marginLeft: '30px' }}>
+                  {DRAMA_STATUS.map((s) => {
+                    const active = (d.status || 'want') === s.key
+                    return (
+                      <button key={s.key} onClick={() => updateDrama(d.id, { status: s.key })} style={{
+                        border: 'none', padding: '4px 12px', borderRadius: '8px', fontSize: '12px',
+                        fontWeight: 600, cursor: 'pointer', lineHeight: 1.4,
+                        color: active ? '#fff' : s.c,
+                        background: active ? s.c : s.bg,
+                      }}>{s.label}</button>
+                    )
+                  })}
+                </div>
               </div>
             ))}
           </div>

@@ -1,3 +1,11 @@
+// 追剧状态（全局统一）：key 与 store.jsx 的 dramas[].status 对应
+export const DRAMA_STATUS = [
+  { key: 'want', label: '想看', c: '#64748b', bg: 'rgba(100,116,139,0.12)' },
+  { key: 'watching', label: '在看', c: '#db2777', bg: 'rgba(219,39,119,0.10)' },
+  { key: 'done', label: '看完', c: '#059669', bg: 'rgba(5,150,105,0.10)' },
+  { key: 'dropped', label: '放弃', c: '#94a3b8', bg: 'rgba(148,163,184,0.16)' },
+]
+
 // 内置剧名库：剧名 → { year, cast }。
 // 用户在「追剧」模块新增在追剧名时，自动带出年份与主演；未命中可手动填写。
 // 纯前端内置快照（非实时联网），覆盖近年热门剧集。
