@@ -17,7 +17,6 @@ export const glassSoft = {
 }
 
 export function Modal({ open, onClose, title, children, footer, center, inline }) {
-  const [kbHeight, setKbHeight] = useState(0)
   const contentRef = useRef(null)
 
   // inline 模式：直接渲染，不弹窗（避免键盘问题）
@@ -40,48 +39,61 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
     setTimeout(() => {
       const active = document.activeElement
       if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
-        active.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        try { active.scrollIntoView({ block: 'center', behavior: 'smooth' }) } catch {}
       }
     }, 350)  // 等待 iOS 键盘动画完成
   }, [])
+
+  // 键盘弹起时真实可见区（iOS 上 window.innerHeight 不会缩，visualViewport 才是真相）
+  // kbBox: { top, height }  弹窗要落在 [kbBox.top, kbBox.top+kbBox.height] 这块矩形内
+  const [kbBox, setKbBox] = useState({ top: 0, height: 0 })
 
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
       document.documentElement.style.overflow = 'hidden'
-      // 监听 iOS 虚拟键盘，动态调整弹窗位置避免被遮挡
       const vv = window.visualViewport
-      const onResize = () => {
-        if (vv) {
-          const diff = window.innerHeight - vv.height
-          setKbHeight(diff > 100 ? diff : 0)
-          scrollActiveIntoView()
+      const recompute = () => {
+        if (!vv) {
+          setKbBox({ top: 0, height: window.innerHeight })
+          return
         }
+        // visualViewport.offsetTop 在键盘弹起时变成负值（向上滚了），height 也变小
+        // 不弹键盘时 offsetTop≈0、height≈innerHeight
+        const top = Math.max(0, vv.offsetTop || 0)
+        const height = vv.height || window.innerHeight
+        setKbBox({ top, height })
+        scrollActiveIntoView()
       }
       if (vv) {
-        vv.addEventListener('resize', onResize)
-        onResize()
+        vv.addEventListener('resize', recompute)
+        vv.addEventListener('scroll', recompute)
+        recompute()
       }
-      // 捕获所有输入框的聚焦事件（切换输入框时也生效）
       const el = contentRef.current
-      if (el) {
-        el.addEventListener('focusin', scrollActiveIntoView)
-      }
+      if (el) el.addEventListener('focusin', scrollActiveIntoView)
       return () => {
         document.body.style.overflow = ''
         document.documentElement.style.overflow = ''
-        if (vv) vv.removeEventListener('resize', onResize)
+        if (vv) { vv.removeEventListener('resize', recompute); vv.removeEventListener('scroll', recompute) }
         if (el) el.removeEventListener('focusin', scrollActiveIntoView)
-        setKbHeight(0)
+        setKbBox({ top: 0, height: 0 })
       }
     }
   }, [open, scrollActiveIntoView])
 
   if (!open) return null
 
-  // 键盘弹起时：居中弹窗改为贴顶（否则 translateY 上移会把位于内容顶部的输入框推出屏幕顶部被挡住）；
-  // 底部抽屉（非 center）则整体上移以避开键盘。弹窗高度也限制为可见区域，内容可滚动。
-  const kbActive = kbHeight > 0
+  // 键盘是否"真的弹起"：visualViewport 比 innerHeight 矮 >100px，就认为键盘弹起
+  const kbActive = window.visualViewport ? (window.innerHeight - window.visualViewport.height > 100) : false
+  // 顶部安全区：iOS 状态栏/灵动岛(env safe-area-inset-top)+ 一点呼吸(12px)
+  // 用 24px 下限，保证无论 env 是否生效都不会被刘海/状态栏盖住
+  const safeTopStr = typeof CSS !== 'undefined' && CSS.supports
+    ? 'max(24px, calc(env(safe-area-inset-top, 0px) + 12px))'
+    : '24px'
+  // 键盘上方的可用区：弹窗要完整落在这块矩形内
+  const usableTop = kbActive ? (kbBox.top + 0) : 0  // 0：让 paddingTop 自己处理安全区
+  const usableHeight = kbActive ? (kbBox.height - 8) : window.innerHeight
 
   return (
     <div
@@ -94,9 +106,14 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
         WebkitBackdropFilter: 'blur(6px)',
         zIndex: 1000,
         display: 'flex',
-        alignItems: kbActive ? (center ? 'flex-start' : 'flex-end') : (center ? 'center' : 'flex-end'),
+        alignItems: center ? (kbActive ? 'flex-start' : 'center') : 'flex-end',
         justifyContent: 'center',
-        padding: center ? (kbActive ? 'calc(8px + var(--safe-top, 0px)) 16px' : '24px 16px') : undefined,
+        padding: 0,
+        // 用 padding 让弹窗"内容区"也落在键盘上方
+        paddingTop: center ? (kbActive ? safeTopStr : '24px') : 0,
+        paddingLeft: center ? 16 : 0,
+        paddingRight: center ? 16 : 0,
+        paddingBottom: center && kbActive ? 8 : 0,
         transition: 'all 0.15s ease',
       }}
     >
@@ -107,14 +124,15 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
           WebkitBackdropFilter: 'blur(30px) saturate(180%)',
           width: '100%',
           maxWidth: '480px',
-          maxHeight: kbActive ? `calc(100vh - ${kbHeight}px - 16px)` : '85vh',
-          transform: kbActive && !center ? `translateY(-${kbHeight}px)` : 'none',
+          // 弹窗最大高度 = 可用区高度（弹窗在键盘上方，超出可滚动）
+          maxHeight: kbActive ? `${usableHeight}px` : '85vh',
+          transform: kbActive && !center ? `translateY(-${window.innerHeight - kbBox.height}px)` : 'none',
           borderRadius: center ? '24px' : '28px 28px 0 0',
           display: 'flex',
           flexDirection: 'column',
           animation: center ? 'fadeIn 0.2s ease' : 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
           boxShadow: center ? '0 12px 40px rgba(244, 114, 182, 0.20)' : '0 -8px 40px rgba(244, 114, 182, 0.15)',
-          transition: 'transform 0.2s ease',
+          transition: 'transform 0.2s ease, max-height 0.2s ease',
         }}
         onClick={(e) => e.stopPropagation()}
       >
