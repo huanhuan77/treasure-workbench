@@ -8,7 +8,14 @@
 export function dedupeCopies(copies) {
   if (!Array.isArray(copies) || copies.length < 2) return copies
   const score = (c) => (c && c.hasOrder ? 4 : 0) + (c && c.used ? 2 : 0) + (c && c.usedDate ? 1 : 0)
-  const norm = (s) => (s || '').replace(/\s+/g, '')
+  // 归一化：删零宽/不可见字符 → 全角(标点/字母/数字)转半角 → 去所有空白。
+  // 这样「复制粘贴带来的零宽字符」「全角空格/全角标点/全角数字」造成的视觉重复也能被合并。
+  const norm = (s) =>
+    (s || '')
+      .replace(/[﻿\u200b-\u200f\ufeff\u00ad\u2060\u2028\u2029]/g, '') // 删除零宽/不可见字符
+      .replace(/[！-～]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0)) // 全角→半角(标点/字母/数字)
+      .replace(/[。、「」『』《》〈〉．｡､｢｣]/g, (ch) => ({ '。': '.', '、': ',', '「': '"', '」': '"', '『': '"', '』': '"', '《': '(', '》': ')', '〈': '(', '〉': ')', '．': '.', '｡': '.', '､': ',', '｢': '"', '｣': '"' }[ch] || ch)) // CJK 专属标点→半角对应
+      .replace(/\s+/g, '') // 折叠所有空白(含全角空格\u3000、不间断空格\u00a0)
   const out = []
   const index = new Map() // 内容 key -> 在 out 中的下标
   for (const c of copies) {

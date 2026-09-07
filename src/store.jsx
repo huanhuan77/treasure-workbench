@@ -3405,7 +3405,9 @@ export function StoreProvider({ children }) {
     setData((d) => ({
       ...d,
       products: d.products.map((p) =>
-        p.id === productId ? { ...p, copies: [newCopy, ...p.copies], updatedAt: now } : p
+        p.id === productId
+          ? { ...p, copies: dedupeCopies([newCopy, ...p.copies]), updatedAt: now }
+          : p
       ),
     }))
     return newCopy.id
@@ -3421,7 +3423,8 @@ export function StoreProvider({ children }) {
           ? {
               ...p,
               updatedAt: now,
-              copies: [
+              // 写入即查重：新导入的列表本身、或与已有文案内容相同(含全角/零宽差异)的，立即合并
+              copies: dedupeCopies([
                 ...list.map((c) => {
                   const hasOrder = !!c.hasOrder
                   const used = hasOrder || !!c.used
@@ -3439,7 +3442,7 @@ export function StoreProvider({ children }) {
                   }
                 }),
                 ...p.copies,
-              ],
+              ]),
             }
           : p
       ),
@@ -3473,17 +3476,16 @@ export function StoreProvider({ children }) {
   const updateCopy = useCallback((productId, copyId, patch) => {
     setData((d) => ({
       ...d,
-      products: d.products.map((p) =>
-        p.id === productId
-          ? {
-              ...p,
-              updatedAt: Date.now(),
-              copies: p.copies.map((c) =>
-                c.id === copyId ? { ...c, ...patch, updatedAt: Date.now() } : c
-              ),
-            }
-          : p
-      ),
+      products: d.products.map((p) => {
+        if (p.id !== productId) return p
+        const nextCopies = p.copies.map((c) =>
+          c.id === copyId ? { ...c, ...patch, updatedAt: Date.now() } : c
+        )
+        // 仅当正文被修改时才去重，避免仅改 topics/style/used 等引发误合并
+        const deduped =
+          patch && typeof patch.content === 'string' ? dedupeCopies(nextCopies) : nextCopies
+        return { ...p, updatedAt: Date.now(), copies: deduped }
+      }),
     }))
   }, [])
 
