@@ -91,6 +91,7 @@ export function DraggableFab({ storageKey = 'default', onClick, children, round 
       onPointerUp={up}
       onPointerCancel={up}
       style={{
+        display: hidden ? 'none' : 'flex',
         position: 'fixed',
         left: pos ? pos.x : -9999,
         top: pos ? pos.y : -9999,

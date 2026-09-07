@@ -333,9 +333,10 @@ export function SamplesPage() {
                                   dlDays !== null && dlDays <= 7 ? '#ea580c' : 'var(--text-sub)'
                   const acList = getAccounts(s).map(a => ({ name: a, ...(ACCOUNT_COLOR[a] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }) }))
 
-                  return <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
+                  return                   <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
                     swipedId={swipedId} setSwipedId={setSwipedId}
                     hideAccount={hideAccount}
+                    show={show}
                     dragEnabled={!isDateSort}
                     onQuickPublish={handleQuickPublish}
                     onOpenLinks={() => setLinksSampleId(s.id)}
@@ -511,7 +512,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, dragEnabled, onEdit, onDelete, onQuickPublish, onOpenLinks }) {
+function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, dragEnabled, onEdit, onDelete, onQuickPublish, onOpenLinks }) {
   const canDrag = dragEnabled !== false   // 按日期排序时禁止拖动（否则与排序结果冲突）
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id, disabled: !canDrag })
   const isSwiped = swipedId === s.id
@@ -578,13 +579,27 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
             {s.deadline && (s.status === 'un_arrived' || s.status === 'arrived') && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
             {(s.commission || 5) > 5 && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
             {(() => {
-              const n = getLinks(s).length
-              if (!n) return null
+              const links = getLinks(s)
+              if (!links.length) return null
               return (
                 <button
-                  onClick={(e) => { e.stopPropagation(); if (isSwiped) setSwipedId(null); onOpenLinks && onOpenLinks() }}
-                  style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '5px', background: 'rgba(99,102,241,0.12)', color: '#4f46e5', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, border: 'none', cursor: 'pointer' }}
-                >🔗 {n}个链接</button>
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (isSwiped) setSwipedId(null)
+                    if (links.length === 1) {
+                      // 只有一条定向链接：直接复制
+                      ;(async () => {
+                        const ok = await copyText(links[0].url)
+                        show(ok ? '已复制定向链接' : '复制失败', ok ? 'success' : 'error')
+                      })()
+                    } else {
+                      // 多条链接：打开选择弹窗逐条复制
+                      onOpenLinks && onOpenLinks()
+                    }
+                  }}
+                  title="复制定向链接"
+                  style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '5px', background: 'rgba(99,102,241,0.12)', color: '#4f46e5', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                >📋 复制</button>
               )
             })()}
           </div>

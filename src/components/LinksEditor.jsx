@@ -6,7 +6,7 @@ export function linkUid() {
 }
 
 // 定向链接多行编辑器：links = [{id,url,note}]，onChange(nextLinks)
-// 新增/编辑样品表单复用。每条：链接地址(必填) + 备注(选填)，可增行、可删行。
+// 新增/编辑样品表单复用。每条只需填链接地址(必填)，可增行、可删行（不再提供备注字段）。
 export function LinksEditor({ links, onChange }) {
   const list = Array.isArray(links) ? links : []
   const setRow = (i, patch) => {
@@ -43,16 +43,10 @@ export function LinksEditor({ links, onChange }) {
                 >删除</button>
               </div>
               <input
-                style={{ ...inputStyle, minHeight: '38px', padding: '8px 10px', fontSize: '14px', marginBottom: '6px' }}
+                style={{ ...inputStyle, minHeight: '38px', padding: '8px 10px', fontSize: '14px' }}
                 placeholder="https://…（粘贴链接地址）"
                 value={it.url || ''}
                 onChange={(e) => setRow(i, { url: e.target.value })}
-              />
-              <input
-                style={{ ...inputStyle, minHeight: '36px', padding: '8px 10px', fontSize: '13px' }}
-                placeholder="备注（选填）"
-                value={it.note || ''}
-                onChange={(e) => setRow(i, { note: e.target.value })}
               />
             </div>
           ))}

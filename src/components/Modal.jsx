@@ -79,6 +79,10 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
 
   if (!open) return null
 
+  // 键盘弹起时：居中弹窗改为贴顶（否则 translateY 上移会把位于内容顶部的输入框推出屏幕顶部被挡住）；
+  // 底部抽屉（非 center）则整体上移以避开键盘。弹窗高度也限制为可见区域，内容可滚动。
+  const kbActive = kbHeight > 0
+
   return (
     <div
       onClick={onClose}
@@ -90,9 +94,9 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
         WebkitBackdropFilter: 'blur(6px)',
         zIndex: 1000,
         display: 'flex',
-        alignItems: center ? 'center' : 'flex-end',
+        alignItems: kbActive ? (center ? 'flex-start' : 'flex-end') : (center ? 'center' : 'flex-end'),
         justifyContent: 'center',
-        padding: center ? '24px 16px' : undefined,
+        padding: center ? (kbActive ? 'calc(8px + var(--safe-top, 0px)) 16px' : '24px 16px') : undefined,
         transition: 'all 0.15s ease',
       }}
     >
@@ -103,8 +107,8 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
           WebkitBackdropFilter: 'blur(30px) saturate(180%)',
           width: '100%',
           maxWidth: '480px',
-          maxHeight: '85vh',
-          transform: kbHeight ? `translateY(-${kbHeight}px)` : 'none',
+          maxHeight: kbActive ? `calc(100vh - ${kbHeight}px - 16px)` : '85vh',
+          transform: kbActive && !center ? `translateY(-${kbHeight}px)` : 'none',
           borderRadius: center ? '24px' : '28px 28px 0 0',
           display: 'flex',
           flexDirection: 'column',

@@ -211,7 +211,7 @@ export function TodoPage() {
         danger
       />
 
-      <DraggableFab storageKey="todo" onClick={openAdd} round>
+      <DraggableFab storageKey="todo" onClick={openAdd} round hidden={addOpen}>
         {/* 用 SVG 而非文字「＋」：文字受字体基线影响会偏上，SVG 才是真正的几何居中 */}
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" style={{ display: 'block' }}>
           <path d="M12 5v14M5 12h14" />
