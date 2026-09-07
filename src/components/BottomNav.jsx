@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useStore } from '../store'
 
 // 简单线性图标（SVG，跟随文字颜色）
 const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -94,6 +95,15 @@ function TabItem({ to, label, Icon, end, onClick, badge }) {
 export function BottomNav() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
+  const { samples } = useStore()
+
+  // 样品 Tab 角标：未到货 + 已到货未拍摄 + 已拍摄未发布（=未发布的合计，不含已放弃）
+  const samplesBadge = useMemo(
+    () => samples.filter((s) => s.status === 'un_arrived' || s.status === 'arrived' || s.status === 'shot').length,
+    [samples]
+  )
+
+  const getBadge = (to) => (to === '/samples' ? samplesBadge : 0)
 
   const handleSideNav = (to) => {
     navigate(to)
@@ -122,7 +132,7 @@ export function BottomNav() {
         }}
       >
         {mainTabs.map(({ Icon, ...tab }) => (
-          <TabItem key={tab.to} {...tab} Icon={Icon} badge={0} />
+          <TabItem key={tab.to} {...tab} Icon={Icon} badge={getBadge(tab.to)} />
         ))}
         {/* 更多按钮 */}
         <button

@@ -293,24 +293,29 @@ export function HomePage() {
               style={{ border: 'none', background: 'rgba(0,0,0,0.06)', color: 'var(--text-sub)', width: '20px', height: '20px', borderRadius: '50%', fontSize: '12px', lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}
             >×</button>
           )}
-          <span style={{ width: '1px', height: '20px', background: 'rgba(0,0,0,0.08)', flexShrink: 0 }} />
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              style={{
-                appearance: 'none', WebkitAppearance: 'none',
-                background: 'transparent', border: 'none', outline: 'none',
-                padding: '8px 22px 8px 8px', fontSize: '14px', fontWeight: 500,
-                color: categoryFilter ? 'var(--text-main)' : 'var(--text-sub)',
-                maxWidth: '108px',
-              }}
-            >
-              <option value="">全部分类</option>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <span style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '11px' }}>▾</span>
-          </div>
+        </div>
+        {/* 分类筛选：横向 chip 条，直接可见、可滑动 */}
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingTop: '6px', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+          <button onClick={() => setCategoryFilter('')} style={{
+            flex: '0 0 auto', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+            border: categoryFilter === '' ? 'none' : '1px solid rgba(244,114,182,0.35)',
+            background: categoryFilter === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+            color: categoryFilter === '' ? '#fff' : 'var(--text-main)', cursor: 'pointer',
+            whiteSpace: 'nowrap',
+          }}>全部</button>
+          {CATEGORIES.map((c) => {
+            const st = CATEGORY_STYLE[c] || CATEGORY_STYLE['其他']
+            const sel = categoryFilter === c
+            return (
+              <button key={c} onClick={() => setCategoryFilter(c)} style={{
+                flex: '0 0 auto', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+                border: sel ? 'none' : `1px solid ${st.bg}`,
+                background: sel ? st.color : '#fff',
+                color: sel ? '#fff' : st.color, cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}>{c}</button>
+            )
+          })}
         </div>
       </div>
 
