@@ -4,6 +4,8 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { OrderFormModal } from '../components/OrderFormModal'
 import { ACCOUNTS, ACCOUNT_COLOR } from '../utils/accounts'
+import { ProductOrdersSheet } from '../components/ProductOrdersSheet'
+import { DraggableFab } from '../components/DraggableFab'
 
 
 // 把 YYYY/MM/DD 或 YYYY-MM-DD 解析成可排序时间戳
@@ -203,18 +205,27 @@ export function OrdersPage() {
     return arr
   }, [filtered, sortKey])
 
-  // 展开的产品卡（默认收起，点卡片头展开看每天明细）
-  const [openGroups, setOpenGroups] = useState(() => new Set())
-  const toggleGroup = (name) => {
-    setOpenGroups((prev) => {
-      const next = new Set(prev)
-      if (next.has(name)) next.delete(name); else next.add(name)
-      return next
-    })
-  }
+  // 点击产品卡 → 弹出该产品的出单记录详情面板
+  const [activeName, setActiveName] = useState(null)
+  const activeGroup = useMemo(() => groups.find((g) => g.name === activeName) || null, [groups, activeName])
 
-  const openAdd = () => { setEditing(null); setFormSeq((s) => s + 1); setModalOpen(true) }
-  const openEdit = (o) => { setEditing(o); setFormSeq((s) => s + 1); setModalOpen(true) }
+  const [prefill, setPrefill] = useState(null)   // 从详情面板「继续新增一单」带入的账号/样品/品名
+
+  const openAdd = () => { setEditing(null); setPrefill(null); setFormSeq((s) => s + 1); setModalOpen(true) }
+  const openEdit = (o) => { setEditing(o); setPrefill(null); setFormSeq((s) => s + 1); setModalOpen(true) }
+  // 详情面板「继续新增一单」：带上该产品的账号与样品，接着记一笔
+  const addMoreForActive = () => {
+    if (!activeGroup) return
+    setPrefill({
+      account: activeGroup.entries.find((e) => e.account)?.account || '',
+      sampleId: activeGroup.entries.find((e) => e.sampleId)?.sampleId || '',
+      name: activeGroup.name,
+    })
+    setActiveName(null)
+    setEditing(null)
+    setFormSeq((s) => s + 1)
+    setModalOpen(true)
+  }
   const closeModal = () => { setModalOpen(false); setEditing(null) }
   const handleSave = (payload) => {
     if (!payload.name) { show('请填写品名', 'error'); return }
@@ -236,13 +247,6 @@ export function OrdersPage() {
       <PageHeader
         title="出单记录"
         onBack={() => navigate('/')}
-        right={
-          <button onClick={openAdd} style={{
-            padding: '8px 16px', borderRadius: '8px', border: 'none',
-            background: 'var(--primary)', color: '#fff',
-            fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-          }}>＋ 记出单</button>
-        }
       />
 
       {/* 顶部汇总：白底+浅边框 2×3 卡；账号行做成 chip 风格单行不换行 */}
@@ -426,11 +430,10 @@ export function OrdersPage() {
           /* 按产品聚合的产品卡：大字累计出单量，点卡片展开每天明细 */
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {groups.map((g) => {
-              const open = openGroups.has(g.name)
               return (
                 <div key={g.name} style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(244,114,182,0.12)', background: '#fff' }}>
-                  {/* 卡片头：品名 + 大字累计数量（点击展开/收起） */}
-                  <button onClick={() => toggleGroup(g.name)} style={{
+                  {/* 卡片头：品名 + 大字累计数量（点击查看该产品的出单记录） */}
+                  <button onClick={() => setActiveName(g.name)} style={{
                     width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
                     padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left',
                   }}>
@@ -452,32 +455,8 @@ export function OrdersPage() {
                       <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--primary-dark)', lineHeight: 1 }}>{g.qty}</span>
                       <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>单</span>
                     </div>
-                    <span style={{
-                      flexShrink: 0, fontSize: '12px', color: '#c9a3ab', transition: 'transform .15s',
-                      transform: open ? 'rotate(180deg)' : 'none',
-                    }}>▾</span>
+                    <span style={{ flexShrink: 0, fontSize: '17px', color: '#c9a3ab', lineHeight: 1 }}>›</span>
                   </button>
-                  {/* 明细：点开才显示 */}
-                  {open && (
-                    <div style={{ padding: '0 6px 6px', borderTop: '1px solid rgba(244,114,182,0.10)' }}>
-                      {g.entries.map((o) => {
-                        const meta = accMeta(o.account)
-                        return (
-                          <div key={o.id} style={{
-                            display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 8px',
-                            borderRadius: '10px', cursor: 'pointer',
-                          }} onClick={() => openEdit(o)}>
-                            <span style={{ flexShrink: 0, width: '9px', height: '9px', borderRadius: '50%', background: meta.c }} />
-                            <span style={{ fontSize: '12px', color: 'var(--text-sub)', flexShrink: 0, minWidth: '16px' }}>{dispDate(o.date)}</span>
-                            <span style={{ fontSize: '12px', color: o.account ? meta.c : '#94a3b8', flexShrink: 0 }}>{o.account || '未选账号'}</span>
-                            <span style={{ flex: 1, fontSize: '12px', color: 'var(--text-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.remark || ''}</span>
-                            <span style={{ flexShrink: 0, fontSize: '13px', fontWeight: 700, color: 'var(--primary-dark)' }}>+{fmtQty(o.qty)}</span>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete(o) }} style={{ flexShrink: 0, border: 'none', background: 'transparent', color: '#f87171', fontSize: '14px', lineHeight: 1, cursor: 'pointer', padding: '2px 4px' }}>🗑</button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
                 </div>
               )
             })}
@@ -485,7 +464,21 @@ export function OrdersPage() {
         )}
       </div>
 
-      <OrderFormModal key={formSeq} open={modalOpen} onClose={closeModal} editing={editing} onSave={handleSave} />
+      <OrderFormModal key={formSeq} open={modalOpen} onClose={closeModal} editing={editing} onSave={handleSave} prefill={prefill} />
+
+      <ProductOrdersSheet
+        open={!!activeGroup}
+        group={activeGroup}
+        onClose={() => setActiveName(null)}
+        onEdit={(o) => { setActiveName(null); openEdit(o) }}
+        onDelete={handleDelete}
+        onAddMore={addMoreForActive}
+        accMeta={accMeta}
+      />
+
+      <DraggableFab storageKey="orders" onClick={openAdd}>
+        ＋ 记出单
+      </DraggableFab>
     </div>
   )
 }

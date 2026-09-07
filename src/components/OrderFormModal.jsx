@@ -11,10 +11,10 @@ function todayStr() {
 }
 
 // 新增 / 编辑出单表单（弹窗内，供出单记录页与总览页复用）
-export function OrderFormModal({ open, onClose, editing, onSave }) {
-  const [account, setAccount] = useState(editing?.account || '')
-  const [sampleId, setSampleId] = useState(editing?.sampleId || '')
-  const [name, setName] = useState(editing?.name || '')
+export function OrderFormModal({ open, onClose, editing, onSave, prefill }) {
+  const [account, setAccount] = useState(editing?.account || prefill?.account || '')
+  const [sampleId, setSampleId] = useState(editing?.sampleId || prefill?.sampleId || '')
+  const [name, setName] = useState(editing?.name || prefill?.name || '')
   const [date, setDate] = useState(editing?.date || todayStr())
   const [qty, setQty] = useState(editing?.qty ? String(editing.qty) : '1')
   const [remark, setRemark] = useState(editing?.remark || '')

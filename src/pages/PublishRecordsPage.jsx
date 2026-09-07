@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../utils/accounts'
+import { SwipeRow } from '../components/SwipeRow'
+import { DraggableFab } from '../components/DraggableFab'
 
 const chipBase = {
   padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
@@ -45,10 +47,6 @@ export function PublishRecordsPage() {
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#111' }}>视频发布记录</h1>
           <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#b3888f' }}>共 {records.length} 条 · 仅关联已拍摄 / 已发布的样品</p>
         </div>
-        <button onClick={() => navigate('/publish-record/new')} style={{
-          padding: '8px 14px', borderRadius: '8px', border: 'none', background: '#ec4899', color: '#fff',
-          fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-        }}>+ 记发布</button>
       </header>
 
       {/* 账号筛选 */}
@@ -85,7 +83,8 @@ export function PublishRecordsPage() {
               const sm = sampleMap[r.sampleId]
               const q = Number(r.qty) > 0 ? Number(r.qty) : 1
               return (
-                <div key={r.id} style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px' }}>
+                <SwipeRow key={r.id} onDelete={() => handleDelete(r)} radius={12}>
+                <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -102,11 +101,16 @@ export function PublishRecordsPage() {
                     ))}
                   </div>
                 </div>
+                </SwipeRow>
               )
             })}
           </div>
         )}
       </div>
+
+      <DraggableFab storageKey="publish-record" onClick={() => navigate('/publish-record/new')}>
+        ＋ 记发布
+      </DraggableFab>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ConfirmModal, Modal, Field, inputStyle, glassStyle } from '../components/Modal'
 import { DueTag } from '../components/DueTag'
+import { DraggableFab } from '../components/DraggableFab'
 
 // 待办事项：独立于「每日计划」的待办池，截止日期可有可无
 
@@ -90,14 +91,6 @@ export function TodoPage() {
             {undoneCount} 条未完成 · 截止日期可不填
           </p>
         </div>
-        {/* 新增按钮 → 打开弹窗 */}
-        <button onClick={openAdd} style={{
-          flexShrink: 0, border: 'none', borderRadius: '50%',
-          width: '40px', height: '40px', cursor: 'pointer',
-          background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
-          fontSize: '24px', lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(244,114,182,0.35)',
-        }}>＋</button>
       </header>
 
       <div style={{ padding: '8px 16px calc(96px + var(--safe-bottom, 0px))' }}>
@@ -122,7 +115,7 @@ export function TodoPage() {
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '10px' }}>✅</div>
             <p style={{ fontSize: '14px', margin: 0 }}>
-              {filter === 'done' ? '还没有已完成的待办' : list.length === 0 ? '还没有待办，点右上角 ＋ 加一条' : '没有未完成的待办啦'}
+              {filter === 'done' ? '还没有已完成的待办' : list.length === 0 ? '还没有待办，点右下角 ＋ 加一条' : '没有未完成的待办啦'}
             </p>
             {list.length === 0 && (
               <button onClick={openAdd} style={{
@@ -217,6 +210,13 @@ export function TodoPage() {
         confirmText="删除"
         danger
       />
+
+      <DraggableFab storageKey="todo" onClick={openAdd} round>
+        {/* 用 SVG 而非文字「＋」：文字受字体基线影响会偏上，SVG 才是真正的几何居中 */}
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" style={{ display: 'block' }}>
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </DraggableFab>
     </div>
   )
 }
