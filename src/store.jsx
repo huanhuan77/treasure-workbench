@@ -3109,11 +3109,16 @@ function loadData() {
       loadedPublishRecords,
       Array.isArray(old.orders) ? old.orders : [],
     )
+    // 一次性清理：旧键 daily_publish_plan_v1 里的记录（幽灵数据）即使已被之前版本写入主存储，
+    // 也在此按 id 彻底剔除，避免「删了还在」的残留。仅本次加载的旧键有效时执行一次。
+    const cleanedPublish = legacyPublishIds
+      ? split.publishRecords.filter((r) => !legacyPublishIds.has(r.id))
+      : split.publishRecords
     return {
       products: productsFinal,
-      samples: aggregatePublish(split.samples, split.publishRecords),
+      samples: aggregatePublish(split.samples, cleanedPublish),
       orders: split.orders,  // 独立出单台账
-      publishRecords: split.publishRecords,
+      publishRecords: cleanedPublish,
       transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
       savingsData: (() => {
         let sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
@@ -3185,24 +3190,38 @@ function migrateSample(s) {
 
 
 // 视频发布记录迁移：兼容旧 daily_publish_plan_v1（{ date: [ {id,account,sampleId,productName,createdAt} ] } ）
+// 注意：旧键只消费一次，读完即删除，否则每次启动都会把里面的历史记录重新注入列表，
+// 导致「删除后下次还在」的 bug。合并时按 id 去重，避免与已 persisted 的主存储记录重复。
+// legacyPublishIds：本次加载从旧键读到的全部 id，供 loadData 做一次性的「幽灵记录」清理。
+let legacyPublishIds = null
 function loadPublishRecords(old) {
   let records = Array.isArray(old && old.publishRecords) ? old.publishRecords : []
+  legacyPublishIds = null
   try {
     const raw = localStorage.getItem('daily_publish_plan_v1')
     if (raw) {
       const oldMap = JSON.parse(raw)
+      const ids = new Set()
+      const existingIds = new Set(records.map((r) => r.id))
       for (const date of Object.keys(oldMap)) {
         for (const r of (oldMap[date] || [])) {
-          records.push({
-            id: r.id || uid(),
+          const id = r.id || uid()
+          ids.add(id)
+          if (existingIds.has(id)) continue // 主存储已有同 id 记录，避免重复
+          records = records.concat({
+            id,
             sampleId: r.sampleId || '',
             productId: '',
             accounts: r.account ? [r.account] : [],
             publishDate: r.publishDate || date,
             createdAt: r.createdAt || Date.now(),
           })
+          existingIds.add(id)
         }
       }
+      // 一次性消费旧数据键：删除后不再重复注入（这是「删了还在」的根因修复）
+      legacyPublishIds = ids
+      localStorage.removeItem('daily_publish_plan_v1')
     }
   } catch (e) {}
   return records
