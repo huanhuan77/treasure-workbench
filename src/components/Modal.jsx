@@ -85,22 +85,20 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
   if (!open) return null
 
   // 键盘是否"真的弹起"：visualViewport 比 innerHeight 矮 >100px，就认为键盘弹起
-  const kbActive = window.visualViewport ? (window.innerHeight - window.visualViewport.height > 100) : false
-  // 顶部安全区：iOS 状态栏/灵动岛(env safe-area-inset-top)+ 一点呼吸(12px)
-  // 用 24px 下限，保证无论 env 是否生效都不会被刘海/状态栏盖住
-  const safeTopStr = typeof CSS !== 'undefined' && CSS.supports
-    ? 'max(24px, calc(env(safe-area-inset-top, 0px) + 12px))'
-    : '24px'
-  // 键盘上方的可用区：弹窗要完整落在这块矩形内
-  const usableTop = kbActive ? (kbBox.top + 0) : 0  // 0：让 paddingTop 自己处理安全区
-  const usableHeight = kbActive ? (kbBox.height - 8) : window.innerHeight
+  const kb = window.visualViewport ? (window.innerHeight - window.visualViewport.height) : 0
+  const kbActive = kb > 100
+  // 键盘上方可用高度（键盘弹起时 = visualViewport.height，实时取避免 state 滞后）
+  const availH = kbActive ? (window.visualViewport?.height || window.innerHeight) : window.innerHeight
+  // 顶部安全留白：不赌 env 是否生效。刘海/状态栏最高约 59px，
+  // 用 max(env, 44px) —— env 生效(如 PWA)取更大值，失效(WebView)也保底 44px 躲开状态栏。
+  const topPadStr = kbActive ? 'max(env(safe-area-inset-top, 0px), 44px)' : '0px'
 
   return (
     <div
       onClick={onClose}
       style={{
         position: 'fixed',
-        inset: 0,
+        left: 0, right: 0, top: 0,
         background: 'rgba(74, 44, 58, 0.25)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
@@ -108,12 +106,11 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
         display: 'flex',
         alignItems: center ? (kbActive ? 'flex-start' : 'center') : 'flex-end',
         justifyContent: 'center',
-        padding: 0,
-        // 用 padding 让弹窗"内容区"也落在键盘上方
-        paddingTop: center ? (kbActive ? safeTopStr : '24px') : 0,
-        paddingLeft: center ? 16 : 0,
-        paddingRight: center ? 16 : 0,
-        paddingBottom: center && kbActive ? 8 : 0,
+        // 键盘弹起：遮罩容器只占"键盘上方那一段"。
+        // 居中弹窗 → 顶部对齐，靠容器 padding-top 让出安全区（输入框在弹窗顶部标题之下，必可见）；
+        // 底部抽屉(非 center) → 容器压缩到键盘上方，translateY 把内容顶上去。
+        height: kbActive ? `${availH}px` : '100%',
+        paddingTop: center && kbActive ? topPadStr : 0,
         transition: 'all 0.15s ease',
       }}
     >
@@ -124,9 +121,9 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
           WebkitBackdropFilter: 'blur(30px) saturate(180%)',
           width: '100%',
           maxWidth: '480px',
-          // 弹窗最大高度 = 可用区高度（弹窗在键盘上方，超出可滚动）
-          maxHeight: kbActive ? `${usableHeight}px` : '85vh',
-          transform: kbActive && !center ? `translateY(-${window.innerHeight - kbBox.height}px)` : 'none',
+          margin: '0 auto',
+          maxHeight: kbActive ? `calc(${availH}px - 52px)` : '85vh',
+          transform: 'none',
           borderRadius: center ? '24px' : '28px 28px 0 0',
           display: 'flex',
           flexDirection: 'column',
