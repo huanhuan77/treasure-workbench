@@ -19,15 +19,18 @@ export function TodoPage() {
   const [filter, setFilter] = useState('undone')  // undone / all / done
   const [delId, setDelId] = useState(null)
 
-  const list = todos || []
+  // 数据自愈：过滤掉数组里的空项/非对象，避免脏数据(如某条为 null)在渲染时崩溃
+  const list = (todos || []).filter((t) => t && typeof t === 'object')
 
   // 未完成在前 → 组内：有截止日的按日期升序在前，无截止日的在后
   const sorted = useMemo(() => {
     return [...list].sort((a, b) => {
       if (!!a.done !== !!b.done) return a.done ? 1 : -1
-      if (a.due && b.due) return a.due < b.due ? -1 : a.due > b.due ? 1 : 0
-      if (a.due) return -1
-      if (b.due) return 1
+      const ad = typeof a.due === 'string' ? a.due : ''
+      const bd = typeof b.due === 'string' ? b.due : ''
+      if (ad && bd) return ad < bd ? -1 : ad > bd ? 1 : 0
+      if (ad) return -1
+      if (bd) return 1
       return (b.createdAt || 0) - (a.createdAt || 0)
     })
   }, [list])
@@ -149,7 +152,7 @@ export function TodoPage() {
                     color: t.done ? '#94a3b8' : 'var(--text-main)',
                     textDecoration: t.done ? 'line-through' : 'none',
                     wordBreak: 'break-all',
-                  }}>{t.title}</span>
+                  }}>{typeof t.title === 'string' || typeof t.title === 'number' ? t.title : ''}</span>
                   <DueTag due={t.due} />
                 </div>
                 <button onClick={() => setDelId(t.id)} style={{

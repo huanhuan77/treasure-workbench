@@ -6,7 +6,7 @@ const storeKey = (k) => `fab_pos_${k}`
  * 可拖动的悬浮按钮：默认贴右侧，按住可拖到任意位置，松手自动吸附到左/右边缘，位置存 localStorage。
  * 拖动时不触发点击，只有「没移动」才算点击。
  */
-export function DraggableFab({ storageKey = 'default', onClick, children, round }) {
+export function DraggableFab({ storageKey = 'default', onClick, children, round, hidden }) {
   const ref = useRef(null)
   const [pos, setPos] = useState(null) // {x, y} 视口坐标（fixed 定位）
   const posRef = useRef({ x: 0, y: 0 })

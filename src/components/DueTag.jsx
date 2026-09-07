@@ -12,10 +12,22 @@ function todayStr() {
  */
 export function DueTag({ due, style }) {
   const calc = useMemo(() => {
-    if (!due) return null
-    const [y, m, d] = due.split('-').map(Number)
-    if (!y || !m || !d) return null
-    const dueMs = new Date(y, m - 1, d).getTime()
+    // 兼容异常数据：due 可能是任意类型（数字/数组/对象），一律安全转成字符串再判断。
+    let s = ''
+    try {
+      if (due === null || due === undefined) s = ''
+      else if (typeof due === 'string') s = due
+      else if (Array.isArray(due)) s = due[0] ? String(due[0]) : ''
+      else s = String(due)
+    } catch {
+      s = ''
+    }
+    if (!s || typeof s !== 'string') return null
+    const m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/)
+    if (!m) return null
+    const y = +m[1], mo = +m[2], d = +m[3]
+    if (!y || !mo || !d) return null
+    const dueMs = new Date(y, mo - 1, d).getTime()
     const today = todayStr()
     const [ty, tm, td] = today.split('-').map(Number)
     const todayMs = new Date(ty, tm - 1, td).getTime()
@@ -28,7 +40,7 @@ export function DueTag({ due, style }) {
     }
     if (days === 0) return { text: '今天截止', color: '#ea580c', bg: '#ffedd5' }
     if (days <= 3) return { text: `剩 ${days} 天`, color: '#ea580c', bg: '#ffedd5' }
-    return { text: `${m}月${d}日截止`, color: '#6b7280', bg: '#f3f4f6' }
+    return { text: `${mo}月${d}日截止`, color: '#6b7280', bg: '#f3f4f6' }
   }, [due])
 
   if (!calc) return null
