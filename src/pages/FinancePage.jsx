@@ -20,7 +20,7 @@ const CATEGORIES = {
 
 export function FinancePage() {
   const navigate = useNavigate()
-  const { transactions, addTransaction, deleteTransaction } = useStore()
+  const { transactions, addTransaction, deleteTransaction, updateTransaction } = useStore()
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)
   const [delId, setDelId] = useState(null)
@@ -240,7 +240,7 @@ export function FinancePage() {
                       <div style={{ fontSize: '13px', color: 'var(--text-main)', marginTop: '4px' }}>{t.remark}</div>
                     )}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
                     <span style={{
                       fontSize: '16px',
                       fontWeight: 700,
@@ -248,6 +248,21 @@ export function FinancePage() {
                     }}>
                       {t.type === 'income' ? '+' : '-'}¥{(Number(t.amount) || 0).toFixed(2)}
                     </span>
+                    {t.type === 'income' && (
+                      <button
+                        onClick={() => { setSwipedTxId(null); const next = t.received === false; updateTransaction(t.id, { received: next }); show(next ? '已标记待收款' : '已收款', 'success') }}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          padding: '2px 8px', borderRadius: '999px', border: 'none', cursor: 'pointer',
+                          fontSize: '10px', fontWeight: 600, lineHeight: '16px',
+                          background: t.received === false ? 'rgba(245,158,11,0.16)' : 'rgba(16,185,129,0.16)',
+                          color: t.received === false ? '#b45309' : '#059669',
+                        }}
+                      >
+                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }} />
+                        {t.received === false ? '待收款' : '已收款'}
+                      </button>
+                    )}
                   </div>
                 </div>
                 </div>

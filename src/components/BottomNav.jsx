@@ -65,7 +65,7 @@ function TabItem({ to, label, Icon, end, onClick, badge }) {
                 minWidth: '18px', height: '18px',
                 padding: '0 5px',
                 borderRadius: '9px',
-                background: '#ef4444', color: '#fff',
+                background: '#f59e0b', color: '#fff',
                 fontSize: '10px', fontWeight: 700,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 0 0 2px rgba(255,255,255,0.85)',

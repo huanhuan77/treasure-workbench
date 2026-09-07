@@ -30,6 +30,7 @@ export function EditTransactionPage() {
   const [amount, setAmount] = useState(String(tx?.amount ?? ''))
   const [date, setDate] = useState(tx?.date || new Date().toISOString().slice(0, 10))
   const [remark, setRemark] = useState(tx?.remark || '')
+  const [received, setReceived] = useState(tx?.received !== undefined ? !!tx.received : (tx?.type === 'income'))
 
   if (!tx) {
     return (
@@ -44,7 +45,7 @@ export function EditTransactionPage() {
 
   const handleSave = () => {
     if (!amount || Number(amount) <= 0) { show('请输入金额', 'error'); return }
-    updateTransaction(id, { type, category, account, amount: Number(amount), date, remark })
+    updateTransaction(id, { type, category, account, amount: Number(amount), date, remark, received })
     show('已更新', 'success')
     navigate('/finance')
   }
@@ -59,7 +60,7 @@ export function EditTransactionPage() {
         <div style={{ ...glassStyle, padding: '16px', overflowX: 'hidden' }}>
         <Field label="类型">
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => { setType('income'); setCategory(INCOME_TYPES.includes(category) ? category : 'sample') }}
+            <button onClick={() => { setType('income'); setCategory(INCOME_TYPES.includes(category) ? category : 'sample'); setReceived(true) }}
               style={{ flex: 1, padding: '11px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: 'none',
                 background: type === 'income' ? 'linear-gradient(135deg, #34d399, #10b981)' : 'rgba(255, 255, 255, 0.5)',
                 color: type === 'income' ? '#fff' : 'var(--text-sub)' }}>💰 收入</button>
@@ -99,6 +100,22 @@ export function EditTransactionPage() {
         <Field label="日期">
           <input type="date" style={inputStyle} value={date} onChange={e => setDate(e.target.value)} />
         </Field>
+        {type === 'income' && (
+          <Field label="收款状态">
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => setReceived(true)} style={{
+                flex: 1, padding: '10px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer',
+                background: received ? 'linear-gradient(135deg, #34d399, #10b981)' : 'rgba(255,255,255,0.5)',
+                color: received ? '#fff' : 'var(--text-sub)',
+              }}>已收款</button>
+              <button onClick={() => setReceived(false)} style={{
+                flex: 1, padding: '10px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer',
+                background: !received ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'rgba(255,255,255,0.5)',
+                color: !received ? '#fff' : 'var(--text-sub)',
+              }}>待收款</button>
+            </div>
+          </Field>
+        )}
         <Field label="备注（选填）">
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="备注" value={remark} onChange={e => setRemark(e.target.value)} />
         </Field>

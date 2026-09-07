@@ -3661,6 +3661,8 @@ export function StoreProvider({ children }) {
       amount: Number(tx.amount) || 0,
       date: tx.date || new Date().toISOString().slice(0, 10),
       remark: tx.remark || '',
+      // 收款状态（仅收入有意义）：income 默认已收款
+      received: tx.received !== undefined ? !!tx.received : (tx.type === 'income'),
       createdAt: now,
       updatedAt: now,
     }
