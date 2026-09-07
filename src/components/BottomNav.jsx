@@ -17,19 +17,14 @@ const mainTabs = [
   { to: '/orders', label: '出单', Icon: MoneyIcon },
 ]
 
-// 更多侧边栏 tab
+// 更多侧边栏 tab（总览已有入口的不重复列出）
 const sideTabs = [
-  { to: '/finance', label: '收支', icon: '💳' },
-  { to: '/publish-reminders', label: '发布提醒', icon: '⏰' },
-  { to: '/publish-records', label: '视频发布记录', icon: '🎬' },
-  { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/reading', label: '读书成长', icon: '📚' },
   { to: '/brands', label: '品牌方', icon: '🤝' },
   { to: '/savings', label: '攒钱计划', icon: '🐷' },
   { to: '/investment', label: '投资跟踪', icon: '📈' },
   { to: '/sensitive', label: '违禁词', icon: '🚫' },
-  { to: '/dramas', label: '追剧', icon: '📺' },
 ]
 
 function TabItem({ to, label, Icon, end, onClick, badge }) {
