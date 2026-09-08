@@ -77,7 +77,8 @@ export function NewSamplePage() {
           )}
         </Field>
         <Field label="归属账号（可多选，选几个账号就生成几条样品）">
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          {/* 账号按钮单行横排，超出可横向滚动，避免换行挤压布局 */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', paddingBottom: '2px', scrollbarWidth: 'none' }} className="hide-scrollbar">
             {ACCOUNTS.map(a => {
               const selected = accounts.includes(a)
               return (
