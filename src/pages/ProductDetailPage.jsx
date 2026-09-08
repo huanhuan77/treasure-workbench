@@ -186,7 +186,7 @@ export function ProductDetailPage() {
     if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
   }
 
-  // 复制该产品全部话题（产品级 + 所有文案自带，去重），输出标准 #话题# 空格分隔
+  // 复制该产品全部话题（产品级 + 所有文案自带，去重），纯文本空格分隔（不带 #）
   const copyAllTopics = async () => {
     const set = new Set()
     const add = (list) => (list || []).forEach((t) =>
@@ -194,7 +194,7 @@ export function ProductDetailPage() {
     )
     add(product.topics)
     ;(product.copies || []).forEach((c) => add(c.topics))
-    const text = [...set].map((t) => '#' + t + '#').join(' ')
+    const text = [...set].join(' ')
     const ok = await copyText(text)
     show(ok ? `已复制 ${set.size} 个话题` : '复制失败', ok ? 'success' : 'error')
   }
