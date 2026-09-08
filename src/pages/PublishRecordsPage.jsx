@@ -91,14 +91,15 @@ export function PublishRecordsPage() {
                         <span style={{ fontSize: '15px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sm ? sm.name : '（样品已删除）'}</span>
                         {q > 1 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px' }}>×{q}</span>}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '2px' }}>📅 {r.publishDate}</div>
                     </div>
                     <button onClick={() => handleDelete(r)} style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecdd3', background: '#fff', color: '#f43f5e', fontSize: '12px', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>删除</button>
                   </div>
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                  {/* 账号与发布时间同一行：账号在前，时间紧跟其后（靠右对齐，不单独占一行） */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
                     {(r.accounts && r.accounts.length ? r.accounts : getAccounts(sm || {})).map((a) => (
                       <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
                     ))}
+                    <span style={{ fontSize: '12px', color: '#9ca3af', marginLeft: 'auto', whiteSpace: 'nowrap', flexShrink: 0 }}>📅 {r.publishDate}</span>
                   </div>
                 </div>
                 </SwipeRow>

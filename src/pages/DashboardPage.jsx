@@ -349,7 +349,7 @@ export function DashboardPage() {
             暂无需要发布提醒的样品
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto', paddingRight: '2px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {reminders.map((s) => (
               <div key={s.id} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -393,8 +393,8 @@ export function DashboardPage() {
             近 7 天没有即将到期的样品
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto', paddingRight: '2px' }}>
-            {expiringSoon.slice(0, 5).map((s) => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {expiringSoon.map((s) => {
               const du = daysUntil(s.deadline)
               const overdue = du !== null && du < 0
               const text = overdue
@@ -430,14 +430,15 @@ export function DashboardPage() {
               <span style={{ fontSize: '20px', flexShrink: 0 }}>📺</span>
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>追剧</div>
-                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>共 {(dramas || []).length} 部 · 点此添加 / 管理</div>
+                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>共 {(dramas || []).length} 部 · 点此查看全部 / 管理</div>
               </div>
             </div>
             <span style={{ fontSize: '16px', color: '#c9c4c6', flexShrink: 0 }}>›</span>
           </div>
           {(dramas || []).length > 0 && (
-            <div style={{ marginTop: '6px' }}>
-              {(dramas || []).slice(0, 5).map((d, i) => (
+            /* 列表高度约 5 条(5×35px)，超出部分可滚动；点击标题栏进 /dramas 查看全部 */
+            <div className="hide-scrollbar" style={{ marginTop: '6px', maxHeight: '175px', overflowY: 'auto', paddingRight: '2px' }}>
+              {(dramas || []).map((d, i) => (
                 <div key={d.id} style={{ borderTop: '1px solid #f2ebee', padding: '8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ flexShrink: 0, fontSize: '11px', color: '#c9c4c6', fontWeight: 600, width: '16px' }}>{i + 1}</span>
                   <span style={{ flex: 1, minWidth: 0, fontSize: '14px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
@@ -446,11 +447,6 @@ export function DashboardPage() {
                   </span>
                 </div>
               ))}
-              {(dramas || []).length > 5 && (
-                <div style={{ borderTop: '1px solid #f2ebee', padding: '8px 0 2px', fontSize: '11px', color: '#c9c4c6', textAlign: 'center' }}>
-                  还有 {(dramas || []).length - 5} 部，点此上方查看全部
-                </div>
-              )}
             </div>
           )}
         </div>
