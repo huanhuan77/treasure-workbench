@@ -139,14 +139,25 @@ export function recomputeTopStatus(s) {
 
 // 不可变地设置某账号的执行状态，并同步顶层 status
 export function setExecStatus(s, account, execKey) {
-  if (!EXEC_STATUS[execKey]) return s
-  const accounts = getAccounts(s)
+  if (!EXEC_STATUS[execKey] || !s || typeof s !== 'object') return s
+  const accounts = [...getAccounts(s)]          // 克隆，避免污染原数组
   const execByAccount = { ...(s.execByAccount || {}) }
-  if (!accounts.includes(account)) {
-    accounts.push(account)
+  const countsByAccount = { ...(s.countsByAccount || {}) }
+  const c = countsByAccount[account]
+  if (!c) {
+    // 新账号：补一个 0 起点计数条目（不覆盖已有同名账号）
+    countsByAccount[account] = { publishCount: 0, orderCount: 0, lastPublishAt: '' }
   }
+  if (!accounts.includes(account)) accounts.push(account)
   execByAccount[account] = execKey
-  const next = { ...s, accounts, execByAccount, status: recomputeTopStatus({ ...s, accounts, execByAccount }) }
+  const next = {
+    ...s,
+    account: accounts[0] || '',
+    accounts,
+    execByAccount,
+    countsByAccount,
+    status: recomputeTopStatus({ ...s, accounts, execByAccount }),
+  }
   // 从放弃改回其它状态 → 视为该账号已人工处理，之后不再被自动放弃改回
   if (s.autoAbandonedByAccount && s.autoAbandonedByAccount[account] && execKey !== 'abandoned') {
     const dismiss = { ...(s.abandonDismissedByAccount || {}) }
@@ -203,17 +214,15 @@ export function normalizeSample(s) {
 }
 
 // 样品是否匹配某个筛选 key（用于 SamplesPage 状态分组卡）
-// un_arrived/arrived 按实体物流；shot/published/abandoned 按"任一账号拥有该执行状态"
+// 口径：以「互斥代表态」getTopStatus 归类 —— 每个样品只属于一个状态分组，
+// 保证 5 张卡之和 = 样品总数、且「卡片数字 = 点它后列表条数」。
+// 代表态判定：未到货 > (执行态: 已发布 > 已拍摄 > 放弃) > 到货未拍。
 export function sampleMatchesFilter(s, filterKey) {
   if (!filterKey || filterKey === 'all') return true
-  if (filterKey === 'un_arrived' || filterKey === 'arrived') {
-    return getLogistics(s) === filterKey
-  }
-  const exec = getExecByAccount(s)
-  return Object.values(exec).includes(filterKey)
+  return getTopStatus(s) === filterKey
 }
 
-// 返回被「系统自动放弃」且用户未手动解除的账号列表（按账号粒度）
+// 返回样品各账号中被「系统自动放弃」且用户未手动解除的账号列表（按账号粒度）
 export function getAutoAbandonedAccounts(s) {
   if (!s || !s.autoAbandoned) return []
   const exec = s.execByAccount || {}
@@ -222,7 +231,8 @@ export function getAutoAbandonedAccounts(s) {
   return getAccounts(s).filter((a) => exec[a] === 'abandoned' && auto[a] && !dismiss[a])
 }
 
-// 统计各状态样品数量（物流态按实体，执行态按"至少一个账号命中"）
+// 统计各状态下样品数量。口径与 sampleMatchesFilter 一致：以互斥代表态 getTopStatus 归类，
+// 每个样品只 +1，保证 5 张卡之和 = 过滤后样品总数（不再因多账号不同状态而重复计数）。
 export function computeStatusStats(samples, accountFilter) {
   const stats = {}
   for (const k of SAMPLE_STATUS_ORDER) stats[k] = 0
@@ -230,12 +240,8 @@ export function computeStatusStats(samples, accountFilter) {
     ? (samples || []).filter((s) => getAccounts(s).includes(accountFilter))
     : (samples || [])
   for (const s of list) {
-    if (getLogistics(s) === 'un_arrived') stats.un_arrived++
-    else if (getLogistics(s) === 'arrived') stats.arrived++
-    const exec = getExecByAccount(s)
-    for (const v of Object.values(exec)) {
-      if (v && stats[v] != null) stats[v]++
-    }
+    const p = getTopStatus(s)
+    if (stats[p] != null) stats[p]++
   }
   return stats
 }
