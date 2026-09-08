@@ -54,6 +54,7 @@ export function NewOrderPage() {
   const [showSamples, setShowSamples] = useState(false)
   const [activeEntryIdx, setActiveEntryIdx] = useState(0)
   const [sampleQuery, setSampleQuery] = useState('')
+  const [pickedIds, setPickedIds] = useState(() => new Set())  // 弹窗内多选样品 id 临时集合
 
   // 可选样品：所选账号下「已发布」的样品（规则与旧弹窗一致）
   const candidateSamples = useMemo(() => {
@@ -75,12 +76,22 @@ export function NewOrderPage() {
     })
   }, [candidateSamples, sampleQuery, entries, activeEntryIdx])
 
-  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery('') }
+  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery(''); setPickedIds(new Set()) }
   const openSamplePicker = (idx) => {
     if (!account) { show('请先选择账号', 'error'); return }
     setActiveEntryIdx(idx)
     setSampleQuery('')
+    // 打开时预勾当前行已选样品（让"已选 → 改选/加选"也能直接多选）
+    setPickedIds(new Set([entries[idx]?.sampleId].filter(Boolean)))
     setShowSamples(true)
+  }
+  const togglePicked = (id) => {
+    setPickedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   // 切换账号：清掉可能不属于新账号的已选样品行
@@ -98,8 +109,21 @@ export function NewOrderPage() {
   const addEntry = () => setEntries((prev) => [...prev, { sampleId: '', qty: '1' }])
   const removeEntry = (idx) => setEntries((prev) => prev.filter((_, i) => i !== idx))
   const updateEntry = (idx, patch) => setEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)))
-  const pickSampleForEntry = (idx, sampleId) => {
-    updateEntry(idx, { sampleId })
+  // 弹窗多选确认：按列表显示顺序写出多行；保留锚点之前的行；锚点之后的行剔除已被多选包含的样品
+  const confirmMultiPick = () => {
+    if (pickedIds.size === 0) { closeSamplePicker(); return }
+    const pickedArr = filteredSamples.filter((s) => pickedIds.has(s.id)).map((s) => s.id)
+    if (pickedArr.length === 0) { closeSamplePicker(); return }
+    setEntries((prev) => {
+      const idx = Math.min(activeEntryIdx, prev.length)
+      const before = prev.slice(0, idx)
+      const after = prev.slice(idx + 1).filter((e) => !pickedIds.has(e.sampleId))
+      return [
+        ...before,
+        ...pickedArr.map((id) => ({ sampleId: id, qty: '1' })),
+        ...after,
+      ]
+    })
     closeSamplePicker()
   }
 
@@ -271,8 +295,39 @@ export function NewOrderPage() {
         }}>保存出单记录</button>
       </div>
 
-      {/* 样品选择弹层（仅已发布） */}
-      <Modal open={showSamples} onClose={closeSamplePicker} title="选择样品">
+      {/* 样品选择弹层（仅已发布），弹窗内多选 */}
+      <Modal
+        open={showSamples}
+        onClose={closeSamplePicker}
+        title="选择样品"
+        footer={
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={closeSamplePicker}
+              style={{
+                flex: 1, padding: '12px', borderRadius: '14px', border: 'none',
+                background: 'rgba(252, 231, 243, 0.6)', color: 'var(--text-sub)',
+                fontSize: '15px', fontWeight: 500, cursor: 'pointer',
+              }}
+            >取消</button>
+            <button
+              type="button"
+              onClick={confirmMultiPick}
+              disabled={pickedIds.size === 0}
+              style={{
+                flex: 1, padding: '12px', borderRadius: '14px', border: 'none',
+                background: pickedIds.size === 0
+                  ? 'rgba(244,114,182,0.25)'
+                  : 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)',
+                color: '#fff', fontSize: '15px', fontWeight: 600,
+                cursor: pickedIds.size === 0 ? 'not-allowed' : 'pointer',
+                boxShadow: pickedIds.size === 0 ? 'none' : '0 4px 14px rgba(244,114,182,0.3)',
+              }}
+            >确定{pickedIds.size > 0 ? ` · 已选 ${pickedIds.size}` : ''}</button>
+          </div>
+        }
+      >
         <div style={{ padding: '0 0 10px' }}>
           <input
             autoFocus
@@ -281,17 +336,35 @@ export function NewOrderPage() {
             onChange={(e) => setSampleQuery(e.target.value)}
             style={{ ...fieldBox, borderColor: sampleQuery ? 'rgba(244,114,182,0.6)' : 'rgba(0,0,0,0.08)' }}
           />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', fontSize: '12px', color: 'var(--text-sub)' }}>
+            <span>已勾选 <b style={{ color: 'var(--primary)' }}>{pickedIds.size}</b> 个</span>
+            {filteredSamples.length > 0 && (
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPickedIds(new Set(filteredSamples.map((s) => s.id)))}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                >全选</button>
+                <span style={{ color: '#d1d5db' }}>|</span>
+                <button
+                  type="button"
+                  onClick={() => setPickedIds(new Set())}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                >清空</button>
+              </div>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '55vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {candidateSamples.length === 0 ? (
             <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>该账号下暂无可出单的样品（需已发布）</div>
           ) : filteredSamples.length === 0 ? (
             <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>没有匹配的样品</div>
           ) : (
             filteredSamples.map((s) => {
-              const sel = s.id === entries[activeEntryIdx]?.sampleId
+              const sel = pickedIds.has(s.id)
               return (
-                <button key={s.id} onClick={() => pickSampleForEntry(activeEntryIdx, s.id)} style={{
+                <button key={s.id} onClick={() => togglePicked(s.id)} style={{
                   display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
                   padding: '11px 6px', borderRadius: '8px', border: 'none',
                   background: sel ? 'rgba(22,163,74,0.08)' : 'transparent', color: 'var(--text-main)',
