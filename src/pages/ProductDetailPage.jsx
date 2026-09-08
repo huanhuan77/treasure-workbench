@@ -728,12 +728,14 @@ function CopyCard({
           aria-label="删除文案"
           style={{
             width: '30px', height: '30px', borderRadius: '50%',
-            border: 'none', background: 'rgba(239,68,68,0.10)',
-            color: '#dc2626', fontSize: '15px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            border: '1px solid rgba(0,0,0,0.06)', background: '#fff',
+            color: '#9ca3af', cursor: 'pointer',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', padding: 0,
           }}
-        >❌</button>
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
       </div>
 
       {/* 文案内容 */}
