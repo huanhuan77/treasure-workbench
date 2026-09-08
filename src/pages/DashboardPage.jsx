@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStore } from '../store'
+import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { OrderFormModal } from '../components/OrderFormModal'
 import { checkForUpdate } from '../main'
 import { needPublishReminder, daysSincePublish, isOverdue, OVERDUE_STATES } from '../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
-import { SAMPLE_STATUS } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
 import { DRAMA_STATUS } from '../utils/dramaLib'
 import { DueTag } from '../components/DueTag'
 
@@ -123,9 +123,9 @@ export function DashboardPage() {
     }
   }, [samples, transactions, orders])
 
-  // 自动放弃提醒：发布满 10 条仍 0 出单、已被系统自动置为「放弃」的样品
+  // 自动放弃提醒：发布满 10 条仍 0 出单、已被系统按账号自动置为「放弃」的样品（按账号粒度）
   const autoAbandoned = useMemo(
-    () => (samples || []).filter((s) => s.autoAbandoned && !s.abandonDismissed && s.status === 'abandoned'),
+    () => (samples || []).filter((s) => getAutoAbandonedAccounts(s).length > 0),
     [samples],
   )
 
@@ -358,21 +358,31 @@ export function DashboardPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {autoAbandoned.map((s) => {
-              const acc = s.account || (s.accounts || [])[0] || '未选账号'
-              const c = ACCOUNT_COLOR[acc] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+              const abandonedAccs = getAutoAbandonedAccounts(s)
+              const accChips = abandonedAccs.map((a) => {
+                const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+                return (
+                  <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
+                )
+              })
               return (
                 <div key={s.id} style={{ background: '#fff', border: '1px solid #fecaca', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{acc}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      {accChips}
                       <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                     </div>
                     <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '3px', fontWeight: 600 }}>
-                      已发 {Number(s.publishCount) || 0} 条视频 · 0 出单 → 已自动放弃
+                      发布满 {AUTO_ABANDON_PUBLISH_COUNT} 条视频 · 0 出单 → 已自动放弃
                     </div>
                   </div>
                   <button
-                    onClick={() => { updateSample(s.id, { status: 'published' }); show('已恢复为「已发布」，不再自动放弃', 'success') }}
+                    onClick={() => {
+                      const execByAccount = { ...(s.execByAccount || {}) }
+                      abandonedAccs.forEach((a) => { execByAccount[a] = 'published' })
+                      updateSample(s.id, { execByAccount })
+                      show('已恢复为「已发布」，不再自动放弃', 'success')
+                    }}
                     style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: '1px solid #fecdd3', background: '#fff', color: '#e11d48', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                   >恢复</button>
                 </div>

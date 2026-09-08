@@ -4,6 +4,10 @@ import { todayStr } from './utils/helpers'
 import { recordDelete, clearDelete, setWordTime } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
 import { ACCOUNT_MAP, mapAccount } from './utils/accounts'
+import {
+  getAccounts, getExecStatus, getAggregateCounts, recomputeTopStatus,
+  normalizeSample, EXEC_STATUS,
+} from './utils/sampleStatus'
 
 const StoreContext = createContext(null)
 
@@ -3096,18 +3100,18 @@ function loadData() {
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
     const loadedSamples = (old.samples || []).map((s) => migrateSample({ ...s, account: mapAccount(s.account) }))
-    const loadedPublishRecords = loadPublishRecords(old)
-    // 一次性迁移：清空历史产生的重复视频发布记录（手机上曾出现 28 条完全重复的数据）。
-    // 仅在首个版本运行一次；之后用户手动记的发布记录不受影响。
-    try {
-      if (!localStorage.getItem('mig_publish_clear_v1')) {
-        loadedPublishRecords.length = 0
-        localStorage.setItem('mig_publish_clear_v1', '1')
-        console.log('[migrate] 已清空历史重复视频发布记录')
-      }
-    } catch (e) {}
-    // 样品多选归属 → 拆分为多条单账号样品，并把发布/出单记录重定向到对应账号的样品
-    const split = splitMultiAccountSamples(
+    const loadedPublishRecordsRaw = loadPublishRecords(old)
+    // 历史去重：同一 id 的重复发布记录只保留一条（绝不整批清空，避免误删用户真实数据）
+    const seenRec = new Set()
+    const loadedPublishRecords = (loadedPublishRecordsRaw || []).filter((r) => {
+      if (!r || !r.id) return true
+      if (seenRec.has(r.id)) return false
+      seenRec.add(r.id)
+      return true
+    })
+    // 样品归属多账号 → 不再拆分，合并为一条实体（物流共享、执行状态按账号独立）。
+    // 历史按账号拆分的同产品样品在此一次性合并回去（先写备份，再合并并重定向记录）。
+    const migrated = migrateSamples(
       loadedSamples,
       loadedPublishRecords,
       Array.isArray(old.orders) ? old.orders : [],
@@ -3115,16 +3119,16 @@ function loadData() {
     // 一次性清理：旧键 daily_publish_plan_v1 里的记录（幽灵数据）即使已被之前版本写入主存储，
     // 也在此按 id 彻底剔除，避免「删了还在」的残留。仅本次加载的旧键有效时执行一次。
     const cleanedPublish = legacyPublishIds
-      ? split.publishRecords.filter((r) => !legacyPublishIds.has(r.id))
-      : split.publishRecords
-    const aggregated = aggregatePublish(split.samples, cleanedPublish)
+      ? migrated.publishRecords.filter((r) => !legacyPublishIds.has(r.id))
+      : migrated.publishRecords
+    const aggregated = aggregatePublish(migrated.samples, cleanedPublish)
     // 一次性补齐：「新增发布记录→自动置为已发布」这条规则上线前记的历史发布记录不会回溯，
     // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
     const backfilled = backfillPublishedStatus(aggregated)
     return {
       products: productsFinal,
       samples: backfilled,
-      orders: split.orders,  // 独立出单台账
+      orders: migrated.orders,  // 独立出单台账
       publishRecords: cleanedPublish,
       transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
       savingsData: (() => {
@@ -3234,81 +3238,107 @@ function loadPublishRecords(old) {
   return records
 }
 
-// 多归属样品拆分：样品 accounts 多选 → 拆成多条「单账号」样品
-// 这样「这个账号 × 这个产品」的发布条数、最后发布时间、N天未发提醒才能按账号独立统计，
-// 否则一个样品归属 A、B 两账号时，A 刚发过会把 B 的 30 天未发给掩盖掉。
-function splitMultiAccountSamples(samples, publishRecords, orders) {
-  const idMap = {}     // 原样品 id → { 账号: 新样品 id }
-  const out = []
-  let changed = false
-
-  for (const s of (samples || [])) {
-    const accs = (Array.isArray(s.accounts) && s.accounts.length ? s.accounts : (s.account ? [s.account] : []))
-      .map((a) => mapAccount(a)).filter(Boolean)
-    // 去重
-    const uniq = accs.filter((a, i) => accs.indexOf(a) === i)
-    if (uniq.length <= 1) {
-      // 单归属（或无归属）：保持原样，但保证 account / accounts 一致
-      const acc = uniq[0] || ''
-      out.push(acc ? { ...s, account: acc, accounts: [acc] } : s)
-      idMap[s.id] = { [acc || '__none__']: s.id }
-      continue
-    }
-    changed = true
-    const map = {}
-    uniq.forEach((a, i) => {
-      if (i === 0) {
-        // 第一个账号沿用原 id，尽量不影响已有引用
-        out.push({ ...s, account: a, accounts: [a] })
-        map[a] = s.id
-      } else {
-        const nid = uid()
-        out.push({ ...s, id: nid, account: a, accounts: [a] })
-        map[a] = nid
-      }
-    })
-    idMap[s.id] = map
+// 样品归属多账号 → 合并为一条实体（物流共享、执行状态按账号独立）。
+// 历史版本曾把多账号样品拆成多条，这里在首次启动时一次性合并回去（先写备份，再合并，
+// 并把发布/出单记录的 sampleId 重定向到保留的实体 id），之后数据即为合并后的形态。
+// 合并完成后每启动一次都只做结构规整（normalizeSample），不再拆分。
+function migrateSamples(samples, publishRecords, orders) {
+  let marker = '0'
+  try { marker = localStorage.getItem('mig_merge_accounts_v1') || '0' } catch (e) {}
+  if (marker === '1') {
+    return { samples: (samples || []).map(normalizeSample), publishRecords: publishRecords || [], orders: orders || [] }
   }
-
-  if (!changed) {
-    return { samples: out, publishRecords: publishRecords || [], orders: orders || [] }
-  }
-
-  // 发布记录：按 accounts 拆分/重定向到各自账号的样品
-  const newRecords = []
-  for (const r of (publishRecords || [])) {
-    const map = r.sampleId ? idMap[r.sampleId] : null
-    if (!map) { newRecords.push(r); continue }
-    const keys = Object.keys(map)
-    // 只按记录自身声明的账号拆分；记录没写账号时不 fan-out，避免同一条记录被复制到每个账号各算一次
-    const rAccs = (Array.isArray(r.accounts) ? r.accounts : [])
-      .map((a) => mapAccount(a)).filter((a) => map[a])
-    if (!rAccs.length) {
-      // 记录本身没账号：只归属到第一个账号（主样品）
-      const k = keys[0]
-      newRecords.push({ ...r, sampleId: map[k], accounts: k === '__none__' ? [] : [k] })
-      continue
-    }
-    rAccs.forEach((a, i) => {
-      newRecords.push(i === 0
-        ? { ...r, sampleId: map[a], accounts: [a] }
-        : { ...r, id: uid(), sampleId: map[a], accounts: [a] })
-    })
-  }
-
-  // 出单记录：按 account 重定向到对应账号的样品
-  const newOrders = (orders || []).map((o) => {
-    const map = o.sampleId ? idMap[o.sampleId] : null
-    if (!map) return o
-    const acc = mapAccount(o.account)
-    const target = map[acc] || map[Object.keys(map)[0]]
-    return target ? { ...o, sampleId: target } : o
-  })
-
-  return { samples: out, publishRecords: newRecords, orders: newOrders }
+  // 合并前先完整备份，极端情况下可回退
+  try {
+    localStorage.setItem('mig_merge_accounts_backup_v1', JSON.stringify({
+      samples: samples || [], publishRecords: publishRecords || [], orders: orders || [], at: Date.now(),
+    }))
+  } catch (e) {}
+  const { merged, idMap } = mergeSplitSamples(samples || [])
+  const newRecords = (publishRecords || []).map((r) => (idMap[r.sampleId] ? { ...r, sampleId: idMap[r.sampleId] } : r))
+  const newOrders = (orders || []).map((o) => (idMap[o.sampleId] ? { ...o, sampleId: idMap[o.sampleId] } : o))
+  try { localStorage.setItem('mig_merge_accounts_v1', '1') } catch (e) {}
+  return { samples: merged.map(normalizeSample), publishRecords: newRecords, orders: newOrders }
 }
 
-// 由发布记录重算样品聚合字段（发布历史/最近发布/发布条数），纯函数
+// 把「同名 + 同 productId」的多个样品（即历史按账号拆分的产物）合并为一条实体
+function mergeSplitSamples(samples) {
+  const groups = new Map()
+  for (const s of samples) {
+    const name = (s.name || '').trim()
+    const pid = s.productId || ''
+    const key = name + '\u0000' + pid
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(s)
+  }
+  const out = []
+  const idMap = {}   // 所有旧 id → 保留的实体 id
+  for (const [, items] of groups) {
+    if (items.length === 1) {
+      const s = items[0]
+      idMap[s.id] = s.id
+      out.push(s)
+      continue
+    }
+    const keep = items[0]   // 沿用第一条的 id，尽量不影响已有引用
+    const accounts = []
+    const execByAccount = {}
+    const countsByAccount = {}
+    const links = []
+    const linkSeen = new Set()
+    for (const s of items) {
+      const acc = (s.account || (Array.isArray(s.accounts) && s.accounts[0]) || '').trim()
+      if (!acc) continue
+      const st = s.status
+      const exec = EXEC_STATUS[st] ? st : null
+      const cnt = Number(s.publishCount) || 0
+      const oc = Number(s.orderCount) || 0
+      const lp = s.lastPublishAt || ''
+      const idx = accounts.indexOf(acc)
+      if (idx === -1) {
+        accounts.push(acc)
+        execByAccount[acc] = exec
+        countsByAccount[acc] = { publishCount: cnt, orderCount: oc, lastPublishAt: lp }
+      } else {
+        // 同账号重复（异常数据）：执行状态取第一个非空；计数取较大值
+        if (!execByAccount[acc] && exec) execByAccount[acc] = exec
+        const cur = countsByAccount[acc]
+        if (cnt > (cur.publishCount || 0) || oc > (cur.orderCount || 0)) {
+          countsByAccount[acc] = {
+            publishCount: Math.max(cnt, cur.publishCount || 0),
+            orderCount: Math.max(oc, cur.orderCount || 0),
+            lastPublishAt: (lp > (cur.lastPublishAt || '')) ? lp : (cur.lastPublishAt || ''),
+          }
+        }
+      }
+      for (const l of (Array.isArray(s.links) ? s.links : [])) {
+        if (l && l.url && !linkSeen.has(l.url)) { linkSeen.add(l.url); links.push(l) }
+      }
+      idMap[s.id] = keep.id
+    }
+    if (accounts.length === 0) {
+      // 极端情况：拆分的条目都没账号，退回保留单条原样
+      idMap[keep.id] = keep.id
+      out.push(keep)
+      continue
+    }
+    // 物流状态：任一账号已到货/拍摄/发布/放弃 → 视为已到货（一个产品一份物流）
+    const arrived = items.some((s) => ['arrived', 'shot', 'published', 'abandoned'].includes(s.status))
+    out.push({
+      ...keep,
+      accounts,
+      account: accounts[0],
+      logistics: arrived ? 'arrived' : 'un_arrived',
+      execByAccount,
+      countsByAccount,
+      links,
+      status: undefined, // 交给 normalizeSample 重算
+    })
+  }
+  return { merged: out, idMap }
+}
+
+// 由发布记录重算样品按账号统计（发布条数/最近发布），并同步顶层聚合字段，纯函数
 function aggregatePublish(samples, records) {
   const bySample = {}
   for (const r of (records || [])) {
@@ -3318,21 +3348,47 @@ function aggregatePublish(samples, records) {
   }
   return (samples || []).map((s) => {
     const list = bySample[s.id]
-    if (!list || !list.length) return s
-    const dates = list.map((r) => r.publishDate).filter(Boolean).sort()
-    const last = dates.length ? dates[dates.length - 1] : ''
-    // 视频条数 = 各记录 qty 累加（向下兼容无 qty 的旧记录视为 1 条）
-    const count = list.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
-    return {
-      ...s,
-      publishHistory: list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: Number(r.qty) > 0 ? Number(r.qty) : 1 })),
-      lastPublishAt: last,
-      publishCount: count,
+    const accounts = getAccounts(s)
+    const countsByAccount = { ...(s.countsByAccount || {}) }
+    let changed = false
+    for (const a of accounts) {
+      if (!countsByAccount[a]) { countsByAccount[a] = { publishCount: 0, orderCount: Number(s.orderCount) || 0, lastPublishAt: '' }; changed = true }
     }
+    if (list && list.length) {
+      const perAcct = {}
+      for (const r of list) {
+        const rAccs = (Array.isArray(r.accounts) && r.accounts.length ? r.accounts : accounts)
+          .map((a) => mapAccount(a)).filter((a) => accounts.includes(a))
+        const qty = Number(r.qty) > 0 ? Number(r.qty) : 1
+        const targets = rAccs.length ? rAccs : accounts
+        for (const a of targets) {
+          if (!perAcct[a]) perAcct[a] = { count: 0, dates: [] }
+          perAcct[a].count += qty
+          if (r.publishDate) perAcct[a].dates.push(r.publishDate)
+        }
+      }
+      for (const a of Object.keys(perAcct)) {
+        const c = perAcct[a]
+        countsByAccount[a] = {
+          publishCount: c.count,
+          orderCount: Number(countsByAccount[a]?.orderCount) || 0,
+          lastPublishAt: c.dates.filter(Boolean).sort().slice(-1)[0] || '',
+        }
+        changed = true
+      }
+    }
+    if (!changed && !list) return s
+    const next = { ...s, countsByAccount, publishHistory: list ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: Number(r.qty) > 0 ? Number(r.qty) : 1 })) : (s.publishHistory || []) }
+    const agg = getAggregateCounts(next)
+    next.publishCount = agg.publishCount
+    next.orderCount = agg.orderCount
+    next.lastPublishAt = agg.lastPublishAt
+    next.status = recomputeTopStatus(next)
+    return next
   })
 }
 
-// 一次性补正：有发布记录（publishCount > 0）却仍停在「已拍摄/已到货」等状态的历史样品 → 置为「已发布」。
+// 一次性补正：有发布记录（publishCount > 0）却仍停在物流阶段/已拍摄等状态的历史样品 → 对应账号置为「已发布」。
 // 只执行一次（靠 mig_publish_status_v1 标记），之后用户手动改状态不会被反复覆盖回去。
 // 已放弃的不动，尊重用户与自动放弃规则的判断。
 function backfillPublishedStatus(samples) {
@@ -3342,9 +3398,22 @@ function backfillPublishedStatus(samples) {
   try { localStorage.setItem('mig_publish_status_v1', '1') } catch (e) {}
   if (!Array.isArray(samples)) return samples
   return samples.map((s) => {
-    if (!s || s.status === 'published' || s.status === 'abandoned') return s
-    if (!(Number(s.publishCount) > 0)) return s
-    return { ...s, status: 'published' }
+    if (!s) return s
+    const execByAccount = { ...(s.execByAccount || {}) }
+    let changed = false
+    for (const a of getAccounts(s)) {
+      const c = s.countsByAccount?.[a]
+      const pub = Number(c?.publishCount) || 0
+      const cur = execByAccount[a]
+      if (pub > 0 && cur !== 'published' && cur !== 'abandoned') {
+        execByAccount[a] = 'published'
+        changed = true
+      }
+    }
+    if (!changed) return s
+    const next = { ...s, execByAccount }
+    next.status = recomputeTopStatus(next)
+    return next
   })
 }
 
@@ -3355,22 +3424,34 @@ export function StoreProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }, [data])
 
-  // 自动放弃规则：同一个账号下的同一个产品（即一条样品），发布满 AUTO_ABANDON_PUBLISH_COUNT 条视频
-  // 却始终 0 出单 → 自动置为「放弃」，并在总览页提醒。
-  // 已放弃 / 用户手动处理过(abandonDismissed)的不再重复处理，避免覆盖用户意图。
+  // 自动放弃规则（按账号粒度）：同一个样品的某个账号，发布满 AUTO_ABANDON_PUBLISH_COUNT 条视频
+  // 却始终 0 出单 → 该账号自动置为「放弃」，并在总览页提醒。
+  // 已放弃 / 用户手动处理过该账号(abandonDismissedByAccount)的不再重复处理，避免覆盖用户意图。
   useEffect(() => {
     const list = data.samples
     if (!Array.isArray(list) || list.length === 0) return
     let changed = false
     const next = list.map((s) => {
-      if (s.status === 'abandoned' || s.abandonDismissed) return s
-      const pub = Number(s.publishCount) || 0
-      const ord = Number(s.orderCount) || 0
-      if (pub >= AUTO_ABANDON_PUBLISH_COUNT && ord <= 0) {
-        changed = true
-        return { ...s, status: 'abandoned', autoAbandoned: true, autoAbandonedAt: Date.now() }
+      const accounts = getAccounts(s)
+      const execByAccount = { ...(s.execByAccount || {}) }
+      const dismiss = { ...(s.abandonDismissedByAccount || {}) }
+      let sampleChanged = false
+      for (const a of accounts) {
+        if (execByAccount[a] === 'abandoned' || dismiss[a]) continue
+        const c = s.countsByAccount?.[a]
+        const pub = Number(c?.publishCount) || 0
+        const ord = Number(c?.orderCount) || 0
+        if (pub >= AUTO_ABANDON_PUBLISH_COUNT && ord <= 0) {
+          execByAccount[a] = 'abandoned'
+          dismiss[a] = false
+          sampleChanged = true
+        }
       }
-      return s
+      if (!sampleChanged) return s
+      changed = true
+      const u = { ...s, execByAccount, abandonDismissedByAccount: dismiss, autoAbandoned: true, autoAbandonedAt: Date.now() }
+      u.status = recomputeTopStatus(u)
+      return u
     })
     if (!changed) return   // 没有需要处理的样品时必须 early return，否则会无限循环
     setData((d) => ({ ...d, samples: next }))
@@ -3556,37 +3637,42 @@ export function StoreProvider({ children }) {
 
   const addSample = useCallback((sample) => {
     const now = Date.now()
-    // 归属账号多选 → 拆分成多条单账号样品（保证「账号 × 产品」可独立统计发布/出单）
+    // 归属账号多选 → 合并为一条实体（物流共享、执行状态按账号独立）
     const accs = (Array.isArray(sample.accounts) && sample.accounts.length
       ? sample.accounts
-      : (sample.account ? [sample.account] : [])).filter(Boolean)
+      : (sample.account ? [sample.account] : [])).map((a) => mapAccount(a)).filter(Boolean)
     const uniq = accs.length ? accs.filter((a, i) => accs.indexOf(a) === i) : ['']
-
-    const base = {
+    const status = sample.status || 'un_arrived'
+    const isLogistics = status === 'un_arrived' || status === 'arrived'
+    const logistics = isLogistics ? status : 'arrived'
+    const execByAccount = {}
+    if (!isLogistics) for (const a of uniq) if (a) execByAccount[a] = status
+    const countsByAccount = {}
+    for (const a of uniq) if (a) countsByAccount[a] = { publishCount: 0, orderCount: 0, lastPublishAt: '' }
+    const created = {
+      id: uid(),
       name: sample.name || '',
       receiveDate: sample.receiveDate || '',
       deadline: sample.deadline || '',
       remark: sample.remark || '',
-      status: sample.status || 'un_arrived',
       productId: sample.productId || '',
-      isArrived: !!sample.isArrived,
+      isArrived: logistics === 'arrived',
+      accounts: uniq.filter(Boolean),
+      account: uniq.filter(Boolean)[0] || '',
+      logistics,
+      execByAccount,
+      countsByAccount,
+      links: (Array.isArray(sample.links) ? sample.links : []).filter((l) => l && l.url),
       publishHistory: [],
       lastPublishAt: '',
       publishCount: 0,
       orderCount: 0,
-    }
-
-    const created = uniq.map((a) => ({
-      ...base,
-      id: uid(),
-      account: a,
-      accounts: a ? [a] : [],
+      status: recomputeTopStatus({ accounts: uniq.filter(Boolean), logistics, execByAccount }),
       createdAt: now,
       updatedAt: now,
-    }))
-
-    setData((d) => ({ ...d, samples: [...created, ...d.samples] }))
-    return created[0].id
+    }
+    setData((d) => ({ ...d, samples: [created, ...d.samples] }))
+    return created.id
   }, [])
 
   const deleteSample = useCallback((id) => {
@@ -3600,13 +3686,44 @@ export function StoreProvider({ children }) {
       samples: d.samples.map((s) => {
         if (s.id !== id) return s
         const next = { ...s, ...patch, updatedAt: Date.now() }
-        // 用户手动把「系统自动放弃」的样品改回其他状态 → 视为已处理，之后不再自动改回放弃
-        if (s.autoAbandoned && 'status' in patch && next.status !== 'abandoned') {
-          next.abandonDismissed = true
+        // 协调 accounts 与 execByAccount / countsByAccount 一致：补全缺失、剔除已移除账号
+        const accounts = getAccounts(next)
+        const execByAccount = { ...(next.execByAccount || {}) }
+        const countsByAccount = { ...(next.countsByAccount || {}) }
+        let rec = false
+        for (const a of accounts) {
+          if (!(a in execByAccount)) { execByAccount[a] = null; rec = true }
+          if (!(a in countsByAccount)) { countsByAccount[a] = { publishCount: 0, orderCount: 0, lastPublishAt: '' }; rec = true }
         }
+        for (const a of Object.keys(execByAccount)) {
+          if (!accounts.includes(a)) { delete execByAccount[a]; delete countsByAccount[a]; rec = true }
+        }
+        if (rec) { next.execByAccount = execByAccount; next.countsByAccount = countsByAccount }
+        next.account = accounts[0] || ''
+        // 用户把某账号从「系统自动放弃」改回其它状态 → 视为已处理，之后不再自动改回放弃
+        const dismiss = { ...(next.abandonDismissedByAccount || {}) }
+        let dismissChanged = false
+        for (const a of accounts) {
+          if (s.autoAbandonedByAccount && s.autoAbandonedByAccount[a] && execByAccount[a] && execByAccount[a] !== 'abandoned' && !dismiss[a]) {
+            dismiss[a] = true; dismissChanged = true
+          }
+        }
+        if (dismissChanged) next.abandonDismissedByAccount = dismiss
+        if (!next.logistics) next.logistics = getLogistics(next)
+        next.status = recomputeTopStatus(next)
         return next
       }),
     }))
+  }, [])
+
+  // 按账号设置执行状态（物流共享、执行独立）
+  const setAccountExec = useCallback((id, account, execKey) => {
+    setData((d) => ({ ...d, samples: d.samples.map((s) => (s.id === id ? setExecStatus(s, account, execKey) : s)) }))
+  }, [])
+
+  // 设置物流状态（实体级共享）
+  const setSampleLogistics = useCallback((id, key) => {
+    setData((d) => ({ ...d, samples: d.samples.map((s) => (s.id === id ? setLogistics(s, key) : s)) }))
   }, [])
 
   // ── 独立出单台账 ──────────────────────────────────────
@@ -3630,8 +3747,17 @@ export function StoreProvider({ children }) {
       if (newOrder.sampleId) {
         next.samples = d.samples.map((sm) => {
           if (sm.id !== newOrder.sampleId) return sm
-          const orderCount = (Number(sm.orderCount) || 0) + 1
-          return { ...sm, orderCount }
+          const acc = newOrder.account
+          const countsByAccount = { ...(sm.countsByAccount || {}) }
+          const c = countsByAccount[acc]
+            ? { ...countsByAccount[acc] }
+            : { publishCount: Number(sm.publishCount) || 0, orderCount: 0, lastPublishAt: sm.lastPublishAt || '' }
+          c.orderCount = (Number(c.orderCount) || 0) + 1
+          countsByAccount[acc] = c
+          const u = { ...sm, countsByAccount }
+          u.orderCount = getAggregateCounts(u).orderCount
+          u.status = recomputeTopStatus(u)
+          return u
         })
       }
       return next
@@ -3661,15 +3787,22 @@ export function StoreProvider({ children }) {
       if (target && target.sampleId) {
         next.samples = d.samples.map((sm) => {
           if (sm.id !== target.sampleId) return sm
-          const orderCount = Math.max(0, (Number(sm.orderCount) || 0) - 1)
-          return { ...sm, orderCount }
+          const acc = target.account
+          const countsByAccount = { ...(sm.countsByAccount || {}) }
+          if (countsByAccount[acc]) {
+            countsByAccount[acc] = { ...countsByAccount[acc], orderCount: Math.max(0, (Number(countsByAccount[acc].orderCount) || 0) - 1) }
+          }
+          const u = { ...sm, countsByAccount }
+          u.orderCount = getAggregateCounts(u).orderCount
+          u.status = recomputeTopStatus(u)
+          return u
         })
       }
       return next
     })
   }, [])
 
-  // 由发布记录重算样品聚合字段（发布历史/最近发布/发布条数）
+  // 由发布记录重算样品按账号统计（发布历史/最近发布/发布条数），保留各账号出单数
   const recomputeSamplePublish = (samples, records) => {
     const bySample = {}
     for (const r of (records || [])) {
@@ -3679,19 +3812,48 @@ export function StoreProvider({ children }) {
     }
     return (samples || []).map((sm) => {
       const list = bySample[sm.id]
-      if (!list && !sm.publishCount) return sm
-      const dates = list ? list.map((r) => r.publishDate).filter(Boolean).sort() : []
-      const last = dates.length ? dates[dates.length - 1] : (sm.lastPublishAt || '')
-      // 视频条数 = 每条记录的 qty 累加（向下兼容无 qty 字段的旧记录视为 1 条）
-      const count = list
-        ? list.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
-        : (sm.publishCount || 0)
-      return {
-        ...sm,
-        publishHistory: list ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: Number(r.qty) > 0 ? Number(r.qty) : 1 })) : (sm.publishHistory || []),
-        lastPublishAt: last,
-        publishCount: count,
+      const accounts = getAccounts(sm)
+      const countsByAccount = { ...(sm.countsByAccount || {}) }
+      let changed = false
+      for (const a of accounts) {
+        if (!countsByAccount[a]) { countsByAccount[a] = { publishCount: 0, orderCount: Number(sm.orderCount) || 0, lastPublishAt: '' }; changed = true }
       }
+      if (list && list.length) {
+        const perAcct = {}
+        for (const r of list) {
+          const rAccs = (Array.isArray(r.accounts) && r.accounts.length ? r.accounts : accounts)
+            .map((a) => mapAccount(a)).filter((a) => accounts.includes(a))
+          const qty = Number(r.qty) > 0 ? Number(r.qty) : 1
+          const targets = rAccs.length ? rAccs : accounts
+          for (const a of targets) {
+            if (!perAcct[a]) perAcct[a] = { count: 0, dates: [] }
+            perAcct[a].count += qty
+            if (r.publishDate) perAcct[a].dates.push(r.publishDate)
+          }
+        }
+        for (const a of Object.keys(perAcct)) {
+          countsByAccount[a] = {
+            publishCount: perAcct[a].count,
+            orderCount: Number(countsByAccount[a]?.orderCount) || 0,
+            lastPublishAt: perAcct[a].dates.filter(Boolean).sort().slice(-1)[0] || '',
+          }
+          changed = true
+        }
+      }
+      if (!changed && !list) return sm
+      const next = {
+        ...sm,
+        countsByAccount,
+        publishHistory: list
+          ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: Number(r.qty) > 0 ? Number(r.qty) : 1 }))
+          : (sm.publishHistory || []),
+      }
+      const agg = getAggregateCounts(next)
+      next.publishCount = agg.publishCount
+      next.orderCount = agg.orderCount
+      next.lastPublishAt = agg.lastPublishAt
+      next.status = recomputeTopStatus(next)
+      return next
     })
   }
 
@@ -3709,13 +3871,28 @@ export function StoreProvider({ children }) {
     setData((d) => {
       const next = { ...d, publishRecords: [newRec, ...(d.publishRecords || [])] }
       next.samples = recomputeSamplePublish(next.samples, next.publishRecords)
-      // 添加了发布记录 → 样品自动置为「已发布」；已放弃的不自动改回，尊重用户/自动放弃的判断
+      // 添加了发布记录 → 对应账号自动置为「已发布」；已放弃的不自动改回，尊重用户/自动放弃的判断
       if (newRec.sampleId) {
-        next.samples = next.samples.map((sm) => (
-          sm.id === newRec.sampleId && sm.status !== 'abandoned' && sm.status !== 'published'
-            ? { ...sm, status: 'published' }
-            : sm
-        ))
+        const sm = next.samples.find((x) => x.id === newRec.sampleId)
+        if (sm) {
+          const accounts = getAccounts(sm)
+          const rAccs = (Array.isArray(newRec.accounts) && newRec.accounts.length ? newRec.accounts : accounts)
+            .map((a) => mapAccount(a)).filter((a) => accounts.includes(a))
+          const targets = rAccs.length ? rAccs : accounts
+          const execByAccount = { ...(sm.execByAccount || {}) }
+          let changed = false
+          for (const a of targets) {
+            if (execByAccount[a] !== 'abandoned' && execByAccount[a] !== 'published') {
+              execByAccount[a] = 'published'
+              changed = true
+            }
+          }
+          if (changed) {
+            const u = { ...sm, execByAccount }
+            u.status = recomputeTopStatus(u)
+            next.samples = next.samples.map((x) => (x.id === newRec.sampleId ? u : x))
+          }
+        }
       }
       return next
     })
@@ -3870,7 +4047,7 @@ export function StoreProvider({ children }) {
     ...data,
     addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
-    addSample, deleteSample, updateSample,
+    addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics,
     addOrder, updateOrder, deleteOrder,
     addPublishRecord, deletePublishRecord,
     addTransaction, deleteTransaction, updateTransaction,

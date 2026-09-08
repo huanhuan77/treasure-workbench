@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, glassStyle } from '../components/Modal'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
-import { isSelectableForPublish } from '../utils/publish'
+import { getExecByAccount } from '../utils/sampleStatus'
 
 function getDateLabel(dateStr) {
   const weekDays = ['日', '一', '二', '三', '四', '五', '六']
@@ -42,12 +42,13 @@ export function NewPublishRecordPage() {
   const [showSamples, setShowSamples] = useState(false)
   const [sampleQuery, setSampleQuery] = useState('')            // 样品搜索关键词
 
-  // 可选样品：仅「所选发布账号下 + 未发布(已拍摄未发布) / 已发布」状态（与出单/发布板块对齐）
+  // 可选样品：所选账号中，该账号处于「已拍摄未发布 / 已发布」的样品（按账号独立判断）
   const sampleList = useMemo(() => {
     if (accounts.length === 0) return []
-    return (samples || []).filter(
-      (s) => isSelectableForPublish(s.status) && accounts.some((a) => hasAccount(s, a)),
-    )
+    return (samples || []).filter((s) => {
+      const execByAccount = getExecByAccount(s)
+      return accounts.some((a) => execByAccount[a] === 'shot' || execByAccount[a] === 'published')
+    })
   }, [samples, accounts])
   // 按名称模糊匹配；已选样品置顶
   const filteredSamples = useMemo(() => {

@@ -59,7 +59,7 @@ export function NewSamplePage() {
       commission: Number(commission), orderDate: isOrder ? orderDate : '',
       links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), note: (l.note || '').trim() })),
     })
-    show(accounts.length > 1 ? `已按 ${accounts.length} 个账号拆分为 ${accounts.length} 条样品` : '已添加', 'success')
+    show(accounts.length > 1 ? `已创建（归属 ${accounts.length} 个账号，物流共享、状态按账号独立）` : '已添加', 'success')
     navigate('/samples')
   }
 
@@ -116,7 +116,7 @@ export function NewSamplePage() {
               background: 'rgba(244,114,182,0.12)', border: '1px solid rgba(244,114,182,0.3)',
               borderRadius: '10px', padding: '8px 10px',
             }}>
-              将拆分为 <b>{accounts.length}</b> 条样品（{accounts.join(' / ')}），各账号的发布条数与出单独立统计、互不干扰。
+              将创建 <b>1 条</b>样品（归属 {accounts.join(' / ')}）：物流状态共享，发布条数与出单按账号独立统计，可在列表/编辑里分别管理每个账号的状态。
             </div>
           )}
         </Field>

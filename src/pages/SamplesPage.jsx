@@ -9,7 +9,7 @@ import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../c
 import { formatDate, todayStr, deadlineDesc, addDays, copyText } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
-import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getExecStatus, getCounts, getTopStatus, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
 
 // 状态枚举统一从 sampleStatus.js 导入（SAMPLE_STATUS / SAMPLE_STATUS_ORDER / SAMPLE_STATUS_LIST）
 
@@ -48,7 +48,7 @@ export function SamplesPage() {
   const [swipedId, setSwipedId] = useState(null)
   // 当前要查看/复制链接的样品 id（null=关闭弹窗）
   const [linksSampleId, setLinksSampleId] = useState(null)
-  const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'un_arrived')
+  const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'all')
   // 账号选择弹窗
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const [accountDraft, setAccountDraft] = useState('all')
@@ -126,7 +126,7 @@ export function SamplesPage() {
   const sorted = useMemo(() => samples, [samples])
   const filtered = useMemo(() => {
     if (filter === 'all') return sorted
-    return sorted.filter((s) => s.status === filter)
+    return sorted.filter((s) => sampleMatchesFilter(s, filter))
   }, [sorted, filter])
   const accountFiltered = useMemo(() => {
     let r = filtered
@@ -149,14 +149,7 @@ export function SamplesPage() {
     })
   }, [accountFiltered, sortKey, sortDir])
 
-  const statusStats = useMemo(() => {
-    const stats = {}
-    for (const k of SAMPLE_STATUS_ORDER) stats[k] = 0
-    // 只统计当前所选账号的数据
-    const ss = accountFilter === 'all' ? samples : samples.filter((s) => getAccounts(s).includes(accountFilter))
-    ss.forEach((s) => { if (SAMPLE_STATUS[s.status]) stats[s.status]++ })
-    return stats
-  }, [samples, accountFilter])
+  const statusStats = useMemo(() => computeStatusStats(samples, accountFilter), [samples, accountFilter])
 
 
   // 悬浮+按钮可拖动
@@ -438,9 +431,9 @@ export function SamplesPage() {
               background: 'rgba(0,0,0,0.04)', color: 'var(--text-sub)', border: 'none',
               fontSize: '14px', fontWeight: 600, cursor: 'pointer',
             }}>取消</button>
-            <button onClick={() => {
+            <button             onClick={() => {
               setAccountFilter(accountDraft)
-              setFilter('un_arrived')
+              setFilter('all')
               sessionStorage.setItem('samples_account', accountDraft)
               setAccountModalOpen(false)
             }} style={{
@@ -514,6 +507,11 @@ export function SamplesPage() {
 // 可拖拽排序的样品卡片
 function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, dragEnabled, onEdit, onDelete, onQuickPublish, onOpenLinks }) {
   const canDrag = dragEnabled !== false   // 按日期排序时禁止拖动（否则与排序结果冲突）
+  const logistics = getLogistics(s)
+  const logInfo = LOGISTICS_STATUS[logistics]
+  const logColor = logInfo ? logInfo.color : '#94a3b8'
+  const repStatus = getTopStatus(s)
+  const repInfo = SAMPLE_STATUS[repStatus]
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id, disabled: !canDrag })
   const isSwiped = swipedId === s.id
   const style = {
@@ -538,7 +536,7 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
           onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
           onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
           style={{
-            ...glassStyle, padding: '12px 14px 10px', borderLeft: `3px solid ${st.stripe}`,
+            ...glassStyle, padding: '12px 14px 10px', borderLeft: `3px solid ${logColor}`,
             transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
             position: 'relative', zIndex: 1, cursor: 'pointer',
           }}
@@ -562,21 +560,34 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
               borderRadius: '6px', opacity: canDrag ? 1 : 0.25,
             }}
           >⇕</button>
-          {/* 第一行：产品名 + 状态 */}
+          {/* 第一行：产品名 + 代表状态 */}
           <div style={{ paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '40px' }}>{s.name}</h3>
-            {st && <span style={{ fontSize: '11px', color: '#fff', background: st.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{st.label}</span>}
+            {repInfo && <span style={{ fontSize: '11px', color: '#fff', background: repInfo.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{repInfo.label}</span>}
           </div>
-          {/* 第二行：账号 + 截止时间 */}
+          {/* 第二行：账号 + 各账号执行状态 + 截止时间 */}
           <div style={{ paddingLeft: '28px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: 'var(--text-sub)' }}>
             {acList.length > 0 && (
               hideAccount
                 ? <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: 'rgba(148,163,184,0.16)', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>***</span>
-                : acList.map((a) => (
-                    <span key={a.name} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a.name}</span>
-                  ))
+                : acList.map((a) => {
+                    const exec = getExecStatus(s, a.name)
+                    const c = getCounts(s, a.name)
+                    const execInfo = exec ? EXEC_STATUS[exec] : (logistics === 'arrived' ? null : null)
+                    const tag = exec ? execInfo.label : (logistics === 'arrived' ? '待拍' : '未到货')
+                    const tagColor = exec ? execInfo.color : 'var(--text-sub)'
+                    const tagBg = exec ? execInfo.bg : 'rgba(148,163,184,0.16)'
+                    const published = c.publishCount > 0
+                    return (
+                      <span key={a.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        {a.name}
+                        <span style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: tagBg, color: tagColor, fontWeight: 700 }}>{tag}</span>
+                        {published && <span style={{ fontSize: '9px', opacity: 0.85 }}>发{c.publishCount}</span>}
+                      </span>
+                    )
+                  })
             )}
-            {s.deadline && (s.status === 'un_arrived' || s.status === 'arrived') && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
+            {s.deadline && (logistics === 'un_arrived' || logistics === 'arrived') && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
             {(s.commission || 5) > 5 && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
             {(() => {
               const links = getLinks(s)
