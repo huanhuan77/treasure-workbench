@@ -199,14 +199,6 @@ export function ProductDetailPage() {
     show(ok ? `已复制 ${set.size} 个话题` : '复制失败', ok ? 'success' : 'error')
   }
 
-  // 复制当前筛选列表里所有文案正文（仅正文拼接，不标记用过）
-  const copyVisibleCopies = async () => {
-    const texts = displayedCopies.map((c) => (c.content || '').trim()).filter(Boolean)
-    if (texts.length === 0) { show('没有可复制的文案', 'error'); return }
-    const ok = await copyText(texts.join('\n\n'))
-    show(ok ? `已复制 ${texts.length} 条文案` : '复制失败', ok ? 'success' : 'error')
-  }
-
   const toggleOrder = (copyId, current, existingUsedDate, preview) => {
     updateCopy(id, copyId, {
       hasOrder: !current,
@@ -390,6 +382,7 @@ export function ProductDetailPage() {
               <CopyCard
                 key={copy.id}
                 copy={copy}
+                onCopyContent={() => handleCopyContent(copy.content, copy.id)}
                 onEdit={() => openEditCopy(copy)}
                 onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder, copy.usedDate, (copy.content || '').replace(/\n/g, ' ').slice(0, 12))}
                 onToggleHot={() => toggleHot(copy.id, copy.hasHot)}
@@ -397,17 +390,6 @@ export function ProductDetailPage() {
                 onDelete={() => setDelCopyId(copy.id)}
               />
             ))}
-            {/* 列表底部：一键复制当前列表所有文案正文 */}
-            <button
-              onClick={copyVisibleCopies}
-              style={{
-                width: '100%', padding: '12px',
-                background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)',
-                color: '#fff', borderRadius: '12px',
-                fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-                boxShadow: '0 2px 10px rgba(244, 114, 182, 0.3)',
-              }}
-            >📋 复制文案（当前列表 {displayedCopies.length} 条）</button>
           </div>
         )}
       </div>
@@ -744,6 +726,7 @@ export function ProductDetailPage() {
 
 function CopyCard({
   copy,
+  onCopyContent,
   onEdit, onToggleOrder, onToggleHot, onToggleUsed, onDelete,
 }) {
   const cardAccent = copy.hasOrder
@@ -855,6 +838,23 @@ function CopyCard({
         <ActionBtn active={copy.hasHot} onClick={onToggleHot} activeColor="hot">
           {copy.hasHot ? '🔥 取消爆单' : '🔥 爆单'}
         </ActionBtn>
+      </div>
+
+      {/* 复制文案按钮（放卡片最底部，逻辑不变：复制该条文案） */}
+      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+        <button
+          onClick={onCopyContent}
+          style={{
+            flex: 1,
+            padding: '10px',
+            background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)',
+            color: '#fff',
+            borderRadius: '12px',
+            fontSize: '13px',
+            fontWeight: 600,
+            boxShadow: '0 2px 8px rgba(244, 114, 182, 0.25)',
+          }}
+        >📋 复制文案</button>
       </div>
 
     </div>
