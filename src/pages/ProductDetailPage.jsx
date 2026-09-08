@@ -262,34 +262,41 @@ export function ProductDetailPage() {
           <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayTitle(product)}</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>📋 {product.copies?.length || 0} 文案</span>
-            <button
-              onClick={copyAllTopics}
-              style={{
-                marginLeft: 'auto', background: '#fff', color: 'var(--primary)',
-                border: '1px solid rgba(236, 72, 182, 0.3)',
-                padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
-                cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-              }}
-            >📋 复制话题</button>
           </div>
         </div>
       </header>
 
       {/* 固定区：话题 + 工具行 + 筛选（不随列表滚动）；本层占满根剩余高度，列表在其内独立滚动 */}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '8px 16px 0' }}>
-        {/* 话题：单行横向滚动，不换行，避免话题多时占多行竖向空间 */}
+        {/* 话题：左侧标签固定 + 中间 chips 横向滚动 + 右侧复制图标固定不随滚动 */}
         {allTopicTags.length > 0 && (
-          <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', marginBottom: '10px', paddingBottom: '2px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 600, flexShrink: 0 }}>话题</span>
-            {allTopicTags.map((t, i) => (
-              <span key={i} style={{
-                fontSize: '11px', color: '#7c3aed',
-                background: 'rgba(237, 233, 254, 0.8)',
-                padding: '3px 10px', borderRadius: '999px', fontWeight: 500,
-                border: '1px solid rgba(124, 58, 237, 0.15)',
-                flexShrink: 0, whiteSpace: 'nowrap',
-              }}>{t}</span>
-            ))}
+            <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', flex: 1, minWidth: 0, paddingBottom: '2px' }}>
+              {allTopicTags.map((t, i) => (
+                <span key={i} style={{
+                  fontSize: '11px', color: '#7c3aed',
+                  background: 'rgba(237, 233, 254, 0.8)',
+                  padding: '3px 10px', borderRadius: '999px', fontWeight: 500,
+                  border: '1px solid rgba(124, 58, 237, 0.15)',
+                  flexShrink: 0, whiteSpace: 'nowrap',
+                }}>{t}</span>
+              ))}
+            </div>
+            <button
+              onClick={copyAllTopics}
+              aria-label="复制话题"
+              style={{
+                flexShrink: 0, marginLeft: '4px',
+                width: '30px', height: '30px', borderRadius: '50%',
+                border: '1px solid rgba(236, 72, 153, 0.3)',
+                background: '#fff', color: 'var(--primary)',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', padding: 0,
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
