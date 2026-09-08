@@ -183,6 +183,19 @@ export function ProductDetailPage() {
     show(ok ? '话题已复制' : '复制失败', ok ? 'success' : 'error')
   }
 
+  // 复制该产品全部话题（产品级 + 所有文案自带，去重），输出标准 #话题# 空格分隔
+  const copyAllTopics = async () => {
+    const set = new Set()
+    const add = (list) => (list || []).forEach((t) =>
+      (t || '').split('#').map((x) => x.trim()).filter(Boolean).forEach((x) => set.add('#' + x + '#'))
+    )
+    add(product.topics)
+    ;(product.copies || []).forEach((c) => add(c.topics))
+    const text = [...set].join(' ')
+    const ok = await copyText(text)
+    show(ok ? `已复制 ${set.size} 个话题` : '复制失败', ok ? 'success' : 'error')
+  }
+
   const toggleOrder = (copyId, current, existingUsedDate, preview) => {
     updateCopy(id, copyId, {
       hasOrder: !current,
@@ -243,10 +256,17 @@ export function ProductDetailPage() {
         >‹</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayTitle(product)}</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
             <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>📋 {product.copies?.length || 0} 文案</span>
-            <span style={{ fontSize: '12px', color: '#2563eb', fontWeight: 500 }}>🎬 已发 {Number(product.postedCount) || 0}</span>
-            <span style={{ fontSize: '12px', color: '#e11d48', fontWeight: 500 }}>🔥 {(product.copies || []).filter((c) => c.hasOrder).length} 出单</span>
+            <button
+              onClick={copyAllTopics}
+              style={{
+                marginLeft: 'auto', background: '#fff', color: 'var(--primary)',
+                border: '1px solid rgba(236, 72, 182, 0.3)',
+                padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+                cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+              }}
+            >📋 复制话题</button>
           </div>
         </div>
       </header>
