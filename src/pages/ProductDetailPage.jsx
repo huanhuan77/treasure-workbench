@@ -130,6 +130,17 @@ export function ProductDetailPage() {
     })
   })()
 
+  // 产品全部话题（产品级 + 所有文案自带，去重），标准 #话题# 格式，用于 header 复制话题旁展示
+  const allTopicTags = (() => {
+    const set = new Set()
+    const add = (list) => (list || []).forEach((t) =>
+      (t || '').split('#').map((x) => x.trim()).filter(Boolean).forEach((x) => set.add('#' + x + '#'))
+    )
+    add(product.topics)
+    ;(product.copies || []).forEach((c) => add(c.topics))
+    return [...set]
+  })()
+
   // 执行生成（多风格，结果不入库）
   const handleGenerate = () => {
     if (!genModal.copy) return
@@ -173,14 +184,6 @@ export function ProductDetailPage() {
     const ok = await copyText(content)
     show(ok ? '文案已复制' : '复制失败', ok ? 'success' : 'error')
     if (ok && copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
-  }
-
-  // 复制话题：合并产品级话题和该文案的话题（不标记用过）
-  const handleCopyTopics = async (topics) => {
-    const merged = [...new Set([...(product.topics || []), ...(topics || [])])]
-    const text = merged.join(' ')
-    const ok = await copyText(text)
-    show(ok ? '话题已复制' : '复制失败', ok ? 'success' : 'error')
   }
 
   // 复制该产品全部话题（产品级 + 所有文案自带，去重），输出标准 #话题# 空格分隔
@@ -268,6 +271,18 @@ export function ProductDetailPage() {
               }}
             >📋 复制话题</button>
           </div>
+          {allTopicTags.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+              {allTopicTags.map((t, i) => (
+                <span key={i} style={{
+                  fontSize: '11px', color: '#7c3aed',
+                  background: 'rgba(237, 233, 254, 0.8)',
+                  padding: '2px 9px', borderRadius: '999px', fontWeight: 500,
+                  border: '1px solid rgba(124, 58, 237, 0.15)',
+                }}>{t}</span>
+              ))}
+            </div>
+          )}
         </div>
       </header>
 
@@ -368,7 +383,6 @@ export function ProductDetailPage() {
                 key={copy.id}
                 copy={copy}
                 onCopyContent={() => handleCopyContent(copy.content, copy.id)}
-                onCopyTopics={() => handleCopyTopics(copy.topics)}
                 onEdit={() => openEditCopy(copy)}
                 onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder, copy.usedDate, (copy.content || '').replace(/\n/g, ' ').slice(0, 12))}
                 onToggleHot={() => toggleHot(copy.id, copy.hasHot)}
@@ -712,7 +726,7 @@ export function ProductDetailPage() {
 
 function CopyCard({
   copy,
-  onCopyContent, onCopyTopics,
+  onCopyContent,
   onEdit, onToggleOrder, onToggleHot, onToggleUsed, onDelete,
 }) {
   const cardAccent = copy.hasOrder
@@ -773,41 +787,6 @@ function CopyCard({
         paddingRight: '80px',
       }}>
         {copy.content}
-      </div>
-
-      {/* 第二行：话题（统一放这里，去掉独立「#文案自带话题」小标题 + 复制话题按钮内联到这一行末尾） */}
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1, minWidth: 0 }}>
-            {copy.topics && copy.topics.length > 0 ? (
-              [...new Set((copy.topics || []).filter(Boolean))].map((t, i) => (
-                <span key={i} style={{
-                  fontSize: '12px',
-                  color: '#7c3aed',
-                  background: 'rgba(237, 233, 254, 0.8)',
-                  padding: '3px 9px',
-                  borderRadius: '999px',
-                  fontWeight: 500,
-                  border: '1px solid rgba(124, 58, 237, 0.15)',
-                }}># {t.replace(/^#/, '')}</span>
-              ))
-            ) : (
-              <span style={{ fontSize: '11px', color: 'var(--text-sub)', opacity: 0.7 }}>暂无话题</span>
-            )}
-          </div>
-          <button
-            onClick={onCopyTopics}
-            title="复制话题"
-            style={{
-              flexShrink: 0,
-              fontSize: '12px', fontWeight: 600,
-              padding: '4px 10px', borderRadius: '999px',
-              border: '1px solid rgba(139, 92, 246, 0.25)',
-              background: 'rgba(237, 233, 254, 0.6)',
-              color: '#6d28d9', cursor: 'pointer',
-            }}
-          >📋 复制</button>
-        </div>
       </div>
 
       {/* 状态标签 */}
