@@ -83,7 +83,7 @@ export function SamplePickerPage({
 
       {/* 列表滚动区（底部留出固定确定栏高度） */}
       <div style={{
-        flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 16px calc(92px + var(--safe-bottom))',
+        flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 16px calc(120px + var(--safe-bottom))',
         WebkitOverflowScrolling: 'touch',
       }}>
         {children}
@@ -91,7 +91,7 @@ export function SamplePickerPage({
 
       {/* 底部固定确定栏 */}
       <div style={{
-        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 20,
+        position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 300,
         maxWidth: '480px', margin: '0 auto',
         padding: '12px 16px calc(14px + var(--safe-bottom))',
         borderTop: '1px solid rgba(0,0,0,0.05)',
