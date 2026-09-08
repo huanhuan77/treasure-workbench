@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Modal, glassStyle } from '../components/Modal'
+import { SamplePickerPage } from '../components/SamplePickerPage'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
 import { getExecByAccount } from '../utils/sampleStatus'
 
@@ -151,6 +151,55 @@ export function NewPublishRecordPage() {
   }
 
   const sectionTitle = { fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }
+
+  // 选择样品已改为「全屏跳页」视图（替代底部抽屉弹窗），切走再回来时表单已填内容不丢
+  if (showSamples) {
+    return (
+      <SamplePickerPage
+        title="选择样品"
+        onBack={closeSamplePicker}
+        query={sampleQuery}
+        onQueryChange={setSampleQuery}
+        count={pickedIds.size}
+        showBulk={filteredSamples.length > 0}
+        onSelectAll={() => setPickedIds(new Set(filteredSamples.map((s) => s.id)))}
+        onClear={() => setPickedIds(new Set())}
+        confirmText={`确定${pickedIds.size > 0 ? ` · 已选 ${pickedIds.size}` : ''}`}
+        confirmDisabled={pickedIds.size === 0}
+        onConfirm={confirmMultiPick}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {sampleList.length === 0 ? (
+            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>所选账号下暂无可发布的样品（需未发布 / 已发布）</div>
+          ) : filteredSamples.length === 0 ? (
+            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>没有匹配的样品</div>
+          ) : (
+            filteredSamples.map((s) => {
+              const sel = pickedIds.has(s.id)
+              return (
+                <button key={s.id} onClick={() => togglePicked(s.id)} style={{
+                  display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
+                  padding: '12px 6px', borderRadius: '8px', border: 'none',
+                  background: sel ? 'rgba(244,114,182,0.1)' : 'transparent', color: 'var(--text-main)',
+                  textAlign: 'left', cursor: 'pointer', borderBottom: '1px solid rgba(0,0,0,0.04)',
+                }}>
+                  <span style={{
+                    width: '22px', height: '22px', minWidth: '22px', borderRadius: '6px',
+                    border: sel ? 'none' : '2px solid #d1d5db',
+                    background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'transparent',
+                    color: '#fff', fontSize: '14px', fontWeight: 700,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{sel ? '✓' : ''}</span>
+                  <span style={{ flex: 1, fontSize: '15px', fontWeight: sel ? 600 : 500 }}>{s.name}</span>
+                  {getAccounts(s).map((a) => <span key={a} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600 }}>{a}</span>)}
+                </button>
+              )
+            })
+          )}
+        </div>
+      </SamplePickerPage>
+    )
+  }
 
   return (
     <div className="app-container">
@@ -306,103 +355,6 @@ export function NewPublishRecordPage() {
         }}>保存发布记录</button>
       </div>
 
-      {/* 样品选择弹层（仅未发布/已发布），弹窗内多选 */}
-      <Modal
-        open={showSamples}
-        onClose={closeSamplePicker}
-        title="选择样品"
-        footer={
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              type="button"
-              onClick={closeSamplePicker}
-              style={{
-                flex: 1, padding: '12px', borderRadius: '14px', border: 'none',
-                background: 'rgba(252, 231, 243, 0.6)', color: 'var(--text-sub)',
-                fontSize: '15px', fontWeight: 500, cursor: 'pointer',
-              }}
-            >取消</button>
-            <button
-              type="button"
-              onClick={confirmMultiPick}
-              disabled={pickedIds.size === 0}
-              style={{
-                flex: 1, padding: '12px', borderRadius: '14px', border: 'none',
-                background: pickedIds.size === 0
-                  ? 'rgba(244,114,182,0.25)'
-                  : 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)',
-                color: '#fff', fontSize: '15px', fontWeight: 600,
-                cursor: pickedIds.size === 0 ? 'not-allowed' : 'pointer',
-                boxShadow: pickedIds.size === 0 ? 'none' : '0 4px 14px rgba(244,114,182,0.3)',
-              }}
-            >确定{pickedIds.size > 0 ? ` · 已选 ${pickedIds.size}` : ''}</button>
-          </div>
-        }
-      >
-        {/* 搜索框 */}
-        <div style={{ padding: '0 0 10px' }}>
-          <input
-            autoFocus
-            placeholder="搜索样品名称…"
-            value={sampleQuery}
-            onChange={(e) => setSampleQuery(e.target.value)}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            inputMode="search"
-            name="q"
-            style={{ ...fieldBox, borderColor: sampleQuery ? 'rgba(244,114,182,0.6)' : 'rgba(0,0,0,0.08)' }}
-          />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', fontSize: '12px', color: 'var(--text-sub)' }}>
-            <span>已勾选 <b style={{ color: 'var(--primary)' }}>{pickedIds.size}</b> 个</span>
-            {filteredSamples.length > 0 && (
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button
-                  type="button"
-                  onClick={() => setPickedIds(new Set(filteredSamples.map((s) => s.id)))}
-                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', padding: 0 }}
-                >全选</button>
-                <span style={{ color: '#d1d5db' }}>|</span>
-                <button
-                  type="button"
-                  onClick={() => setPickedIds(new Set())}
-                  style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '12px', cursor: 'pointer', padding: 0 }}
-                >清空</button>
-              </div>
-            )}
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {sampleList.length === 0 ? (
-            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>所选账号下暂无可发布的样品（需未发布 / 已发布）</div>
-          ) : filteredSamples.length === 0 ? (
-            <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>没有匹配的样品</div>
-          ) : (
-            filteredSamples.map((s) => {
-              const sel = pickedIds.has(s.id)
-              return (
-                <button key={s.id} onClick={() => togglePicked(s.id)} style={{
-                  display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
-                  padding: '11px 6px', borderRadius: '8px', border: 'none',
-                  background: sel ? 'rgba(244,114,182,0.1)' : 'transparent', color: 'var(--text-main)',
-                  textAlign: 'left', cursor: 'pointer', borderBottom: '1px solid rgba(0,0,0,0.04)',
-                }}>
-                  <span style={{
-                    width: '22px', height: '22px', minWidth: '22px', borderRadius: '6px',
-                    border: sel ? 'none' : '2px solid #d1d5db',
-                    background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'transparent',
-                    color: '#fff', fontSize: '14px', fontWeight: 700,
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  }}>{sel ? '✓' : ''}</span>
-                  <span style={{ flex: 1, fontSize: '15px', fontWeight: sel ? 600 : 500 }}>{s.name}</span>
-                  {getAccounts(s).map((a) => <span key={a} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600 }}>{a}</span>)}
-                </button>
-              )
-            })
-          )}
-        </div>
-      </Modal>
     </div>
   )
 }
