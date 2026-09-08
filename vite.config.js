@@ -17,4 +17,22 @@ function versionPlugin() {
 export default defineConfig({
   base: process.env.BASE_PATH || '/',
   plugins: [react(), versionPlugin()],
+  // 拆分大 chunk 以便走 Contents API 部署（单文件 base64 限 1MB）
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // 把 react / react-dom / react-router-dom 拆出来作为 vendor
+            if (id.includes('react-router')) return 'vendor-router'
+            if (id.includes('react-dom') || id.includes('react/')) return 'vendor-react'
+            if (id.includes('antd') || id.includes('@ant-design') || id.includes('@rc-component')) return 'vendor-antd'
+            return 'vendor'
+          }
+          return undefined
+        },
+      },
+    },
+  },
 })

@@ -9,12 +9,14 @@ const PenIcon = () => (<svg {...iconProps}><path d="M4 20l1-4L16.5 4.5a2.12 2.12
 const TagIcon = () => (<svg {...iconProps}><path d="M20.6 12.4 12.4 20.6a2 2 0 0 1-2.8 0l-6.2-6.2a2 2 0 0 1-.6-1.4V5.2a2 2 0 0 1 2-2h7.8a2 2 0 0 1 1.4.6l6.6 6.6a2 2 0 0 1 0 2Z" /><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none" /></svg>)
 const MoneyIcon = () => (<svg {...iconProps}><circle cx="12" cy="12" r="9" /><path d="M12 7v10" /><path d="M14.6 9.6c-.5-.8-1.5-1.2-2.6-1.2-1.4 0-2.5.9-2.5 2s1.1 2 2.5 2 2.5.9 2.5 2-1.1 2-2.5 2c-1.1 0-2.1-.4-2.6-1.2" /></svg>)
 const MoreIcon = () => (<svg {...iconProps}><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none" /></svg>)
+const VideoIcon = () => (<svg {...iconProps}><rect x="3" y="6" width="14" height="12" rx="2" /><path d="M17 10l4-2v8l-4-2" /></svg>)
 
-// 底部主 tab（4 个核心功能 + 更多）
+// 底部主 tab（5 个核心功能 + 更多）：按用户要求把「视频发布记录」独立出来，不再藏在「更多」里
 const mainTabs = [
   { to: '/', label: '总览', Icon: HomeIcon, end: true },
   { to: '/products', label: '文案库', Icon: PenIcon },
   { to: '/samples', label: '样品', Icon: TagIcon },
+  { to: '/publish-records', label: '发布', Icon: VideoIcon },
   { to: '/orders', label: '出单', Icon: MoneyIcon },
 ]
 

@@ -264,10 +264,11 @@ export function HomePage() {
   )
 
   return (
-    <div className="app-container">
+    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <header style={{
         padding: 'calc(16px + var(--safe-top)) 16px 12px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+        flexShrink: 0,
       }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.3px' }}>宝藏工作台</h1>
@@ -275,7 +276,8 @@ export function HomePage() {
         </div>
       </header>
 
-      <div style={{ padding: '8px 16px 4px' }}>
+      {/* 搜索 + 分类筛选：固定不滚动 */}
+      <div style={{ padding: '8px 16px 4px', flexShrink: 0 }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: '8px', background: '#fff',
           borderRadius: '8px', padding: '6px 8px 6px 14px', boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)',
@@ -319,7 +321,8 @@ export function HomePage() {
         </div>
       </div>
 
-      <div style={{ padding: '8px 16px 16px' }}>
+      {/* 列表：独立滚动 */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(16px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {!active ? (
           products.length === 0 ? (
             emptyGlass('📭', '还没有产品', '点击下方 + 添加你的第一个产品')

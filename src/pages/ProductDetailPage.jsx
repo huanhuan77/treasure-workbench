@@ -117,9 +117,7 @@ export function ProductDetailPage() {
   const displayedCopies = (() => {
     let list = product.copies
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
-    else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder && !c.hasHot)
-    else if (copyFilter === '爆单') list = list.filter((c) => c.hasHot)
-    else if (copyFilter === '未用过') list = list.filter((c) => !c.used)
+    else if (copyFilter === '保单') list = list.filter((c) => c.used)
     return [...list].sort((a, b) => {
       if (!sortPending) {
         if (a.hasHot !== b.hasHot) return b.hasHot ? 1 : -1  // 爆单优先
@@ -298,14 +296,12 @@ export function ProductDetailPage() {
           </div>
         </div>
 
-        {/* 文案筛选：全部 / 出单 / 未出单 */}
+        {/* 文案筛选：只保留 出单文案 / 保单文案（按用户要求精简） */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
           {[
             { key: '全部', label: '全部' },
             { key: '出单', label: '出单文案' },
-            { key: '未出单', label: '未出单文案' },
-            { key: '爆单', label: '🔥爆单文案' },
-            { key: '未用过', label: '未用过文案' },
+            { key: '保单', label: '保单文案' },
           ].map((f) => {
             const active = copyFilter === f.key
             return (
@@ -711,6 +707,32 @@ function CopyCard({
       position: 'relative',
       ...cardAccent,
     }}>
+      {/* 右上角操作按钮：编辑 / 删除（按你要求放右上角，编辑 ✏️、删除 ❌） */}
+      <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px', zIndex: 2 }}>
+        <button
+          onClick={onEdit}
+          aria-label="编辑文案"
+          style={{
+            width: '30px', height: '30px', borderRadius: '50%',
+            border: 'none', background: 'rgba(244,114,182,0.12)',
+            color: '#be185d', fontSize: '14px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          }}
+        >✏️</button>
+        <button
+          onClick={onDelete}
+          aria-label="删除文案"
+          style={{
+            width: '30px', height: '30px', borderRadius: '50%',
+            border: 'none', background: 'rgba(239,68,68,0.10)',
+            color: '#dc2626', fontSize: '15px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          }}
+        >❌</button>
+      </div>
+
       {/* 文案内容 */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.5)',
@@ -722,17 +744,18 @@ function CopyCard({
         whiteSpace: 'pre-wrap',
         marginBottom: '8px',
         border: '1px solid rgba(255, 255, 255, 0.5)',
+        // 右上角按钮区宽度约 72px，留出右侧 padding 避免文案贴边
+        paddingRight: '80px',
       }}>
         {copy.content}
       </div>
 
-      {/* 话题：只显示文案自带话题（去重后） */}
+      {/* 第二行：话题（统一放这里，去掉独立「#文案自带话题」小标题 + 复制话题按钮内联到这一行末尾） */}
       <div style={{ marginBottom: '8px' }}>
-        {copy.topics && copy.topics.length > 0 && (
-          <div>
-            <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '4px', fontWeight: 500 }}># 文案自带话题</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {[...new Set((copy.topics || []).filter(Boolean))].map((t, i) => (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', flex: 1, minWidth: 0 }}>
+            {copy.topics && copy.topics.length > 0 ? (
+              [...new Set((copy.topics || []).filter(Boolean))].map((t, i) => (
                 <span key={i} style={{
                   fontSize: '12px',
                   color: '#7c3aed',
@@ -742,10 +765,24 @@ function CopyCard({
                   fontWeight: 500,
                   border: '1px solid rgba(124, 58, 237, 0.15)',
                 }}># {t.replace(/^#/, '')}</span>
-              ))}
-            </div>
+              ))
+            ) : (
+              <span style={{ fontSize: '11px', color: 'var(--text-sub)', opacity: 0.7 }}>暂无话题</span>
+            )}
           </div>
-        )}
+          <button
+            onClick={onCopyTopics}
+            title="复制话题"
+            style={{
+              flexShrink: 0,
+              fontSize: '12px', fontWeight: 600,
+              padding: '4px 10px', borderRadius: '999px',
+              border: '1px solid rgba(139, 92, 246, 0.25)',
+              background: 'rgba(237, 233, 254, 0.6)',
+              color: '#6d28d9', cursor: 'pointer',
+            }}
+          >📋 复制</button>
+        </div>
       </div>
 
       {/* 状态标签 */}
@@ -786,7 +823,7 @@ function CopyCard({
         )}
       </div>
 
-      {/* 复制按钮区 */}
+      {/* 复制文案按钮（复制话题按钮已搬到上面话题行末尾） */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '6px' }}>
         <button
           onClick={onCopyContent}
@@ -801,22 +838,9 @@ function CopyCard({
             boxShadow: '0 2px 8px rgba(244, 114, 182, 0.25)',
           }}
         >📋 复制文案</button>
-        <button
-          onClick={onCopyTopics}
-          style={{
-            flex: 1,
-            padding: '10px',
-            background: 'linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)',
-            color: '#fff',
-            borderRadius: '12px',
-            fontSize: '13px',
-            fontWeight: 600,
-            boxShadow: '0 2px 8px rgba(139, 92, 246, 0.25)',
-          }}
-        >📋 复制话题</button>
       </div>
 
-      {/* 操作按钮区 */}
+      {/* 操作按钮区（编辑/删除已搬到右上角） */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <ActionBtn active={copy.used} onClick={onToggleUsed} activeColor="info">
           {copy.used ? '✓ 用过' : '标记用过'}
@@ -826,12 +850,6 @@ function CopyCard({
         </ActionBtn>
         <ActionBtn active={copy.hasHot} onClick={onToggleHot} activeColor="hot">
           {copy.hasHot ? '🔥 取消爆单' : '🔥 爆单'}
-        </ActionBtn>
-        <ActionBtn onClick={onEdit} tone="neutral">
-          ✎ 编辑
-        </ActionBtn>
-        <ActionBtn onClick={onDelete} tone="danger">
-          删除
         </ActionBtn>
       </div>
 

@@ -8,7 +8,7 @@ import { parseBulkCopies } from '../utils/helpers'
 import { inputStyle, btnPrimary, btnGhost } from '../components/Modal'
 
 // 导入时自动套用的兜底话题（产品未单独配置话题时使用）
-const DEFAULT_IMPORT_TOPICS = ['#好物推荐', '#亲测分享', '#强烈推荐', '#仙女都在喝什么']
+const DEFAULT_IMPORT_TOPICS = []
 
 export function BatchImportPage() {
   const navigate = useNavigate()
@@ -83,7 +83,11 @@ export function BatchImportPage() {
               {ordered > 0 && <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#fee2e2', color: '#dc2626', fontWeight: 600 }}>🔥 出单 {ordered}</span>}
               {used > 0 && <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#dcfce7', color: '#16a34a', fontWeight: 600 }}>✓ 用过 {used}</span>}
               {ordered === 0 && used === 0 && <span style={{ color: 'var(--gray-400)' }}>未标记状态</span>}
-              <div style={{ fontSize: '11px', color: 'var(--primary)', marginBottom: '6px' }}>🏷️ 将自动添加话题：{(product.topics && product.topics.length ? product.topics : DEFAULT_IMPORT_TOPICS).map(t => t.replace(/^#/, '')).join(' ')}</div>
+              {(product.topics && product.topics.length ? (
+                <div style={{ fontSize: '11px', color: 'var(--primary)', marginBottom: '6px' }}>🏷️ 将自动添加产品默认话题：{product.topics.map(t => t.replace(/^#/, '')).join(' ')}</div>
+              ) : (
+                <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '6px' }}>🏷️ 未填话题不会默认填充，留空白</div>
+              ))}
             </div>
             {list.map((item, i) => (
               <div key={i} style={{

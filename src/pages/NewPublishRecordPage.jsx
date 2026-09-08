@@ -37,9 +37,12 @@ export function NewPublishRecordPage() {
 
   const [publishDate, setPublishDate] = useState(() => init.publishDate || new Date().toISOString().slice(0, 10))
   const [accounts, setAccounts] = useState(initAccounts)        // 发布账号：多选
-  const [sampleId, setSampleId] = useState(initSample)
-  const [qty, setQty] = useState('1')                           // 发布数量（≥1）
+  // 多个样品 + 各自数量（行结构）：{ sampleId, qty }[]
+  const [entries, setEntries] = useState(
+    initSample ? [{ sampleId: initSample, qty: '1' }] : []
+  )
   const [showSamples, setShowSamples] = useState(false)
+  const [activeEntryIdx, setActiveEntryIdx] = useState(0)       // 当前在选的 entry 行
   const [sampleQuery, setSampleQuery] = useState('')            // 样品搜索关键词
 
   // 可选样品：所选账号中，该账号处于「已拍摄未发布 / 已发布」的样品（按账号独立判断）
@@ -50,44 +53,67 @@ export function NewPublishRecordPage() {
       return accounts.some((a) => execByAccount[a] === 'shot' || execByAccount[a] === 'published')
     })
   }, [samples, accounts])
-  // 按名称模糊匹配；已选样品置顶
+  // 按名称模糊匹配；已选样品在该账号下置顶；过滤掉其它 entry 已经选过的（同一次发布避免重复）
   const filteredSamples = useMemo(() => {
     const q = sampleQuery.trim().toLowerCase()
-    const list = q ? sampleList.filter((s) => (s.name || '').toLowerCase().includes(q)) : sampleList
+    const usedElsewhere = new Set(entries.map((e, i) => (i === activeEntryIdx ? null : e.sampleId)).filter(Boolean))
+    const base = sampleList.filter((s) => !usedElsewhere.has(s.id))
+    const list = q ? base.filter((s) => (s.name || '').toLowerCase().includes(q)) : base
     return [...list].sort((a, b) => {
-      if (a.id === sampleId) return -1
-      if (b.id === sampleId) return 1
+      const cur = entries[activeEntryIdx]?.sampleId
+      if (a.id === cur) return -1
+      if (b.id === cur) return 1
       return 0
     })
-  }, [sampleList, sampleQuery, sampleId])
+  }, [sampleList, sampleQuery, entries, activeEntryIdx])
 
   const closeSamplePicker = () => { setShowSamples(false); setSampleQuery('') }
-  const openSamplePicker = () => {
+  const openSamplePicker = (idx) => {
     if (accounts.length === 0) { show('请先选择发布账号', 'error'); return }
+    setActiveEntryIdx(idx)
     setShowSamples(true)
   }
 
   const toggleAccount = (a) => {
     const next = accounts.includes(a) ? accounts.filter((x) => x !== a) : [...accounts, a]
-    // 切换账号后，若已选样品不属于新的账号组合 → 清空，避免误关联
-    const sm = sampleId ? (samples || []).find((x) => x.id === sampleId) : null
-    if (sm && !next.some((acc) => hasAccount(sm, acc))) setSampleId('')
     setAccounts(next)
   }
-  const chosen = sampleList.find((s) => s.id === sampleId) || null
+
+  // 增删改 entry 行
+  const addEntry = () => {
+    setEntries((prev) => [...prev, { sampleId: '', qty: '1' }])
+  }
+  const removeEntry = (idx) => {
+    setEntries((prev) => prev.filter((_, i) => i !== idx))
+  }
+  const updateEntry = (idx, patch) => {
+    setEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)))
+  }
+  const pickSampleForEntry = (idx, sampleId) => {
+    updateEntry(idx, { sampleId })
+    closeSamplePicker()
+  }
+
+  const chosenSamples = entries.map((e) => sampleList.find((s) => s.id === e.sampleId) || null)
 
   const handleSave = () => {
     if (accounts.length === 0) { show('请选择至少一个发布账号', 'error'); return }
-    if (!sampleId || !chosen) { show('请选择所选账号下的关联样品', 'error'); return }
-    addPublishRecord({
-      sampleId,
-      productId: chosen?.productId || '',
-      accounts: [...accounts],
-      publishDate,
-      qty: Math.max(1, Number(qty) || 1),
-    })
-    show('已记录发布', 'success')
+    const valid = entries.filter((e) => e.sampleId && (Number(e.qty) >= 1))
+    if (valid.length === 0) { show('请至少选择 1 个样品并填写数量', 'error'); return }
+    let lastId = null
+    for (const e of valid) {
+      const sm = sampleList.find((s) => s.id === e.sampleId)
+      lastId = addPublishRecord({
+        sampleId: e.sampleId,
+        productId: sm?.productId || '',
+        accounts: [...accounts],
+        publishDate,
+        qty: Math.max(1, Number(e.qty) || 1),
+      })
+    }
+    show(`已记录 ${valid.length} 条发布`, 'success')
     navigate(-1)
+    return lastId
   }
 
   const sectionTitle = { fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }
@@ -140,51 +166,84 @@ export function NewPublishRecordPage() {
           </div>
         </div>
 
-        {/* 关联样品：所选发布账号下、未发布/已发布 */}
+        {/* 关联样品 + 发布数量：多产品行结构，每行一个样品 + 各自数量 */}
         <div style={{ marginBottom: '14px' }}>
-          <div style={sectionTitle}>关联样品（仅所选账号下 · 未发布 / 已发布可选）</div>
-          <div style={fieldBox} onClick={openSamplePicker}>
-            <span style={{ color: chosen ? 'var(--text-main)' : '#9ca3af', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              {chosen ? (
-                <>
-                  <span>{chosen.name}</span>
-                  {getAccounts(chosen).map((a) => (
-                    <span key={a} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600 }}>{a}</span>
-                  ))}
-                </>
-              ) : accounts.length === 0 ? '请先在上方选择发布账号' : '点击选择样品'}
-            </span>
-            <span style={{ color: '#c4c9d0', fontSize: '13px' }}>▾</span>
+          <div style={{ ...sectionTitle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>关联样品 & 发布数量（可多选产品，每产品独立计数）</span>
+            <button onClick={addEntry} style={{
+              flexShrink: 0, padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700,
+              border: '1.5px solid rgba(244,114,182,0.35)', background: '#fff', color: 'var(--primary)', cursor: 'pointer',
+            }}>＋ 添加</button>
           </div>
-        </div>
-
-        {/* 发布数量 */}
-        <div style={{ marginBottom: '12px' }}>
-          <div style={sectionTitle}>发布数量（一次记多条视频时填写实际条数）</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button type="button" onClick={() => setQty((v) => String(Math.max(1, (Number(v) || 1) - 1)))} style={{
-              width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid rgba(0,0,0,0.08)',
-              background: '#fff', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', flexShrink: 0,
-            }}>−</button>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={qty}
-              onChange={(e) => {
-                const n = parseInt(e.target.value, 10)
-                if (Number.isNaN(n) || n < 1) setQty('')
-                else setQty(String(n))
-              }}
-              onBlur={() => setQty((v) => (Number(v) >= 1 ? v : '1'))}
-              style={{ ...fieldBox, flex: 1, textAlign: 'center', fontWeight: 700 }}
-            />
-            <button type="button" onClick={() => setQty((v) => String((Number(v) || 1) + 1))} style={{
-              width: '38px', height: '38px', borderRadius: '10px', border: '1.5px solid rgba(0,0,0,0.08)',
-              background: '#fff', fontSize: '20px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', flexShrink: 0,
-            }}>＋</button>
-            <span style={{ fontSize: '12px', color: 'var(--text-sub)', whiteSpace: 'nowrap' }}>条视频</span>
+          {entries.length === 0 && (
+            <div style={{ fontSize: '12px', color: '#9ca3af', padding: '12px', textAlign: 'center', background: '#fff', border: '1.5px dashed rgba(0,0,0,0.10)', borderRadius: '10px' }}>
+              点上方「＋ 添加」或下方按钮，新增一条「样品+数量」行
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {entries.map((e, idx) => {
+              const sm = chosenSamples[idx]
+              return (
+                <div key={idx} style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
+                  borderRadius: '10px', padding: '10px 12px',
+                }}>
+                  {/* 产品名 */}
+                  <button onClick={() => openSamplePicker(idx)} style={{
+                    flex: 1, minWidth: 0, textAlign: 'left',
+                    background: 'transparent', border: 'none', cursor: 'pointer',
+                    fontSize: '14px', color: sm ? 'var(--text-main)' : '#9ca3af',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {sm ? sm.name : '点击选择产品'}
+                  </button>
+                  {/* 发布数量 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                    <button type="button" onClick={() => updateEntry(idx, { qty: String(Math.max(1, (Number(e.qty) || 1) - 1)) })} style={{
+                      width: '30px', height: '30px', borderRadius: '8px', border: '1.5px solid rgba(0,0,0,0.08)',
+                      background: '#fff', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', padding: 0,
+                    }}>−</button>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={e.qty}
+                      onChange={(ev) => {
+                        const n = parseInt(ev.target.value, 10)
+                        if (Number.isNaN(n) || n < 1) updateEntry(idx, { qty: '' })
+                        else updateEntry(idx, { qty: String(n) })
+                      }}
+                      onBlur={() => { if (Number(e.qty) < 1) updateEntry(idx, { qty: '1' }) }}
+                      style={{
+                        width: '46px', height: '30px', textAlign: 'center', fontSize: '14px', fontWeight: 700,
+                        border: '1.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', background: '#fff',
+                        color: 'var(--text-main)', boxSizing: 'border-box',
+                      }}
+                    />
+                    <button type="button" onClick={() => updateEntry(idx, { qty: String((Number(e.qty) || 1) + 1) })} style={{
+                      width: '30px', height: '30px', borderRadius: '8px', border: '1.5px solid rgba(0,0,0,0.08)',
+                      background: '#fff', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', padding: 0,
+                    }}>＋</button>
+                  </div>
+                  {/* 删除该行 */}
+                  <button onClick={() => removeEntry(idx)} aria-label="删除该产品" style={{
+                    width: '30px', height: '30px', borderRadius: '50%',
+                    border: 'none', background: 'rgba(239,68,68,0.10)', color: '#dc2626',
+                    fontSize: '14px', cursor: 'pointer', flexShrink: 0, padding: 0,
+                  }}>×</button>
+                </div>
+              )
+            })}
           </div>
+          {entries.length === 0 && (
+            <button onClick={addEntry} style={{
+              width: '100%', marginTop: '10px', padding: '10px',
+              border: '1.5px dashed rgba(244,114,182,0.45)', borderRadius: '10px',
+              background: 'rgba(244,114,182,0.04)', color: 'var(--primary)',
+              fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+            }}>＋ 添加第一个产品</button>
+          )}
         </div>
       </div>
 
@@ -222,9 +281,9 @@ export function NewPublishRecordPage() {
             <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>没有匹配的样品</div>
           ) : (
             filteredSamples.map((s) => {
-              const sel = s.id === sampleId
+              const sel = s.id === entries[activeEntryIdx]?.sampleId
               return (
-                <button key={s.id} onClick={() => { setSampleId(s.id); closeSamplePicker() }} style={{
+                <button key={s.id} onClick={() => pickSampleForEntry(activeEntryIdx, s.id)} style={{
                   display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
                   padding: '11px 6px', borderRadius: '8px', border: 'none',
                   background: sel ? 'rgba(244,114,182,0.1)' : 'transparent', color: 'var(--text-main)',

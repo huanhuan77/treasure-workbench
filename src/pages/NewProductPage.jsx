@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
+import { getTopStatus } from '../utils/sampleStatus'
 
 const CATEGORIES = ['保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
 
@@ -17,16 +18,24 @@ function PageHeader({ title, onBack }) {
 
 export function NewProductPage() {
   const navigate = useNavigate()
-  const { addProduct } = useStore()
+  const { addProduct, samples } = useStore()
   const { show } = useToast()
   const [name, setName] = useState('')
   const [brand, setBrand] = useState('')
   const [category, setCategory] = useState('')
-  const [postedCount, setPostedCount] = useState(0)
+  const [showSamplePicker, setShowSamplePicker] = useState(false)
+  // 样品库中"非放弃状态"的样品名（去重）
+  const sampleOptions = (() => {
+    const set = new Set()
+    for (const s of samples || []) {
+      if (getTopStatus(s) !== 'abandoned' && s.name) set.add(s.name)
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
+  })()
 
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
-    addProduct({ name: name.trim(), brand: brand.trim(), category, postedCount: Number(postedCount) || 0 })
+    addProduct({ name: name.trim(), brand: brand.trim(), category })
     show('产品已添加', 'success')
     navigate('/products')
   }
@@ -38,6 +47,30 @@ export function NewProductPage() {
         <div style={{ ...glassStyle, padding: '16px', overflowX: 'hidden' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} placeholder="例如：补水喷雾" value={name} onChange={e => setName(e.target.value)} autoFocus />
+          <div style={{ marginTop: '6px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <button type="button" onClick={() => setShowSamplePicker((v) => !v)} style={{
+              padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
+              border: '1px solid rgba(244,114,182,0.35)', background: showSamplePicker ? 'rgba(244,114,182,0.12)' : '#fff',
+              color: 'var(--primary)', cursor: 'pointer',
+            }}>📋 从样品库选名称</button>
+            <span style={{ fontSize: '11px', color: 'var(--text-sub)', alignSelf: 'center' }}>或直接手动输入</span>
+          </div>
+          {showSamplePicker && (
+            <div style={{
+              marginTop: '6px', padding: '8px', maxHeight: '180px', overflowY: 'auto',
+              background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px',
+              display: 'flex', flexWrap: 'wrap', gap: '6px',
+            }}>
+              {sampleOptions.length === 0 ? (
+                <span style={{ fontSize: '12px', color: 'var(--text-sub)', padding: '6px' }}>样品库暂无非放弃产品</span>
+              ) : sampleOptions.map((n) => (
+                <button key={n} type="button" onClick={() => { setName(n); setShowSamplePicker(false) }} style={{
+                  fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '999px',
+                  border: '1px solid rgba(0,0,0,0.10)', background: '#fff', color: 'var(--text-main)', cursor: 'pointer',
+                }}>{n}</button>
+              ))}
+            </div>
+          )}
         </Field>
         <Field label="品牌名（选填）">
           <input style={inputStyle} placeholder="例如：珀芙研 / 洁比兔" value={brand} onChange={e => setBrand(e.target.value)} />
@@ -55,9 +88,6 @@ export function NewProductPage() {
               }}>{c}</button>
             ))}
           </div>
-        </Field>
-        <Field label="已发视频数">
-          <input type="number" min="0" style={inputStyle} value={postedCount === 0 ? '' : postedCount} placeholder="0（默认）" onChange={e => setPostedCount(e.target.value === '' ? 0 : parseInt(e.target.value))} />
         </Field>
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
@@ -79,7 +109,6 @@ export function EditProductPage() {
   const [name, setName] = useState(product?.name || '')
   const [brand, setBrand] = useState(product?.brand || '')
   const [category, setCategory] = useState(product?.category || '')
-  const [postedCount, setPostedCount] = useState(Number(product?.postedCount) || 0)
 
   if (!product) {
     return (
@@ -92,7 +121,7 @@ export function EditProductPage() {
 
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
-    updateProduct(id, { name: name.trim(), brand: brand.trim(), category, postedCount: Number(postedCount) || 0 })
+    updateProduct(id, { name: name.trim(), brand: brand.trim(), category })
     show('产品信息已更新', 'success')
     navigate(-1)
   }
@@ -129,9 +158,6 @@ export function EditProductPage() {
               }}            >{c}</button>
             ))}
           </div>
-        </Field>
-        <Field label="已发视频数">
-          <input type="number" min="0" style={inputStyle} value={postedCount === 0 ? '' : postedCount} placeholder="0（默认）" onChange={e => setPostedCount(e.target.value === '' ? 0 : parseInt(e.target.value))} />
         </Field>
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>

@@ -195,8 +195,8 @@ export function SamplesPage() {
   }
 
   return (
-    <div className="app-container">
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 20px 10px' }}>
+    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 20px 10px', flexShrink: 0 }}>
         {/* 第一行：标题 + 搜索框 + 隐藏账号（搜索框旁边） */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>样品记录</h1>
@@ -254,7 +254,7 @@ export function SamplesPage() {
       </header>
 
       {/* 状态分组卡：一排横滚，每张显示该状态汇总（点选切换 filter） */}
-      <div style={{ display: 'flex', gap: '6px', padding: '2px 16px 6px', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: '6px', padding: '2px 16px 6px', overflowX: 'auto', flexShrink: 0 }}>
         {/* 全部 */}
         {(() => {
           const allCnt = Object.values(statusStats).reduce((a, b) => a + b, 0)
@@ -305,7 +305,8 @@ export function SamplesPage() {
         })}
       </div>
 
-      <div style={{ padding: '4px 16px calc(88px + var(--safe-bottom, 0px))' }}>
+      {/* 列表：独立滚动 */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {accountFiltered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏷️</div>
@@ -620,21 +621,14 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
               {s.remark}
             </div>
           )}
-          {/* 发布信息 / N天未发提醒 / 补记发布快捷入口 */}
-          {(s.publishCount > 0 || needPublishReminder(s)) && (
+          {/* 未发布提醒 / 补记发布快捷入口（已发条数展示按用户要求移除） */}
+          {needPublishReminder(s) && (
             <div style={{ paddingLeft: '28px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              {s.publishCount > 0 && (
-                <span style={{ fontSize: '11px', color: 'var(--text-sub)', whiteSpace: 'nowrap', flexShrink: 0 }}>📹 已发 {s.publishCount} 次 · {lastPublishText(s)}</span>
-              )}
-              {needPublishReminder(s) && (
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>⚠ {daysSincePublish(s) === Infinity ? '从未发布' : `${daysSincePublish(s)}天未发`}</span>
-              )}
-              {needPublishReminder(s) && (
-                <button onClick={(e) => { e.stopPropagation(); onQuickPublish && onQuickPublish(s) }} style={{
-                  fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ec4899', border: 'none',
-                  padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                }}>补记发布</button>
-              )}
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>⚠ {daysSincePublish(s) === Infinity ? '从未发布' : `${daysSincePublish(s)}天未发`}</span>
+              <button onClick={(e) => { e.stopPropagation(); onQuickPublish && onQuickPublish(s) }} style={{
+                fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ec4899', border: 'none',
+                padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+              }}>补记发布</button>
             </div>
           )}
         </div>
