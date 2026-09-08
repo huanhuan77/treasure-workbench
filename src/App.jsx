@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef } from 'react'
 import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { StoreProvider, useStore } from './store'
 import { ToastProvider, useToast } from './components/Toast'
+import { GlobalKeyboardFix } from './components/GlobalKeyboardFix'
 import { syncAll, GIST_ID_KEY, LAST_SYNC_KEY } from './utils/sync'
 import { BottomNav } from './components/BottomNav'
 import { DashboardPage } from './pages/DashboardPage'
@@ -102,6 +103,7 @@ function App() {
     <StoreProvider>
       <ToastProvider>
         <AutoBackup />
+        <GlobalKeyboardFix />
         <HashRouter>
           <LaunchRedirect />
           <Routes>

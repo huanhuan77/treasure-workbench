@@ -95,6 +95,7 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
 
   return (
     <div
+      data-modal="1"
       onClick={onClose}
       style={{
         position: 'fixed',
