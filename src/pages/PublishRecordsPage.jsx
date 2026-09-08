@@ -175,46 +175,52 @@ export function PublishRecordsPage() {
         })}
       </div>
 
-      {/* 产品筛选 + 时间筛选（快捷时段与月份下拉互斥） */}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '4px 16px 8px', alignItems: 'center', flexShrink: 0 }}>
-        <button onClick={() => setShowProdPicker((v) => !v)} style={{
-          ...chipBase,
-          borderColor: prodFilter.length ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-          background: prodFilter.length ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-          color: prodFilter.length ? '#fff' : 'var(--text-main)',
-        }}>📦 产品{prodFilter.length ? ` · ${prodFilter.length}` : ''}</button>
-        {/* 全部：与 5 个快捷时段 + 月份下拉 互斥（单选“时间范围”语义） */}
-        <button onClick={resetDate} style={{
-          ...chipBase,
-          borderColor: !datePreset && !month ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-          background: !datePreset && !month ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-          color: !datePreset && !month ? '#fff' : 'var(--text-sub)',
-        }}>全部</button>
-        {[
-          { k: 'today', label: '今天' },
-          { k: 'yesterday', label: '昨天' },
-          { k: 'thisWeek', label: '本周' },
-          { k: 'thisMonth', label: '本月' },
-          { k: 'lastMonth', label: '上月' },
-        ].map((it) => {
-          const sel = datePreset === it.k
-          return (
-            <button key={it.k} onClick={() => toggleDatePreset(it.k)} style={{
-              ...chipBase,
-              borderColor: sel ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-              color: sel ? '#fff' : 'var(--text-main)',
-            }}>{it.label}</button>
-          )
-        })}
+      {/* 产品筛选 + 时间筛选：左侧快捷项横向滚动，右侧「按月份」固定 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 16px 8px', flexShrink: 0 }}>
+        <div className="hide-scrollbar" style={{
+          flex: 1, minWidth: 0, display: 'flex', gap: '6px', alignItems: 'center',
+          overflowX: 'auto', whiteSpace: 'nowrap', padding: '2px 0', WebkitOverflowScrolling: 'touch',
+        }}>
+          <button onClick={() => setShowProdPicker((v) => !v)} style={{
+            ...chipBase, flexShrink: 0,
+            borderColor: prodFilter.length ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+            background: prodFilter.length ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+            color: prodFilter.length ? '#fff' : 'var(--text-main)',
+          }}>📦 产品{prodFilter.length ? ` · ${prodFilter.length}` : ''}</button>
+          {/* 全部：与 5 个快捷时段 + 月份下拉 互斥（单选“时间范围”语义） */}
+          <button onClick={resetDate} style={{
+            ...chipBase, flexShrink: 0,
+            borderColor: !datePreset && !month ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+            background: !datePreset && !month ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+            color: !datePreset && !month ? '#fff' : 'var(--text-sub)',
+          }}>全部</button>
+          {[
+            { k: 'today', label: '今天' },
+            { k: 'yesterday', label: '昨天' },
+            { k: 'thisWeek', label: '本周' },
+            { k: 'thisMonth', label: '本月' },
+            { k: 'lastMonth', label: '上月' },
+          ].map((it) => {
+            const sel = datePreset === it.k
+            return (
+              <button key={it.k} onClick={() => toggleDatePreset(it.k)} style={{
+                ...chipBase, flexShrink: 0,
+                borderColor: sel ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+                color: sel ? '#fff' : 'var(--text-main)',
+              }}>{it.label}</button>
+            )
+          })}
+        </div>
+        {/* 「按月份」固定在右侧，不随快捷项横滚 */}
         <select
           value={month}
           onChange={(e) => pickMonth(e.target.value)}
           style={{
-            padding: '6px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+            flexShrink: 0, padding: '6px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
             border: month ? 'none' : '1px solid rgba(0,0,0,0.06)',
             background: month ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-            color: month ? '#fff' : 'var(--text-main)', cursor: 'pointer',
+            color: month ? '#fff' : 'var(--text-main)', cursor: 'pointer', maxWidth: '112px',
           }}
         >
           <option value="">📅 按月份</option>
