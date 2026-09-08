@@ -86,18 +86,20 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onA
                       <span style={{ flex: 1, fontSize: '12px', color: 'var(--text-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.remark || ''}</span>
                       <span style={{ flexShrink: 0, fontSize: '14px', fontWeight: 700, color: 'var(--primary-dark)' }}>+{fmtQty(o.qty)}</span>
                     </span>
-                    {/* 右上角 ❌ 单条删除按钮（除了右滑手势外，也提供直接点击） */}
+                    {/* 右上角 细线灰× 圆形删除（除了右滑手势外，也提供直接点击） */}
                     <button
                       onClick={(e) => { e.stopPropagation(); onDelete(o) }}
                       aria-label="删除该出单"
                       style={{
                         position: 'absolute', top: '50%', right: '8px', transform: 'translateY(-50%)',
-                        width: '24px', height: '24px', borderRadius: '50%',
-                        border: 'none', background: 'rgba(239,68,68,0.10)', color: '#dc2626',
-                        fontSize: '12px', cursor: 'pointer', padding: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: '26px', height: '26px', borderRadius: '50%',
+                        border: '1px solid rgba(0,0,0,0.06)', background: '#fff',
+                        color: '#9ca3af', cursor: 'pointer', padding: 0,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       }}
-                    >❌</button>
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M18 6 6 18M6 6l12 12" /></svg>
+                    </button>
                   </div>
                 </SwipeRow>
               )

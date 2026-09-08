@@ -275,14 +275,16 @@ export function PublishRecordsPage() {
               return (
                 <SwipeRow key={r.id} onDelete={() => handleDelete(r)} radius={12}>
                 <div style={{ position: 'relative', background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px' }}>
-                  {/* 右上角 ❌ 删除 */}
+                  {/* 右上角 细线灰× 圆形删除 */}
                   <button onClick={() => handleDelete(r)} aria-label="删除发布记录" style={{
-                    position: 'absolute', top: '8px', right: '8px',
-                    width: '26px', height: '26px', borderRadius: '50%',
-                    border: 'none', background: 'rgba(239,68,68,0.10)', color: '#dc2626',
-                    fontSize: '13px', cursor: 'pointer', padding: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>❌</button>
+                    position: 'absolute', top: '6px', right: '6px',
+                    width: '30px', height: '30px', borderRadius: '50%',
+                    border: '1px solid rgba(0,0,0,0.06)', background: '#fff',
+                    color: '#9ca3af', cursor: 'pointer', padding: 0,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M18 6 6 18M6 6l12 12" /></svg>
+                  </button>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '34px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
