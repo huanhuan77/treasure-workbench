@@ -33,10 +33,11 @@ export function NewPublishRecordPage() {
 
   const init = location.state || {}
   const initSample = init.sampleId || ''
-  const initAccounts = Array.isArray(init.accounts) && init.accounts.length ? init.accounts : []
+  // 预选账号：优先显式传的 account；兼容旧入口只传 accounts 数组（取第一个）
+  const initAccount = init.account || (Array.isArray(init.accounts) && init.accounts.length ? init.accounts[0] : '') || ''
 
   const [publishDate, setPublishDate] = useState(() => init.publishDate || new Date().toISOString().slice(0, 10))
-  const [accounts, setAccounts] = useState(initAccounts)        // 发布账号：多选
+  const [account, setAccount] = useState(initAccount)           // 发布账号：单选
   // 多个样品 + 各自数量（行结构）：{ sampleId, qty }[]
   // 至少预置 1 行（从 SamplesPage 带入 initSample 也算 1 行），空状态对用户不可见
   const [entries, setEntries] = useState(
@@ -45,15 +46,16 @@ export function NewPublishRecordPage() {
   const [showSamples, setShowSamples] = useState(false)
   const [activeEntryIdx, setActiveEntryIdx] = useState(0)       // 当前在选的 entry 行
   const [sampleQuery, setSampleQuery] = useState('')            // 样品搜索关键词
+  const [pickedIds, setPickedIds] = useState(() => new Set())   // 弹窗内多选样品 id 临时集合
 
   // 可选样品：所选账号中，该账号处于「已拍摄未发布 / 已发布」的样品（按账号独立判断）
   const sampleList = useMemo(() => {
-    if (accounts.length === 0) return []
+    if (!account) return []
     return (samples || []).filter((s) => {
       const execByAccount = getExecByAccount(s)
-      return accounts.some((a) => execByAccount[a] === 'shot' || execByAccount[a] === 'published')
+      return execByAccount[account] === 'shot' || execByAccount[account] === 'published'
     })
-  }, [samples, accounts])
+  }, [samples, account])
   // 按名称模糊匹配；已选样品在该账号下置顶；过滤掉其它 entry 已经选过的（同一次发布避免重复）
   const filteredSamples = useMemo(() => {
     const q = sampleQuery.trim().toLowerCase()
@@ -68,16 +70,51 @@ export function NewPublishRecordPage() {
     })
   }, [sampleList, sampleQuery, entries, activeEntryIdx])
 
-  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery('') }
+  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery(''); setPickedIds(new Set()) }
   const openSamplePicker = (idx) => {
-    if (accounts.length === 0) { show('请先选择发布账号', 'error'); return }
+    if (!account) { show('请先选择发布账号', 'error'); return }
     setActiveEntryIdx(idx)
+    setSampleQuery('')
+    // 打开时预勾当前行已选样品
+    setPickedIds(new Set([entries[idx]?.sampleId].filter(Boolean)))
     setShowSamples(true)
   }
+  const togglePicked = (id) => {
+    setPickedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  // 弹窗多选确认：按列表显示顺序写出多行；保留锚点之前的行；锚点之后剔除被多选包含的
+  const confirmMultiPick = () => {
+    if (pickedIds.size === 0) { closeSamplePicker(); return }
+    const pickedArr = filteredSamples.filter((s) => pickedIds.has(s.id)).map((s) => s.id)
+    if (pickedArr.length === 0) { closeSamplePicker(); return }
+    setEntries((prev) => {
+      const idx = Math.min(activeEntryIdx, prev.length)
+      const before = prev.slice(0, idx)
+      const after = prev.slice(idx + 1).filter((e) => !pickedIds.has(e.sampleId))
+      return [
+        ...before,
+        ...pickedArr.map((id) => ({ sampleId: id, qty: '1' })),
+        ...after,
+      ]
+    })
+    closeSamplePicker()
+  }
 
-  const toggleAccount = (a) => {
-    const next = accounts.includes(a) ? accounts.filter((x) => x !== a) : [...accounts, a]
-    setAccounts(next)
+  // 切换账号：单选；清掉可能不属于新账号的已选样品行
+  const onPickAccount = (a) => {
+    setAccount(a)
+    setEntries((prev) => prev.map((e) => {
+      if (!e.sampleId) return e
+      const sm = (samples || []).find((x) => x.id === e.sampleId)
+      const exec = sm ? getExecByAccount(sm) : {}
+      if (sm && exec[a] !== 'shot' && exec[a] !== 'published') return { ...e, sampleId: '' }
+      return e
+    }))
   }
 
   // 增删改 entry 行
@@ -90,15 +127,11 @@ export function NewPublishRecordPage() {
   const updateEntry = (idx, patch) => {
     setEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)))
   }
-  const pickSampleForEntry = (idx, sampleId) => {
-    updateEntry(idx, { sampleId })
-    closeSamplePicker()
-  }
 
   const chosenSamples = entries.map((e) => sampleList.find((s) => s.id === e.sampleId) || null)
 
   const handleSave = () => {
-    if (accounts.length === 0) { show('请选择至少一个发布账号', 'error'); return }
+    if (!account) { show('请选择一个发布账号', 'error'); return }
     const valid = entries.filter((e) => e.sampleId && (Number(e.qty) >= 1))
     if (valid.length === 0) { show('请至少选择 1 个样品并填写数量', 'error'); return }
     let lastId = null
@@ -107,7 +140,7 @@ export function NewPublishRecordPage() {
       lastId = addPublishRecord({
         sampleId: e.sampleId,
         productId: sm?.productId || '',
-        accounts: [...accounts],
+        accounts: account ? [account] : [],
         publishDate,
         qty: Math.max(1, Number(e.qty) || 1),
       })
@@ -146,15 +179,15 @@ export function NewPublishRecordPage() {
           <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>{getDateLabel(publishDate)}</div>
         </div>
 
-        {/* 发布账号：多选 chips */}
+        {/* 发布账号：单选 chip（整单归属一个账号） */}
         <div style={{ marginBottom: '14px' }}>
-          <div style={sectionTitle}>发布账号（可多选，自动归属到所选账号下）</div>
+          <div style={sectionTitle}>发布账号</div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {ACCOUNTS.map((a) => {
-              const selected = accounts.includes(a)
+              const selected = account === a
               const col = ACCOUNT_COLOR[a] || { c: '#7c3aed', bg: 'rgba(255,255,255,0.6)' }
               return (
-                <button key={a} onClick={() => toggleAccount(a)} style={{
+                <button key={a} onClick={() => onPickAccount(a)} style={{
                   ...chipBase,
                   minWidth: '92px',
                   borderColor: selected ? col.c : 'rgba(0,0,0,0.06)',
@@ -165,6 +198,7 @@ export function NewPublishRecordPage() {
               )
             })}
           </div>
+          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>整次发布归属到一个账号，下面所有产品都属于该账号</div>
         </div>
 
         {/* 关联样品 + 发布数量：多产品行结构，每行一个样品 + 各自数量 */}
@@ -263,8 +297,39 @@ export function NewPublishRecordPage() {
         }}>保存发布记录</button>
       </div>
 
-      {/* 样品选择弹层（仅未发布/已发布） */}
-      <Modal open={showSamples} onClose={closeSamplePicker} title="选择样品">
+      {/* 样品选择弹层（仅未发布/已发布），弹窗内多选 */}
+      <Modal
+        open={showSamples}
+        onClose={closeSamplePicker}
+        title="选择样品"
+        footer={
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={closeSamplePicker}
+              style={{
+                flex: 1, padding: '12px', borderRadius: '14px', border: 'none',
+                background: 'rgba(252, 231, 243, 0.6)', color: 'var(--text-sub)',
+                fontSize: '15px', fontWeight: 500, cursor: 'pointer',
+              }}
+            >取消</button>
+            <button
+              type="button"
+              onClick={confirmMultiPick}
+              disabled={pickedIds.size === 0}
+              style={{
+                flex: 1, padding: '12px', borderRadius: '14px', border: 'none',
+                background: pickedIds.size === 0
+                  ? 'rgba(244,114,182,0.25)'
+                  : 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)',
+                color: '#fff', fontSize: '15px', fontWeight: 600,
+                cursor: pickedIds.size === 0 ? 'not-allowed' : 'pointer',
+                boxShadow: pickedIds.size === 0 ? 'none' : '0 4px 14px rgba(244,114,182,0.3)',
+              }}
+            >确定{pickedIds.size > 0 ? ` · 已选 ${pickedIds.size}` : ''}</button>
+          </div>
+        }
+      >
         {/* 搜索框 */}
         <div style={{ padding: '0 0 10px' }}>
           <input
@@ -274,17 +339,35 @@ export function NewPublishRecordPage() {
             onChange={(e) => setSampleQuery(e.target.value)}
             style={{ ...fieldBox, borderColor: sampleQuery ? 'rgba(244,114,182,0.6)' : 'rgba(0,0,0,0.08)' }}
           />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', fontSize: '12px', color: 'var(--text-sub)' }}>
+            <span>已勾选 <b style={{ color: 'var(--primary)' }}>{pickedIds.size}</b> 个</span>
+            {filteredSamples.length > 0 && (
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setPickedIds(new Set(filteredSamples.map((s) => s.id)))}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                >全选</button>
+                <span style={{ color: '#d1d5db' }}>|</span>
+                <button
+                  type="button"
+                  onClick={() => setPickedIds(new Set())}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-sub)', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                >清空</button>
+              </div>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '55vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {sampleList.length === 0 ? (
             <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>所选账号下暂无可发布的样品（需未发布 / 已发布）</div>
           ) : filteredSamples.length === 0 ? (
             <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>没有匹配的样品</div>
           ) : (
             filteredSamples.map((s) => {
-              const sel = s.id === entries[activeEntryIdx]?.sampleId
+              const sel = pickedIds.has(s.id)
               return (
-                <button key={s.id} onClick={() => pickSampleForEntry(activeEntryIdx, s.id)} style={{
+                <button key={s.id} onClick={() => togglePicked(s.id)} style={{
                   display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
                   padding: '11px 6px', borderRadius: '8px', border: 'none',
                   background: sel ? 'rgba(244,114,182,0.1)' : 'transparent', color: 'var(--text-main)',
