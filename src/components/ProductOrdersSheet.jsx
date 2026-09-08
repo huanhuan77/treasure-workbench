@@ -93,8 +93,8 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onA
                       style={{
                         position: 'absolute', top: '50%', right: '8px', transform: 'translateY(-50%)',
                         width: '26px', height: '26px', borderRadius: '50%',
-                        border: '1px solid rgba(0,0,0,0.06)', background: '#fff',
-                        color: '#9ca3af', cursor: 'pointer', padding: 0,
+                        border: '1px solid rgba(236,72,153,0.18)', background: '#fce7f3',
+                        color: '#ec4899', cursor: 'pointer', padding: 0,
                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       }}
                     >

@@ -279,8 +279,8 @@ export function PublishRecordsPage() {
                   <button onClick={() => handleDelete(r)} aria-label="删除发布记录" style={{
                     position: 'absolute', top: '6px', right: '6px',
                     width: '30px', height: '30px', borderRadius: '50%',
-                    border: '1px solid rgba(0,0,0,0.06)', background: '#fff',
-                    color: '#9ca3af', cursor: 'pointer', padding: 0,
+                    border: '1px solid rgba(236,72,153,0.18)', background: '#fce7f3',
+                    color: '#ec4899', cursor: 'pointer', padding: 0,
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M18 6 6 18M6 6l12 12" /></svg>
