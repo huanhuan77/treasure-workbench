@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { Modal, inputStyle } from '../components/Modal'
+import { Modal } from '../components/Modal'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
 import { isSelectableForOrder } from '../utils/publish'
 
@@ -46,7 +46,6 @@ export function NewOrderPage() {
 
   const [account, setAccount] = useState(initAccount)              // 整单归属账号（单选）
   const [date, setDate] = useState(init.date || todayStr())         // 出单日期
-  const [remark, setRemark] = useState('')                          // 整单备注（选填）
   // 多个产品 + 各自数量（行结构）：{ sampleId, qty }
   const [entries, setEntries] = useState(
     initSample ? [{ sampleId: initSample, qty: '1' }] : [{ sampleId: '', qty: '1' }]
@@ -142,7 +141,6 @@ export function NewOrderPage() {
         sampleId: e.sampleId,
         productId: sm?.productId || '',
         qty: Math.max(1, Number(e.qty) || 1),
-        remark: remark.trim(),
       })
     }
     show(`已记 ${valid.length} 条出单`, 'success')
@@ -266,17 +264,6 @@ export function NewOrderPage() {
               )
             })}
           </div>
-        </div>
-
-        {/* 备注：整单 */}
-        <div style={{ marginBottom: '14px' }}>
-          <div style={sectionTitle}>备注（选填）</div>
-          <textarea
-            placeholder="平台 / 链接 / 说明"
-            value={remark}
-            onChange={(e) => setRemark(e.target.value)}
-            style={{ ...inputStyle, minHeight: '56px', resize: 'vertical' }}
-          />
         </div>
       </div>
 
