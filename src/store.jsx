@@ -3689,6 +3689,14 @@ export function StoreProvider({ children }) {
     setData((d) => {
       const next = { ...d, publishRecords: [newRec, ...(d.publishRecords || [])] }
       next.samples = recomputeSamplePublish(next.samples, next.publishRecords)
+      // 添加了发布记录 → 样品自动置为「已发布」；已放弃的不自动改回，尊重用户/自动放弃的判断
+      if (newRec.sampleId) {
+        next.samples = next.samples.map((sm) => (
+          sm.id === newRec.sampleId && sm.status !== 'abandoned' && sm.status !== 'published'
+            ? { ...sm, status: 'published' }
+            : sm
+        ))
+      }
       return next
     })
     return newRec.id
