@@ -248,7 +248,7 @@ export function OrdersPage() {
   const accMeta = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
 
   return (
-    <div className="app-container" style={{ background: 'transparent', minHeight: '100vh', color: 'var(--text-main)', display: 'flex', flexDirection: 'column' }}>
+    <div className="app-container scroll-lock-page" style={{ background: 'transparent', color: 'var(--text-main)', display: 'flex', flexDirection: 'column' }}>
       <PageHeader
         title="出单记录"
         onBack={() => navigate('/')}
@@ -459,7 +459,7 @@ export function OrdersPage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(20px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {filtered.length === 0 ? (
           orders.length === 0 ? (
             <button onClick={openAdd} style={{

@@ -46,6 +46,10 @@ export function ProductDetailPage() {
 
   const [showClear, setShowClear] = useState(false)
 
+  // 标记出单/爆单后延时 1 秒再按爆单排序。必须在下方 if(!product) return 之前声明（rules of hooks），
+  // 否则产品不存在提前 return 时本 hook 不执行，同一实例从有效切到无效 id 会报 "fewer hooks"。
+  const [sortPending, setSortPending] = useState(false)
+
   // 话题管理（话题统一从所有文案自带话题聚合，编辑时同步到所有文案）
   const [showTopics, setShowTopics] = useState(false)
   const [topicDraft, setTopicDraft] = useState([])
@@ -112,8 +116,7 @@ export function ProductDetailPage() {
     )
   }
 
-  // 文案筛选 + 爆单优先、同状态按创建时间倒序（标记出单后延时 1 秒再排序）
-  const [sortPending, setSortPending] = useState(false)
+  // 文案筛选 + 爆单优先、同状态按创建时间倒序（标记出单后延时 1 秒再排序；sortPending 见组件顶部）
   const displayedCopies = (() => {
     let list = product.copies
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)

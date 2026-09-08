@@ -142,6 +142,24 @@ a {
   }
 }
 
+/* 顶部固定 + 列表独立滚动 的页面：
+   锁死容器高度并隐藏溢出，让内部 flex:1; overflowY:auto 的列表真正在容器内滚动，
+   否则内容超高时 flex 容器会被撑高、退化成整页滚动（搜索区跟着滚走）。
+   用法：在页面根节点 className="app-container scroll-lock-page"。 */
+.scroll-lock-page {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  /* 滚动页自身用列表容器的 padding-bottom 兜底，去掉 .app-container 默认的底部留白，避免浪费高度 */
+  padding-bottom: 0;
+}
+/* 桌面端 app-container 有 20px 上下外边距，容器高度需扣除，避免底部溢出 */
+@media (min-width: 481px) {
+  .scroll-lock-page {
+    height: calc(100dvh - 40px);
+  }
+}
+
 /* 隐藏滚动条但保留滚动能力：用于账号/标签等可横滑的单行按钮组 */
 .hide-scrollbar {
   -ms-overflow-style: none;

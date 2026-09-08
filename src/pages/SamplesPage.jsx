@@ -82,9 +82,12 @@ export function SamplesPage() {
     setAccountsHidden(next)
   }
 
+  // 列表滚动容器 ref：列表改为内部滚动后，保存/恢复滚动位置都以它为基准（不再是 window）
+  const listRef = useRef(null)
+
   // 补记发布快捷入口：跳到发布记录页并预填样品（及归属账号）
   const handleQuickPublish = (s) => {
-    sessionStorage.setItem('samples_scroll', String(window.scrollY))
+    sessionStorage.setItem('samples_scroll', String(listRef.current?.scrollTop ?? 0))
     sessionStorage.setItem('samples_filter', filter)
     sessionStorage.setItem('samples_account', accountFilter)
     navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })
@@ -111,8 +114,9 @@ export function SamplesPage() {
     const savedAccount = sessionStorage.getItem('samples_account')
     if (saved) {
       sessionStorage.removeItem('samples_scroll')
+      // 列表改内部滚动容器后，恢复的是列表容器的 scrollTop（不再是 window）
       requestAnimationFrame(() => {
-        window.scrollTo(0, parseInt(saved))
+        if (listRef.current) listRef.current.scrollTop = parseInt(saved) || 0
       })
     }
     if (savedFilter) {
@@ -187,7 +191,7 @@ export function SamplesPage() {
     if (m) {
       try { localStorage.setItem('sampleFabPos', JSON.stringify(fabPosRef.current)) } catch(e) {}
     } else if (tap) {
-      sessionStorage.setItem('samples_scroll', String(window.scrollY))
+      sessionStorage.setItem('samples_scroll', String(listRef.current?.scrollTop ?? 0))
       sessionStorage.setItem('samples_filter', filter)
       sessionStorage.setItem('samples_account', accountFilter)
       navigate('/samples/new', { state: { account: accountFilter } })
@@ -195,7 +199,7 @@ export function SamplesPage() {
   }
 
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: 'calc(16px + var(--safe-top)) 20px 10px', flexShrink: 0 }}>
         {/* 第一行：标题 + 搜索框 + 隐藏账号（搜索框旁边） */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -306,7 +310,7 @@ export function SamplesPage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '4px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {accountFiltered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏷️</div>
@@ -335,7 +339,7 @@ export function SamplesPage() {
                     onQuickPublish={handleQuickPublish}
                     onOpenLinks={() => setLinksSampleId(s.id)}
                     onEdit={() => {
-                      sessionStorage.setItem('samples_scroll', String(window.scrollY))
+                      sessionStorage.setItem('samples_scroll', String(listRef.current?.scrollTop ?? 0))
                       sessionStorage.setItem('samples_filter', filter)
                       sessionStorage.setItem('samples_account', accountFilter)
                       setSwipedId(null)

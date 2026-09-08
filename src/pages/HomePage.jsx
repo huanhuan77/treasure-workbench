@@ -264,7 +264,7 @@ export function HomePage() {
   )
 
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
       <header style={{
         padding: 'calc(16px + var(--safe-top)) 16px 12px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
@@ -322,7 +322,7 @@ export function HomePage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(16px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {!active ? (
           products.length === 0 ? (
             emptyGlass('📭', '还没有产品', '点击下方 + 添加你的第一个产品')
