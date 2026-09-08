@@ -48,15 +48,6 @@ export function DashboardPage() {
   }
 
   // 手动检查更新（主屏幕应用无刷新入口，检测到新版本时硬刷新加载）
-  // 首次进入总览时，若有「自动放弃」的样品，弹一次提醒（同一次会话只弹一次）
-  const abandonToastShown = useRef(false)
-  useEffect(() => {
-    if (abandonToastShown.current) return
-    if (!autoAbandoned.length) return
-    abandonToastShown.current = true
-    show(`${autoAbandoned.length} 个产品发布满 10 条仍未出单，已自动置为放弃`, 'error')
-  }, [autoAbandoned.length, show])
-
   useEffect(() => {
     if (typeof document === 'undefined') return
     if (document.getElementById('dash-todo-scroll-style')) return
@@ -137,6 +128,16 @@ export function DashboardPage() {
     () => (samples || []).filter((s) => s.autoAbandoned && !s.abandonDismissed && s.status === 'abandoned'),
     [samples],
   )
+
+  // 首次进入总览时，若有「自动放弃」的样品，弹一次提醒（同一次会话只弹一次）
+  // 注意：必须放在 autoAbandoned 定义之后，否则依赖数组求值会命中 TDZ 导致整页崩溃
+  const abandonToastShown = useRef(false)
+  useEffect(() => {
+    if (abandonToastShown.current) return
+    if (!autoAbandoned.length) return
+    abandonToastShown.current = true
+    show(`${autoAbandoned.length} 个产品发布满 10 条仍未出单，已自动置为放弃`, 'error')
+  }, [autoAbandoned.length, show])
 
   // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
   const allReminders = useMemo(
