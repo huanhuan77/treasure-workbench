@@ -86,8 +86,8 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onA
           )}
         </div>
 
-        {/* 底部：继续新增一单 */}
-        <div style={{ padding: '10px 16px calc(14px + var(--safe-bottom, 0px))', borderTop: '1px solid rgba(244,114,182,0.14)' }}>
+        {/* 底部：继续新增一单。底部 padding 加大到 76px + 安全区，主动避开底部 BottomNav(~60px)+安全区，避免按钮被遮挡。 */}
+        <div style={{ padding: '10px 16px calc(76px + var(--safe-bottom, 0px))', borderTop: '1px solid rgba(244,114,182,0.14)' }}>
           <button
             onClick={onAddMore}
             style={{
