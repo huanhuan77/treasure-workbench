@@ -3117,9 +3117,13 @@ function loadData() {
     const cleanedPublish = legacyPublishIds
       ? split.publishRecords.filter((r) => !legacyPublishIds.has(r.id))
       : split.publishRecords
+    const aggregated = aggregatePublish(split.samples, cleanedPublish)
+    // 一次性补齐：「新增发布记录→自动置为已发布」这条规则上线前记的历史发布记录不会回溯，
+    // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
+    const backfilled = backfillPublishedStatus(aggregated)
     return {
       products: productsFinal,
-      samples: aggregatePublish(split.samples, cleanedPublish),
+      samples: backfilled,
       orders: split.orders,  // 独立出单台账
       publishRecords: cleanedPublish,
       transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
@@ -3325,6 +3329,22 @@ function aggregatePublish(samples, records) {
       lastPublishAt: last,
       publishCount: count,
     }
+  })
+}
+
+// 一次性补正：有发布记录（publishCount > 0）却仍停在「已拍摄/已到货」等状态的历史样品 → 置为「已发布」。
+// 只执行一次（靠 mig_publish_status_v1 标记），之后用户手动改状态不会被反复覆盖回去。
+// 已放弃的不动，尊重用户与自动放弃规则的判断。
+function backfillPublishedStatus(samples) {
+  let marker = '0'
+  try { marker = localStorage.getItem('mig_publish_status_v1') || '0' } catch (e) {}
+  if (marker === '1') return samples
+  try { localStorage.setItem('mig_publish_status_v1', '1') } catch (e) {}
+  if (!Array.isArray(samples)) return samples
+  return samples.map((s) => {
+    if (!s || s.status === 'published' || s.status === 'abandoned') return s
+    if (!(Number(s.publishCount) > 0)) return s
+    return { ...s, status: 'published' }
   })
 }
 
