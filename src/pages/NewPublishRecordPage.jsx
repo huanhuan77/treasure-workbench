@@ -264,17 +264,29 @@ export function NewPublishRecordPage() {
                   </div>
                   {/* 删除该行（仅 1 行时禁用，保证始终至少 1 行可见） */}
                   <button
+                    type="button"
                     onClick={() => canDelete && removeEntry(idx)}
                     disabled={!canDelete}
                     aria-label="删除该产品"
+                    title="删除该产品"
                     style={{
-                      width: '30px', height: '30px', borderRadius: '50%',
-                      border: 'none',
-                      background: canDelete ? 'rgba(239,68,68,0.10)' : 'rgba(0,0,0,0.04)',
-                      color: canDelete ? '#dc2626' : '#cbd5e1',
-                      fontSize: '14px', cursor: canDelete ? 'pointer' : 'not-allowed', flexShrink: 0, padding: 0,
+                      width: '32px', height: '32px', borderRadius: '8px',
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      border: `1.5px solid ${canDelete ? 'rgba(239,68,68,0.30)' : 'rgba(0,0,0,0.06)'}`,
+                      background: canDelete ? 'rgba(239,68,68,0.06)' : 'rgba(0,0,0,0.02)',
+                      color: canDelete ? '#e11d48' : '#cbd5e1',
+                      cursor: canDelete ? 'pointer' : 'not-allowed', flexShrink: 0, padding: 0,
+                      transition: 'background 0.15s, color 0.15s, transform 0.1s',
                     }}
-                  >×</button>
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                      <path d="M10 11v6M14 11v6" />
+                    </svg>
+                  </button>
                 </div>
               )
             })}
