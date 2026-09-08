@@ -130,11 +130,11 @@ export function ProductDetailPage() {
     })
   })()
 
-  // 产品全部话题（产品级 + 所有文案自带，去重），标准 #话题# 格式，用于 header 复制话题旁展示
+  // 产品全部话题（产品级 + 所有文案自带，去重），用于话题行展示（纯文本，不带 #）
   const allTopicTags = (() => {
     const set = new Set()
     const add = (list) => (list || []).forEach((t) =>
-      (t || '').split('#').map((x) => x.trim()).filter(Boolean).forEach((x) => set.add('#' + x + '#'))
+      (t || '').split('#').map((x) => x.trim()).filter(Boolean).forEach((x) => set.add(x))
     )
     add(product.topics)
     ;(product.copies || []).forEach((c) => add(c.topics))
@@ -190,11 +190,11 @@ export function ProductDetailPage() {
   const copyAllTopics = async () => {
     const set = new Set()
     const add = (list) => (list || []).forEach((t) =>
-      (t || '').split('#').map((x) => x.trim()).filter(Boolean).forEach((x) => set.add('#' + x + '#'))
+      (t || '').split('#').map((x) => x.trim()).filter(Boolean).forEach((x) => set.add(x))
     )
     add(product.topics)
     ;(product.copies || []).forEach((c) => add(c.topics))
-    const text = [...set].join(' ')
+    const text = [...set].map((t) => '#' + t + '#').join(' ')
     const ok = await copyText(text)
     show(ok ? `已复制 ${set.size} 个话题` : '复制失败', ok ? 'success' : 'error')
   }
