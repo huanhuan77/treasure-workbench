@@ -35,6 +35,46 @@ function monthLabel(ym) {
   return `${m[1]}年${Number(m[2])}月`
 }
 
+// 快捷时间区间：返回 [startTs, endTs)；空字符串返回 null
+// today/yesterday/thisWeek(周一-周日)/thisMonth/lastMonth
+function presetBounds(preset) {
+  if (!preset) return null
+  const d = new Date()
+  // 今天 0:00 ~ 明天 0:00
+  if (preset === 'today') {
+    const s = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+    const e = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime()
+    return [s, e]
+  }
+  // 昨天 0:00 ~ 今天 0:00
+  if (preset === 'yesterday') {
+    const s = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1).getTime()
+    const e = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+    return [s, e]
+  }
+  // 本周（周一 0:00 -> 下周一 0:00）
+  if (preset === 'thisWeek') {
+    const day = d.getDay() // 0(日)~6(六)
+    const offset = (day === 0 ? 6 : day - 1) // 周一为本周起点
+    const s = new Date(d.getFullYear(), d.getMonth(), d.getDate() - offset).getTime()
+    const e = new Date(d.getFullYear(), d.getMonth(), d.getDate() - offset + 7).getTime()
+    return [s, e]
+  }
+  // 本月 1号 0:00 -> 下月 1号 0:00
+  if (preset === 'thisMonth') {
+    const s = new Date(d.getFullYear(), d.getMonth(), 1).getTime()
+    const e = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime()
+    return [s, e]
+  }
+  // 上月 1号 -> 本月 1号
+  if (preset === 'lastMonth') {
+    const s = new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime()
+    const e = new Date(d.getFullYear(), d.getMonth(), 1).getTime()
+    return [s, e]
+  }
+  return null
+}
+
 export function PublishRecordsPage() {
   const navigate = useNavigate()
   const { publishRecords, samples, deletePublishRecord } = useStore()
@@ -42,6 +82,7 @@ export function PublishRecordsPage() {
   const [accFilter, setAccFilter] = useState([])   // 账号多选筛选
   const [prodFilter, setProdFilter] = useState([])  // 产品多选筛选（按样品名分组）
   const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
+  const [datePreset, setDatePreset] = useState('') // 快捷时段：''/today/yesterday/thisWeek/thisMonth/lastMonth
   const [showProdPicker, setShowProdPicker] = useState(false) // 产品筛选展开
 
   const sampleMap = useMemo(() => Object.fromEntries((samples || []).map((s) => [s.id, s])), [samples])
@@ -60,9 +101,13 @@ export function PublishRecordsPage() {
   }, [records, sampleMap])
   const toggleAcc = (a) => setAccFilter((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))
   const toggleProd = (n) => setProdFilter((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]))
+  // 快捷时段与月份下拉互斥：选 preset 清 month，选 month 清 preset
+  const toggleDatePreset = (p) => { setDatePreset((cur) => (cur === p ? '' : p)); if (p) setMonth('') }
+  const pickMonth = (ym) => { setMonth(ym); setDatePreset('') }
+  const resetDate = () => { setDatePreset(''); setMonth('') }
 
   // 时间筛选 + 账号筛选 + 产品筛选
-  const bounds = monthBounds(month)
+  const bounds = presetBounds(datePreset) || monthBounds(month)
   const filtered = useMemo(() => records.filter((r) => {
     if (accFilter.length && !(r.accounts || []).some((a) => accFilter.includes(a))) return false
     if (bounds) {
@@ -130,23 +175,41 @@ export function PublishRecordsPage() {
         })}
       </div>
 
-      {/* 产品筛选 + 月份筛选 */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '4px 16px 8px', alignItems: 'center', flexShrink: 0 }}>
+      {/* 产品筛选 + 时间筛选（快捷时段与月份下拉互斥） */}
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '4px 16px 8px', alignItems: 'center', flexShrink: 0 }}>
         <button onClick={() => setShowProdPicker((v) => !v)} style={{
           ...chipBase,
           borderColor: prodFilter.length ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
           background: prodFilter.length ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
           color: prodFilter.length ? '#fff' : 'var(--text-main)',
         }}>📦 产品{prodFilter.length ? ` · ${prodFilter.length}` : ''}</button>
-        <button onClick={() => setMonth('')} style={{
+        {/* 全部：与 5 个快捷时段 + 月份下拉 互斥（单选“时间范围”语义） */}
+        <button onClick={resetDate} style={{
           ...chipBase,
-          borderColor: month === '' && accFilter.length === 0 && prodFilter.length === 0 ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-          background: month === '' && accFilter.length === 0 && prodFilter.length === 0 ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-          color: month === '' && accFilter.length === 0 && prodFilter.length === 0 ? '#fff' : 'var(--text-sub)',
-        }}>全部时间</button>
+          borderColor: !datePreset && !month ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+          background: !datePreset && !month ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+          color: !datePreset && !month ? '#fff' : 'var(--text-sub)',
+        }}>全部</button>
+        {[
+          { k: 'today', label: '今天' },
+          { k: 'yesterday', label: '昨天' },
+          { k: 'thisWeek', label: '本周' },
+          { k: 'thisMonth', label: '本月' },
+          { k: 'lastMonth', label: '上月' },
+        ].map((it) => {
+          const sel = datePreset === it.k
+          return (
+            <button key={it.k} onClick={() => toggleDatePreset(it.k)} style={{
+              ...chipBase,
+              borderColor: sel ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+              color: sel ? '#fff' : 'var(--text-main)',
+            }}>{it.label}</button>
+          )
+        })}
         <select
           value={month}
-          onChange={(e) => setMonth(e.target.value)}
+          onChange={(e) => pickMonth(e.target.value)}
           style={{
             padding: '6px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
             border: month ? 'none' : '1px solid rgba(0,0,0,0.06)',
