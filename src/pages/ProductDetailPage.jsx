@@ -287,8 +287,8 @@ export function ProductDetailPage() {
         </div>
       </header>
 
-      {/* 固定区：工具行 + 筛选（不随列表滚动） */}
-      <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
+      {/* 固定区：工具行 + 筛选（不随列表滚动）；本层占满根剩余高度，列表在其内独立滚动 */}
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '8px 16px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-sub)' }}>
             爆款文案 <span style={{ color: 'var(--gray-300)', fontWeight: 400 }}>({product.copies.length})</span>
