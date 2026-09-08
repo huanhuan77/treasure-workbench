@@ -236,13 +236,14 @@ export function ProductDetailPage() {
   }
 
   return (
-    <div className="app-container">
+    <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* 顶部 · 毛玻璃浅色 */}
       <header style={{
         padding: 'calc(16px + var(--safe-top)) 16px 14px',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
+        flexShrink: 0,
       }}>
         <button
           onClick={() => navigate('/products')}
@@ -286,7 +287,8 @@ export function ProductDetailPage() {
         </div>
       </header>
 
-      <div style={{ padding: '8px 16px 12px' }}>
+      {/* 固定区：工具行 + 筛选（不随列表滚动） */}
+      <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-sub)' }}>
             爆款文案 <span style={{ color: 'var(--gray-300)', fontWeight: 400 }}>({product.copies.length})</span>
@@ -361,6 +363,8 @@ export function ProductDetailPage() {
           })}
         </div>
 
+        {/* 文案列表：仅此区域滚动，上方工具行/筛选固定 */}
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 16px calc(24px + 76px + var(--safe-bottom))' }}>
         {product.copies.length === 0 ? (
           <div style={{
             ...glassStyle,
@@ -392,6 +396,7 @@ export function ProductDetailPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* 话题管理弹窗 */}
