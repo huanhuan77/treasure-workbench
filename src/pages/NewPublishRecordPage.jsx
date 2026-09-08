@@ -262,7 +262,7 @@ export function NewPublishRecordPage() {
                       background: '#fff', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', padding: 0,
                     }}>＋</button>
                   </div>
-                  {/* 删除该行（仅 1 行时禁用，保证始终至少 1 行可见） */}
+                  {/* 删除该行（仅 1 行时禁用，保证始终至少 1 行可见）：细线 × 圆形图标 */}
                   <button
                     type="button"
                     onClick={() => canDelete && removeEntry(idx)}
@@ -270,21 +270,18 @@ export function NewPublishRecordPage() {
                     aria-label="删除该产品"
                     title="删除该产品"
                     style={{
-                      width: '32px', height: '32px', borderRadius: '8px',
+                      width: '30px', height: '30px', borderRadius: '50%',
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                      border: `1.5px solid ${canDelete ? 'rgba(239,68,68,0.30)' : 'rgba(0,0,0,0.06)'}`,
-                      background: canDelete ? 'rgba(239,68,68,0.06)' : 'rgba(0,0,0,0.02)',
-                      color: canDelete ? '#e11d48' : '#cbd5e1',
+                      border: '1px solid rgba(0,0,0,0.06)',
+                      background: canDelete ? '#fff' : 'rgba(0,0,0,0.02)',
+                      color: canDelete ? '#9ca3af' : '#d1d5db',
                       cursor: canDelete ? 'pointer' : 'not-allowed', flexShrink: 0, padding: 0,
-                      transition: 'background 0.15s, color 0.15s, transform 0.1s',
+                      transition: 'background 0.15s, color 0.15s',
                     }}
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-                      <path d="M3 6h18" />
-                      <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
-                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
-                      <path d="M10 11v6M14 11v6" />
+                      <path d="M18 6 6 18M6 6l12 12" />
                     </svg>
                   </button>
                 </div>
