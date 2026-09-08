@@ -272,39 +272,41 @@ export function ProductDetailPage() {
               }}
             >📋 复制话题</button>
           </div>
-          {allTopicTags.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-              {allTopicTags.map((t, i) => (
-                <span key={i} style={{
-                  fontSize: '11px', color: '#7c3aed',
-                  background: 'rgba(237, 233, 254, 0.8)',
-                  padding: '2px 9px', borderRadius: '999px', fontWeight: 500,
-                  border: '1px solid rgba(124, 58, 237, 0.15)',
-                }}>{t}</span>
-              ))}
-            </div>
-          )}
         </div>
       </header>
 
-      {/* 固定区：工具行 + 筛选（不随列表滚动）；本层占满根剩余高度，列表在其内独立滚动 */}
+      {/* 固定区：话题 + 工具行 + 筛选（不随列表滚动）；本层占满根剩余高度，列表在其内独立滚动 */}
       <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '8px 16px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-          <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-sub)' }}>
-            爆款文案 <span style={{ color: 'var(--gray-300)', fontWeight: 400 }}>({product.copies.length})</span>
-          </h2>
-          <div style={{ display: 'flex', gap: '8px' }}>
+        {/* 话题：单行横向滚动，不换行，避免话题多时占多行竖向空间 */}
+        {allTopicTags.length > 0 && (
+          <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', marginBottom: '10px', paddingBottom: '2px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 600, flexShrink: 0 }}>话题</span>
+            {allTopicTags.map((t, i) => (
+              <span key={i} style={{
+                fontSize: '11px', color: '#7c3aed',
+                background: 'rgba(237, 233, 254, 0.8)',
+                padding: '3px 10px', borderRadius: '999px', fontWeight: 500,
+                border: '1px solid rgba(124, 58, 237, 0.15)',
+                flexShrink: 0, whiteSpace: 'nowrap',
+              }}>{t}</span>
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)' }}>爆款文案 {product.copies.length}</span>
+          <div style={{ display: 'flex', gap: '6px' }}>
             <button
               onClick={openTopics}
               style={{
                 background: '#fff',
                 color: 'var(--text-sub)',
                 border: '1px solid rgba(0,0,0,0.10)',
-                padding: '8px 14px',
+                padding: '6px 12px',
                 borderRadius: '12px',
-                fontSize: '13px',
+                fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}
             ># 话题</button>
             <button
@@ -313,11 +315,12 @@ export function ProductDetailPage() {
                 background: '#fff',
                 color: 'var(--primary)',
                 border: '1px solid rgba(236, 72, 182, 0.35)',
-                padding: '8px 14px',
+                padding: '6px 12px',
                 borderRadius: '12px',
-                fontSize: '13px',
+                fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}
             >批量导入</button>
             <button
@@ -326,18 +329,19 @@ export function ProductDetailPage() {
                 background: '#fff',
                 color: '#ef4444',
                 border: '1px solid rgba(239, 68, 68, 0.35)',
-                padding: '8px 14px',
+                padding: '6px 12px',
                 borderRadius: '12px',
-                fontSize: '13px',
+                fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}
             >清空文案</button>
           </div>
         </div>
 
         {/* 文案筛选：只保留 出单文案 / 保单文案（按用户要求精简） */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
           {[
             { key: '全部', label: '全部' },
             { key: '出单', label: '出单文案' },
