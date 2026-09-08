@@ -216,20 +216,16 @@ export function OrdersPage() {
 
   const [prefill, setPrefill] = useState(null)   // 从详情面板「继续新增一单」带入的账号/样品/品名
 
-  const openAdd = () => { setEditing(null); setPrefill(null); setFormSeq((s) => s + 1); setModalOpen(true) }
+  const openAdd = () => { setEditing(null); setModalOpen(false); navigate('/orders/new') }
   const openEdit = (o) => { setEditing(o); setPrefill(null); setFormSeq((s) => s + 1); setModalOpen(true) }
-  // 详情面板「继续新增一单」：带上该产品的账号与样品，接着记一笔
+  // 详情面板「继续新增一单」：带上该产品的账号与样品，跳独立页接着记
   const addMoreForActive = () => {
     if (!activeGroup) return
-    setPrefill({
-      account: activeGroup.entries.find((e) => e.account)?.account || '',
-      sampleId: activeGroup.entries.find((e) => e.sampleId)?.sampleId || '',
-      name: activeGroup.name,
-    })
+    const acc = activeGroup.entries.find((e) => e.account)?.account || ''
+    const sid = activeGroup.entries.find((e) => e.sampleId)?.sampleId || ''
     setActiveName(null)
-    setEditing(null)
-    setFormSeq((s) => s + 1)
-    setModalOpen(true)
+    setModalOpen(false)
+    navigate('/orders/new', { state: { account: acc, sampleId: sid } })
   }
   const closeModal = () => { setModalOpen(false); setEditing(null) }
   const handleSave = (payload) => {

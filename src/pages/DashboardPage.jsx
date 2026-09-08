@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
-import { OrderFormModal } from '../components/OrderFormModal'
 import { checkForUpdate } from '../main'
 import { needPublishReminder, daysSincePublish, isOverdue, OVERDUE_STATES } from '../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
@@ -37,15 +36,8 @@ function fmt(n) {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders, publishRecords, dramas, todos, addOrder, updateSample } = useStore()
+  const { samples, transactions, orders, publishRecords, dramas, todos, updateSample } = useStore()
   const { show } = useToast()
-  const [orderModalOpen, setOrderModalOpen] = useState(false)
-  const handleSaveOrder = (payload) => {
-    if (!payload.name) { show('请填写品名', 'error'); return }
-    addOrder(payload)
-    setOrderModalOpen(false)
-    show('已记一笔出单', 'success')
-  }
 
   // 手动检查更新（主屏幕应用无刷新入口，检测到新版本时硬刷新加载）
   useEffect(() => {
@@ -213,7 +205,7 @@ export function DashboardPage() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-              <button onClick={(e) => { e.stopPropagation(); setOrderModalOpen(true) }} style={{
+              <button onClick={(e) => { e.stopPropagation(); navigate('/orders/new') }} style={{
                 border: 'none', background: 'transparent', padding: 0, cursor: 'pointer',
                 fontSize: '12px', color: '#db2777', fontWeight: 700,
               }}>＋ 记出单</button>
@@ -511,9 +503,6 @@ export function DashboardPage() {
           )}
         </div>
       </div>
-
-      {/* 记出单弹窗：总览直接弹出，无需跳转出单页 */}
-      <OrderFormModal open={orderModalOpen} onClose={() => setOrderModalOpen(false)} editing={null} onSave={handleSaveOrder} />
     </div>
   )
 }

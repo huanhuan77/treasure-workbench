@@ -33,6 +33,7 @@ import { TodoPage } from './pages/TodoPage'
 import { NewPublishRecordPage } from './pages/NewPublishRecordPage'
 import { PublishRecordsPage } from './pages/PublishRecordsPage'
 import { PublishRemindersPage } from './pages/PublishRemindersPage'
+import { NewOrderPage } from './pages/NewOrderPage'
 
 // 自动云同步组件：双向同步（拉取云端 → 智能合并 → 写本地 → 推回云端）
 function AutoBackup() {
@@ -108,6 +109,7 @@ function App() {
             <Route path="/products" element={<HomePage />} />
             <Route path="/samples" element={<SamplesPage />} />
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/new" element={<NewOrderPage />} />
             <Route path="/savings" element={<SavingsPage />} />
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/sensitive" element={<SensitiveCenterPage />} />
