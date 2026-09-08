@@ -134,7 +134,8 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{
-          padding: '18px 22px 14px',
+          // 顶部 padding 加 iOS 状态栏/灵动岛安全区（兜底 44px）—— 避免标题/搜索框被系统状态栏压住
+          padding: 'calc(18px + max(env(safe-area-inset-top, 0px), 44px)) 22px 14px',
           borderBottom: '1px solid rgba(244, 114, 182, 0.12)',
           display: 'flex',
           justifyContent: 'space-between',
