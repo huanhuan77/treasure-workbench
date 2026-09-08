@@ -79,7 +79,7 @@ export function PublishRecordsPage() {
   const navigate = useNavigate()
   const { publishRecords, samples, deletePublishRecord } = useStore()
   const { show } = useToast()
-  const [accFilter, setAccFilter] = useState([])   // 账号多选筛选
+  const [account, setAccount] = useState('')    // 账号单选筛选，''=全部账号
   const [prodFilter, setProdFilter] = useState([])  // 产品多选筛选（按样品名分组）
   const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
   const [datePreset, setDatePreset] = useState('') // 快捷时段：''/today/yesterday/thisWeek/thisMonth/lastMonth
@@ -99,7 +99,6 @@ export function PublishRecordsPage() {
     }
     return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
   }, [records, sampleMap])
-  const toggleAcc = (a) => setAccFilter((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))
   const toggleProd = (n) => setProdFilter((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]))
   // 快捷时段与月份下拉互斥：选 preset 清 month，选 month 清 preset
   const toggleDatePreset = (p) => { setDatePreset((cur) => (cur === p ? '' : p)); if (p) setMonth('') }
@@ -109,7 +108,7 @@ export function PublishRecordsPage() {
   // 时间筛选 + 账号筛选 + 产品筛选
   const bounds = presetBounds(datePreset) || monthBounds(month)
   const filtered = useMemo(() => records.filter((r) => {
-    if (accFilter.length && !(r.accounts || []).some((a) => accFilter.includes(a))) return false
+    if (account && !(r.accounts || []).includes(account)) return false
     if (bounds) {
       const t = parseTs(r.publishDate)
       if (t === null || t < bounds[0] || t >= bounds[1]) return false
@@ -119,7 +118,7 @@ export function PublishRecordsPage() {
       if (!sm || !prodFilter.includes(sm.name)) return false
     }
     return true
-  }), [records, accFilter, bounds, prodFilter, sampleMap])
+  }), [records, account, bounds, prodFilter, sampleMap])
 
   // 当前月份下拉里可用的月份（来自有日期的记录），新→旧
   const monthOptions = useMemo(() => {
@@ -153,19 +152,20 @@ export function PublishRecordsPage() {
         </div>
       </header>
 
-      {/* 账号筛选 */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '12px 16px 4px', flexShrink: 0 }}>
-        <button onClick={() => setAccFilter([])} style={{
+      {/* 账号筛选：单选 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', padding: '12px 16px 4px', flexShrink: 0 }}>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', flexShrink: 0 }}>账号</span>
+        <button onClick={() => setAccount('')} style={{
           ...chipBase,
-          borderColor: accFilter.length === 0 ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-          background: accFilter.length === 0 ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-          color: accFilter.length === 0 ? '#fff' : 'var(--text-sub)',
+          borderColor: account === '' ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+          background: account === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+          color: account === '' ? '#fff' : 'var(--text-sub)',
         }}>全部账号</button>
         {ACCOUNTS.map((a) => {
-          const sel = accFilter.includes(a)
+          const sel = account === a
           const col = ACCOUNT_COLOR[a] || { c: '#7c3aed', bg: 'rgba(255,255,255,0.6)' }
           return (
-            <button key={a} onClick={() => toggleAcc(a)} style={{
+            <button key={a} onClick={() => setAccount(a)} style={{
               ...chipBase,
               borderColor: sel ? col.c : 'rgba(0,0,0,0.06)',
               background: sel ? col.bg : '#fff',
