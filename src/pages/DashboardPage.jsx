@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
@@ -37,7 +37,7 @@ function fmt(n) {
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders, publishRecords, dramas, todos, addOrder } = useStore()
+  const { samples, transactions, orders, publishRecords, dramas, todos, addOrder, updateSample } = useStore()
   const { show } = useToast()
   const [orderModalOpen, setOrderModalOpen] = useState(false)
   const handleSaveOrder = (payload) => {
@@ -48,6 +48,15 @@ export function DashboardPage() {
   }
 
   // 手动检查更新（主屏幕应用无刷新入口，检测到新版本时硬刷新加载）
+  // 首次进入总览时，若有「自动放弃」的样品，弹一次提醒（同一次会话只弹一次）
+  const abandonToastShown = useRef(false)
+  useEffect(() => {
+    if (abandonToastShown.current) return
+    if (!autoAbandoned.length) return
+    abandonToastShown.current = true
+    show(`${autoAbandoned.length} 个产品发布满 10 条仍未出单，已自动置为放弃`, 'error')
+  }, [autoAbandoned.length, show])
+
   useEffect(() => {
     if (typeof document === 'undefined') return
     if (document.getElementById('dash-todo-scroll-style')) return
@@ -122,6 +131,12 @@ export function DashboardPage() {
       orderTotal, orderQty, orderPerAccount,
     }
   }, [samples, transactions, orders])
+
+  // 自动放弃提醒：发布满 10 条仍 0 出单、已被系统自动置为「放弃」的样品
+  const autoAbandoned = useMemo(
+    () => (samples || []).filter((s) => s.autoAbandoned && !s.abandonDismissed && s.status === 'abandoned'),
+    [samples],
+  )
 
   // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
   const allReminders = useMemo(
@@ -331,6 +346,40 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* 自动放弃提醒：发布满 10 条仍 0 出单，已自动置为「放弃」 */}
+      {autoAbandoned.length > 0 && (
+        <div style={{ padding: '12px 16px 4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
+            <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ef4444' }} />
+            未出单已自动放弃
+            <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 7px', borderRadius: '8px' }}>{autoAbandoned.length}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {autoAbandoned.map((s) => {
+              const acc = s.account || (s.accounts || [])[0] || '未选账号'
+              const c = ACCOUNT_COLOR[acc] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+              return (
+                <div key={s.id} style={{ background: '#fff', border: '1px solid #fecaca', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{acc}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '3px', fontWeight: 600 }}>
+                      已发 {Number(s.publishCount) || 0} 条视频 · 0 出单 → 已自动放弃
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { updateSample(s.id, { status: 'published' }); show('已恢复为「已发布」，不再自动放弃', 'success') }}
+                    style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: '1px solid #fecdd3', background: '#fff', color: '#e11d48', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                  >恢复</button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 发布提醒（N 天未发的样品） */}
       <div style={{ padding: '12px 16px 4px' }}>

@@ -11,6 +11,9 @@ const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
 const CURRENT_VERSION = '24'
 
+// 自动放弃阈值：同一账号 + 同一产品（一条样品）发布满 N 条视频仍 0 出单 → 自动置为「放弃」并提醒
+export const AUTO_ABANDON_PUBLISH_COUNT = 10
+
 // 全球账号映射已统一由 ./utils/accounts 提供（ACCOUNT_MAP / mapAccount）
 
 
@@ -3332,6 +3335,27 @@ export function StoreProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }, [data])
 
+  // 自动放弃规则：同一个账号下的同一个产品（即一条样品），发布满 AUTO_ABANDON_PUBLISH_COUNT 条视频
+  // 却始终 0 出单 → 自动置为「放弃」，并在总览页提醒。
+  // 已放弃 / 用户手动处理过(abandonDismissed)的不再重复处理，避免覆盖用户意图。
+  useEffect(() => {
+    const list = data.samples
+    if (!Array.isArray(list) || list.length === 0) return
+    let changed = false
+    const next = list.map((s) => {
+      if (s.status === 'abandoned' || s.abandonDismissed) return s
+      const pub = Number(s.publishCount) || 0
+      const ord = Number(s.orderCount) || 0
+      if (pub >= AUTO_ABANDON_PUBLISH_COUNT && ord <= 0) {
+        changed = true
+        return { ...s, status: 'abandoned', autoAbandoned: true, autoAbandonedAt: Date.now() }
+      }
+      return s
+    })
+    if (!changed) return   // 没有需要处理的样品时必须 early return，否则会无限循环
+    setData((d) => ({ ...d, samples: next }))
+  }, [data.samples])
+
   const addProduct = useCallback((product) => {
     const now = Date.now()
     const newProduct = {
@@ -3553,7 +3577,15 @@ export function StoreProvider({ children }) {
   const updateSample = useCallback((id, patch) => {
     setData((d) => ({
       ...d,
-      samples: d.samples.map((s) => (s.id === id ? { ...s, ...patch, updatedAt: Date.now() } : s)),
+      samples: d.samples.map((s) => {
+        if (s.id !== id) return s
+        const next = { ...s, ...patch, updatedAt: Date.now() }
+        // 用户手动把「系统自动放弃」的样品改回其他状态 → 视为已处理，之后不再自动改回放弃
+        if (s.autoAbandoned && 'status' in patch && next.status !== 'abandoned') {
+          next.abandonDismissed = true
+        }
+        return next
+      }),
     }))
   }, [])
 
