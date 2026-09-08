@@ -71,7 +71,7 @@ export function CalendarDetailPage() {
         borderBottom: '1px solid rgba(0,0,0,0.04)',
       }}>
         <button onClick={() => navigate('/calendar')} style={{
-          width: '36px', height: '36px', borderRadius: '50%', border: 'none',
+          width: '44px', height: '44px', borderRadius: '50%', border: 'none',
           background: 'rgba(244,114,182,0.08)', color: 'var(--primary)',
           fontSize: '18px', cursor: 'pointer', flexShrink: 0,
         }}>‹</button>

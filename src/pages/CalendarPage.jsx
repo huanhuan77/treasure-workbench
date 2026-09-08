@@ -38,7 +38,7 @@ export function CalendarPage() {
       }}>
         <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📅 日历</h1>
         <button onClick={goToday} style={{
-          width: '36px', height: '36px', borderRadius: '50%', border: 'none',
+          width: '44px', height: '44px', borderRadius: '50%', border: 'none',
           background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
           fontSize: '20px', cursor: 'pointer', boxShadow: '0 4px 14px rgba(244,114,182,0.35)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',

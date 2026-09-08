@@ -18,7 +18,7 @@ export function SamplePickerPage({
   onConfirm,
 }) {
   const backBtn = {
-    width: '36px', height: '36px', borderRadius: '50%',
+    width: '44px', height: '44px', borderRadius: '50%',
     background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
     color: 'var(--text-main)', fontSize: '20px', cursor: 'pointer',
     display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,

@@ -83,7 +83,7 @@ export function TodoPage() {
       }}>
         <button onClick={() => navigate(-1)} style={{
           border: 'none', background: 'rgba(236,72,153,0.10)', color: 'var(--primary)',
-          width: '36px', height: '36px', borderRadius: '50%', fontSize: '20px',
+          width: '44px', height: '44px', borderRadius: '50%', fontSize: '20px',
           cursor: 'pointer', flexShrink: 0,
         }}>←</button>
         <div style={{ flex: 1, minWidth: 0 }}>

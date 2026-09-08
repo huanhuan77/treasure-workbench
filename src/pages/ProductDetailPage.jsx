@@ -231,7 +231,7 @@ export function ProductDetailPage() {
         <button
           onClick={() => navigate('/products')}
           style={{
-            width: '36px', height: '36px', borderRadius: '50%',
+            width: '44px', height: '44px', borderRadius: '50%',
             background: 'rgba(255,255,255,0.6)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
@@ -484,7 +484,7 @@ export function ProductDetailPage() {
             <button
               onClick={() => setGenModal({ open: false, copy: null })}
               style={{
-                width: '36px', height: '36px', borderRadius: '50%',
+                width: '44px', height: '44px', borderRadius: '50%',
                 border: 'none', background: 'rgba(0,0,0,0.05)',
                 fontSize: '18px', color: 'var(--text-main)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
