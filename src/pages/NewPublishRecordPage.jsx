@@ -38,8 +38,9 @@ export function NewPublishRecordPage() {
   const [publishDate, setPublishDate] = useState(() => init.publishDate || new Date().toISOString().slice(0, 10))
   const [accounts, setAccounts] = useState(initAccounts)        // 发布账号：多选
   // 多个样品 + 各自数量（行结构）：{ sampleId, qty }[]
+  // 至少预置 1 行（从 SamplesPage 带入 initSample 也算 1 行），空状态对用户不可见
   const [entries, setEntries] = useState(
-    initSample ? [{ sampleId: initSample, qty: '1' }] : []
+    initSample ? [{ sampleId: initSample, qty: '1' }] : [{ sampleId: '', qty: '1' }]
   )
   const [showSamples, setShowSamples] = useState(false)
   const [activeEntryIdx, setActiveEntryIdx] = useState(0)       // 当前在选的 entry 行
@@ -183,6 +184,7 @@ export function NewPublishRecordPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {entries.map((e, idx) => {
               const sm = chosenSamples[idx]
+              const canDelete = entries.length > 1
               return (
                 <div key={idx} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
@@ -226,24 +228,23 @@ export function NewPublishRecordPage() {
                       background: '#fff', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', padding: 0,
                     }}>＋</button>
                   </div>
-                  {/* 删除该行 */}
-                  <button onClick={() => removeEntry(idx)} aria-label="删除该产品" style={{
-                    width: '30px', height: '30px', borderRadius: '50%',
-                    border: 'none', background: 'rgba(239,68,68,0.10)', color: '#dc2626',
-                    fontSize: '14px', cursor: 'pointer', flexShrink: 0, padding: 0,
-                  }}>×</button>
+                  {/* 删除该行（仅 1 行时禁用，保证始终至少 1 行可见） */}
+                  <button
+                    onClick={() => canDelete && removeEntry(idx)}
+                    disabled={!canDelete}
+                    aria-label="删除该产品"
+                    style={{
+                      width: '30px', height: '30px', borderRadius: '50%',
+                      border: 'none',
+                      background: canDelete ? 'rgba(239,68,68,0.10)' : 'rgba(0,0,0,0.04)',
+                      color: canDelete ? '#dc2626' : '#cbd5e1',
+                      fontSize: '14px', cursor: canDelete ? 'pointer' : 'not-allowed', flexShrink: 0, padding: 0,
+                    }}
+                  >×</button>
                 </div>
               )
             })}
           </div>
-          {entries.length === 0 && (
-            <button onClick={addEntry} style={{
-              width: '100%', marginTop: '10px', padding: '10px',
-              border: '1.5px dashed rgba(244,114,182,0.45)', borderRadius: '10px',
-              background: 'rgba(244,114,182,0.04)', color: 'var(--primary)',
-              fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-            }}>＋ 添加第一个产品</button>
-          )}
         </div>
       </div>
 
