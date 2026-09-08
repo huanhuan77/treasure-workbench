@@ -119,7 +119,7 @@ export function NewPublishRecordPage() {
   const sectionTitle = { fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }
 
   return (
-    <div className="app-container" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div className="app-container">
       <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => navigate(-1)} style={{
           width: '36px', height: '36px', borderRadius: '50%',
@@ -132,7 +132,7 @@ export function NewPublishRecordPage() {
         </h1>
       </header>
 
-      <div style={{ padding: '12px 16px', flex: 1 }}>
+      <div style={{ padding: '12px 16px' }}>
         {/* 发布时间：可填过去日期（补记） */}
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>发布时间</div>
