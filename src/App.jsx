@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react'
-import { HashRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { HashRouter, useLocation, useNavigate } from 'react-router-dom'
 import { StoreProvider, useStore } from './store'
 import { ToastProvider, useToast } from './components/Toast'
 import { GlobalKeyboardFix } from './components/GlobalKeyboardFix'
@@ -35,6 +35,42 @@ import { NewPublishRecordPage } from './pages/NewPublishRecordPage'
 import { PublishRecordsPage } from './pages/PublishRecordsPage'
 import { PublishRemindersPage } from './pages/PublishRemindersPage'
 import { NewOrderPage } from './pages/NewOrderPage'
+import { KeepAliveRoutes } from './components/KeepAliveRoutes'
+
+// 路由表（data 形式，供 KeepAliveRoutes 内的 useRoutes 使用）
+const routes = [
+  { path: '/', element: <DashboardPage /> },
+  { path: '/products', element: <HomePage /> },
+  { path: '/samples', element: <SamplesPage /> },
+  { path: '/orders', element: <OrdersPage /> },
+  { path: '/orders/new', element: <NewOrderPage /> },
+  { path: '/savings', element: <SavingsPage /> },
+  { path: '/finance', element: <FinancePage /> },
+  { path: '/sensitive', element: <SensitiveCenterPage /> },
+  { path: '/calendar', element: <CalendarPage /> },
+  { path: '/calendar/:date', element: <CalendarDetailPage /> },
+  { path: '/backup', element: <BackupPage /> },
+  { path: '/investment', element: <InvestmentPage /> },
+  { path: '/reading', element: <ReadingPage /> },
+  { path: '/reading/:id/notes', element: <NotePage /> },
+  { path: '/brands', element: <BrandContactsPage /> },
+  { path: '/daily', element: <DailyPlanPage /> },
+  { path: '/todos', element: <TodoPage /> },
+  { path: '/publish-records', element: <PublishRecordsPage /> },
+  { path: '/publish-reminders', element: <PublishRemindersPage /> },
+  { path: '/publish-record/new', element: <NewPublishRecordPage /> },
+  { path: '/product/new', element: <NewProductPage /> },
+  { path: '/product/:id/edit', element: <EditProductPage /> },
+  { path: '/batch-import/:id', element: <BatchImportPage /> },
+  { path: '/copy-edit/:productId/:copyId', element: <EditCopyPage /> },
+  { path: '/dramas', element: <DramaPage /> },
+  { path: '/dramas/new', element: <NewDramaPage /> },
+  { path: '/samples/new', element: <NewSamplePage /> },
+  { path: '/samples/:id/edit', element: <EditSamplePage /> },
+  { path: '/finance/new', element: <NewTransactionPage /> },
+  { path: '/finance/edit/:id', element: <EditTransactionPage /> },
+  { path: '/product/:id', element: <ProductDetailPage /> },
+]
 
 // 自动云同步组件：双向同步（拉取云端 → 智能合并 → 写本地 → 推回云端）
 function AutoBackup() {
@@ -106,39 +142,7 @@ function App() {
         <GlobalKeyboardFix />
         <HashRouter>
           <LaunchRedirect />
-          <Routes>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/products" element={<HomePage />} />
-            <Route path="/samples" element={<SamplesPage />} />
-            <Route path="/orders" element={<OrdersPage />} />
-            <Route path="/orders/new" element={<NewOrderPage />} />
-            <Route path="/savings" element={<SavingsPage />} />
-            <Route path="/finance" element={<FinancePage />} />
-            <Route path="/sensitive" element={<SensitiveCenterPage />} />
-            <Route path="/calendar" element={<CalendarPage />} />
-            <Route path="/calendar/:date" element={<CalendarDetailPage />} />
-            <Route path="/backup" element={<BackupPage />} />
-            <Route path="/investment" element={<InvestmentPage />} />
-            <Route path="/reading" element={<ReadingPage />} />
-            <Route path="/reading/:id/notes" element={<NotePage />} />
-            <Route path="/brands" element={<BrandContactsPage />} />
-            <Route path="/daily" element={<DailyPlanPage />} />
-            <Route path="/todos" element={<TodoPage />} />
-            <Route path="/publish-records" element={<PublishRecordsPage />} />
-            <Route path="/publish-reminders" element={<PublishRemindersPage />} />
-            <Route path="/publish-record/new" element={<NewPublishRecordPage />} />
-            <Route path="/product/new" element={<NewProductPage />} />
-            <Route path="/product/:id/edit" element={<EditProductPage />} />
-            <Route path="/batch-import/:id" element={<BatchImportPage />} />
-            <Route path="/copy-edit/:productId/:copyId" element={<EditCopyPage />} />
-            <Route path="/dramas" element={<DramaPage />} />
-            <Route path="/dramas/new" element={<NewDramaPage />} />
-            <Route path="/samples/new" element={<NewSamplePage />} />
-            <Route path="/samples/:id/edit" element={<EditSamplePage />} />
-            <Route path="/finance/new" element={<NewTransactionPage />} />
-            <Route path="/finance/edit/:id" element={<EditTransactionPage />} />
-            <Route path="/product/:id" element={<ProductDetailPage />} />
-          </Routes>
+          <KeepAliveRoutes routes={routes} />
           <BottomNav />
         </HashRouter>
       </ToastProvider>
