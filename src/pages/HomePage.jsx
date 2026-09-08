@@ -12,7 +12,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 
 // 产品分类（供添加时选择）
-const CATEGORIES = ['保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
+const CATEGORIES = ['保健品', '美妆', '护肤', '洗护', '日用', '饮品', '食品', '其他']
 
 // 每个分类一个固定颜色 + 第一字作为图标文字
 const CATEGORY_STYLE = {
