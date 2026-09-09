@@ -21,42 +21,42 @@ export function PublishRemindersPage() {
   return (
     <div className="app-container" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', minHeight: '100vh' }}>
       <PageHeader title={`发布提醒（${list.length}）`} onBack={() => navigate(-1)} />
-      <div style={{ padding: '16px' }}>
+      <div style={{ padding: '10px 12px 16px' }}>
         {list.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '14px', padding: '40px 20px', textAlign: 'center', color: '#16a34a', fontSize: '14px' }}>
+          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '30px 16px', textAlign: 'center', color: '#16a34a', fontSize: '13px' }}>
             🎉 没有需要提醒的样品，都已按时发了视频
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {list.map((s) => {
               const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.published
               const days = daysSincePublish(s)
               return (
-                <div key={s.id} style={{ background: '#fff', border: '1px solid #fecdd3', borderRadius: '14px', padding: '14px 16px' }}>
+                <div key={s.id} style={{ background: '#fff', border: '1px solid #fecdd3', borderRadius: '10px', padding: '8px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
-                    <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', color: st.color, background: st.bg, fontWeight: 600, flexShrink: 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
+                    <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: st.color, background: st.bg, fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
                       {st.icon} {st.label}
                     </span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '5px', fontWeight: 600 }}>
+                  <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '3px', fontWeight: 600, lineHeight: 1.4 }}>
                     {isOverdue(s)
                       ? `⚠ 已逾期（截止 ${s.deadline}）`
                       : `⚠ ${(days === Infinity ? '从未发布过视频' : `已 ${days} 天没发视频`)}（出单品需持续发）`}
                   </div>
                   {getAccounts(s).length > 0 && (
-                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '6px' }}>
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
                       {getAccounts(s).map((a) => (
-                        <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
+                        <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
                       ))}
                     </div>
                   )}
-                  <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
+                  <div style={{ marginTop: '7px', display: 'flex', gap: '8px' }}>
                     <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
-                      flex: 1, padding: '11px 0', borderRadius: '10px', border: 'none', background: '#ec4899', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                      flex: 1, padding: '7px 0', borderRadius: '8px', border: 'none', background: '#ec4899', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                     }}>📹 补记发布</button>
                     <button onClick={() => navigate(`/samples/${s.id}/edit`)} style={{
-                      flex: 1, padding: '11px 0', borderRadius: '10px', border: '1.5px solid rgba(0,0,0,0.08)', background: 'rgba(255,255,255,0.6)', color: 'var(--text-sub)', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                      flex: 1, padding: '7px 0', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', background: 'rgba(255,255,255,0.6)', color: 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                     }}>调整状态</button>
                   </div>
                 </div>
