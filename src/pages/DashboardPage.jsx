@@ -34,6 +34,16 @@ function fmt(n) {
   return n.toLocaleString()
 }
 
+// 本周区间（周一 ~ 今天）：返回两个 YYYY-MM-DD 字符串，可直接做字典序比较
+function thisWeekRange() {
+  const now = new Date()
+  const y = now.getFullYear(), m = now.getMonth(), d = now.getDate()
+  const offset = now.getDay() === 0 ? 6 : now.getDay() - 1 // 周一起点
+  const pad = (n) => String(n).padStart(2, '0')
+  const fmtD = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`
+  return [fmtD(new Date(y, m, d - offset)), fmtD(now)]
+}
+
 export function DashboardPage() {
   const navigate = useNavigate()
   const { samples, transactions, orders, publishRecords, dramas, todos, updateSample } = useStore()
@@ -98,20 +108,23 @@ export function DashboardPage() {
       if (t.type === 'income') income += n
       else expense += n
     })
-    // 独立出单台账
-    const orderTotal = (orders || []).length
-    const orderQty = (orders || []).reduce((s, o) => s + (Number(o.qty) || 0), 0)
-    // 按账号分组出单数
-    const orderPerAccount = {}
+    // 独立出单台账：总览只展示本周口径（周一 ~ 今天），按 date 字符串区间过滤
+    const [wkMon, wkToday] = thisWeekRange()
+    let orderWeekTotal = 0, orderWeekQty = 0
+    const orderWeekPerAccount = {}
     ;(orders || []).forEach((o) => {
+      const dt = o.date || ''
+      if (!(dt >= wkMon && dt <= wkToday)) return
+      orderWeekTotal++
+      orderWeekQty += Number(o.qty) || 0
       const a = mapAccount((o.account || '').trim())
       if (!a) return
-      orderPerAccount[a] = (orderPerAccount[a] || 0) + 1
+      orderWeekPerAccount[a] = (orderWeekPerAccount[a] || 0) + 1
     })
     return {
       sTotal, recent, urgent,
       income, expense, net: income - expense,
-      orderTotal, orderQty, orderPerAccount,
+      orderWeekTotal, orderWeekQty, orderWeekPerAccount,
     }
   }, [samples, transactions, orders])
 
@@ -199,9 +212,10 @@ export function DashboardPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ec4899', flexShrink: 0 }} />
               <span style={{ fontSize: '12px', fontWeight: 600, color: '#111', letterSpacing: '0.3px' }}>出单</span>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: '#db2777', background: '#fdf2f7', padding: '1px 7px', borderRadius: '8px', whiteSpace: 'nowrap' }}>本周</span>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span style={{ fontSize: '20px', fontWeight: 700, color: '#111', lineHeight: 1 }}>{fmt(stat.orderTotal)}</span>
-                <span style={{ fontSize: '11px', color: '#c9a3ab' }}>笔 · 累计 {stat.orderQty} 单</span>
+                <span style={{ fontSize: '20px', fontWeight: 700, color: '#111', lineHeight: 1 }}>{fmt(stat.orderWeekTotal)}</span>
+                <span style={{ fontSize: '11px', color: '#c9a3ab' }}>笔 · 本周出单 {stat.orderWeekQty} 单</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
@@ -212,21 +226,21 @@ export function DashboardPage() {
               <span style={{ fontSize: '16px', color: '#f9a8d4' }}>›</span>
             </div>
           </div>
-          {/* 按账号分列（固定三个账号，各显示单数 + 总计） */}
+          {/* 按账号分列（固定三个账号，各显示本周单数） */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
             {ACCOUNTS.map((a) => (
               <span key={a} style={{
                 fontSize: '11px', color: '#666', background: ACCOUNT_COLOR[a]?.bg || '#fdf2f7',
                 padding: '2px 8px', borderRadius: '10px', whiteSpace: 'nowrap',
               }}>
-                {a} <b style={{ color: ACCOUNT_COLOR[a]?.c || '#db2777' }}>{fmt(stat.orderPerAccount[a] || 0)}</b>
+                {a} <b style={{ color: ACCOUNT_COLOR[a]?.c || '#db2777' }}>{fmt(stat.orderWeekPerAccount[a] || 0)}</b>
               </span>
             ))}
             <span style={{
               fontSize: '11px', color: '#db2777', background: '#fdf2f7',
               padding: '2px 8px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 700,
             }}>
-              共 {fmt(stat.orderTotal)} 单
+              本周共 {fmt(stat.orderWeekTotal)} 笔
             </span>
           </div>
         </div>
