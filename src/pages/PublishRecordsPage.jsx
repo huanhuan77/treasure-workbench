@@ -80,32 +80,20 @@ export function PublishRecordsPage() {
   const { publishRecords, samples, deletePublishRecord } = useStore()
   const { show } = useToast()
   const [account, setAccount] = useState('')    // 账号单选筛选，''=全部账号
-  const [prodFilter, setProdFilter] = useState([])  // 产品多选筛选（按样品名分组）
   const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
-  const [datePreset, setDatePreset] = useState('') // 快捷时段：''/today/yesterday/thisWeek/thisMonth/lastMonth
-  const [showProdPicker, setShowProdPicker] = useState(false) // 产品筛选展开
+  const [datePreset, setDatePreset] = useState('today') // 快捷时段：默认「今天」/yesterday/thisWeek/thisMonth/lastMonth
 
   const sampleMap = useMemo(() => Object.fromEntries((samples || []).map((s) => [s.id, s])), [samples])
   const records = useMemo(
     () => [...(publishRecords || [])].sort((a, b) => String(b.publishDate || '').localeCompare(String(a.publishDate || ''))),
     [publishRecords],
   )
-  // 产品筛选选项：所有出现过的样品名（去重）
-  const prodOptions = useMemo(() => {
-    const set = new Set()
-    for (const r of records) {
-      const sm = sampleMap[r.sampleId]
-      if (sm && sm.name) set.add(sm.name)
-    }
-    return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
-  }, [records, sampleMap])
-  const toggleProd = (n) => setProdFilter((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]))
   // 快捷时段与月份下拉互斥：选 preset 清 month，选 month 清 preset
   const toggleDatePreset = (p) => { setDatePreset((cur) => (cur === p ? '' : p)); if (p) setMonth('') }
   const pickMonth = (ym) => { setMonth(ym); setDatePreset('') }
   const resetDate = () => { setDatePreset(''); setMonth('') }
 
-  // 时间筛选 + 账号筛选 + 产品筛选
+  // 时间筛选 + 账号筛选
   const bounds = presetBounds(datePreset) || monthBounds(month)
   const filtered = useMemo(() => records.filter((r) => {
     if (account && !(r.accounts || []).includes(account)) return false
@@ -113,12 +101,8 @@ export function PublishRecordsPage() {
       const t = parseTs(r.publishDate)
       if (t === null || t < bounds[0] || t >= bounds[1]) return false
     }
-    if (prodFilter.length) {
-      const sm = sampleMap[r.sampleId]
-      if (!sm || !prodFilter.includes(sm.name)) return false
-    }
     return true
-  }), [records, account, bounds, prodFilter, sampleMap])
+  }), [records, account, bounds])
 
   // 当前月份下拉里可用的月份（来自有日期的记录），新→旧
   const monthOptions = useMemo(() => {
@@ -152,11 +136,13 @@ export function PublishRecordsPage() {
         </div>
       </header>
 
-      {/* 账号筛选：单选 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', padding: '12px 16px 4px', flexShrink: 0 }}>
-        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', flexShrink: 0 }}>账号</span>
+      {/* 账号筛选：单行横向滚动，不换行 */}
+      <div className="hide-scrollbar" style={{
+        display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px 6px',
+        flexShrink: 0, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
+      }}>
         <button onClick={() => setAccount('')} style={{
-          ...chipBase,
+          ...chipBase, flexShrink: 0,
           borderColor: account === '' ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
           background: account === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
           color: account === '' ? '#fff' : 'var(--text-sub)',
@@ -166,7 +152,7 @@ export function PublishRecordsPage() {
           const col = ACCOUNT_COLOR[a] || { c: '#7c3aed', bg: 'rgba(255,255,255,0.6)' }
           return (
             <button key={a} onClick={() => setAccount(a)} style={{
-              ...chipBase,
+              ...chipBase, flexShrink: 0,
               borderColor: sel ? col.c : 'rgba(0,0,0,0.06)',
               background: sel ? col.bg : '#fff',
               color: sel ? col.c : 'var(--text-main)',
@@ -181,12 +167,6 @@ export function PublishRecordsPage() {
           flex: 1, minWidth: 0, display: 'flex', gap: '6px', alignItems: 'center',
           overflowX: 'auto', whiteSpace: 'nowrap', padding: '2px 0', WebkitOverflowScrolling: 'touch',
         }}>
-          <button onClick={() => setShowProdPicker((v) => !v)} style={{
-            ...chipBase, flexShrink: 0,
-            borderColor: prodFilter.length ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-            background: prodFilter.length ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-            color: prodFilter.length ? '#fff' : 'var(--text-main)',
-          }}>📦 产品{prodFilter.length ? ` · ${prodFilter.length}` : ''}</button>
           {/* 全部：与 5 个快捷时段 + 月份下拉 互斥（单选“时间范围”语义） */}
           <button onClick={resetDate} style={{
             ...chipBase, flexShrink: 0,
@@ -229,36 +209,6 @@ export function PublishRecordsPage() {
           ))}
         </select>
       </div>
-
-      {/* 产品多选展开面板 */}
-      {showProdPicker && (
-        <div style={{ padding: '4px 16px 8px', background: 'rgba(255,255,255,0.6)', borderTop: '1px dashed rgba(244,114,182,0.25)', borderBottom: '1px dashed rgba(244,114,182,0.25)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)' }}>按产品多选</span>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button onClick={() => setProdFilter([])} style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '999px', border: '1px solid rgba(0,0,0,0.08)', background: '#fff', cursor: 'pointer' }}>清空</button>
-              <button onClick={() => setShowProdPicker(false)} style={{ fontSize: '11px', padding: '2px 10px', borderRadius: '999px', border: 'none', background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff', cursor: 'pointer' }}>完成</button>
-            </div>
-          </div>
-          {prodOptions.length === 0 ? (
-            <div style={{ fontSize: '12px', color: 'var(--text-sub)', padding: '8px 0' }}>暂无产品数据</div>
-          ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {prodOptions.map((n) => {
-                const sel = prodFilter.includes(n)
-                return (
-                  <button key={n} onClick={() => toggleProd(n)} style={{
-                    fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '999px',
-                    border: sel ? 'none' : '1px solid rgba(0,0,0,0.10)',
-                    background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-                    color: sel ? '#fff' : 'var(--text-main)', cursor: 'pointer',
-                  }}>{n}</button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* 列表：独立滚动 */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '10px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
