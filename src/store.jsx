@@ -3125,9 +3125,10 @@ function loadData() {
     // 一次性补齐：「新增发布记录→自动置为已发布」这条规则上线前记的历史发布记录不会回溯，
     // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
     const backfilled = backfillPublishedStatus(aggregated)
+    const categorized = backfillSampleCategories(backfilled, productsFinal) // 空分类样品按产品名回填
     return {
       products: productsFinal,
-      samples: backfilled,
+      samples: categorized,
       orders: migrated.orders,  // 独立出单台账
       publishRecords: cleanedPublish,
       transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
@@ -3259,6 +3260,30 @@ function migrateSamples(samples, publishRecords, orders) {
   const newOrders = (orders || []).map((o) => (idMap[o.sampleId] ? { ...o, sampleId: idMap[o.sampleId] } : o))
   try { localStorage.setItem('mig_merge_accounts_v1', '1') } catch (e) {}
   return { samples: merged.map(normalizeSample), publishRecords: newRecords, orders: newOrders }
+}
+
+// 存量样品分类回填：样品早期没有 category 字段（分类功能 2026-09 新增）。
+// 启动时对仍为空的样品，用「样品名 ↔ 产品名」做双向包含匹配，取名称最长的产品继承其分类。
+// 幂等：只填空分类、绝不覆盖已有分类；匹配不上保持空，等用户在编辑页手动补。
+function backfillSampleCategories(samples, products) {
+  const norm = (x) => String(x || '').replace(/\s+/g, '')
+  const pool = (products || [])
+    .map((p) => ({ n: (p.name || '').trim(), c: (p.category || '').trim() }))
+    .filter((p) => p.n && p.c)
+  if (!pool.length) return samples
+  return (samples || []).map((s) => {
+    if ((s.category || '').trim()) return s   // 已有分类不动
+    const name = norm(s.name)
+    if (!name) return s
+    let best = null
+    for (const p of pool) {
+      const pn = norm(p.n)
+      if (name.includes(pn) || pn.includes(name)) {
+        if (!best || pn.length > best.len) best = { c: p.c, len: pn.length }   // 名称越长越精确
+      }
+    }
+    return best ? { ...s, category: best.c } : s
+  })
 }
 
 // 把「同名 + 同 productId」的多个样品（即历史按账号拆分的产物）合并为一条实体
