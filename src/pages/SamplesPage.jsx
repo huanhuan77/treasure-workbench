@@ -10,6 +10,7 @@ import { formatDate, todayStr, deadlineDesc, addDays, copyText } from '../utils/
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
 import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getExecStatus, getCounts, getTopStatus, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
+import { CATEGORIES } from '../utils/categories'
 
 // 状态枚举统一从 sampleStatus.js 导入（SAMPLE_STATUS / SAMPLE_STATUS_ORDER / SAMPLE_STATUS_LIST）
 
@@ -641,6 +642,7 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
 
 function SampleForm({ sample, onClose, onSave, onDelete }) {
   const { products } = useStore()
+  const { show } = useToast()
   const [form, setForm] = useState({
     name: sample?.name || '',
     account: sample?.account || (Array.isArray(sample?.accounts) && sample.accounts[0]) || '',
@@ -652,6 +654,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
     commission: sample?.commission || 5,
     orderDate: sample?.orderDate || '',
     productId: sample?.productId || '',
+    category: sample?.category || '',
     isArrived: sample?.isArrived ?? false,
   })
   // 截止时间是否被用户手动改过（未手动改时，随收货时间自动 +15 天）
@@ -675,6 +678,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
 
   const handleSave = () => {
     if (!form.name.trim()) return
+    if (!sample && !form.category) { show('请选择分类', 'error'); return }   // 新增样品必须选分类
     const isOrder = form.status === 'published'
     const f = { ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] }
     if (!isOrder) f.orderDate = ''
@@ -701,6 +705,20 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
     >
       <Field label="产品名称" required>
         <input style={inputStyle} placeholder="样品名称" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+      </Field>
+
+      <Field label="分类" required={!sample}>
+        <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
+          {CATEGORIES.map((c) => (
+            <button key={c} type="button" onClick={() => setForm({ ...form, category: c })} style={{
+              flex: '0 0 auto', padding: '8px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+              border: form.category === c ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
+              background: form.category === c ? 'rgba(244,114,182,0.12)' : '#fff',
+              color: form.category === c ? 'var(--primary)' : 'var(--text-sub)',
+              cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
+            }}>{c}</button>
+          ))}
+        </div>
       </Field>
 
       <Field label={sample ? '归属账号（单条样品仅归属 1 个账号）' : '归属账号（可多选，选几个账号就生成几条样品）'}>

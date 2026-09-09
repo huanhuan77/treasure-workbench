@@ -52,6 +52,7 @@ export function NewSamplePage() {
 
   const handleSave = () => {
     if (!name.trim()) { show('请输入产品名称', 'error'); return }
+    if (!category) { show('请选择分类', 'error'); return }
     if (accounts.length === 0) { show('请选择归属账号', 'error'); return }
     if (duplicateName) {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要重复添加吗？`)) return
@@ -79,7 +80,7 @@ export function NewSamplePage() {
             </p>
           )}
         </Field>
-        <Field label="分类（选填）">
+        <Field label="分类" required>
           <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
             {CATEGORIES.map(c => (
               <button key={c} onClick={() => setCategory(c)} style={{
