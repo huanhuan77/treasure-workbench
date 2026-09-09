@@ -2,16 +2,16 @@
 //
 // 数据模型（一次合并重构后）：
 //   样品 = 一个实体，可归属多个账号。
-//   - logistics（物流状态，实体级共享）：un_arrived 未到货 / arrived 已到货未拍摄
+//   - logistics（物流状态，实体级共享）：un_arrived 未到货 / arrived 已到货（拍摄/发布走执行状态）
 //   - execByAccount（执行状态，按账号独立）：{ 账号: shot|published|abandoned }
 //   - countsByAccount（按账号统计）：{ 账号: { publishCount, orderCount, lastPublishAt } }
 //   为兼容未改动的老页面，实体仍保留顶层 status（代表值）、publishCount（合计）、
 //   orderCount（合计）、lastPublishAt（最新）、publishHistory（全部）、account（首个账号）。
 
-// 物流状态（共享）
+// 物流状态（共享，只标记到没到货；是否拍摄/发布由下方各账号执行状态表达）
 export const LOGISTICS_STATUS = {
   un_arrived: { key: 'un_arrived', label: '未到货', icon: '🚚', color: '#94a3b8', bg: 'rgba(148,163,184,0.16)' },
-  arrived: { key: 'arrived', label: '已到货未拍摄', icon: '📦', color: '#f97316', bg: 'rgba(249,115,22,0.16)' },
+  arrived: { key: 'arrived', label: '已到货', icon: '📦', color: '#f97316', bg: 'rgba(249,115,22,0.16)' },
 }
 
 // 执行状态（按账号独立）
@@ -52,7 +52,7 @@ export function getAccounts(s) {
   return s?.account ? [s.account] : []
 }
 
-// 物流状态（实体级共享）：未到货 / 已到货未拍摄
+// 物流状态（实体级共享）：未到货 / 已到货
 export function getLogistics(s) {
   if (s && (s.logistics === 'un_arrived' || s.logistics === 'arrived')) return s.logistics
   const st = s?.status

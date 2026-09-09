@@ -167,6 +167,7 @@ export function EditSamplePage() {
                 color: logistics === s.key ? '#fff' : 'var(--text-sub)' }}>{s.icon} {s.label}</button>
             ))}
           </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '4px' }}>只标记货到没到；是否拍摄/已发布，在下方按账号单独设置。</div>
         </Field>
 
         <Field label="各账号执行状态（独立管理）">
