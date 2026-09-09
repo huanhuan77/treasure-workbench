@@ -82,7 +82,7 @@ export function PublishRecordsPage() {
   const [account, setAccount] = useState('')    // 账号单选筛选，''=全部账号
   const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
   const [datePreset, setDatePreset] = useState('today') // 快捷时段：默认「今天」/yesterday/thisWeek/thisMonth/lastMonth
-  const [sortMode, setSortMode] = useState('time') // time 按时间倒序 | count 按样品累计发布次数
+  const [countDesc, setCountDesc] = useState(true) // 发布次数排序：true 降序（多在前）/ false 升序（少在前）
 
   const sampleMap = useMemo(() => Object.fromEntries((samples || []).map((s) => [s.id, s])), [samples])
   const records = useMemo(
@@ -130,9 +130,8 @@ export function PublishRecordsPage() {
     }
     return [...acc.values()]
   }, [records, account, bounds, sampleMap])
-  // 排序
-  //  time  模式：按行内最近发布日期倒序（最新发布的样品/账号在前）
-  //  count 模式：按样品×账号全期累计发布次数降序（不受今天/本月筛选影响），相同次数再按最近发布倒序
+  // 排序：恒按「样品×账号累计发布次数」升降序排（点击 chip 切换）
+  // 次数相同的行再按最近发布日期倒序
   const sortedRows = useMemo(() => {
     const arr = rows.map((r) => {
       const sm = sampleMap[r.sampleId]
@@ -140,11 +139,11 @@ export function PublishRecordsPage() {
       return { ...r, fullCount: full, lastTs: parseTs(r.lastPublishAt) || 0 }
     })
     return arr.sort((a, b) =>
-      sortMode === 'count'
+      countDesc
         ? b.fullCount - a.fullCount || b.lastTs - a.lastTs
-        : b.lastTs - a.lastTs
+        : a.fullCount - b.fullCount || b.lastTs - a.lastTs
     )
-  }, [rows, sortMode, sampleMap])
+  }, [rows, countDesc, sampleMap])
 
   // 当前月份下拉里可用的月份（来自有日期的记录），新→旧
   const monthOptions = useMemo(() => {
@@ -257,24 +256,15 @@ export function PublishRecordsPage() {
         </select>
       </div>
 
-      {/* 排序切换：按时间最新在前 / 按样品累计发布次数降序 */}
+      {/* 排序：按发布次数，点击切换 降序/升序 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 16px 8px', flexShrink: 0 }}>
-        <span style={{ fontSize: '12px', color: '#b3888f', fontWeight: 600, marginRight: '2px', flexShrink: 0 }}>排序</span>
-        <button onClick={() => setSortMode('time')} style={{
+        <span style={{ fontSize: '12px', color: '#b3888f', fontWeight: 600, flexShrink: 0 }}>排序</span>
+        <button onClick={() => setCountDesc((v) => !v)} style={{
           ...chipBase, flexShrink: 0, padding: '4px 10px',
-          borderColor: sortMode === 'time' ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-          background: sortMode === 'time' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-          color: sortMode === 'time' ? '#fff' : 'var(--text-sub)',
-        }}>按时间</button>
-        <button onClick={() => setSortMode('count')} style={{
-          ...chipBase, flexShrink: 0, padding: '4px 10px',
-          borderColor: sortMode === 'count' ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-          background: sortMode === 'count' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-          color: sortMode === 'count' ? '#fff' : 'var(--text-sub)',
-        }}>按发布次数</button>
-        {sortMode === 'count' && (
-          <span style={{ fontSize: '11px', color: '#c08a92', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>样品累计发布总条数多的在前</span>
-        )}
+          borderColor: 'var(--primary)',
+          background: 'linear-gradient(135deg,#f472b6,#ec4899)',
+          color: '#fff',
+        }}>发布次数 {countDesc ? '▼' : '▲'}</button>
       </div>
 
       {/* 列表：独立滚动 */}
@@ -308,9 +298,7 @@ export function PublishRecordsPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '15px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sm ? sm.name : '（样品已删除）'}</span>
                         {q > 1 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px' }}>×{q}</span>}
-                        {sortMode === 'count' && (
-                          <span style={{ flexShrink: 0, fontSize: '10px', fontWeight: 600, color: '#c08a92', padding: '1px 6px', borderRadius: '6px', background: 'rgba(192,138,146,0.12)' }}>累计 {row.fullCount}</span>
-                        )}
+                        <span style={{ flexShrink: 0, fontSize: '10px', fontWeight: 600, color: '#c08a92', padding: '1px 6px', borderRadius: '6px', background: 'rgba(192,138,146,0.12)' }}>累计 {row.fullCount}</span>
                       </div>
                     </div>
                   </div>
