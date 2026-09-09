@@ -39,18 +39,16 @@ export function PublishRemindersPage() {
                       {st.icon} {st.label}
                     </span>
                   </div>
-                  <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '3px', fontWeight: 600, lineHeight: 1.4 }}>
-                    {isOverdue(s)
-                      ? `⚠ 已逾期（截止 ${s.deadline}）`
-                      : `⚠ ${(days === Infinity ? '从未发布过视频' : `已 ${days} 天没发视频`)}（出单品需持续发）`}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '3px' }}>
+                    <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, lineHeight: 1.4 }}>
+                      {isOverdue(s)
+                        ? `⚠ 已逾期（截止 ${s.deadline}）`
+                        : `⚠ ${(days === Infinity ? '从未发布过视频' : `已 ${days} 天没发视频`)}（出单品需持续发）`}
+                    </span>
+                    {getAccounts(s).map((a) => (
+                      <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
+                    ))}
                   </div>
-                  {getAccounts(s).length > 0 && (
-                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
-                      {getAccounts(s).map((a) => (
-                        <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
-                      ))}
-                    </div>
-                  )}
                   <div style={{ marginTop: '7px', display: 'flex', gap: '8px' }}>
                     <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
                       flex: 1, padding: '7px 0', borderRadius: '8px', border: 'none', background: '#ec4899', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
