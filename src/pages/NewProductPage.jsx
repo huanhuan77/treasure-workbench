@@ -139,9 +139,6 @@ export function EditProductPage() {
         <Field label="产品名称" required>
           <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} autoFocus />
         </Field>
-        <Field label="品牌名（选填）">
-          <input style={inputStyle} value={brand} onChange={e => setBrand(e.target.value)} />
-        </Field>
         <Field label="分类（选填）">
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {CATEGORIES.map(c => (
