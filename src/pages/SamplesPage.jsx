@@ -471,12 +471,12 @@ export function SamplesPage() {
                       </div>
                       <button onClick={async () => {
                         const ok = await copyText(lk.url)
-                        show(ok ? '已复制' : '复制失败', ok ? 'success' : 'error')
+                        show(ok ? '已复制链接' : '复制失败', ok ? 'success' : 'error')
                       }} style={{
                         flexShrink: 0, border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700,
                         background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
                         padding: '8px 14px', borderRadius: '9px',
-                      }}>复制</button>
+                      }}>复制链接</button>
                     </div>
                   </div>
                 ))}
@@ -582,12 +582,10 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
                     const tag = exec ? execInfo.label : (logistics === 'arrived' ? '待拍' : '未到货')
                     const tagColor = exec ? execInfo.color : 'var(--text-sub)'
                     const tagBg = exec ? execInfo.bg : 'rgba(148,163,184,0.16)'
-                    const published = c.publishCount > 0
                     return (
                       <span key={a.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {a.name}
                         <span style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: tagBg, color: tagColor, fontWeight: 700 }}>{tag}</span>
-                        {published && <span style={{ fontSize: '9px', opacity: 0.85 }}>发{c.publishCount}</span>}
                       </span>
                     )
                   })

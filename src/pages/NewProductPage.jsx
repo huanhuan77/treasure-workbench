@@ -72,9 +72,6 @@ export function NewProductPage() {
             </div>
           )}
         </Field>
-        <Field label="品牌名（选填）">
-          <input style={inputStyle} placeholder="例如：珀芙研 / 洁比兔" value={brand} onChange={e => setBrand(e.target.value)} />
-        </Field>
         <Field label="分类（选填）">
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {CATEGORIES.map(c => (

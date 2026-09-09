@@ -16,7 +16,7 @@ export const glassSoft = {
   borderRadius: '16px',
 }
 
-export function Modal({ open, onClose, title, children, footer, center, inline }) {
+export function Modal({ open, onClose, title, children, footer, center, inline, compact }) {
   const contentRef = useRef(null)
 
   // inline 模式：直接渲染，不弹窗（避免键盘问题）
@@ -121,7 +121,7 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
           backdropFilter: 'blur(30px) saturate(180%)',
           WebkitBackdropFilter: 'blur(30px) saturate(180%)',
           width: '100%',
-          maxWidth: '480px',
+          maxWidth: compact ? '320px' : '480px',
           margin: '0 auto',
           maxHeight: kbActive ? `calc(${availH}px - 52px)` : '85vh',
           transform: 'none',
@@ -136,14 +136,17 @@ export function Modal({ open, onClose, title, children, footer, center, inline }
       >
         <div style={{
           // 顶部 padding 加 iOS 状态栏/灵动岛安全区（兜底 44px）—— 避免标题/搜索框被系统状态栏压住
-          padding: 'calc(18px + max(env(safe-area-inset-top, 0px), 44px)) 22px 14px',
+          // compact：小确认弹窗不预留 44px 状态栏兜底（居中弹窗不会顶到状态栏），整体更紧凑
+          padding: compact
+            ? 'calc(14px + env(safe-area-inset-top, 0px)) 18px 10px'
+            : 'calc(18px + max(env(safe-area-inset-top, 0px), 44px)) 22px 14px',
           borderBottom: '1px solid rgba(244, 114, 182, 0.12)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexShrink: 0,
         }}>
-          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: 'var(--text-main)' }}>{title}</h3>
+          <h3 style={{ margin: 0, fontSize: compact ? '15px' : '17px', fontWeight: 600, color: 'var(--text-main)' }}>{title}</h3>
           <button
             onClick={onClose}
             style={{
@@ -225,17 +228,19 @@ export const btnGhost = {
   whiteSpace: 'nowrap',
 }
 
-export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText = '确认', danger }) {
+export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText = '确认', danger, compact }) {
   return (
-    <Modal open={open} onClose={onClose} title={title} center>
-      <p style={{ margin: 0, color: 'var(--text-sub)', fontSize: '14px', lineHeight: 1.6 }}>{message}</p>
-      <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-        <button style={btnGhost} onClick={onClose}>取消</button>
+    <Modal open={open} onClose={onClose} title={title} center compact={compact}>
+      <p style={{ margin: 0, color: 'var(--text-sub)', fontSize: compact ? '13px' : '14px', lineHeight: 1.6 }}>{message}</p>
+      <div style={{ display: 'flex', gap: '10px', marginTop: compact ? '14px' : '20px' }}>
+        <button style={{ ...btnGhost, padding: compact ? '9px 14px' : btnGhost.padding, fontSize: compact ? '13px' : btnGhost.fontSize }} onClick={onClose}>取消</button>
         <button
           style={{
             ...btnPrimary,
             background: danger ? 'linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)' : btnPrimary.background,
             flex: 1,
+            padding: compact ? '9px 14px' : btnPrimary.padding,
+            fontSize: compact ? '13px' : btnPrimary.fontSize,
           }}
           onClick={() => { onConfirm(); onClose() }}
         >

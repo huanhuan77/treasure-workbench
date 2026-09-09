@@ -120,7 +120,7 @@ export function ProductDetailPage() {
   const displayedCopies = (() => {
     let list = product.copies
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
-    else if (copyFilter === '保单') list = list.filter((c) => c.used)
+    else if (copyFilter === '爆单') list = list.filter((c) => c.used)
     return [...list].sort((a, b) => {
       if (!sortPending) {
         if (a.hasHot !== b.hasHot) return b.hasHot ? 1 : -1  // 爆单优先
@@ -347,12 +347,12 @@ export function ProductDetailPage() {
           </div>
         </div>
 
-        {/* 文案筛选：只保留 出单文案 / 保单文案（按用户要求精简） */}
+        {/* 文案筛选：只保留 出单文案 / 爆单文案（按用户要求精简） */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
           {[
             { key: '全部', label: '全部' },
             { key: '出单', label: '出单文案' },
-            { key: '保单', label: '保单文案' },
+            { key: '爆单', label: '爆单文案' },
           ].map((f) => {
             const active = copyFilter === f.key
             return (
@@ -496,6 +496,7 @@ export function ProductDetailPage() {
         message="确定删除这条文案吗？"
         confirmText="删除"
         danger
+        compact
       />
 
       <ConfirmModal
@@ -807,34 +808,6 @@ function CopyCard({
 
       {/* 状态标签 */}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-        {copy.used && (() => {
-          const d = copy.usedDate ? daysDiff(copy.usedDate) : null
-          const desc = d === null ? '' : d < 0 ? `${-d}天前用过` : d === 0 ? '今天用过' : `${d}天前用过`
-          return (
-            <span style={{
-              fontSize: '11px', color: '#0891b2', background: 'rgba(207, 250, 254, 0.8)',
-              padding: '3px 9px', borderRadius: '8px', fontWeight: 500,
-            }}>✓ 用过{desc ? ` · ${desc}` : ''}</span>
-          )
-        })()}
-        {copy.hasOrder && (() => {
-          return (
-            <span style={{
-              fontSize: '13px', color: '#047857', background: 'linear-gradient(135deg,#d1fae5,#a7f3d0)',
-              padding: '4px 12px', borderRadius: '8px', fontWeight: 700,
-              boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
-            }}>💰 出单</span>
-          )
-        })()}
-        {copy.hasHot && (() => {
-          return (
-            <span style={{
-              fontSize: '13px', color: '#fff', background: 'linear-gradient(135deg,#f43f5e,#dc2626)',
-              padding: '4px 12px', borderRadius: '8px', fontWeight: 700,
-              boxShadow: '0 2px 8px rgba(244,63,94,0.4)',
-            }}>🔥 爆单</span>
-          )
-        })()}
         {copy.style && (
           <span style={{
             fontSize: '11px', color: '#c2410c', background: 'rgba(255, 237, 213, 0.8)',
@@ -843,11 +816,18 @@ function CopyCard({
         )}
       </div>
 
-      {/* 操作按钮区（编辑/删除已搬到右上角） */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      {/* 操作按钮区（编辑/删除已搬到右上角）；「用过」后日期紧跟按钮右侧 */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
         <ActionBtn active={copy.used} onClick={onToggleUsed} activeColor="info">
-          {copy.used ? '✓ 用过' : '标记用过'}
+          用过
         </ActionBtn>
+        {copy.used && (() => {
+          const d = copy.usedDate ? daysDiff(copy.usedDate) : null
+          const desc = d === null ? '' : d <= 0 ? '今天' : `${d}天前`
+          return desc
+            ? <span style={{ fontSize: '11px', color: '#0891b2', fontWeight: 600, whiteSpace: 'nowrap' }}>{desc}</span>
+            : null
+        })()}
         <ActionBtn active={copy.hasOrder} onClick={onToggleOrder} activeColor="success">
           {copy.hasOrder ? '💰 取消出单' : '💰 出单'}
         </ActionBtn>

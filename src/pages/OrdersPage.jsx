@@ -87,16 +87,13 @@ export function OrdersPage() {
   const [editing, setEditing] = useState(null)   // null=新增
   const [formSeq, setFormSeq] = useState(0)      // 每次打开自增，作 key 强制重建表单以清空上次输入
   const [accountFilter, setAccountFilter] = useState('')  // ''=全部
-  const [productFilter, setProductFilter] = useState([])   // 产品名多选筛选；空=全部
   const [quick, setQuick] = useState('today')  // ''=全部 / today/yesterday/week/month/lastMonth（默认今天）
   const [month, setMonth] = useState('')  // ''=全部 / 'YYYY-MM'=指定月（与 quick 互斥）
   const [monthOpen, setMonthOpen] = useState(false)  // 月份下拉展开态
   const [sortKey, setSortKey] = useState('mostDesc')  // 'mostDesc'=出单最多(降序) / 'mostAsc'=出单最少(升序)
   const [monthPos, setMonthPos] = useState(null)     // 月份下拉锚点 {top,left}，fixed 定位用
-  const [showProdPicker, setShowProdPicker] = useState(false) // 产品多选面板
   const monthBtnRef = useRef(null)
 
-  const toggleProd = (n) => setProductFilter((prev) => (prev.includes(n) ? prev.filter((x) => x !== n) : [...prev, n]))
 
   const toggleMonthOpen = () => {
     const el = monthBtnRef.current
@@ -144,11 +141,10 @@ export function OrdersPage() {
     })
   }, [orders])
 
-  // 时间筛选（快捷段优先，其次指定月份） + 账号筛选 + 产品名筛选
+  // 时间筛选（快捷段优先，其次指定月份） + 账号筛选
   const filtered = useMemo(() => {
     let arr = list
     if (accountFilter) arr = arr.filter((o) => o.account === accountFilter)
-    if (productFilter.length) arr = arr.filter((o) => productFilter.includes(o.name))
     const bounds = quick ? quickBounds(quick) : monthBounds(month)
     if (bounds) {
       const [s, e] = bounds
@@ -159,7 +155,7 @@ export function OrdersPage() {
       })
     }
     return arr
-  }, [list, accountFilter, productFilter, quick, month])
+  }, [list, accountFilter, quick, month])
 
   // 汇总：跟着 range+accountFilter 走
   const summary = useMemo(() => {
@@ -390,56 +386,7 @@ export function OrdersPage() {
             }}>{a}</button>
           )
         })}
-        {/* 产品多选 */}
-        <button onClick={() => setShowProdPicker((v) => !v)} style={{
-          flex: '0 0 auto', padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
-          border: productFilter.length ? 'none' : '1px solid rgba(244,114,182,0.35)',
-          background: productFilter.length ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-          color: productFilter.length ? '#fff' : 'var(--text-main)', cursor: 'pointer',
-          whiteSpace: 'nowrap',
-        }}>📦 产品{productFilter.length ? ` · ${productFilter.length}` : ''}</button>
-      </div>
-
-      {/* 产品多选展开面板：列出所有出现过的产品名 */}
-      {showProdPicker && (() => {
-        // 从 filtered 中聚合所有出现过的产品名（不被时间/账号筛选影响，保证选项全集可见）
-        const opts = (() => {
-          const base = accountFilter ? list.filter((o) => o.account === accountFilter) : list
-          const set = new Set()
-          for (const o of base) if (o.name) set.add(o.name)
-          return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
-        })()
-        return (
-          <div style={{ padding: '4px 16px 8px', background: 'rgba(255,255,255,0.6)', borderTop: '1px dashed rgba(244,114,182,0.25)', borderBottom: '1px dashed rgba(244,114,182,0.25)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)' }}>按产品多选</span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <button onClick={() => setProductFilter([])} style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '999px', border: '1px solid rgba(0,0,0,0.08)', background: '#fff', cursor: 'pointer' }}>清空</button>
-                <button onClick={() => setShowProdPicker(false)} style={{ fontSize: '11px', padding: '2px 10px', borderRadius: '999px', border: 'none', background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff', cursor: 'pointer' }}>完成</button>
-              </div>
-            </div>
-            {opts.length === 0 ? (
-              <div style={{ fontSize: '12px', color: 'var(--text-sub)', padding: '8px 0' }}>暂无产品数据</div>
-            ) : (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {opts.map((n) => {
-                  const sel = productFilter.includes(n)
-                  return (
-                    <button key={n} onClick={() => toggleProd(n)} style={{
-                      fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '999px',
-                      border: sel ? 'none' : '1px solid rgba(0,0,0,0.10)',
-                      background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-                      color: sel ? '#fff' : 'var(--text-main)', cursor: 'pointer',
-                    }}>{n}</button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )
-      })()}
-
-      {/* 排序：按出单量，点按钮在降序/升序之间切换 */}
+      </div>      {/* 排序：按出单量，点按钮在降序/升序之间切换 */}
       <div style={{ padding: '4px 16px 2px', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
         <button onClick={() => setSortKey(sortKey === 'mostDesc' ? 'mostAsc' : 'mostDesc')} style={{
