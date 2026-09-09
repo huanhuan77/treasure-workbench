@@ -53,6 +53,7 @@ export function NewOrderPage() {
   const [showSamples, setShowSamples] = useState(false)
   const [activeEntryIdx, setActiveEntryIdx] = useState(0)
   const [sampleQuery, setSampleQuery] = useState('')
+  const [sampleCategory, setSampleCategory] = useState('')   // 选样品时的分类筛选（''=全部分类）
   const [pickedIds, setPickedIds] = useState(() => new Set())  // 弹窗内多选样品 id 临时集合
 
   // 可选样品：所选账号下「已发布」的样品（规则与旧弹窗一致）
@@ -66,16 +67,17 @@ export function NewOrderPage() {
     const q = sampleQuery.trim().toLowerCase()
     const usedElsewhere = new Set(entries.map((e, i) => (i === activeEntryIdx ? null : e.sampleId)).filter(Boolean))
     const base = candidateSamples.filter((s) => !usedElsewhere.has(s.id))
-    const list = q ? base.filter((s) => (s.name || '').toLowerCase().includes(q)) : base
+    const byCat = sampleCategory ? base.filter((s) => (s.category || '') === sampleCategory) : base
+    const list = q ? byCat.filter((s) => (s.name || '').toLowerCase().includes(q)) : byCat
     return [...list].sort((a, b) => {
       const cur = entries[activeEntryIdx]?.sampleId
       if (a.id === cur) return -1
       if (b.id === cur) return 1
       return 0
     })
-  }, [candidateSamples, sampleQuery, entries, activeEntryIdx])
+  }, [candidateSamples, sampleQuery, sampleCategory, entries, activeEntryIdx])
 
-  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery(''); setPickedIds(new Set()) }
+  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery(''); setSampleCategory(''); setPickedIds(new Set()) }
   const openSamplePicker = (idx) => {
     if (!account) { show('请先选择账号', 'error'); return }
     setActiveEntryIdx(idx)
@@ -158,6 +160,8 @@ export function NewOrderPage() {
         onBack={closeSamplePicker}
         query={sampleQuery}
         onQueryChange={setSampleQuery}
+        category={sampleCategory}
+        onCategoryChange={setSampleCategory}
         count={pickedIds.size}
         showBulk={filteredSamples.length > 0}
         onSelectAll={() => setPickedIds(new Set(filteredSamples.map((s) => s.id)))}

@@ -202,6 +202,7 @@ export function normalizeSample(s) {
     ...s,
     account: accounts[0] || '',
     accounts,
+    category: s.category || '',   // 分类（与产品分类同口径，选填）
     logistics,
     execByAccount,
     countsByAccount,

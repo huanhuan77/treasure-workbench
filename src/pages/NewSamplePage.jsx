@@ -6,6 +6,7 @@ import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../componen
 import { addDays } from '../utils/helpers'
 import { SAMPLE_STATUS_LIST } from '../utils/sampleStatus'
 import { LinksEditor } from '../components/LinksEditor'
+import { CATEGORIES } from '../utils/categories'
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 
@@ -36,6 +37,7 @@ export function NewSamplePage() {
   const [commission, setCommission] = useState(5)
   const [orderDate, setOrderDate] = useState('')
   const [links, setLinks] = useState([])
+  const [category, setCategory] = useState('')   // 分类（选填，与产品分类同口径）
   const isOrder = status === 'published'
 
   // 同名检测（按所选账号交集判断）
@@ -56,6 +58,7 @@ export function NewSamplePage() {
     }
     addSample({
       name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark,
+      category,
       commission: Number(commission), orderDate: isOrder ? orderDate : '',
       links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), note: (l.note || '').trim() })),
     })
@@ -75,6 +78,19 @@ export function NewSamplePage() {
               ⚠️ 已有同名样品
             </p>
           )}
+        </Field>
+        <Field label="分类（选填）">
+          <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
+            {CATEGORIES.map(c => (
+              <button key={c} onClick={() => setCategory(c)} style={{
+                flex: '0 0 auto', padding: '8px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+                border: category === c ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
+                background: category === c ? 'rgba(244,114,182,0.12)' : '#fff',
+                color: category === c ? 'var(--primary)' : 'var(--text-sub)',
+                cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
+              }}>{c}</button>
+            ))}
+          </div>
         </Field>
         <Field label="归属账号（可多选，选几个账号就生成几条样品）">
           {/* 账号按钮单行横排，超出可横向滚动，避免换行挤压布局 */}

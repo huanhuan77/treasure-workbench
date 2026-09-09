@@ -1,4 +1,5 @@
 // 全屏「选择样品」页骨架（替代弹窗，iOS 键盘/状态栏下更稳）
+import { CATEGORIES } from '../utils/categories'
 // 仅供需要把"选样品弹窗"升级为整页选择的表单页复用。
 // 本组件只负责布局骨架（头部/搜索区/计数操作行/内容滚动/底部确定），
 // 列表项与勾选逻辑由调用方以 children 传入并自行维护状态。
@@ -12,6 +13,9 @@ export function SamplePickerPage({
   showBulk,        // 是否显示 全选/清空
   onSelectAll,
   onClear,
+  category,        // 当前分类筛选（''=全部分类）
+  onCategoryChange,
+  categoryOptions = CATEGORIES, // 分类选项，默认产品/样品共用分类
   children,        // 样品列表区
   confirmText,     // 确定按钮文案（含计数时调用方拼好）
   confirmDisabled,
@@ -61,6 +65,31 @@ export function SamplePickerPage({
           name="q"
           style={{ ...fieldBox, borderColor: query ? 'rgba(244,114,182,0.6)' : 'rgba(0,0,0,0.08)' }}
         />
+        {/* 分类筛选：单行横向滚动，不换行 */}
+        {categoryOptions && categoryOptions.length > 0 && (
+          <div className="hide-scrollbar" style={{
+            display: 'flex', gap: '6px', marginTop: '8px', overflowX: 'auto',
+            whiteSpace: 'nowrap', paddingBottom: '2px', WebkitOverflowScrolling: 'touch',
+          }}>
+            <button type="button" onClick={() => onCategoryChange && onCategoryChange('')} style={{
+              flex: '0 0 auto', padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+              border: '1.5px solid', borderColor: !category ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+              background: !category ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+              color: !category ? '#fff' : 'var(--text-sub)', cursor: 'pointer',
+            }}>全部分类</button>
+            {categoryOptions.map((c) => {
+              const sel = category === c
+              return (
+                <button key={c} type="button" onClick={() => onCategoryChange && onCategoryChange(c)} style={{
+                  flex: '0 0 auto', padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+                  border: '1.5px solid', borderColor: sel ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+                  background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+                  color: sel ? '#fff' : 'var(--text-sub)', cursor: 'pointer',
+                }}>{c}</button>
+              )
+            })}
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', fontSize: '12px', color: 'var(--text-sub)' }}>
           <span>已勾选 <b style={{ color: 'var(--primary)' }}>{count}</b> 个</span>
           {showBulk && (

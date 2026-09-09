@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { getTopStatus } from '../utils/sampleStatus'
 
-const CATEGORIES = ['保健品', '护肤', '美妆', '饮品', '食品', '洗护', '日用', '其他']
+import { CATEGORIES } from '../utils/categories'
 
 function PageHeader({ title, onBack }) {
   return (

@@ -6,6 +6,7 @@ import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../componen
 import { addDays } from '../utils/helpers'
 import { getAccounts, getLogistics, getExecByAccount, getCounts, LOGISTICS_STATUS, EXEC_STATUS } from '../utils/sampleStatus'
 import { LinksEditor } from '../components/LinksEditor'
+import { CATEGORIES } from '../utils/categories'
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 const LOGISTICS_LIST = Object.values(LOGISTICS_STATUS)
@@ -37,6 +38,7 @@ export function EditSamplePage() {
   const [receiveDate, setReceiveDate] = useState(sample?.receiveDate || new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0, 10), 15))
   const [remark, setRemark] = useState(sample?.remark || '')
+  const [category, setCategory] = useState(sample?.category || '')   // 分类（选填）
   const [commission, setCommission] = useState(sample?.commission || 5)
   const [links, setLinks] = useState(() =>
     (Array.isArray(sample?.links) ? sample.links : []).map((l) => ({ id: l.id || 'L' + Math.random().toString(36).slice(2, 6), url: l.url || '', note: l.note || '' }))
@@ -85,6 +87,7 @@ export function EditSamplePage() {
       receiveDate,
       deadline,
       remark,
+      category,
       commission: Number(commission),
       links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), note: (l.note || '').trim() })),
     })
@@ -107,6 +110,19 @@ export function EditSamplePage() {
         <div style={{ ...glassStyle, padding: '16px' }}>
         <Field label="产品名称" required>
           <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} autoFocus />
+        </Field>
+        <Field label="分类（选填）">
+          <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
+            {CATEGORIES.map(c => (
+              <button key={c} onClick={() => setCategory(c)} style={{
+                flex: '0 0 auto', padding: '8px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+                border: category === c ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
+                background: category === c ? 'rgba(244,114,182,0.12)' : '#fff',
+                color: category === c ? 'var(--primary)' : 'var(--text-sub)',
+                cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
+              }}>{c}</button>
+            ))}
+          </div>
         </Field>
         <Field label="归属账号（可多选）">
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
