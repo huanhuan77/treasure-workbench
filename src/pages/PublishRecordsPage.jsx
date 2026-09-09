@@ -82,6 +82,7 @@ export function PublishRecordsPage() {
   const [account, setAccount] = useState('')    // 账号单选筛选，''=全部账号
   const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
   const [datePreset, setDatePreset] = useState('today') // 快捷时段：默认「今天」/yesterday/thisWeek/thisMonth/lastMonth
+  const [sortMode, setSortMode] = useState('time') // time 按时间倒序 | count 按样品累计发布次数
 
   const sampleMap = useMemo(() => Object.fromEntries((samples || []).map((s) => [s.id, s])), [samples])
   const records = useMemo(
@@ -104,8 +105,11 @@ export function PublishRecordsPage() {
       }
       return true
     })
-    // 按「样品累计发布条数」降序：同一样品的多条记录聚合连续展示，
-    // 发布记录多的样品置顶，组内保持发布日期倒序（records 已按日期倒序）
+    // 同一样品聚合连续展示；组间排序：
+    //  time  模式：按组内最新发布日期倒序（最新发布的样品在前）
+    //  count 模式：按样品累计发布总条数降序（不受时间/账号筛选影响，重发多的样品置顶），
+    //              次数相同时再按组内最新发布日期倒序
+    // 组内始终按日期倒序（records 已按日期倒序）
     const groups = new Map()
     for (const r of arr) {
       const k = r.sampleId || '_'
@@ -113,9 +117,18 @@ export function PublishRecordsPage() {
       groups.get(k).push(r)
     }
     return [...groups.entries()]
-      .sort((a, b) => b[1].length - a[1].length)
-      .flatMap(([, items]) => items)
-  }, [records, account, bounds])
+      .map(([k, items]) => {
+        const lastTs = Math.max(...items.map((r) => parseTs(r.publishDate) || 0))
+        const key = sortMode === 'count'
+          ? (sampleMap[k] ? (Number(sampleMap[k].publishCount) || 0) : 0)
+          : lastTs
+        return { key, lastTs, items }
+      })
+      .sort((a, b) => sortMode === 'count'
+        ? b.key - a.key || b.lastTs - a.lastTs
+        : b.lastTs - a.lastTs)
+      .flatMap((g) => g.items)
+  }, [records, account, bounds, sortMode, sampleMap])
 
   // 当前月份下拉里可用的月份（来自有日期的记录），新→旧
   const monthOptions = useMemo(() => {
@@ -221,6 +234,26 @@ export function PublishRecordsPage() {
             <option key={ym} value={ym} style={{ color: '#111' }}>{monthLabel(ym)}</option>
           ))}
         </select>
+      </div>
+
+      {/* 排序切换：按时间最新在前 / 按样品累计发布次数降序 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '2px 16px 8px', flexShrink: 0 }}>
+        <span style={{ fontSize: '12px', color: '#b3888f', fontWeight: 600, marginRight: '2px', flexShrink: 0 }}>排序</span>
+        <button onClick={() => setSortMode('time')} style={{
+          ...chipBase, flexShrink: 0, padding: '4px 10px',
+          borderColor: sortMode === 'time' ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+          background: sortMode === 'time' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+          color: sortMode === 'time' ? '#fff' : 'var(--text-sub)',
+        }}>按时间</button>
+        <button onClick={() => setSortMode('count')} style={{
+          ...chipBase, flexShrink: 0, padding: '4px 10px',
+          borderColor: sortMode === 'count' ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
+          background: sortMode === 'count' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+          color: sortMode === 'count' ? '#fff' : 'var(--text-sub)',
+        }}>按发布次数</button>
+        {sortMode === 'count' && (
+          <span style={{ fontSize: '11px', color: '#c08a92', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>样品累计发布总条数多的在前</span>
+        )}
       </div>
 
       {/* 列表：独立滚动 */}
