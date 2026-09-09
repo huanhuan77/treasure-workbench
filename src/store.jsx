@@ -3932,6 +3932,33 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
+  // 按 (样品, 账号) 清理发布记录：仅剥离该账号的份额。
+  // 多账号记录（accounts 含多个账号）→ 拆出其它账号的单账号 record 保留，避免牵连其它账号。
+  const deletePublishRecordsByAccount = useCallback((sampleId, account) => {
+    setData((d) => {
+      const recs = d.publishRecords || []
+      const toDelete = recs.filter(
+        (r) => r.sampleId === sampleId && Array.isArray(r.accounts) && r.accounts.includes(account)
+      )
+      if (!toDelete.length) return d
+      const toDelIds = new Set(toDelete.map((r) => r.id))
+      const others = recs.filter((r) => !toDelIds.has(r.id))
+      const newRecs = []
+      for (const r of toDelete) {
+        if (Array.isArray(r.accounts) && r.accounts.length > 1) {
+          const remainAccs = r.accounts.filter((a) => a !== account)
+          for (const a of remainAccs) {
+            newRecs.push({ ...r, id: r.id + '__' + a + '__split', accounts: [a] })
+          }
+        }
+      }
+      const nextRecs = [...others, ...newRecs]
+      const next = { ...d, publishRecords: nextRecs }
+      next.samples = recomputeSamplePublish(next.samples, nextRecs)
+      return next
+    })
+  }, [])
+
   const addTransaction = useCallback((tx) => {
     const now = Date.now()
     const newTx = {
@@ -4074,7 +4101,7 @@ export function StoreProvider({ children }) {
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics,
     addOrder, updateOrder, deleteOrder,
-    addPublishRecord, deletePublishRecord,
+    addPublishRecord, deletePublishRecord, deletePublishRecordsByAccount,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord,
     addDrama, updateDrama, deleteDrama,
