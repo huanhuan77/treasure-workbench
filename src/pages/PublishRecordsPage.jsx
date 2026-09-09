@@ -95,14 +95,27 @@ export function PublishRecordsPage() {
 
   // 时间筛选 + 账号筛选
   const bounds = presetBounds(datePreset) || monthBounds(month)
-  const filtered = useMemo(() => records.filter((r) => {
-    if (account && !(r.accounts || []).includes(account)) return false
-    if (bounds) {
-      const t = parseTs(r.publishDate)
-      if (t === null || t < bounds[0] || t >= bounds[1]) return false
+  const filtered = useMemo(() => {
+    const arr = records.filter((r) => {
+      if (account && !(r.accounts || []).includes(account)) return false
+      if (bounds) {
+        const t = parseTs(r.publishDate)
+        if (t === null || t < bounds[0] || t >= bounds[1]) return false
+      }
+      return true
+    })
+    // 按「样品累计发布条数」降序：同一样品的多条记录聚合连续展示，
+    // 发布记录多的样品置顶，组内保持发布日期倒序（records 已按日期倒序）
+    const groups = new Map()
+    for (const r of arr) {
+      const k = r.sampleId || '_'
+      if (!groups.has(k)) groups.set(k, [])
+      groups.get(k).push(r)
     }
-    return true
-  }), [records, account, bounds])
+    return [...groups.entries()]
+      .sort((a, b) => b[1].length - a[1].length)
+      .flatMap(([, items]) => items)
+  }, [records, account, bounds])
 
   // 当前月份下拉里可用的月份（来自有日期的记录），新→旧
   const monthOptions = useMemo(() => {
