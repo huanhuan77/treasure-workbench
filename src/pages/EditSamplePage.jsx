@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
-import { addDays } from '../utils/helpers'
+import { addDays, todayStr } from '../utils/helpers'
 import { getAccounts, getLogistics, getCounts, isShotSample, LOGISTICS_STATUS } from '../utils/sampleStatus'
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
@@ -22,7 +22,7 @@ function PageHeader({ title, onBack }) {
 
 export function EditSamplePage() {
   const navigate = useNavigate()
-  const { samples, updateSample, deleteSample } = useStore()
+  const { samples, updateSample, deleteSample, addPublishRecord } = useStore()
   const { show } = useToast()
   const id = window.location.hash.match(/\/samples\/([^/]+)\/edit/)?.[1]
   const sample = id ? samples.find((s) => s.id === id) : null
@@ -43,6 +43,8 @@ export function EditSamplePage() {
   const [links, setLinks] = useState(() =>
     (Array.isArray(sample?.links) ? sample.links : []).map((l) => ({ id: l.id || 'L' + Math.random().toString(36).slice(2, 6), url: l.url || '', note: l.note || '' }))
   )
+  const [manualPubOpen, setManualPubOpen] = useState(false)      // 手动补发布展开
+  const [pubAccounts, setPubAccounts] = useState([])             // 补发布选中的账号
 
   const toggleAccount = (a) => {
     setAccounts((prev) => (
@@ -194,6 +196,46 @@ export function EditSamplePage() {
               })}
             </div>
           )}
+          {/* 手动补发布：忘了记发布时补一条今天的记录，状态/计数自动更新 */}
+          <div style={{ marginTop: '8px' }}>
+            {!manualPubOpen ? (
+              <button onClick={() => { setPubAccounts([...accounts]); setManualPubOpen(true) }} style={{
+                width: '100%', padding: '9px 0', borderRadius: '10px', border: '1px dashed rgba(6,182,212,0.5)',
+                background: 'rgba(6,182,212,0.06)', color: '#0891b2', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+              }}>✋ 忘了记发布？手动补一条今天的发布</button>
+            ) : (
+              <div style={{ border: '1px solid rgba(6,182,212,0.25)', borderRadius: '10px', padding: '8px 10px', background: 'rgba(6,182,212,0.04)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginBottom: '6px' }}>选择这次发布到的账号（发布日期 = 今天）：</div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  {accounts.map((a) => {
+                    const sel = pubAccounts.includes(a)
+                    return (
+                      <button key={a} onClick={() => setPubAccounts((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]))} style={{
+                        padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                        border: sel ? 'none' : '1px solid rgba(0,0,0,0.10)',
+                        background: sel ? '#06b6d4' : '#fff', color: sel ? '#fff' : 'var(--text-sub)',
+                      }}>{a}</button>
+                    )
+                  })}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => setManualPubOpen(false)} style={{
+                    flex: 1, padding: '8px 0', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', background: '#fff', color: 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                  }}>取消</button>
+                  <button
+                    disabled={pubAccounts.length === 0}
+                    onClick={() => {
+                      addPublishRecord({ sampleId: id, accounts: [...pubAccounts], qty: 1, publishDate: todayStr() })
+                      show(`已补记今天发布（${pubAccounts.join(' / ')}）`, 'success')
+                      setManualPubOpen(false)
+                    }}
+                    style={{
+                      flex: 1, padding: '8px 0', borderRadius: '8px', border: 'none', background: pubAccounts.length ? '#06b6d4' : 'rgba(6,182,212,0.3)', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: pubAccounts.length ? 'pointer' : 'default',
+                    }}>确认补记</button>
+                </div>
+              </div>
+            )}
+          </div>
         </Field>
 
         <div style={{ display: 'flex', gap: '10px' }}>
