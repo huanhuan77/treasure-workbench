@@ -276,12 +276,6 @@ const styles = {
     suffix: ['数据说话', '优缺点结', '客观评价', '建议收藏'],
     middle: ['从几个维度', '实测结果', '对比分析', '结论先行'],
   },
-  // 机制文案：短句分行、口语吐槽、结尾抖包袱（正文走 generateMechanismCopy，此处占位保证「全部风格」覆盖到）
-  '机制': {
-    prefix: ['你一句', '我就知道', '算什么'],
-    suffix: ['算我是小丑吗', '早该用了', '真的服了'],
-    middle: ['这个', '那我之前买的', '说实话我也没想到'],
-  },
 }
 
 export function getStyles() { return Object.keys(styles) }
@@ -308,76 +302,4 @@ export function generateSimilarCopy(content, productName, brand, style = '种草
 // 把标题 + 话题拼成可一键复制的文本
 export function buildTitleWithTopics(title, topics) {
   return `${title}\n${topics.join(' ')}`
-}
-
-// ════════════════════════════════════════════════════════
-// 机制文案（短句分行 · 口语吐槽 · 结尾抖包袱）
-// 参考爆款结构：前半段铺场景/抛对比，最后一句反转或自嘲收尾
-// 例：
-//   你一句「怎么睡觉不卸妆」/ 我就知道 / 这个坚持吃对了
-//   现在三瓶到手119 / 那我之前三百多买的算什么 / 算我是小丑吗
-// ════════════════════════════════════════════════════════
-
-// 按产品领域取「场景钩子」与「效果落点」，避免牛头不对马嘴
-const MECHANISM_FILL = {
-  skincare: { scene: '你一句「最近皮肤怎么这么稳」', result: '坚持用对了', pain: '熬夜都不垮' },
-  health:   { scene: '你一句「最近状态怎么这么好」', result: '坚持吃对了', pain: '身体轻松多了' },
-  scent:    { scene: '你一句「怎么这么好闻」',       result: '是真的用对了', pain: '清爽一整天' },
-  food:     { scene: '你一句「最近怎么这么精神」',   result: '坚持喝对了',   pain: '整个人在线' },
-  beauty:   { scene: '你一句「眼睛怎么这么亮」',     result: '是买对了',     pain: '精致又省心' },
-  default:  { scene: '你一句「最近怎么这么好看」',   result: '是选对了',     pain: '状态肉眼可见' },
-}
-
-// 构建机制句库：每条是「若干分行短句」，末句用「我就知道 / 算…吗 / 只是…」收尾
-function buildMechanismLines(product, domain, hook) {
-  const f = MECHANISM_FILL[domain] || MECHANISM_FILL.default
-  const lines = [
-    // 型一：被看穿 → 反向证明有效（图 1 结构）
-    [f.scene, '我就知道', `${product}${f.result}`],
-    [f.scene, '我就知道', `这个${product}没白用`],
-    // 型二：价格背刺 → 自嘲（图 2 结构）
-    [`${product}现在是真的划算`, '那我之前买的算什么', '算我手快吗'],
-    ['早买的人看到现在这个价', '算什么？', '算我这个小丑吗'],
-    // 型三：日常被追问 → 轻描淡写抖包袱
-    [`同事问我最近怎么${f.pain}`, '我说没什么啊', `就是用了${product}`],
-    ['被追着问是不是偷偷做了项目', '我说没有啊', `只是把${product}用明白了`],
-    // 型四：效果落点型
-    ['一开始真没抱什么希望', '用着用着就离不开了', `${product}是真的懂我`],
-    ['说实话我也没想到', `${f.pain}是这种体验`, `${product}这次没踩雷`],
-  ]
-  // 抽到内容卖点时补一条带卖点的机制句，保证与原文案强相关
-  if (hook) lines.push(['没用过之前我也怀疑', `直到${hook}了`, '现在只想说：早该用'])
-  return lines
-}
-
-/**
- * 生成「机制文案」：多条分行短句拼成的强钩子文案，行间用换行分隔
- * @returns {string} 形如「A\nB\nC」的多行文案
- */
-export function generateMechanismCopy(content, productName, brand, sensitiveWords) {
-  const full = fullNameOf(productName, brand)
-  const product = full || productName || '这个东西'
-  const domain = inferDomain(productName, content)
-  const stripped = (brand ? (content || '').split(brand).join(' ') : (content || '')).split(product).join(' ')
-  const hook = extractHook(stripped)
-  const pool = buildMechanismLines(product, domain, hook)
-  const picked = pool[Math.floor(Math.random() * pool.length)]
-  return sanitizeText(picked.filter(Boolean).join('\n'), sensitiveWords).clean
-}
-
-// 机制文案的标题：优先取带「反差/追问/吐槽」钩子的那句，过长则截断
-const MECH_TITLE_KEYS = ['你一句', '怎么', '算什么', '被追', '问我', '没想到', '没抱']
-export function generateMechanismTitle(content, productName, brand, sensitiveWords) {
-  const cp = generateMechanismCopy(content, productName, brand, sensitiveWords)
-  const segs = cp.split('\n').map((s) => s.trim()).filter(Boolean)
-  // 挑钩子感最强的一句（命中关键词最多者优先，其次首句）
-  let best = segs[0] || ''
-  let bestScore = -1
-  for (const s of segs) {
-    let score = 0
-    for (const k of MECH_TITLE_KEYS) if (s.includes(k)) score += 2
-    if (score > bestScore) { bestScore = score; best = s }
-  }
-  const title = best.length > 20 ? best.slice(0, 20) : best
-  return sanitizeText(title || `${fullNameOf(productName, brand) || productName || '好物'}真的可以入手`, sensitiveWords).clean
 }

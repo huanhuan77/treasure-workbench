@@ -7,7 +7,6 @@ import { copyText, todayStr, daysDiff } from '../utils/helpers'
 import {
   generateTitle, generateTopics, generateSimilarCopy,
   getStyles, buildTitleWithTopics,
-  generateMechanismCopy, generateMechanismTitle,
 } from '../utils/copyGenerator'
 
 // 风格选项（带 emoji 和颜色，参考图二）
@@ -19,7 +18,6 @@ const STYLE_OPTIONS = [
   { key: '清单', label: '圈层认同', emoji: '👯', color: '#10b981' },
   { key: '情绪', label: '情绪爆发', emoji: '💥', color: '#ef4444' },
   { key: '测评', label: '人群标签', emoji: '📋', color: '#f97316' },
-  { key: '机制', label: '机制文案', emoji: '🎯', color: '#0ea5e9' },
 ]
 
 // 品牌名 + 产品名 拼接显示（避免品牌重复，如「珀芙研冷膜」）
@@ -156,12 +154,8 @@ export function ProductDetailPage() {
       const results = stylesToUse.map((styleKey) => ({
         id: Date.now() + Math.random(),
         style: styleKey,
-        content: styleKey === '机制'
-          ? generateMechanismCopy(genModal.copy.content, product.name, product.brand, sensitiveWords)
-          : generateSimilarCopy(genModal.copy.content, product.name, product.brand, styleKey, sensitiveWords),
-        title: styleKey === '机制'
-          ? generateMechanismTitle(genModal.copy.content, product.name, product.brand, sensitiveWords)
-          : generateTitle(genModal.copy.content, product.name, product.brand, sensitiveWords),
+        content: generateSimilarCopy(genModal.copy.content, product.name, product.brand, styleKey, sensitiveWords),
+        title: generateTitle(genModal.copy.content, product.name, product.brand, sensitiveWords),
         topics: generateTopics(genModal.copy.content, product.name, product.brand, sensitiveWords),
         collected: false,
       }))
