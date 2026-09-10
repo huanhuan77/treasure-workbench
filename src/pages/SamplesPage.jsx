@@ -1,8 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
-import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
@@ -42,7 +39,7 @@ const SORT_OPTIONS = [
 
 export function SamplesPage() {
   const navigate = useNavigate()
-  const { samples, addSample, deleteSample, updateSample, reorderSamples } = useStore()
+  const { samples, addSample, deleteSample, updateSample } = useStore()
   const { show } = useToast()
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
@@ -73,7 +70,6 @@ export function SamplesPage() {
     setSortKey(key)
     setSortDir(opt?.defaultDir || 'desc')
   }
-  const isDateSort = sortKey !== 'custom'
   // 排序已迁移到弹窗内，外部不再需要 sortHint 变量
   // 隐藏样品卡上的账号标签（隐私/展示场景），全局开关持久化到本地
   const [hideAccount, setHideAccount] = useState(isAccountsHidden)
@@ -92,20 +88,6 @@ export function SamplesPage() {
     sessionStorage.setItem('samples_filter', filter)
     sessionStorage.setItem('samples_account', accountFilter)
     navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })
-  }
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
-  )
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const oldIndex = displayed.findIndex(s => s.id === active.id)
-    const newIndex = displayed.findIndex(s => s.id === over.id)
-    if (oldIndex < 0 || newIndex < 0) return
-    reorderSamples(arrayMove(displayed.map(s => s.id), oldIndex, newIndex))
   }
 
   // 恢复滚动位置和筛选状态（从编辑/新增页返回时）
@@ -318,9 +300,7 @@ export function SamplesPage() {
             <p style={{ fontSize: '14px', margin: 0 }}>暂无样品记录</p>
           </div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={displayed.map(s => s.id)} strategy={verticalListSortingStrategy}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {displayed.map((s) => {
                   const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.un_arrived
                   const dl = deadlineDesc(s.deadline)
@@ -332,11 +312,10 @@ export function SamplesPage() {
                                   dlDays !== null && dlDays <= 7 ? '#ea580c' : 'var(--text-sub)'
                   const acList = getAccounts(s).map(a => ({ name: a, ...(ACCOUNT_COLOR[a] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }) }))
 
-                  return                   <SortableSampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
+                  return                   <SampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
                     swipedId={swipedId} setSwipedId={setSwipedId}
                     hideAccount={hideAccount}
                     show={show}
-                    dragEnabled={!isDateSort}
                     onQuickPublish={handleQuickPublish}
                     onOpenLinks={() => setLinksSampleId(s.id)}
                     onEdit={() => {
@@ -353,8 +332,6 @@ export function SamplesPage() {
                   />
                 })}
               </div>
-            </SortableContext>
-          </DndContext>
         )}
       </div>
 
@@ -511,24 +488,15 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, dragEnabled, onEdit, onDelete, onQuickPublish, onOpenLinks }) {
-  const canDrag = dragEnabled !== false   // 按日期排序时禁止拖动（否则与排序结果冲突）
+function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickPublish, onOpenLinks }) {
   const logistics = getLogistics(s)
   const logInfo = LOGISTICS_STATUS[logistics]
   const logColor = logInfo ? logInfo.color : '#94a3b8'
   const repStatus = getTopStatus(s)
   const repInfo = SAMPLE_STATUS[repStatus]
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: s.id, disabled: !canDrag })
   const isSwiped = swipedId === s.id
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 50 : undefined,
-    opacity: isDragging ? 0.92 : 1,
-    boxShadow: isDragging ? '0 12px 30px rgba(244,114,182,0.28)' : undefined,
-  }
   return (
-    <div ref={setNodeRef} style={style}>
+    <div>
       <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
         {/* 左滑操作按钮 */}
         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
@@ -538,7 +506,7 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
         {/* 可滑动内容 */}
         <div
           onClick={() => { if (isSwiped) { setSwipedId(null) } }}
-          onTouchStart={(e) => { if (e.target.closest('button[aria-label="拖动排序"]')) return; const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
+          onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
           onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
           onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
           style={{
@@ -547,32 +515,14 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
             position: 'relative', zIndex: 1, cursor: 'pointer',
           }}
         >
-          {/* ⇕ 拖动按钮（左侧边缘） */}
-          <button
-            {...(canDrag ? attributes : {})}
-            {...(canDrag ? listeners : {})}
-            onPointerDown={(e) => { e.stopPropagation(); if (canDrag) listeners?.onPointerDown?.(e) }}
-            onTouchStart={(e) => { e.stopPropagation(); if (canDrag) listeners?.onTouchStart?.(e) }}
-            aria-label="拖动排序"
-            disabled={!canDrag}
-            title={canDrag ? '拖动排序' : '按日期排序时不可拖动'}
-            style={{
-              position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)',
-              width: '24px', height: '32px',
-              border: 'none', background: 'transparent', color: 'var(--gray-400)',
-              fontSize: '20px', lineHeight: 1, cursor: canDrag ? 'grab' : 'default',
-              touchAction: canDrag ? 'none' : 'auto',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderRadius: '6px', opacity: canDrag ? 1 : 0.25,
-            }}
-          >⇕</button>
-          {/* 第一行：产品名 + 代表状态 */}
-          <div style={{ paddingLeft: '28px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {/* 第一行：产品名 + 分类 + 代表状态 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '40px' }}>{s.name}</h3>
+            {s.category && <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: 'rgba(139,92,246,0.12)', color: '#7c3aed', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.category}</span>}
             {repInfo && <span style={{ fontSize: '11px', color: '#fff', background: repInfo.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{repInfo.label}</span>}
           </div>
           {/* 第二行：账号 + 各账号发布/出单数字（发布按账号独立）+ 截止时间 */}
-          <div style={{ paddingLeft: '28px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: 'var(--text-sub)' }}>
+          <div style={{ marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: 'var(--text-sub)' }}>
             {acList.length > 0 && (
               hideAccount
                 ? <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: 'rgba(148,163,184,0.16)', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>***</span>
