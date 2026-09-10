@@ -113,7 +113,9 @@ export function NewOrderPage() {
   // 弹窗多选确认：按列表显示顺序写出多行；保留锚点之前的行；锚点之后的行剔除已被多选包含的样品
   const confirmMultiPick = () => {
     if (pickedIds.size === 0) { closeSamplePicker(); return }
-    const pickedArr = filteredSamples.filter((s) => pickedIds.has(s.id)).map((s) => s.id)
+    // 注意：必须按「全部候选」取，不能按 filteredSamples —— 那样搜索/切分类后
+    // 之前选中的样品会掉出当前列表，导致只剩最后一个被写回表单
+    const pickedArr = candidateSamples.filter((s) => pickedIds.has(s.id)).map((s) => s.id)
     if (pickedArr.length === 0) { closeSamplePicker(); return }
     setEntries((prev) => {
       const idx = Math.min(activeEntryIdx, prev.length)
@@ -164,7 +166,7 @@ export function NewOrderPage() {
         onCategoryChange={setSampleCategory}
         count={pickedIds.size}
         showBulk={filteredSamples.length > 0}
-        onSelectAll={() => setPickedIds(new Set(filteredSamples.map((s) => s.id)))}
+        onSelectAll={() => setPickedIds((prev) => new Set([...prev, ...filteredSamples.map((s) => s.id)]))}
         onClear={() => setPickedIds(new Set())}
         confirmText={`确定${pickedIds.size > 0 ? ` · 已选 ${pickedIds.size}` : ''}`}
         confirmDisabled={pickedIds.size === 0}

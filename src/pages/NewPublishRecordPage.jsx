@@ -93,7 +93,8 @@ export function NewPublishRecordPage() {
   // 弹窗多选确认：按列表显示顺序写出多行；保留锚点之前的行；锚点之后剔除被多选包含的
   const confirmMultiPick = () => {
     if (pickedIds.size === 0) { closeSamplePicker(); return }
-    const pickedArr = filteredSamples.filter((s) => pickedIds.has(s.id)).map((s) => s.id)
+    // 按「全部候选」取，不能按 filteredSamples —— 否则搜索/切分类后先前选中的样品会丢，只剩最后一个
+    const pickedArr = sampleList.filter((s) => pickedIds.has(s.id)).map((s) => s.id)
     if (pickedArr.length === 0) { closeSamplePicker(); return }
     setEntries((prev) => {
       const idx = Math.min(activeEntryIdx, prev.length)
@@ -167,7 +168,7 @@ export function NewPublishRecordPage() {
         onCategoryChange={setSampleCategory}
         count={pickedIds.size}
         showBulk={filteredSamples.length > 0}
-        onSelectAll={() => setPickedIds(new Set(filteredSamples.map((s) => s.id)))}
+        onSelectAll={() => setPickedIds((prev) => new Set([...prev, ...filteredSamples.map((s) => s.id)]))}
         onClear={() => setPickedIds(new Set())}
         confirmText={`确定${pickedIds.size > 0 ? ` · 已选 ${pickedIds.size}` : ''}`}
         confirmDisabled={pickedIds.size === 0}
