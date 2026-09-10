@@ -518,7 +518,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
           {/* 第一行：产品名 + 分类 + 代表状态 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '40px' }}>{s.name}</h3>
-            {s.category && <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: 'rgba(37,99,235,0.12)', color: '#2563eb', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.category}</span>}
+            {s.category && <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: 'rgba(71,85,105,0.12)', color: '#475569', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.category}</span>}
             {repInfo && <span style={{ fontSize: '11px', color: '#fff', background: repInfo.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{repInfo.label}</span>}
           </div>
           {/* 第二行：账号 + 各账号发布/出单数字（发布按账号独立）+ 截止时间 */}
