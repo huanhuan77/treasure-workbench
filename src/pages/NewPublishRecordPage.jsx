@@ -4,7 +4,6 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { SamplePickerPage } from '../components/SamplePickerPage'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
-import { getExecByAccount } from '../utils/sampleStatus'
 
 function getDateLabel(dateStr) {
   const weekDays = ['日', '一', '二', '三', '四', '五', '六']
@@ -52,10 +51,8 @@ export function NewPublishRecordPage() {
   // 可选样品：所选账号中，该账号处于「已拍摄未发布 / 已发布」的样品（按账号独立判断）
   const sampleList = useMemo(() => {
     if (!account) return []
-    return (samples || []).filter((s) => {
-      const execByAccount = getExecByAccount(s)
-      return execByAccount[account] === 'shot' || execByAccount[account] === 'published'
-    })
+    // 可发样品：已拍（拍摄为样品级共享）且归属当前账号；归档(放弃)不可发
+    return (samples || []).filter((s) => !s.archived && s.isShot && hasAccount(s, account))
   }, [samples, account])
   // 按名称模糊匹配；已选样品在该账号下置顶；过滤掉其它 entry 已经选过的（同一次发布避免重复）
   const filteredSamples = useMemo(() => {

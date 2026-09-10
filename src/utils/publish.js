@@ -47,7 +47,7 @@ export function isOverdue(sample) {
 //    —— 未出单的样品（无论已拍摄/已发布）不再按「N 天未发」提醒，避免无关打扰。
 export function needPublishReminder(sample) {
   if (!sample) return false
-  if (sample.status === 'abandoned') return false
+  if (sample.archived || sample.status === 'abandoned') return false   // 归档(放弃)不提醒
   // 逾期：仅仍需处理的待发状态（未到货/已到货未拍摄/已拍摄未发布）才提醒，已发布的过去截止日不计
   if (isOverdue(sample) && OVERDUE_STATES.includes(sample.status)) return true
   // 已出单的样品：7 天未发视频才提醒

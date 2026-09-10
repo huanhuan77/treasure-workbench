@@ -3667,24 +3667,33 @@ export function StoreProvider({ children }) {
       ? sample.accounts
       : (sample.account ? [sample.account] : [])).map((a) => mapAccount(a)).filter(Boolean)
     const uniq = accs.length ? accs.filter((a, i) => accs.indexOf(a) === i) : ['']
+    // 两轴模型：优先读 logistics/isShot/archived；兼容旧 status 单值
     const status = sample.status || 'un_arrived'
-    const isLogistics = status === 'un_arrived' || status === 'arrived'
-    const logistics = isLogistics ? status : 'arrived'
+    const logistics = sample.logistics || (status === 'un_arrived' ? 'un_arrived' : 'arrived')
+    const isShot = typeof sample.isShot === 'boolean'
+      ? sample.isShot
+      : (status === 'shot' || status === 'published')
+    const archived = typeof sample.archived === 'boolean'
+      ? sample.archived
+      : (status === 'abandoned')
     const execByAccount = {}
-    if (!isLogistics) for (const a of uniq) if (a) execByAccount[a] = status
     const countsByAccount = {}
     for (const a of uniq) if (a) countsByAccount[a] = { publishCount: 0, orderCount: 0, lastPublishAt: '' }
+    const accList = uniq.filter(Boolean)
     const created = {
       id: uid(),
       name: sample.name || '',
       receiveDate: sample.receiveDate || '',
       deadline: sample.deadline || '',
       remark: sample.remark || '',
+      category: sample.category || '',
       productId: sample.productId || '',
       isArrived: logistics === 'arrived',
-      accounts: uniq.filter(Boolean),
-      account: uniq.filter(Boolean)[0] || '',
+      accounts: accList,
+      account: accList[0] || '',
       logistics,
+      isShot,
+      archived,
       execByAccount,
       countsByAccount,
       links: (Array.isArray(sample.links) ? sample.links : []).filter((l) => l && l.url),
@@ -3692,7 +3701,7 @@ export function StoreProvider({ children }) {
       lastPublishAt: '',
       publishCount: 0,
       orderCount: 0,
-      status: recomputeTopStatus({ accounts: uniq.filter(Boolean), logistics, execByAccount }),
+      status: recomputeTopStatus({ accounts: accList, logistics, execByAccount, isShot, archived }),
       createdAt: now,
       updatedAt: now,
     }
@@ -3932,33 +3941,6 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
-  // 按 (样品, 账号) 清理发布记录：仅剥离该账号的份额。
-  // 多账号记录（accounts 含多个账号）→ 拆出其它账号的单账号 record 保留，避免牵连其它账号。
-  const deletePublishRecordsByAccount = useCallback((sampleId, account) => {
-    setData((d) => {
-      const recs = d.publishRecords || []
-      const toDelete = recs.filter(
-        (r) => r.sampleId === sampleId && Array.isArray(r.accounts) && r.accounts.includes(account)
-      )
-      if (!toDelete.length) return d
-      const toDelIds = new Set(toDelete.map((r) => r.id))
-      const others = recs.filter((r) => !toDelIds.has(r.id))
-      const newRecs = []
-      for (const r of toDelete) {
-        if (Array.isArray(r.accounts) && r.accounts.length > 1) {
-          const remainAccs = r.accounts.filter((a) => a !== account)
-          for (const a of remainAccs) {
-            newRecs.push({ ...r, id: r.id + '__' + a + '__split', accounts: [a] })
-          }
-        }
-      }
-      const nextRecs = [...others, ...newRecs]
-      const next = { ...d, publishRecords: nextRecs }
-      next.samples = recomputeSamplePublish(next.samples, nextRecs)
-      return next
-    })
-  }, [])
-
   const addTransaction = useCallback((tx) => {
     const now = Date.now()
     const newTx = {
@@ -4101,7 +4083,7 @@ export function StoreProvider({ children }) {
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics,
     addOrder, updateOrder, deleteOrder,
-    addPublishRecord, deletePublishRecord, deletePublishRecordsByAccount,
+    addPublishRecord, deletePublishRecord,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord,
     addDrama, updateDrama, deleteDrama,

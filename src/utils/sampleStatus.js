@@ -1,24 +1,27 @@
-// 样品状态枚举与按账号状态工具集
+// 样品状态枚举与状态工具集
 //
-// 数据模型（一次合并重构后）：
+// 数据模型（两轴版，2026-09 重构）：
 //   样品 = 一个实体，可归属多个账号。
-//   - logistics（物流状态，实体级共享）：un_arrived 未到货 / arrived 已到货（拍摄/发布走执行状态）
-//   - execByAccount（执行状态，按账号独立）：{ 账号: shot|published|abandoned }
-//   - countsByAccount（按账号统计）：{ 账号: { publishCount, orderCount, lastPublishAt } }
-//   为兼容未改动的老页面，实体仍保留顶层 status（代表值）、publishCount（合计）、
-//   orderCount（合计）、lastPublishAt（最新）、publishHistory（全部）、account（首个账号）。
+//   - logistics（物流，样品级共享）：un_arrived 未到货 / arrived 已到货
+//   - isShot（拍摄，样品级共享 bool）：视频拍一次就够，跟账号无关
+//   - archived（归档/放弃，样品级 bool）：不做了，不占状态链
+//   - countsByAccount（按账号独立统计）：{ 账号: { publishCount, orderCount, lastPublishAt } }
+//     「发布」只看数字：某账号 publishCount>0 即该账号已发，无需独立"已发布"开关。
+//   - status（代表态，由上两轴推导，兼容老 key）：un_arrived 未到货 / arrived 待拍 /
+//     shot 已拍未发 / published 已发布 / abandoned 已放弃(归档)
+//   - execByAccount 保留为兼容字段（老数据/自动放弃机制仍写入），但 UI 不再编辑/展示。
 
-// 物流状态（共享，只标记到没到货；是否拍摄/发布由下方各账号执行状态表达）
+// 物流状态（共享）
 export const LOGISTICS_STATUS = {
   un_arrived: { key: 'un_arrived', label: '未到货', icon: '🚚', color: '#94a3b8', bg: 'rgba(148,163,184,0.16)' },
-  arrived: { key: 'arrived', label: '已到货', icon: '📦', color: '#f97316', bg: 'rgba(249,115,22,0.16)' },
+  arrived: { key: 'arrived', label: '待拍', icon: '📦', color: '#f97316', bg: 'rgba(249,115,22,0.16)' },
 }
 
-// 执行状态（按账号独立）
+// 执行状态（保留兼容：老数据迁移与自动放弃机制仍用 key，UI 不再按账号编辑）
 export const EXEC_STATUS = {
-  shot: { key: 'shot', label: '已拍摄未发布', icon: '🎬', color: '#06b6d4', bg: 'rgba(6,182,212,0.16)' },
+  shot: { key: 'shot', label: '已拍未发', icon: '🎬', color: '#06b6d4', bg: 'rgba(6,182,212,0.16)' },
   published: { key: 'published', label: '已发布', icon: '✅', color: '#16a34a', bg: 'rgba(22,163,74,0.16)' },
-  abandoned: { key: 'abandoned', label: '放弃', icon: '🚫', color: '#9ca3af', bg: 'rgba(156,163,175,0.16)' },
+  abandoned: { key: 'abandoned', label: '已放弃', icon: '🚫', color: '#9ca3af', bg: 'rgba(156,163,175,0.16)' },
 }
 
 // 全部 5 态（兼容老代码按 key 取色/取文案）
@@ -52,7 +55,7 @@ export function getAccounts(s) {
   return s?.account ? [s.account] : []
 }
 
-// 物流状态（实体级共享）：未到货 / 已到货
+// 物流状态（实体级共享）：未到货 / 已到货未拍摄
 export function getLogistics(s) {
   if (s && (s.logistics === 'un_arrived' || s.logistics === 'arrived')) return s.logistics
   const st = s?.status
@@ -105,17 +108,49 @@ export function getCounts(s, account) {
   }
 }
 
-// 顶层 status 代表值（供未改动的页面/筛选/提醒使用）
-export function getTopStatus(s) {
-  const logistics = getLogistics(s)
-  if (logistics === 'un_arrived') return 'un_arrived'
-  const exec = getExecByAccount(s)
+// ── 两轴核心判定（兼容老数据：无显式字段时从 execByAccount / 顶层 status / 统计推导）──
+
+// 是否归档（放弃）：显式 archived 优先；老数据=全部账号都 abandoned 或老顶层 status 为 abandoned
+export function isArchivedSample(s) {
+  if (!s || typeof s !== 'object') return false
+  if (typeof s.archived === 'boolean') return s.archived
+  const exec = (s.execByAccount && typeof s.execByAccount === 'object') ? s.execByAccount : {}
   const vals = Object.values(exec).filter(Boolean)
-  if (vals.length === 0) return 'arrived'
-  if (vals.every((v) => v === 'abandoned')) return 'abandoned'
-  if (vals.includes('published')) return 'published'
-  if (vals.includes('shot')) return 'shot'
-  return 'arrived'
+  if (vals.length && vals.every((v) => v === 'abandoned')) return true
+  return s.status === 'abandoned'
+}
+
+// 是否已拍摄（样品级共享）：显式 isShot 优先；老数据=任一账号 shot/published、
+// 或老顶层 status 为 shot/published、或已有任何发布记录
+export function isShotSample(s) {
+  if (!s || typeof s !== 'object') return false
+  if (typeof s.isShot === 'boolean') return s.isShot
+  const exec = (s.execByAccount && typeof s.execByAccount === 'object') ? s.execByAccount : {}
+  const vals = Object.values(exec).filter(Boolean)
+  if (vals.some((v) => v === 'shot' || v === 'published')) return true
+  const st = s.status
+  if (st === 'shot' || st === 'published') return true
+  if ((Number(s.publishCount) || 0) > 0) return true
+  const cb = s.countsByAccount
+  if (cb && Object.values(cb).some((c) => (Number(c?.publishCount) || 0) > 0)) return true
+  return false
+}
+
+// 是否已发布过（任一账号发布条数 > 0）
+export function hasPublished(s) {
+  if (!s || typeof s !== 'object') return false
+  if ((Number(s.publishCount) || 0) > 0) return true
+  const cb = s.countsByAccount
+  return !!(cb && Object.values(cb).some((c) => (Number(c?.publishCount) || 0) > 0))
+}
+
+// 顶层 status 代表值（两轴推导，供筛选/提醒/标签使用）
+// 规则只有一条链：已放弃(归档) > 未到货 > 待拍(未拍) > 已拍未发 > 已发布
+export function getTopStatus(s) {
+  if (isArchivedSample(s)) return 'abandoned'
+  if (getLogistics(s) === 'un_arrived') return 'un_arrived'
+  if (!isShotSample(s)) return 'arrived'
+  return hasPublished(s) ? 'published' : 'shot'
 }
 
 // 顶层聚合：publishCount 合计 / orderCount 合计 / lastPublishAt 最新
@@ -173,6 +208,29 @@ export function setLogistics(s, key) {
   return { ...s, logistics: key, status: recomputeTopStatus({ ...s, logistics: key }) }
 }
 
+// 设置拍摄状态（样品级共享）：拍过就是拍过，跟账号无关
+export function setShot(s, bool) {
+  if (!s || typeof s !== 'object') return s
+  const next = { ...s, isShot: !!bool }
+  // 同步兼容字段：execByAccount 各账号非 published 的 shot 与 isShot 对齐（published 不动，发布过必然拍过）
+  const execByAccount = { ...(s.execByAccount || {}) }
+  for (const a of Object.keys(execByAccount)) {
+    if (execByAccount[a] === 'shot' && !bool) execByAccount[a] = null
+    if (!execByAccount[a] && bool) execByAccount[a] = 'shot'
+  }
+  next.execByAccount = execByAccount
+  next.status = recomputeTopStatus(next)
+  return next
+}
+
+// 设置归档（放弃）：不占状态链，随时可恢复
+export function setArchived(s, bool) {
+  if (!s || typeof s !== 'object') return s
+  const next = { ...s, archived: !!bool }
+  next.status = recomputeTopStatus(next)
+  return next
+}
+
 // 把样品规整为新的完整结构（合并迁移 / 新建 / 安全兜底都用它）
 export function normalizeSample(s) {
   if (!s || typeof s !== 'object') return s
@@ -198,18 +256,22 @@ export function normalizeSample(s) {
     }
   }
   const agg = getAggregateCounts({ ...s, accounts, execByAccount, countsByAccount })
+  const shot = isShotSample({ ...s, accounts, execByAccount, countsByAccount, publishCount: agg.publishCount })
+  const archived = isArchivedSample(s)
   return {
     ...s,
     account: accounts[0] || '',
     accounts,
     category: s.category || '',   // 分类（与产品分类同口径，选填）
     logistics,
+    isShot: shot,                 // 拍摄（样品级共享）
+    archived,                     // 归档/放弃（样品级）
     execByAccount,
     countsByAccount,
     publishCount: agg.publishCount,
     orderCount: agg.orderCount,
     lastPublishAt: agg.lastPublishAt,
-    status: recomputeTopStatus({ accounts, logistics, execByAccount }),
+    status: recomputeTopStatus({ accounts, logistics, execByAccount, isShot: shot, archived, publishCount: agg.publishCount, countsByAccount }),
     isArrived: logistics === 'arrived',
   }
 }

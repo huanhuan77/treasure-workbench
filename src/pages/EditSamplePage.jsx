@@ -4,13 +4,12 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { addDays } from '../utils/helpers'
-import { getAccounts, getLogistics, getExecByAccount, getCounts, LOGISTICS_STATUS, EXEC_STATUS } from '../utils/sampleStatus'
+import { getAccounts, getLogistics, getCounts, isShotSample, LOGISTICS_STATUS } from '../utils/sampleStatus'
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
 
 const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
 const LOGISTICS_LIST = Object.values(LOGISTICS_STATUS)
-const EXEC_LIST = Object.values(EXEC_STATUS)
 
 function PageHeader({ title, onBack }) {
   return (
@@ -34,7 +33,8 @@ export function EditSamplePage() {
     : (sample?.account ? [_mapAcc(sample.account)] : [])
   const [accounts, setAccounts] = useState(initialAccounts)
   const [logistics, setLogisticsState] = useState(getLogistics(sample))
-  const [execByAccount, setExecByAccount] = useState(getExecByAccount(sample))
+  const [isShot, setIsShot] = useState(sample?.isShot ?? isShotSample(sample))   // 拍摄（样品级共享）
+  const [archived, setArchived] = useState(!!sample?.archived)                    // 归档（放弃）
   const [receiveDate, setReceiveDate] = useState(sample?.receiveDate || new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0, 10), 15))
   const [remark, setRemark] = useState(sample?.remark || '')
@@ -45,25 +45,15 @@ export function EditSamplePage() {
   )
 
   const toggleAccount = (a) => {
-    setAccounts((prev) => {
-      if (prev.includes(a)) {
-        const next = prev.filter((x) => x !== a)
-        setExecByAccount((eb) => { const c = { ...eb }; delete c[a]; return c })
-        return next
-      }
-      setExecByAccount((eb) => ({ ...eb, [a]: eb[a] || null }))
-      return [...prev, a]
-    })
-  }
-
-  const setExec = (a, key) => {
-    setExecByAccount((eb) => ({ ...eb, [a]: key }))
+    setAccounts((prev) => (
+      prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]
+    ))
   }
 
   const onLogistics = (key) => {
     setLogisticsState(key)
-    // 回到「未到货」时清空各账号执行状态（还没到货谈不上已拍/已发）
-    if (key === 'un_arrived') setExecByAccount({})
+    // 回到「未到货」时视为未拍（还没到货谈不上已拍）
+    if (key === 'un_arrived') setIsShot(false)
   }
 
   if (!sample) {
@@ -83,7 +73,8 @@ export function EditSamplePage() {
       account: accounts[0],
       accounts: [...accounts],
       logistics,
-      execByAccount,
+      isShot,
+      archived,
       receiveDate,
       deadline,
       remark,
@@ -169,37 +160,37 @@ export function EditSamplePage() {
           </div>
         </Field>
 
-        <Field label="各账号执行状态（独立管理）">
-          {accounts.length === 0 ? (
-            <div style={{ fontSize: '12px', color: 'var(--text-sub)' }}>请先选择归属账号</div>
-          ) : logistics === 'un_arrived' ? (
-            <div style={{ fontSize: '12px', color: 'var(--text-sub)' }}>未到货，到货后可分别设置各账号的拍摄/发布状态。</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <Field label="拍摄（拍一次即可，与账号无关）">
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {[
+              { v: false, label: '🎬 未拍' },
+              { v: true, label: '✅ 已拍' },
+            ].map((it) => (
+              <button key={String(it.v)} onClick={() => setIsShot(it.v)} style={{
+                flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '13px', fontWeight: 600, border: 'none',
+                background: isShot === it.v ? '#06b6d4' : 'rgba(255,255,255,0.5)',
+                color: isShot === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
+            ))}
+          </div>
+        </Field>
+
+        <Field label="归档（放弃，不做了可随时恢复）">
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {[
+              { v: false, label: '使用中' },
+              { v: true, label: '🚫 已归档' },
+            ].map((it) => (
+              <button key={String(it.v)} onClick={() => setArchived(it.v)} style={{
+                flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '13px', fontWeight: 600, border: 'none',
+                background: archived === it.v ? '#9ca3af' : 'rgba(255,255,255,0.5)',
+                color: archived === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
+            ))}
+          </div>
+          {accounts.length > 0 && (
+            <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-sub)', lineHeight: 1.6 }}>
               {accounts.map((a) => {
-                const cur = execByAccount[a]
                 const c = getCounts(sample, a)
-                return (
-                  <div key={a} style={{ border: '1px solid rgba(0,0,0,0.05)', borderRadius: '12px', padding: '8px 10px', background: 'rgba(255,255,255,0.5)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-main)', flex: 1 }}>{a}</span>
-                      <span style={{ fontSize: '10px', color: 'var(--text-sub)' }}>
-                        已发 {c.publishCount} · 出单 {c.orderCount}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                      {EXEC_LIST.map((s) => (
-                        <button key={s.key} onClick={() => setExec(a, s.key)} style={{
-                          flex: 1, minWidth: 0, padding: '8px 4px', borderRadius: '10px', fontSize: '12px', fontWeight: 600, border: 'none',
-                          background: cur === s.key ? s.color : 'rgba(255,255,255,0.7)',
-                          color: cur === s.key ? '#fff' : 'var(--text-sub)' }}>{s.icon} {s.label}</button>
-                      ))}
-                      {!cur && (
-                        <span style={{ fontSize: '11px', color: 'var(--text-sub)', alignSelf: 'center', paddingLeft: '4px' }}>（待拍摄）</span>
-                      )}
-                    </div>
-                  </div>
-                )
+                return <div key={a}>{a}：已发 {c.publishCount} 条 · 出单 {c.orderCount}（发布/出单按账号独立统计）</div>
               })}
             </div>
           )}

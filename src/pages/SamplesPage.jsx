@@ -9,7 +9,7 @@ import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../c
 import { formatDate, todayStr, deadlineDesc, addDays, copyText } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
-import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getExecStatus, getCounts, getTopStatus, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getCounts, getTopStatus, isShotSample, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
 import { CATEGORIES } from '../utils/categories'
 
 // 状态枚举统一从 sampleStatus.js 导入（SAMPLE_STATUS / SAMPLE_STATUS_ORDER / SAMPLE_STATUS_LIST）
@@ -571,22 +571,20 @@ function SortableSampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId,
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '40px' }}>{s.name}</h3>
             {repInfo && <span style={{ fontSize: '11px', color: '#fff', background: repInfo.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{repInfo.label}</span>}
           </div>
-          {/* 第二行：账号 + 各账号执行状态 + 截止时间 */}
+          {/* 第二行：账号 + 各账号发布/出单数字（发布按账号独立）+ 截止时间 */}
           <div style={{ paddingLeft: '28px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: 'var(--text-sub)' }}>
             {acList.length > 0 && (
               hideAccount
                 ? <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: 'rgba(148,163,184,0.16)', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>***</span>
                 : acList.map((a) => {
-                    const exec = getExecStatus(s, a.name)
                     const c = getCounts(s, a.name)
-                    const execInfo = exec ? EXEC_STATUS[exec] : (logistics === 'arrived' ? null : null)
-                    const tag = exec ? execInfo.label : (logistics === 'arrived' ? '待拍' : '未到货')
-                    const tagColor = exec ? execInfo.color : 'var(--text-sub)'
-                    const tagBg = exec ? execInfo.bg : 'rgba(148,163,184,0.16)'
+                    const stat = c.publishCount > 0 ? `发${c.publishCount}${c.orderCount > 0 ? ` · 出${c.orderCount}` : ''}` : (logistics === 'arrived' ? '未发' : '未到货')
+                    const statColor = c.publishCount > 0 ? '#16a34a' : (logistics === 'arrived' ? '#f97316' : '#94a3b8')
+                    const statBg = c.publishCount > 0 ? 'rgba(22,163,74,0.14)' : (logistics === 'arrived' ? 'rgba(249,115,22,0.14)' : 'rgba(148,163,184,0.16)')
                     return (
                       <span key={a.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {a.name}
-                        <span style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: tagBg, color: tagColor, fontWeight: 700 }}>{tag}</span>
+                        <span style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: statBg, color: statColor, fontWeight: 700 }}>{stat}</span>
                       </span>
                     )
                   })
@@ -647,15 +645,14 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
     name: sample?.name || '',
     account: sample?.account || (Array.isArray(sample?.accounts) && sample.accounts[0]) || '',
     accounts: Array.isArray(sample?.accounts) && sample.accounts.length ? sample.accounts : (sample?.account ? [sample.account] : []),
-    status: sample?.status || 'un_arrived',
+    logistics: sample?.logistics || (sample?.status === 'un_arrived' ? 'un_arrived' : 'arrived'),
+    isShot: sample?.isShot ?? isShotSample(sample),
     receiveDate: sample?.receiveDate || todayStr(),
     deadline: sample?.deadline || (sample ? '' : addDays(todayStr(), 15)),
     remark: sample?.remark || '',
     commission: sample?.commission || 5,
-    orderDate: sample?.orderDate || '',
     productId: sample?.productId || '',
     category: sample?.category || '',
-    isArrived: sample?.isArrived ?? false,
   })
   // 截止时间是否被用户手动改过（未手动改时，随收货时间自动 +15 天）
   const [deadlineTouched, setDeadlineTouched] = useState(!!sample?.deadline)
@@ -679,9 +676,7 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
   const handleSave = () => {
     if (!form.name.trim()) return
     if (!sample && !form.category) { show('请选择分类', 'error'); return }   // 新增样品必须选分类
-    const isOrder = form.status === 'published'
     const f = { ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] }
-    if (!isOrder) f.orderDate = ''
     onSave(f)
   }
 
@@ -770,31 +765,50 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
           style={{ ...inputStyle }} />
       </Field>
 
-      <Field label="状态">
+      <Field label="物流">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          {SAMPLE_STATUS_LIST.map((s) => (
+          {[
+            { v: 'un_arrived', label: '🚚 未到货' },
+            { v: 'arrived', label: '📦 已到货' },
+          ].map((it) => (
             <button
-              key={s.key}
-              onClick={() => setForm((f) => {
-                const order = s.key === 'published'
-                return { ...f, status: s.key, orderDate: order ? f.orderDate : '' }
-              })}
+              key={it.v}
+              onClick={() => setForm((f) => ({ ...f, logistics: it.v, isShot: it.v === 'un_arrived' ? false : f.isShot }))}
               style={{
                 padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                background: form.status === s.key ? s.color : 'rgba(255,255,255,0.5)',
-                color: form.status === s.key ? '#fff' : 'var(--text-sub)',
-                border: form.status === s.key ? 'none' : '1px solid rgba(255,255,255,0.6)',
+                background: (form.logistics || (form.isShot ? 'arrived' : 'un_arrived')) === it.v ? '#ec4899' : 'rgba(255,255,255,0.5)',
+                color: (form.logistics || (form.isShot ? 'arrived' : 'un_arrived')) === it.v ? '#fff' : 'var(--text-sub)',
+                border: 'none',
               }}
-            >{s.icon} {s.label.replace('🔥 ', '')}</button>
+            >{it.label}</button>
           ))}
         </div>
       </Field>
 
-      {(form.status === 'published') && (
-        <Field label="出单日期（选填，用于近出单统计）">
-          <input type="date" style={inputStyle} value={form.orderDate || ''} onChange={(e) => setForm({ ...form, orderDate: e.target.value })} />
-        </Field>
-      )}
+      <Field label="拍摄（拍一次即可，与账号无关）">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {[
+            { v: false, label: '🎬 未拍' },
+            { v: true, label: '✅ 已拍' },
+          ].map((it) => (
+            <button
+              key={String(it.v)}
+              onClick={() => setForm((f) => ({ ...f, isShot: it.v }))}
+              style={{
+                padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+                background: !!form.isShot === it.v ? '#06b6d4' : 'rgba(255,255,255,0.5)',
+                color: !!form.isShot === it.v ? '#fff' : 'var(--text-sub)',
+                border: 'none',
+              }}
+            >{it.label}</button>
+          ))}
+        </div>
+        {sample && (
+          <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-sub)' }}>
+            归档（放弃）请在保存后用「放弃」入口操作；发布/出单按账号独立统计。
+          </div>
+        )}
+      </Field>
 
       <Field label="收货时间">
         <input type="date" style={inputStyle} value={form.receiveDate} onChange={(e) => onReceiveChange(e.target.value)} />

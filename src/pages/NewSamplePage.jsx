@@ -4,7 +4,6 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { addDays } from '../utils/helpers'
-import { SAMPLE_STATUS_LIST } from '../utils/sampleStatus'
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
 
@@ -30,15 +29,14 @@ export function NewSamplePage() {
   const _rawAcc = _mapAcc(location.state?.account || sessionStorage.getItem('samples_account'))
   const initialAccounts = _rawAcc && ACCOUNTS.includes(_rawAcc) ? [_rawAcc] : []
   const [accounts, setAccounts] = useState(initialAccounts)
-  const [status, setStatus] = useState('un_arrived')
+  const [arrived, setArrived] = useState(false)   // 物流：false=未到货 / true=已到货
+  const [isShot, setIsShot] = useState(false)     // 拍摄（样品级共享）
   const [receiveDate, setReceiveDate] = useState(new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(() => addDays(new Date().toISOString().slice(0, 10), 15))
   const [remark, setRemark] = useState('')
   const [commission, setCommission] = useState(5)
-  const [orderDate, setOrderDate] = useState('')
   const [links, setLinks] = useState([])
-  const [category, setCategory] = useState('')   // 分类（选填，与产品分类同口径）
-  const isOrder = status === 'published'
+  const [category, setCategory] = useState('')   // 分类（与产品分类同口径）
 
   // 同名检测（按所选账号交集判断）
   const getAccounts = (s) => Array.isArray(s?.accounts) && s.accounts.length ? s.accounts : (s?.account ? [s.account] : [])
@@ -58,12 +56,14 @@ export function NewSamplePage() {
       if (!confirm(`⚠️「${name.trim()}」已存在，确定要重复添加吗？`)) return
     }
     addSample({
-      name: name.trim(), account: accounts[0], accounts: [...accounts], status, receiveDate, deadline, remark,
+      name: name.trim(), account: accounts[0], accounts: [...accounts],
+      logistics: arrived ? 'arrived' : 'un_arrived', isShot,
+      receiveDate, deadline, remark,
       category,
-      commission: Number(commission), orderDate: isOrder ? orderDate : '',
+      commission: Number(commission),
       links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), note: (l.note || '').trim() })),
     })
-    show(accounts.length > 1 ? `已创建（归属 ${accounts.length} 个账号，物流共享、状态按账号独立）` : '已添加', 'success')
+    show(accounts.length > 1 ? `已创建（归属 ${accounts.length} 个账号，物流与拍摄共享，发布/出单按账号独立统计）` : '已添加', 'success')
     navigate('/samples')
   }
 
@@ -137,21 +137,32 @@ export function NewSamplePage() {
             </div>
           )}
         </Field>
-        <Field label="状态">
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {SAMPLE_STATUS_LIST.map((s) => (
-              <button key={s.key} onClick={() => setStatus(s.key)} style={{
-                padding: '7px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: status === s.key ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.5)',
-                color: status === s.key ? '#fff' : 'var(--text-sub)' }}>{s.icon} {s.label}</button>
+        <Field label="物流状态">
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {[
+              { v: false, label: '🚚 未到货' },
+              { v: true, label: '📦 已到货' },
+            ].map((it) => (
+              <button key={String(it.v)} onClick={() => setArrived(it.v)} style={{
+                flex: 1, padding: '9px 0', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
+                background: arrived === it.v ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.5)',
+                color: arrived === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
             ))}
           </div>
         </Field>
-        {isOrder && (
-          <Field label="出单日期（选填，用于近出单统计）">
-            <input type="date" style={inputStyle} value={orderDate} onChange={e => setOrderDate(e.target.value)} />
-          </Field>
-        )}
+        <Field label="拍摄（拍一次即可，与账号无关）">
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {[
+              { v: false, label: '🎬 未拍' },
+              { v: true, label: '✅ 已拍' },
+            ].map((it) => (
+              <button key={String(it.v)} onClick={() => setIsShot(it.v)} style={{
+                flex: 1, padding: '9px 0', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
+                background: isShot === it.v ? 'linear-gradient(135deg, #22d3ee, #06b6d4)' : 'rgba(255,255,255,0.5)',
+                color: isShot === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
+            ))}
+          </div>
+        </Field>
         <div style={{ display: 'flex', gap: '10px' }}>
           <div style={{ flex: 1 }}>
             <Field label="收货日期">
