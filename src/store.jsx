@@ -2989,6 +2989,12 @@ function yesterdayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+// 今天（YYYY-MM-DD）
+function todayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 // 一次性：把所有「历史」（legacy:true）发布记录的日期统一改到昨天。
 // 历史补录记录原本沿用样品的最后发布/截止/收货日期（多在过去甚至为空落到今天），
 // 混在今天的新记录里既看不出是历史，也把「今天」的统计口径搅乱。
@@ -3001,6 +3007,25 @@ function backfillLegacyPublishDate(records) {
   if (!Array.isArray(records)) return records
   const y = yesterdayStr()
   return records.map((r) => (r && r.legacy && r.publishDate !== y ? { ...r, publishDate: y } : r))
+}
+
+// 一次性回滚：上一次把 legacy 记录统一改成「昨天」后，所有补录记录挤在同一天，
+// 失去了各自的日期。此处按样品的 截止时间 → 收货时间 把日期还原回去
+// （补录时优先用的 lastPublishAt 已被那次改动覆盖，只能用这两个最贴近的来源还原）。
+function restoreLegacyPublishDate(records, samples) {
+  let done = false
+  try { done = localStorage.getItem('mig_legacy_pub_date_restore_v1') === '1' } catch (e) {}
+  if (done) return records
+  try { localStorage.setItem('mig_legacy_pub_date_restore_v1', '1') } catch (e) {}
+  if (!Array.isArray(records) || !Array.isArray(samples)) return records
+  const map = Object.fromEntries(samples.filter((s) => s && s.id).map((s) => [s.id, s]))
+  return records.map((r) => {
+    if (!r || !r.legacy) return r
+    const s = map[r.sampleId]
+    if (!s) return r
+    const d = normDate(s.deadline) || normDate(s.receiveDate)
+    return d ? { ...r, publishDate: d } : r
+  })
 }
 
 function normalizeDates(d) {
@@ -3168,7 +3193,10 @@ function loadData() {
       ? migrated.publishRecords.filter((r) => !legacyPublishIds.has(r.id))
       : migrated.publishRecords
     // 一次性补录：老数据的「已发布」只是个开关（无记录、无条数），迁移后会掉回「已拍未发」
-    const legacyFixed = backfillLegacyPublishDate(backfillLegacyPublishRecords(migrated.samples, cleanedPublish))
+    const legacyFixed = restoreLegacyPublishDate(
+      backfillLegacyPublishDate(backfillLegacyPublishRecords(migrated.samples, cleanedPublish)),
+      migrated.samples,
+    )
     const aggregated = aggregatePublish(migrated.samples, legacyFixed)
     // 一次性补齐：「新增发布记录→自动置为已发布」这条规则上线前记的历史发布记录不会回溯，
     // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
@@ -3473,7 +3501,7 @@ export function backfillLegacyPublishRecords(samples, records) {
   if (done) return list
   try { localStorage.setItem('mig_legacy_pub_v1', '1') } catch (e) {}
   if (!Array.isArray(samples)) return list
-  const fallbackDate = yesterdayStr  // 历史数据无日期可依时落到「昨天」，不占用今天的口径
+  const fallbackDate = todayStr  // 无日期可依时才落到今天；能推算出日期的按各自日期还原
   for (const s of samples) {
     if (!s || !s.id) continue
     if (s.archived || s.status === 'abandoned') continue
