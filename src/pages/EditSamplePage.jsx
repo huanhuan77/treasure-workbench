@@ -188,14 +188,6 @@ export function EditSamplePage() {
                 color: archived === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
             ))}
           </div>
-          {accounts.length > 0 && (
-            <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-sub)', lineHeight: 1.6 }}>
-              {accounts.map((a) => {
-                const c = getCounts(sample, a)
-                return <div key={a}>{a}：已发 {c.publishCount} 条 · 出单 {c.orderCount}（发布/出单按账号独立统计）</div>
-              })}
-            </div>
-          )}
           {/* 手动补发布：忘了记发布时补一条今天的记录，状态/计数自动更新 */}
           <div style={{ marginTop: '8px' }}>
             {!manualPubOpen ? (
