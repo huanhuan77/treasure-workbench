@@ -94,14 +94,14 @@ export function NewSamplePage() {
           </div>
         </Field>
         <Field label="归属账号（可多选，选几个账号就生成几条样品）">
-          {/* 账号按钮单行横排，超出可横向滚动，避免换行挤压布局 */}
+          {/* 账号按钮单行横排，缩小尺寸保证一行放得下 */}
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', overflowX: 'auto', overflowY: 'hidden', paddingBottom: '2px', scrollbarWidth: 'none' }} className="hide-scrollbar">
             {ACCOUNTS.map(a => {
               const selected = accounts.includes(a)
               return (
                 <button key={a} onClick={() => toggleAccount(a)} style={{
-                  flex: '0 0 auto', minWidth: '92px',
-                  padding: '10px 14px', borderRadius: '999px',
+                  flex: '1 1 0', minWidth: 0,
+                  padding: '7px 8px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
                   background: selected
                     ? 'linear-gradient(135deg, #f472b6, #ec4899)'
@@ -109,14 +109,14 @@ export function NewSamplePage() {
                   cursor: 'pointer',
                   transition: 'all 0.15s',
                   boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-                  textAlign: 'center', minHeight: '40px',
+                  textAlign: 'center', minHeight: '34px',
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '4px',
+                  gap: '3px',
                 }}>
                   <span style={{
-                    fontSize: '13px', fontWeight: 600,
+                    fontSize: '12px', fontWeight: 600,
                     color: selected ? '#fff' : 'var(--text-main)',
-                    whiteSpace: 'nowrap',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{a}</span>
                   {selected && (
                     <span style={{
