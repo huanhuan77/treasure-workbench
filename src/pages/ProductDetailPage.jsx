@@ -803,18 +803,19 @@ function CopyCard({
         // 右上角按钮区宽度约 72px，留出右侧 padding 避免文案贴边
         paddingRight: '80px',
       }}>
-        {copy.content}
+        {/* 仅展示层去掉末尾空白行：pre-wrap 下尾部换行会渲染成按钮上方的大片空白；复制时仍用原文案 */}
+        {String(copy.content || '').replace(/\s+$/, '')}
       </div>
 
-      {/* 状态标签 */}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
-        {copy.style && (
+      {/* 状态标签（无风格时不渲染，避免占出一行空白） */}
+      {copy.style && (
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '8px' }}>
           <span style={{
             fontSize: '11px', color: '#c2410c', background: 'rgba(255, 237, 213, 0.8)',
             padding: '3px 9px', borderRadius: '8px', fontWeight: 500,
           }}>风格：{copy.style}</span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 操作按钮区（编辑/删除已搬到右上角）；「用过」后日期紧跟按钮右侧 */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
