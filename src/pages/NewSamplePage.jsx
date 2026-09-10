@@ -127,15 +127,6 @@ export function NewSamplePage() {
               )
             })}
           </div>
-          {accounts.length > 1 && (
-            <div style={{
-              marginTop: '8px', fontSize: '12px', lineHeight: 1.5, fontWeight: 600, color: '#be185d',
-              background: 'rgba(244,114,182,0.12)', border: '1px solid rgba(244,114,182,0.3)',
-              borderRadius: '10px', padding: '8px 10px',
-            }}>
-              将创建 <b>1 条</b>样品（归属 {accounts.join(' / ')}）：物流状态共享，发布条数与出单按账号独立统计，可在列表/编辑里分别管理每个账号的状态。
-            </div>
-          )}
         </Field>
         <Field label="物流状态">
           <div style={{ display: 'flex', gap: '6px' }}>
