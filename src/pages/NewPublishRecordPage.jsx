@@ -48,12 +48,16 @@ export function NewPublishRecordPage() {
   const [sampleCategory, setSampleCategory] = useState('')      // 选样品时的分类筛选（''=全部分类）
   const [pickedIds, setPickedIds] = useState(() => new Set())   // 弹窗内多选样品 id 临时集合
 
-  // 可选样品：所选账号中，该账号处于「已拍摄未发布 / 已发布」的样品（按账号独立判断）
+  // 可选样品：已拍且归属当前账号、未归档；从样品卡「补记发布」带入/已选中的样品始终保留
+  // （补记是明确的事实记录，不受「待拍/未到货」过滤限制）
   const sampleList = useMemo(() => {
     if (!account) return []
-    // 可发样品：已拍（拍摄为样品级共享）且归属当前账号；归档(放弃)不可发
-    return (samples || []).filter((s) => !s.archived && s.isShot && hasAccount(s, account))
-  }, [samples, account])
+    const all = samples || []
+    const picked = new Set(entries.map((e) => e.sampleId).filter(Boolean))
+    const base = all.filter((s) => !s.archived && s.isShot && hasAccount(s, account))
+    const extra = all.filter((s) => picked.has(s.id) && !base.includes(s))
+    return [...extra, ...base]
+  }, [samples, account, entries])
   // 按名称模糊匹配；已选样品在该账号下置顶；过滤掉其它 entry 已经选过的（同一次发布避免重复）
   const filteredSamples = useMemo(() => {
     const q = sampleQuery.trim().toLowerCase()
