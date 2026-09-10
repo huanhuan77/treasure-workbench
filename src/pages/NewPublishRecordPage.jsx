@@ -253,7 +253,6 @@ export function NewPublishRecordPage() {
               )
             })}
           </div>
-          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>整次发布归属到一个账号，下面所有产品都属于该账号</div>
         </div>
 
         {/* 关联样品 + 发布数量：多产品行结构，每行一个样品 + 各自数量 */}

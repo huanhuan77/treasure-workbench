@@ -539,7 +539,8 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
                     )
                   })
             )}
-            {s.deadline && (logistics === 'un_arrived' || logistics === 'arrived') && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
+            {/* 已发布 / 已放弃 不再显示时间（截止日对这两类已无意义） */}
+            {s.deadline && repStatus !== 'published' && repStatus !== 'abandoned' && (logistics === 'un_arrived' || logistics === 'arrived') && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
             {(s.commission || 5) > 5 && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}
             {(() => {
               const links = getLinks(s)

@@ -2982,6 +2982,27 @@ function normDate(v) {
   return `${m[1]}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
 }
 
+// 昨天（YYYY-MM-DD）：历史补录数据的兜底日期
+function yesterdayStr() {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// 一次性：把所有「历史」（legacy:true）发布记录的日期统一改到昨天。
+// 历史补录记录原本沿用样品的最后发布/截止/收货日期（多在过去甚至为空落到今天），
+// 混在今天的新记录里既看不出是历史，也把「今天」的统计口径搅乱。
+// 统一落到昨天后：今天=当天新记的，昨天=历史补录的，发布记录列表可直接用「昨天」筛出全部历史。
+function backfillLegacyPublishDate(records) {
+  let done = false
+  try { done = localStorage.getItem('mig_legacy_pub_date_v1') === '1' } catch (e) {}
+  if (done) return records
+  try { localStorage.setItem('mig_legacy_pub_date_v1', '1') } catch (e) {}
+  if (!Array.isArray(records)) return records
+  const y = yesterdayStr()
+  return records.map((r) => (r && r.legacy && r.publishDate !== y ? { ...r, publishDate: y } : r))
+}
+
 function normalizeDates(d) {
   if (!d) return d
   return {
@@ -3147,7 +3168,7 @@ function loadData() {
       ? migrated.publishRecords.filter((r) => !legacyPublishIds.has(r.id))
       : migrated.publishRecords
     // 一次性补录：老数据的「已发布」只是个开关（无记录、无条数），迁移后会掉回「已拍未发」
-    const legacyFixed = backfillLegacyPublishRecords(migrated.samples, cleanedPublish)
+    const legacyFixed = backfillLegacyPublishDate(backfillLegacyPublishRecords(migrated.samples, cleanedPublish))
     const aggregated = aggregatePublish(migrated.samples, legacyFixed)
     // 一次性补齐：「新增发布记录→自动置为已发布」这条规则上线前记的历史发布记录不会回溯，
     // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
@@ -3452,7 +3473,7 @@ export function backfillLegacyPublishRecords(samples, records) {
   if (done) return list
   try { localStorage.setItem('mig_legacy_pub_v1', '1') } catch (e) {}
   if (!Array.isArray(samples)) return list
-  const fallbackDate = () => new Date().toISOString().slice(0, 10)
+  const fallbackDate = yesterdayStr  // 历史数据无日期可依时落到「昨天」，不占用今天的口径
   for (const s of samples) {
     if (!s || !s.id) continue
     if (s.archived || s.status === 'abandoned') continue

@@ -239,7 +239,6 @@ export function NewOrderPage() {
               )
             })}
           </div>
-          <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '4px' }}>整笔出单归属到一个账号，下面所有产品都属于该账号</div>
         </div>
 
         {/* 出单日期 */}
