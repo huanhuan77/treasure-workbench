@@ -111,6 +111,8 @@ export function SamplesPage() {
   }, [])
 
   const sorted = useMemo(() => samples, [samples])
+  // 未分类样品数量（无 category 的样品）
+  const uncatCount = useMemo(() => (samples || []).filter((s) => !(s.category || '').trim()).length, [samples])
   const filtered = useMemo(() => {
     if (filter === 'all') return sorted
     return sorted.filter((s) => sampleMatchesFilter(s, filter))
@@ -291,6 +293,22 @@ export function SamplesPage() {
           )
         })}
       </div>
+
+      {/* 未分类样品入口：存在无分类样品时提示，点进去可批量补分类 */}
+      {uncatCount > 0 && (
+        <button
+          onClick={() => navigate('/samples/uncategorized')}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
+            margin: '0 16px 8px', padding: '9px 12px', borderRadius: '10px', cursor: 'pointer',
+            background: 'rgba(109,40,217,0.08)', border: '1px solid rgba(109,40,217,0.25)',
+            color: '#6d28d9', fontSize: '12px', fontWeight: 700, textAlign: 'left',
+          }}
+        >
+          <span>🏷️ {uncatCount} 个样品还没分类 · 去设置</span>
+          <span style={{ fontSize: '16px', lineHeight: 1 }}>›</span>
+        </button>
+      )}
 
       {/* 列表：独立滚动 */}
       <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '4px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
