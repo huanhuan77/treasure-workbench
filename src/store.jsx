@@ -2989,11 +2989,7 @@ function yesterdayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-// 今天（YYYY-MM-DD）
-function todayStr() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
+// todayStr 由 ./utils/helpers 导入（本文件已 import，勿重复定义）
 
 // 一次性：把所有「历史」（legacy:true）发布记录的日期统一改到昨天。
 // 历史补录记录原本沿用样品的最后发布/截止/收货日期（多在过去甚至为空落到今天），
