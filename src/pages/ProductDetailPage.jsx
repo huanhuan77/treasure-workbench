@@ -824,7 +824,8 @@ function CopyCard({
         </ActionBtn>
         {copy.used && (() => {
           const d = copy.usedDate ? daysDiff(copy.usedDate) : null
-          const desc = d === null ? '' : d <= 0 ? '今天' : `${d}天前`
+          // daysDiff：过去为负、今天为 0、未来为正；只有 0 才是「今天」
+          const desc = d === null ? '' : d === 0 ? '今天' : d < 0 ? `${-d}天前` : `${d}天后`
           return desc
             ? <span style={{ fontSize: '11px', color: '#0891b2', fontWeight: 600, whiteSpace: 'nowrap' }}>{desc}</span>
             : null
