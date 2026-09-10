@@ -717,22 +717,22 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
       </Field>
 
       <Field label={sample ? '归属账号（单条样品仅归属 1 个账号）' : '归属账号（可多选，选几个账号就生成几条样品）'}>
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
           {ACCOUNTS.map((a) => {
             const selected = form.accounts.includes(a)
             return (
               <button key={a} type="button" onClick={() => toggleAccountSel(a)} style={{
-                flex: '0 0 auto', minWidth: '92px',
-                padding: '10px 14px', borderRadius: '999px',
+                flex: '1 1 0', minWidth: 0,
+                padding: '7px 8px', borderRadius: '999px',
                 border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
                 background: selected ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.6)',
                 cursor: 'pointer', transition: 'all 0.15s',
                 boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-                textAlign: 'center', minHeight: '40px',
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                textAlign: 'center', minHeight: '34px',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
               }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: selected ? '#fff' : 'var(--text-main)', whiteSpace: 'nowrap' }}>{a}</span>
-                {selected && <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700, flexShrink: 0 }}>✓</span>}
+                <span style={{ fontSize: '11px', fontWeight: 600, color: selected ? '#fff' : 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a}</span>
+                {selected && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 700, flexShrink: 0 }}>✓</span>}
               </button>
             )
           })}

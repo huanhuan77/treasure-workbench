@@ -118,13 +118,13 @@ export function EditSamplePage() {
           </div>
         </Field>
         <Field label="归属账号（可多选）">
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
             {ACCOUNTS.map((a) => {
               const selected = accounts.includes(a)
               return (
                 <button key={a} onClick={() => toggleAccount(a)} style={{
                   flex: 1, minWidth: 0,
-                  padding: '10px 8px', borderRadius: '999px',
+                  padding: '7px 8px', borderRadius: '999px',
                   border: selected ? '2px solid var(--primary)' : '1.5px solid rgba(0,0,0,0.06)',
                   background: selected
                     ? 'linear-gradient(135deg, #f472b6, #ec4899)'
@@ -132,12 +132,12 @@ export function EditSamplePage() {
                   cursor: 'pointer',
                   transition: 'all 0.15s',
                   boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-                  textAlign: 'center', minHeight: '38px',
+                  textAlign: 'center', minHeight: '34px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   gap: '2px',
                 }}>
                   <span style={{
-                    fontSize: '12px', fontWeight: 600,
+                    fontSize: '11px', fontWeight: 600,
                     color: selected ? '#fff' : 'var(--text-main)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden', textOverflow: 'ellipsis',
