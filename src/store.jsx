@@ -2582,29 +2582,29 @@ const defaultData = {
     { id: 'p_olly', name: 'olly女维', brand: 'OLLY', category: '保健品', createdAt: Date.now(), copies: ollySeed }
   ],
   samples: [
-  { id:'s_001', name:'冰格', account:'广东刘亦菲', receiveDate:'2026/4/17', deadline:'2026-05-02', remark:'', status:'un_arrived' },
-  { id:'s_002', name:'口罩', account:'广东刘亦菲', receiveDate:'2026/4/18', deadline:'2026-05-03', remark:'', status:'un_arrived' },
-  { id:'s_003', name:'柳丝木洁面乳', account:'广东刘亦菲', receiveDate:'2026/5/7', deadline:'2026-05-22', remark:'', status:'un_arrived' },
-  { id:'s_004', name:'柳丝木洁颜油', account:'广东刘亦菲', receiveDate:'2026/5/20', deadline:'2026-06-04', remark:'', status:'un_arrived' },
+  { id:'s_001', name:'冰格', account:'广东刘亦菲', receiveDate:'2026-04-17', deadline:'2026-05-02', remark:'', status:'un_arrived' },
+  { id:'s_002', name:'口罩', account:'广东刘亦菲', receiveDate:'2026-04-18', deadline:'2026-05-03', remark:'', status:'un_arrived' },
+  { id:'s_003', name:'柳丝木洁面乳', account:'广东刘亦菲', receiveDate:'2026-05-07', deadline:'2026-05-22', remark:'', status:'un_arrived' },
+  { id:'s_004', name:'柳丝木洁颜油', account:'广东刘亦菲', receiveDate:'2026-05-20', deadline:'2026-06-04', remark:'', status:'un_arrived' },
   { id:'s_005', name:'雾犀牙膏', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
   { id:'s_006', name:'植研加睫毛胶水新', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'3条', status:'published' },
-  { id:'s_007', name:'造物者 小美', account:'广东刘亦菲', receiveDate:'2026/5/13', deadline:'2026-05-28', remark:'3条', status:'published' },
+  { id:'s_007', name:'造物者 小美', account:'广东刘亦菲', receiveDate:'2026-05-13', deadline:'2026-05-28', remark:'3条', status:'published' },
   { id:'s_008', name:'一次性内裤', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_009', name:'珀芙研等渗面膜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_010', name:'珀芙研蛋白胶原面膜', account:'广东刘亦菲', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
+  { id:'s_010', name:'珀芙研蛋白胶原面膜', account:'广东刘亦菲', receiveDate:'2026-05-03', deadline:'2026-05-18', remark:'', status:'published' },
   { id:'s_011', name:'珀芙研油敏霜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_012', name:'珀芙研闪光棒', account:'广东刘亦菲', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
-  { id:'s_013', name:'珀芙研修护霜小样', account:'广东刘亦菲', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'', status:'published' },
+  { id:'s_012', name:'珀芙研闪光棒', account:'广东刘亦菲', receiveDate:'2026-05-03', deadline:'2026-05-18', remark:'', status:'published' },
+  { id:'s_013', name:'珀芙研修护霜小样', account:'广东刘亦菲', receiveDate:'2026-05-16', deadline:'2026-05-31', remark:'', status:'published' },
   { id:'s_014', name:'珀芙研冷膜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_015', name:'珀芙研修护霜', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_016', name:'衣物香氛挂件', account:'广东刘亦菲', receiveDate:'2026/4/24', deadline:'2026-05-09', remark:'', status:'published' },
-  { id:'s_017', name:'浮汀遮瑕液', account:'广东刘亦菲', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'出单 佣金10%', status:'published' },
+  { id:'s_016', name:'衣物香氛挂件', account:'广东刘亦菲', receiveDate:'2026-04-24', deadline:'2026-05-09', remark:'', status:'published' },
+  { id:'s_017', name:'浮汀遮瑕液', account:'广东刘亦菲', receiveDate:'2026-05-16', deadline:'2026-05-31', remark:'出单 佣金10%', status:'published' },
   { id:'s_018', name:'护魔手机壳', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'出单 佣金10%', status:'published' },
   { id:'s_019', name:'祛湿清', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_020', name:'植研加睫毛胶水旧', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_021', name:'讯姆钢化膜', account:'广东刘亦菲', receiveDate:'2026/3/16', deadline:'2026-03-31', remark:'', status:'published' },
-  { id:'s_022', name:'袋鼠妈妈沐浴露洗发水', account:'广东刘亦菲', receiveDate:'2026/4/27', deadline:'2026-05-12', remark:'', status:'published' },
-  { id:'s_023', name:'手持风扇', account:'广东刘亦菲', receiveDate:'2026/3/23', deadline:'2026-04-07', remark:'', status:'published' },
+  { id:'s_021', name:'讯姆钢化膜', account:'广东刘亦菲', receiveDate:'2026-03-16', deadline:'2026-03-31', remark:'', status:'published' },
+  { id:'s_022', name:'袋鼠妈妈沐浴露洗发水', account:'广东刘亦菲', receiveDate:'2026-04-27', deadline:'2026-05-12', remark:'', status:'published' },
+  { id:'s_023', name:'手持风扇', account:'广东刘亦菲', receiveDate:'2026-03-23', deadline:'2026-04-07', remark:'', status:'published' },
   { id:'s_024', name:'绵绵的羊', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_025', name:'完美日记唇釉', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_026', name:'纽益宝鱼油', account:'广东刘亦菲', receiveDate:'2026-04-28', deadline:'2026-05-13', remark:'', status:'published' },
@@ -2613,55 +2613,55 @@ const defaultData = {
   { id:'s_029', name:'无界香水', account:'广东刘亦菲', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
   { id:'s_030', name:'ph咖啡', account:'广东刘亦菲', receiveDate:'2026-05-07', deadline:'2026-05-22', remark:'', status:'un_arrived' },
   { id:'s_031', name:'宁心', account:'广东刘亦菲', receiveDate:'2026-05-01', deadline:'2026-05-16', remark:'', status:'published' },
-  { id:'s_032', name:'倍加洁牙刷', account:'晚梨不吃梨', receiveDate:'2026/5/11', deadline:'2026-05-26', remark:'', status:'published' },
-  { id:'s_033', name:'脆升升礼盒', account:'晚梨不吃梨', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'', status:'published' },
-  { id:'s_034', name:'滴露消毒液', account:'晚梨不吃梨', receiveDate:'2026/5/17', deadline:'2026-06-01', remark:'', status:'published' },
-  { id:'s_035', name:'珀莱雅', account:'晚梨不吃梨', receiveDate:'2026/5/17', deadline:'2026-06-01', remark:'', status:'published' },
-  { id:'s_036', name:'答非冰感毛巾', account:'晚梨不吃梨', receiveDate:'2026/6/3', deadline:'2026-06-18', remark:'', status:'published' },
-  { id:'s_037', name:'润培护发精油', account:'晚梨不吃梨', receiveDate:'2026/6/4', deadline:'2026-06-19', remark:'', status:'published' },
-  { id:'s_038', name:'皮带', account:'晚梨不吃梨', receiveDate:'2026/6/4', deadline:'2026-06-19', remark:'', status:'published' },
-  { id:'s_039', name:'宁心', account:'晚梨不吃梨', receiveDate:'2026/3/3', deadline:'2026-03-18', remark:'', status:'published' },
-  { id:'s_040', name:'后谷咖啡', account:'晚梨不吃梨', receiveDate:'2026/6/5', deadline:'2026-06-20', remark:'', status:'published' },
-  { id:'s_041', name:'可靠冰凉毛巾', account:'晚梨不吃梨', receiveDate:'2026/6/5', deadline:'2026-06-20', remark:'', status:'published' },
-  { id:'s_042', name:'星帮尼湿巾', account:'晚梨不吃梨', receiveDate:'2026/6/9', deadline:'2026-06-24', remark:'', status:'published' },
-  { id:'s_043', name:'官栈花胶', account:'晚梨不吃梨', receiveDate:'2026/6/9', deadline:'2026-06-24', remark:'', status:'published' },
-  { id:'s_044', name:'奶酪', account:'晚梨不吃梨', receiveDate:'2026/6/9', deadline:'2026-06-24', remark:'', status:'published' },
-  { id:'s_045', name:'植研加睫毛胶水新', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
-  { id:'s_046', name:'植研加睫毛胶水旧', account:'晚梨不吃梨', receiveDate:'2026/6/24', deadline:'2026-07-09', remark:'', status:'published' },
-  { id:'s_047', name:'铁剂', account:'晚梨不吃梨', receiveDate:'2026/6/24', deadline:'2026-07-09', remark:'', status:'published' },
-  { id:'s_048', name:'童颜纪面膜', account:'晚梨不吃梨', receiveDate:'2026/6/26', deadline:'2026-07-11', remark:'', status:'published' },
-  { id:'s_049', name:'泥巴派', account:'晚梨不吃梨', receiveDate:'2026/6/26', deadline:'2026-07-11', remark:'', status:'published' },
-  { id:'s_050', name:'百草妈咪洁面泡沫', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
-  { id:'s_051', name:'一页精华', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
-  { id:'s_052', name:'丹泊沐浴露', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
-  { id:'s_053', name:'生理盐水湿巾', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
-  { id:'s_054', name:'衣物香氛挂件', account:'晚梨不吃梨', receiveDate:'2026/6/16', deadline:'2026-07-01', remark:'', status:'published' },
-  { id:'s_055', name:'祛湿轻', account:'晚梨不吃梨', receiveDate:'2026/3/1', deadline:'2026-03-16', remark:'', status:'published' },
+  { id:'s_032', name:'倍加洁牙刷', account:'晚梨不吃梨', receiveDate:'2026-05-11', deadline:'2026-05-26', remark:'', status:'published' },
+  { id:'s_033', name:'脆升升礼盒', account:'晚梨不吃梨', receiveDate:'2026-05-16', deadline:'2026-05-31', remark:'', status:'published' },
+  { id:'s_034', name:'滴露消毒液', account:'晚梨不吃梨', receiveDate:'2026-05-17', deadline:'2026-06-01', remark:'', status:'published' },
+  { id:'s_035', name:'珀莱雅', account:'晚梨不吃梨', receiveDate:'2026-05-17', deadline:'2026-06-01', remark:'', status:'published' },
+  { id:'s_036', name:'答非冰感毛巾', account:'晚梨不吃梨', receiveDate:'2026-06-03', deadline:'2026-06-18', remark:'', status:'published' },
+  { id:'s_037', name:'润培护发精油', account:'晚梨不吃梨', receiveDate:'2026-06-04', deadline:'2026-06-19', remark:'', status:'published' },
+  { id:'s_038', name:'皮带', account:'晚梨不吃梨', receiveDate:'2026-06-04', deadline:'2026-06-19', remark:'', status:'published' },
+  { id:'s_039', name:'宁心', account:'晚梨不吃梨', receiveDate:'2026-03-03', deadline:'2026-03-18', remark:'', status:'published' },
+  { id:'s_040', name:'后谷咖啡', account:'晚梨不吃梨', receiveDate:'2026-06-05', deadline:'2026-06-20', remark:'', status:'published' },
+  { id:'s_041', name:'可靠冰凉毛巾', account:'晚梨不吃梨', receiveDate:'2026-06-05', deadline:'2026-06-20', remark:'', status:'published' },
+  { id:'s_042', name:'星帮尼湿巾', account:'晚梨不吃梨', receiveDate:'2026-06-09', deadline:'2026-06-24', remark:'', status:'published' },
+  { id:'s_043', name:'官栈花胶', account:'晚梨不吃梨', receiveDate:'2026-06-09', deadline:'2026-06-24', remark:'', status:'published' },
+  { id:'s_044', name:'奶酪', account:'晚梨不吃梨', receiveDate:'2026-06-09', deadline:'2026-06-24', remark:'', status:'published' },
+  { id:'s_045', name:'植研加睫毛胶水新', account:'晚梨不吃梨', receiveDate:'2026-06-16', deadline:'2026-07-01', remark:'', status:'published' },
+  { id:'s_046', name:'植研加睫毛胶水旧', account:'晚梨不吃梨', receiveDate:'2026-06-24', deadline:'2026-07-09', remark:'', status:'published' },
+  { id:'s_047', name:'铁剂', account:'晚梨不吃梨', receiveDate:'2026-06-24', deadline:'2026-07-09', remark:'', status:'published' },
+  { id:'s_048', name:'童颜纪面膜', account:'晚梨不吃梨', receiveDate:'2026-06-26', deadline:'2026-07-11', remark:'', status:'published' },
+  { id:'s_049', name:'泥巴派', account:'晚梨不吃梨', receiveDate:'2026-06-26', deadline:'2026-07-11', remark:'', status:'published' },
+  { id:'s_050', name:'百草妈咪洁面泡沫', account:'晚梨不吃梨', receiveDate:'2026-06-16', deadline:'2026-07-01', remark:'', status:'published' },
+  { id:'s_051', name:'一页精华', account:'晚梨不吃梨', receiveDate:'2026-06-16', deadline:'2026-07-01', remark:'', status:'published' },
+  { id:'s_052', name:'丹泊沐浴露', account:'晚梨不吃梨', receiveDate:'2026-06-16', deadline:'2026-07-01', remark:'', status:'published' },
+  { id:'s_053', name:'生理盐水湿巾', account:'晚梨不吃梨', receiveDate:'2026-06-16', deadline:'2026-07-01', remark:'', status:'published' },
+  { id:'s_054', name:'衣物香氛挂件', account:'晚梨不吃梨', receiveDate:'2026-06-16', deadline:'2026-07-01', remark:'', status:'published' },
+  { id:'s_055', name:'祛湿轻', account:'晚梨不吃梨', receiveDate:'2026-03-01', deadline:'2026-03-16', remark:'', status:'published' },
   { id:'s_056', name:'洁比兔 湿巾', account:'晚梨不吃梨', receiveDate:'2026-03-24', deadline:'2026-04-08', remark:'', status:'published' },
-  { id:'s_057', name:'洁比兔益生菌洗液', account:'晚梨不吃梨', receiveDate:'2026/3/24', deadline:'2026-04-08', remark:'', status:'published' },
-  { id:'s_058', name:'绵绵的羊', account:'晚梨不吃梨', receiveDate:'2026/4/28', deadline:'2026-05-13', remark:'', status:'published' },
-  { id:'s_059', name:'宝玑米脱毛膏', account:'晚梨不吃梨', receiveDate:'2026/4/28', deadline:'2026-05-13', remark:'', status:'published' },
-  { id:'s_060', name:'纯耕六味地黄丸', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
-  { id:'s_061', name:'纯耕黄精人参', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
-  { id:'s_062', name:'珀芙研等渗面膜', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
-  { id:'s_063', name:'珀芙研蛋白胶原面膜', account:'晚梨不吃梨', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
-  { id:'s_064', name:'珀芙研冷膜', account:'晚梨不吃梨', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
-  { id:'s_065', name:'珀芙研修护霜', account:'晚梨不吃梨', receiveDate:'2026/5/3', deadline:'2026-05-18', remark:'', status:'published' },
-  { id:'s_066', name:'珀芙研修护霜小样', account:'晚梨不吃梨', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'', status:'published' },
-  { id:'s_067', name:'柏芙妍油敏霜', account:'晚梨不吃梨', receiveDate:'2026/5/16', deadline:'2026-05-31', remark:'', status:'published' },
-  { id:'s_068', name:'珂拉琪唇釉礼盒', account:'晚梨不吃梨', receiveDate:'2026/5/13', deadline:'2026-05-28', remark:'2条起投', status:'published' },
-  { id:'s_069', name:'润培沐浴露', account:'晚梨不吃梨', receiveDate:'2026/5/18', deadline:'2026-06-02', remark:'', status:'published' },
-  { id:'s_070', name:'倍爱健', account:'晚梨不吃梨', receiveDate:'2026/5/11', deadline:'2026-05-26', remark:'', status:'published' },
-  { id:'s_071', name:'fiboo富铁软糖', account:'晚梨不吃梨', receiveDate:'2026/4/28', deadline:'2026-05-13', remark:'', status:'published' },
-  { id:'s_072', name:'美那有营养软糖', account:'晚梨不吃梨', receiveDate:'2026/4/29', deadline:'2026-05-14', remark:'', status:'published' },
-  { id:'s_073', name:'香蕉饮', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
-  { id:'s_074', name:'olly女维', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
-  { id:'s_075', name:'olly褪黑素', account:'晚梨不吃梨', receiveDate:'2026/4/23', deadline:'2026-05-08', remark:'', status:'published' },
-  { id:'s_076', name:'洗衣凝珠', account:'晚梨不吃梨', receiveDate:'2026/5/5', deadline:'2026-05-20', remark:'', status:'published' },
-  { id:'s_077', name:'茵缇玛', account:'晚梨不吃梨', receiveDate:'2026/5/6', deadline:'2026-05-21', remark:'', status:'published' },
-  { id:'s_078', name:'苏卡咖啡', account:'晚梨不吃梨', receiveDate:'2026/5/5', deadline:'2026-05-20', remark:'', status:'published' },
-  { id:'s_079', name:'ph咖啡', account:'晚梨不吃梨', receiveDate:'2026/4/18', deadline:'2026-05-03', remark:'', status:'published' },
-  { id:'s_080', name:'斯维诗液体钙', account:'晚梨不吃梨', receiveDate:'2026/3/26', deadline:'2026-04-10', remark:'', status:'abandoned' },
+  { id:'s_057', name:'洁比兔益生菌洗液', account:'晚梨不吃梨', receiveDate:'2026-03-24', deadline:'2026-04-08', remark:'', status:'published' },
+  { id:'s_058', name:'绵绵的羊', account:'晚梨不吃梨', receiveDate:'2026-04-28', deadline:'2026-05-13', remark:'', status:'published' },
+  { id:'s_059', name:'宝玑米脱毛膏', account:'晚梨不吃梨', receiveDate:'2026-04-28', deadline:'2026-05-13', remark:'', status:'published' },
+  { id:'s_060', name:'纯耕六味地黄丸', account:'晚梨不吃梨', receiveDate:'2026-04-23', deadline:'2026-05-08', remark:'', status:'published' },
+  { id:'s_061', name:'纯耕黄精人参', account:'晚梨不吃梨', receiveDate:'2026-04-23', deadline:'2026-05-08', remark:'', status:'published' },
+  { id:'s_062', name:'珀芙研等渗面膜', account:'晚梨不吃梨', receiveDate:'2026-04-23', deadline:'2026-05-08', remark:'', status:'published' },
+  { id:'s_063', name:'珀芙研蛋白胶原面膜', account:'晚梨不吃梨', receiveDate:'2026-05-03', deadline:'2026-05-18', remark:'', status:'published' },
+  { id:'s_064', name:'珀芙研冷膜', account:'晚梨不吃梨', receiveDate:'2026-05-03', deadline:'2026-05-18', remark:'', status:'published' },
+  { id:'s_065', name:'珀芙研修护霜', account:'晚梨不吃梨', receiveDate:'2026-05-03', deadline:'2026-05-18', remark:'', status:'published' },
+  { id:'s_066', name:'珀芙研修护霜小样', account:'晚梨不吃梨', receiveDate:'2026-05-16', deadline:'2026-05-31', remark:'', status:'published' },
+  { id:'s_067', name:'柏芙妍油敏霜', account:'晚梨不吃梨', receiveDate:'2026-05-16', deadline:'2026-05-31', remark:'', status:'published' },
+  { id:'s_068', name:'珂拉琪唇釉礼盒', account:'晚梨不吃梨', receiveDate:'2026-05-13', deadline:'2026-05-28', remark:'2条起投', status:'published' },
+  { id:'s_069', name:'润培沐浴露', account:'晚梨不吃梨', receiveDate:'2026-05-18', deadline:'2026-06-02', remark:'', status:'published' },
+  { id:'s_070', name:'倍爱健', account:'晚梨不吃梨', receiveDate:'2026-05-11', deadline:'2026-05-26', remark:'', status:'published' },
+  { id:'s_071', name:'fiboo富铁软糖', account:'晚梨不吃梨', receiveDate:'2026-04-28', deadline:'2026-05-13', remark:'', status:'published' },
+  { id:'s_072', name:'美那有营养软糖', account:'晚梨不吃梨', receiveDate:'2026-04-29', deadline:'2026-05-14', remark:'', status:'published' },
+  { id:'s_073', name:'香蕉饮', account:'晚梨不吃梨', receiveDate:'2026-04-23', deadline:'2026-05-08', remark:'', status:'published' },
+  { id:'s_074', name:'olly女维', account:'晚梨不吃梨', receiveDate:'2026-04-23', deadline:'2026-05-08', remark:'', status:'published' },
+  { id:'s_075', name:'olly褪黑素', account:'晚梨不吃梨', receiveDate:'2026-04-23', deadline:'2026-05-08', remark:'', status:'published' },
+  { id:'s_076', name:'洗衣凝珠', account:'晚梨不吃梨', receiveDate:'2026-05-05', deadline:'2026-05-20', remark:'', status:'published' },
+  { id:'s_077', name:'茵缇玛', account:'晚梨不吃梨', receiveDate:'2026-05-06', deadline:'2026-05-21', remark:'', status:'published' },
+  { id:'s_078', name:'苏卡咖啡', account:'晚梨不吃梨', receiveDate:'2026-05-05', deadline:'2026-05-20', remark:'', status:'published' },
+  { id:'s_079', name:'ph咖啡', account:'晚梨不吃梨', receiveDate:'2026-04-18', deadline:'2026-05-03', remark:'', status:'published' },
+  { id:'s_080', name:'斯维诗液体钙', account:'晚梨不吃梨', receiveDate:'2026-03-26', deadline:'2026-04-10', remark:'', status:'abandoned' },
   { id:'s_094', name:'祛湿清', account:'努力成为富婆', receiveDate:'2026-03-01', deadline:'2026-03-16', remark:'', status:'un_arrived' },
   { id:'s_114', name:'olly女维', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
   { id:'s_115', name:'无糖清凉糖', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
@@ -2672,9 +2672,9 @@ const defaultData = {
   { id:'s_121', name:'巧尼芙', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
   { id:'s_123', name:'健美生复合维B', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
   { id:'s_124', name:'洛神月褪黑素', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_125', name:'重颜纪面膜', account:'晚梨不吃梨', receiveDate:'2026/6/26', deadline:'2026-07-11', remark:'', status:'un_arrived' },
+  { id:'s_125', name:'重颜纪面膜', account:'晚梨不吃梨', receiveDate:'2026-06-26', deadline:'2026-07-11', remark:'', status:'un_arrived' },
   { id:'s_126', name:'珀芙研油敏霜', account:'晚梨不吃梨', receiveDate:'', deadline:'', remark:'', status:'published' },
-  { id:'s_127', name:'洁比兔湿厕纸', account:'晚梨不吃梨', receiveDate:'2026/3/24', deadline:'2026-04-08', remark:'', status:'published' },
+  { id:'s_127', name:'洁比兔湿厕纸', account:'晚梨不吃梨', receiveDate:'2026-03-24', deadline:'2026-04-08', remark:'', status:'published' },
   { id:'s_128', name:'南瓜茶', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'un_arrived' },
   { id:'s_129', name:'香蕉饮', account:'努力成为富婆', receiveDate:'', deadline:'', remark:'', status:'published' }
 ],
@@ -2969,13 +2969,38 @@ function sanitizeJiebitudu(products) {
 }
 
 // 首次使用/数据损坏时返回种子数据（同样去重，避免种子内部重复）
-function dedupedDefaultData() {
+// 日期归一：历史数据里有 2026/4/17、2026.4.17 等写法，直接喂给 <input type="date">
+// 会报 “The specified value ... does not conform to the required format”（且 addDays 解析失败）
+function normDate(v) {
+  if (!v) return v || ''
+  const s = String(v).trim()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  const m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/)
+  if (!m) return v
+  const mm = Number(m[2]), dd = Number(m[3])
+  if (!mm || !dd || mm > 12 || dd > 31) return v
+  return `${m[1]}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
+}
+
+function normalizeDates(d) {
+  if (!d) return d
   return {
+    ...d,
+    samples: (d.samples || []).map((s) => (s ? { ...s, receiveDate: normDate(s.receiveDate), deadline: normDate(s.deadline) } : s)),
+    orders: (d.orders || []).map((o) => (o ? { ...o, date: normDate(o.date) } : o)),
+    publishRecords: (d.publishRecords || []).map((r) => (r ? { ...r, publishDate: normDate(r.publishDate) } : r)),
+    transactions: (d.transactions || []).map((t) => (t ? { ...t, date: normDate(t.date) } : t)),
+    todos: (d.todos || []).map((t) => (t ? { ...t, due: normDate(t.due) } : t)),
+  }
+}
+
+function dedupedDefaultData() {
+  return normalizeDates({
     ...defaultData,
     products: (defaultData.products || []).map((p) =>
       Array.isArray(p.copies) ? { ...p, copies: dedupeCopies(p.copies) } : p
     ),
-  }
+  })
 }
 
 function loadData() {
@@ -3126,7 +3151,7 @@ function loadData() {
     // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
     const backfilled = backfillPublishedStatus(aggregated)
     const categorized = backfillSampleCategories(backfilled, productsFinal) // 空分类样品按产品名回填
-    return {
+    return normalizeDates({
       products: productsFinal,
       samples: categorized,
       orders: migrated.orders,  // 独立出单台账
@@ -3146,7 +3171,7 @@ function loadData() {
       sensitiveWords: old.sensitiveWords || DEFAULT_SENSITIVE_WORDS,  // 版本升级不再替换用户自定义词库
       dramas: Array.isArray(old.dramas) ? old.dramas : [],
       todos: Array.isArray(old.todos) ? old.todos : [],
-    }
+    })
   } catch (e) {
     console.warn('[loadData] 加载数据异常，使用默认值:', e)
     return dedupedDefaultData()

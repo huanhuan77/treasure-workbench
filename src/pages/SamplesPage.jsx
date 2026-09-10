@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
-import { formatDate, todayStr, deadlineDesc, addDays, copyText } from '../utils/helpers'
+import { formatDate, todayStr, deadlineDesc, addDays, copyText, toDateInput } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
 import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getCounts, getTopStatus, isShotSample, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
@@ -811,11 +811,11 @@ function SampleForm({ sample, onClose, onSave, onDelete }) {
       </Field>
 
       <Field label="收货时间">
-        <input type="date" style={inputStyle} value={form.receiveDate} onChange={(e) => onReceiveChange(e.target.value)} />
+        <input type="date" style={inputStyle} value={toDateInput(form.receiveDate)} onChange={(e) => onReceiveChange(e.target.value)} />
       </Field>
 
       <Field label="截止时间（默认收货 +15 天）">
-        <input type="date" style={inputStyle} value={form.deadline} onChange={(e) => { setDeadlineTouched(true); setForm({ ...form, deadline: e.target.value }) }} />
+        <input type="date" style={inputStyle} value={toDateInput(form.deadline)} onChange={(e) => { setDeadlineTouched(true); setForm({ ...form, deadline: e.target.value }) }} />
       </Field>
 
       <Field label="备注">

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
-import { addDays, todayStr } from '../utils/helpers'
+import { addDays, todayStr, toDateInput } from '../utils/helpers'
 import { getAccounts, getLogistics, getCounts, isShotSample, LOGISTICS_STATUS } from '../utils/sampleStatus'
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
@@ -233,12 +233,12 @@ export function EditSamplePage() {
         <div style={{ display: 'flex', gap: '10px' }}>
           <div style={{ flex: 1 }}>
             <Field label="收货日期">
-              <input type="date" style={inputStyle} value={receiveDate} onChange={(e) => { setReceiveDate(e.target.value); setDeadline(addDays(e.target.value, 15)) }} />
+              <input type="date" style={inputStyle} value={toDateInput(receiveDate)} onChange={(e) => { setReceiveDate(e.target.value); setDeadline(addDays(e.target.value, 15)) }} />
             </Field>
           </div>
           <div style={{ flex: 1 }}>
             <Field label="截止时间">
-              <input type="date" style={inputStyle} value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+              <input type="date" style={inputStyle} value={toDateInput(deadline)} onChange={(e) => setDeadline(e.target.value)} />
             </Field>
           </div>
         </div>

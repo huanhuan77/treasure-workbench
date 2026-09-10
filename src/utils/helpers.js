@@ -38,6 +38,19 @@ export function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
 
+// 归一为 <input type="date"> 要求的 YYYY-MM-DD
+// 兼容历史数据里的 2026/4/17、2026.4.17、2026-4-17 等写法；解析不出返回 ''
+export function toDateInput(v) {
+  if (!v) return ''
+  const s = String(v).trim()
+  const m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/)
+  if (!m) return ''
+  const [, y, mo, d] = m
+  const mm = Number(mo), dd = Number(d)
+  if (!mm || !dd || mm > 12 || dd > 31) return ''
+  return `${y}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`
+}
+
 // 日期加 n 天，返回 YYYY-MM-DD（按本地日期解析，避免时区偏移）
 export function addDays(dateStr, n) {
   if (!dateStr) return ''
