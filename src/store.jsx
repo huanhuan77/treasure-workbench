@@ -3146,7 +3146,9 @@ function loadData() {
     const cleanedPublish = legacyPublishIds
       ? migrated.publishRecords.filter((r) => !legacyPublishIds.has(r.id))
       : migrated.publishRecords
-    const aggregated = aggregatePublish(migrated.samples, cleanedPublish)
+    // 一次性补录：老数据的「已发布」只是个开关（无记录、无条数），迁移后会掉回「已拍未发」
+    const legacyFixed = backfillLegacyPublishRecords(migrated.samples, cleanedPublish)
+    const aggregated = aggregatePublish(migrated.samples, legacyFixed)
     // 一次性补齐：「新增发布记录→自动置为已发布」这条规则上线前记的历史发布记录不会回溯，
     // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
     const backfilled = backfillPublishedStatus(aggregated)
@@ -3155,7 +3157,7 @@ function loadData() {
       products: productsFinal,
       samples: categorized,
       orders: migrated.orders,  // 独立出单台账
-      publishRecords: cleanedPublish,
+      publishRecords: legacyFixed,
       transactions: migrateTransactions((Array.isArray(old.transactions) && old.transactions.length ? old.transactions : (defaultData.transactions || [])).map((t) => ({ ...t, account: mapAccount(t.account) }))),
       savingsData: (() => {
         let sd = old.savingsData ? { ...defaultData.savingsData, ...old.savingsData, records: { ...defaultData.savingsData.records, ...old.savingsData.records } } : defaultData.savingsData
@@ -3436,6 +3438,45 @@ function aggregatePublish(samples, records) {
     next.status = recomputeTopStatus(next)
     return next
   })
+}
+
+// 一次性补录：两轴模型上线前，「已发布」只是样品上的一个开关（顶层 status / execByAccount），
+// 既没有发布记录、也没有发布条数。迁移后这类样品会因为「条数 = 0」被重算回「已拍未发」，
+// 并一直挂在待发布提醒里。此处按残留的 execByAccount='published' 标记，给这些（样品,账号）
+// 补一条「历史发布」记录（legacy: true，UI 打「历史」标签），使 状态 / 次数 / 记录表 三者一致。
+// 只执行一次（mig_legacy_pub_v1），已有条数或已有该账号记录的不补，已归档的不动。
+export function backfillLegacyPublishRecords(samples, records) {
+  const list = Array.isArray(records) ? [...records] : []
+  let done = false
+  try { done = localStorage.getItem('mig_legacy_pub_v1') === '1' } catch (e) {}
+  if (done) return list
+  try { localStorage.setItem('mig_legacy_pub_v1', '1') } catch (e) {}
+  if (!Array.isArray(samples)) return list
+  const fallbackDate = () => new Date().toISOString().slice(0, 10)
+  for (const s of samples) {
+    if (!s || !s.id) continue
+    if (s.archived || s.status === 'abandoned') continue
+    const exec = (s.execByAccount && typeof s.execByAccount === 'object') ? s.execByAccount : {}
+    for (const a of getAccounts(s)) {
+      if (exec[a] !== 'published') continue
+      const c = (s.countsByAccount && s.countsByAccount[a]) || null
+      if ((Number(c && c.publishCount) || 0) > 0) continue              // 已有条数，说明记录/补记已存在
+      if (list.some((r) => r.sampleId === s.id && (r.accounts || []).includes(a))) continue
+      const date = normDate(c && c.lastPublishAt) || normDate(s.lastPublishAt)
+        || normDate(s.deadline) || normDate(s.receiveDate) || fallbackDate()
+      list.push({
+        id: `legacy_${s.id}_${a}`,
+        sampleId: s.id,
+        productId: s.productId || '',
+        accounts: [a],
+        qty: 1,
+        publishDate: date,
+        createdAt: 0,      // 历史数据，不参与"最近创建"排序
+        legacy: true,
+      })
+    }
+  }
+  return list
 }
 
 // 一次性补正：有发布记录（publishCount > 0）却仍停在物流阶段/已拍摄等状态的历史样品 → 对应账号置为「已发布」。
