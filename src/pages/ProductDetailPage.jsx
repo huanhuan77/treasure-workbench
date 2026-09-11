@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
@@ -56,6 +56,7 @@ export function ProductDetailPage() {
   const [newTopic, setNewTopic] = useState('')
   const [editTopicIdx, setEditTopicIdx] = useState(null)
   const [editTopicVal, setEditTopicVal] = useState('')
+  const topicRowRef = useRef(null)   // 顶部话题横滑行，用于把新话题滚到眼前
 
   const openTopics = () => {
     // 从产品级话题 + 所有文案自带话题聚合（去重 + 拆分 #a#b 双话题，避免重复观感）
@@ -77,6 +78,13 @@ export function ProductDetailPage() {
     const updatedCopies = (product.copies || []).map((c) => ({ ...c, topics: [...pool] }))
     updateProduct(product.id, { copies: updatedCopies, topics: pool })
   }
+  // 新加的话题追在话题行末尾，横滑行默认看不见 → 加完把它滚到眼前
+  const scrollTopicsToEnd = () => {
+    setTimeout(() => {
+      const el = topicRowRef.current
+      if (el) el.scrollLeft = el.scrollWidth
+    }, 80)
+  }
   const addTopic = () => {
     const raw = newTopic.trim()
     if (!raw) return
@@ -91,6 +99,7 @@ export function ProductDetailPage() {
     if (addedCount === 0) { show('这些话题已存在', 'error'); return }
     setTopicDraft(next); setNewTopic('')
     applyTopics(next)
+    scrollTopicsToEnd()
     show(`已添加 ${addedCount} 个话题`, 'success')
   }
   const removeTopic = (t) => {
@@ -109,6 +118,7 @@ export function ProductDetailPage() {
   }
   const doneTopics = () => {
     setShowTopics(false)
+    scrollTopicsToEnd()   // 关弹窗后让新话题出现在话题行可视区内
     show(`话题已更新，${(product.copies || []).length} 条文案已同步`, 'success')
   }
 
@@ -282,7 +292,7 @@ export function ProductDetailPage() {
         {allTopicTags.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-sub)', fontWeight: 600, flexShrink: 0 }}>话题</span>
-            <div className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', flex: 1, minWidth: 0, paddingBottom: '2px' }}>
+            <div ref={topicRowRef} className="hide-scrollbar" style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', flex: 1, minWidth: 0, paddingBottom: '2px' }}>
               {allTopicTags.map((t, i) => (
                 <span key={i} style={{
                   fontSize: '11px', color: '#7c3aed',
@@ -325,7 +335,7 @@ export function ProductDetailPage() {
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
               }}
-            ># 话题</button>
+            ># 话题{allTopicTags.length > 0 ? ` ${allTopicTags.length}` : ''}</button>
             <button
               onClick={() => navigate(`/batch-import/${product.id}`)}
               style={{
