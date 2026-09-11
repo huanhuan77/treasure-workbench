@@ -153,7 +153,8 @@ export function TodoPage() {
                     textDecoration: t.done ? 'line-through' : 'none',
                     wordBreak: 'break-all',
                   }}>{typeof t.title === 'string' || typeof t.title === 'number' ? t.title : ''}</span>
-                  <DueTag due={t.due} />
+                  {/* 已完成的待办不再显示截止/过期时间 */}
+                  {!t.done && <DueTag due={t.due} />}
                 </div>
                 <button onClick={() => setDelId(t.id)} style={{
                   flexShrink: 0, border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',

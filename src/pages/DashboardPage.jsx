@@ -318,7 +318,8 @@ export function DashboardPage() {
                     color: '#fff', fontSize: '9px', fontWeight: 700, lineHeight: 1,
                   }}>{t.done ? '✓' : ''}</span>
                   <span style={{ flex: 1, minWidth: 0, fontSize: '12.5px', color: t.done ? '#94a3b8' : '#111', textDecoration: t.done ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
-                  <DueTag due={t.due} />
+                  {/* 已完成的待办不再显示截止/过期时间 */}
+                  {!t.done && <DueTag due={t.due} />}
                 </div>
               ))}
             </div>
