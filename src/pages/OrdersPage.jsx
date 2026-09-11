@@ -87,7 +87,7 @@ export function OrdersPage() {
   const [editing, setEditing] = useState(null)   // null=新增
   const [formSeq, setFormSeq] = useState(0)      // 每次打开自增，作 key 强制重建表单以清空上次输入
   const [accountFilter, setAccountFilter] = useState('')  // ''=全部
-  const [quick, setQuick] = useState('today')  // ''=全部 / today/yesterday/week/month/lastMonth（默认今天）
+  const [quick, setQuick] = useState('')  // ''=全部（默认全部，避免昨天记的单今天打开看不见）/ today/yesterday/week/month/lastMonth
   const [month, setMonth] = useState('')  // ''=全部 / 'YYYY-MM'=指定月（与 quick 互斥）
   const [monthOpen, setMonthOpen] = useState(false)  // 月份下拉展开态
   const [sortKey, setSortKey] = useState('mostDesc')  // 'mostDesc'=出单最多(降序) / 'mostAsc'=出单最少(升序)

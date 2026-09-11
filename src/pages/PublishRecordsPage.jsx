@@ -82,7 +82,7 @@ export function PublishRecordsPage() {
   const { show } = useToast()
   const [account, setAccount] = useState('')    // 账号单选筛选，''=全部账号
   const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
-  const [datePreset, setDatePreset] = useState('today') // 快捷时段：默认「今天」/yesterday/thisWeek/thisMonth/lastMonth
+  const [datePreset, setDatePreset] = useState('') // 快捷时段：默认「全部」（避免昨天记的今天打开看不见）/yesterday/thisWeek/thisMonth/lastMonth
   const [expanded, setExpanded] = useState('')   // 展开查看全部日期的分组 key
   const [delGroup, setDelGroup] = useState(null) // 待确认删除的分组
 
