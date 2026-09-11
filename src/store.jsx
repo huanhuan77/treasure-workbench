@@ -3395,21 +3395,27 @@ function reclaimOrphanRecords(samples, publishRecords, orders) {
   }
 }
 
-// 一次性改名：样品「洁比兔湿厕纸」→「洁比兔湿巾」，与产品库统一（用户指定，中间不带空格）。
+// 改名：样品「洁比兔湿厕纸」→「洁比兔湿巾」，与产品库统一（用户指定，中间不带空格）。
 // 产品库「洁比兔 湿巾」的空格也一并去掉，两边命名完全一致。判等走归一化，可覆盖空格变体。
+// 幂等：每次启动都执行（不再靠标记只跑一次）。原因：改名迁移上线后出现过「标记已写、
+// 改名未落盘」的时序死角（旧缓存 JS 先跑完旧流程 + 新 JS 启动时标记拦截了订正），
+// 幂等执行可保证无论设备此前处于什么状态，只要跑上新代码名称必定被纠正。
 function renameJiebiWipe(samples, products) {
-  let done = false
-  try { done = localStorage.getItem('mig_rename_jiebi_v1') === '1' } catch (e) {}
-  if (done) return { samples, products }
-  try { localStorage.setItem('mig_rename_jiebi_v1', '1') } catch (e) {}
   const SAMPLE_FROM = normSampleNameKey('洁比兔湿厕纸')
   const WIPES = normSampleNameKey('洁比兔湿巾')
-  const nextSamples = (samples || []).map((s) => (
-    s && normSampleNameKey(s.name) === SAMPLE_FROM ? { ...s, name: '洁比兔湿巾' } : s
-  ))
-  const nextProducts = (products || []).map((p) => (
-    p && normSampleNameKey(p.name) === WIPES ? { ...p, name: '洁比兔湿巾' } : p
-  ))
+  let changed = false
+  const nextSamples = (samples || []).map((s) => {
+    if (s && normSampleNameKey(s.name) === SAMPLE_FROM) { changed = true; return { ...s, name: '洁比兔湿巾' } }
+    return s
+  })
+  const nextProducts = (products || []).map((p) => {
+    // brand 必须一并清空：首页文案库的产品标题是「brand + name」拼接显示
+    // （HomePage.displayTitle：先切掉 name 里的品牌前缀再拼 brand + 空格 + 余部），
+    // 只改 name 不清 brand 的话，显示永远是「洁比兔 湿巾」，空格去不掉。
+    if (p && normSampleNameKey(p.name) === WIPES) { changed = true; return { ...p, name: '洁比兔湿巾', brand: '' } }
+    return p
+  })
+  if (changed) { try { localStorage.setItem('mig_rename_jiebi_v1', '1') } catch (e) {} }
   return { samples: nextSamples, products: nextProducts }
 }
 
