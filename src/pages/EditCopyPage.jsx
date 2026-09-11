@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { inputStyle, btnPrimary, btnGhost } from '../components/Modal'
+import { inputStyle, btnPrimary, btnGhost, ConfirmModal } from '../components/Modal'
 
 export function EditCopyPage() {
   const navigate = useNavigate()
@@ -13,6 +13,7 @@ export function EditCopyPage() {
   const copy = product?.copies?.find(c => c.id === copyId)
 
   const [content, setContent] = useState(copy?.content || '')
+  const [showDel, setShowDel] = useState(false)   // 删除确认小弹窗
   // 键盘弹起时的真实可见高度（px）。为空表示键盘未弹起，用 100dvh
   const [kbHeight, setKbHeight] = useState(null)
 
@@ -64,14 +65,17 @@ export function EditCopyPage() {
     navigate(-1)
   }
 
-  const handleDelete = () => {
-    if (!confirm('确定删除这条文案吗？')) return
+  // 删除改成应用内小弹窗（原来是系统原生 confirm，又大又丑）
+  const handleDelete = () => setShowDel(true)
+
+  const confirmDelete = () => {
     deleteCopy(product.id, copy.id)
     show('已删除', 'success')
     navigate(-1)
   }
 
   return (
+    <>
     <div
       className="app-container"
       style={{
@@ -121,5 +125,17 @@ export function EditCopyPage() {
         <button style={{ ...btnPrimary, flex: 2 }} onClick={handleSave} disabled={!content.trim()}>保存</button>
       </div>
     </div>
+
+    <ConfirmModal
+      open={showDel}
+      onClose={() => setShowDel(false)}
+      onConfirm={confirmDelete}
+      title="删除文案"
+      message="确定删除这条文案吗？"
+      confirmText="删除"
+      danger
+      compact
+    />
+    </>
   )
 }
