@@ -120,7 +120,9 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
           background: 'rgba(255, 255, 255, 0.85)',
           backdropFilter: 'blur(30px) saturate(180%)',
           WebkitBackdropFilter: 'blur(30px) saturate(180%)',
-          width: '100%',
+          // xs（删除类超小确认弹窗）：宽度取 min(248px, 86vw) —— 常规屏固定 248px，
+          // 只在极窄屏（<288px）时按 86vw 缩，两侧永远留 7% 边距，不会铺满
+          width: xs ? 'min(248px, 86vw)' : '100%',
           maxWidth: xs ? '248px' : compact ? '320px' : '480px',
           margin: '0 auto',
           maxHeight: kbActive ? `calc(${availH}px - 52px)` : '85vh',
