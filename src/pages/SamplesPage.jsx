@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStore } from '../store'
+import { useStore, normSampleNameKey } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { formatDate, todayStr, deadlineDesc, addDays, copyText, toDateInput } from '../utils/helpers'
@@ -120,7 +120,12 @@ export function SamplesPage() {
   const accountFiltered = useMemo(() => {
     let r = filtered
     if (accountFilter !== 'all') r = r.filter((s) => getAccounts(s).includes(accountFilter))
-    if (searchKeyword.trim()) r = r.filter((s) => s.name.toLowerCase().includes(searchKeyword.trim().toLowerCase()))
+    if (searchKeyword.trim()) {
+      // 归一化匹配：名称里的空格/全角/零宽字符/大小写差异不影响搜索，
+      // 这样「洁比兔湿巾」能搜到「洁比兔 湿巾」，与同名合并的判等口径保持一致。
+      const kw = normSampleNameKey(searchKeyword)
+      r = r.filter((s) => normSampleNameKey(s.name).includes(kw))
+    }
     return r
   }, [filtered, accountFilter, searchKeyword])
 

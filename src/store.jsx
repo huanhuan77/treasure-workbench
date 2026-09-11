@@ -3306,22 +3306,73 @@ function migrateSamples(samples, publishRecords, orders) {
   // v1：按「名称 + productId」合并（历史按账号拆分的样品）
   // v2：改按「名称」合并（历史数据 productId 常为空/不一致，v1 会漏合并）
   // v3：名称判等加归一化（去空格/全角/零宽/大小写），修「洁比兔 湿巾 vs 洁比兔湿巾」这类漏合并
+  // v4：修 v3 的计数丢失缺陷（读顶层 publishCount 覆盖了 countsByAccount 明细，发布次数会变少）；
+  //     并增加孤儿记录回收。升版本号是为了让已经跑过 v3 的设备重新合并一次修正数值。
   let marker = '0'
-  try { marker = localStorage.getItem('mig_merge_accounts_v3') || '0' } catch (e) {}
+  try { marker = localStorage.getItem('mig_merge_accounts_v4') || '0' } catch (e) {}
   if (marker === '1') {
     return { samples: (samples || []).map(normalizeSample), publishRecords: publishRecords || [], orders: orders || [] }
   }
+  // v3 的缺陷会把 countsByAccount 里较大的数值覆盖成较小的（发布次数凭空变少），
+  // 且写入后的数据已无法反推。好在那次合并前留了完整备份，这里优先从备份取原始数据重做一次。
+  let baseSamples = samples || []
+  let baseRecords = publishRecords || []
+  let baseOrders = orders || []
+  try {
+    const raw = localStorage.getItem('mig_merge_accounts_backup_v3')
+    if (raw) {
+      const bk = JSON.parse(raw)
+      if (Array.isArray(bk.samples) && bk.samples.length) {
+        baseSamples = bk.samples
+        baseRecords = Array.isArray(bk.publishRecords) ? bk.publishRecords : baseRecords
+        baseOrders = Array.isArray(bk.orders) ? bk.orders : baseOrders
+      }
+    }
+  } catch (e) {}
   // 合并前先完整备份，极端情况下可回退
   try {
-    localStorage.setItem('mig_merge_accounts_backup_v3', JSON.stringify({
-      samples: samples || [], publishRecords: publishRecords || [], orders: orders || [], at: Date.now(),
+    localStorage.setItem('mig_merge_accounts_backup_v4', JSON.stringify({
+      samples: baseSamples, publishRecords: baseRecords, orders: baseOrders, at: Date.now(),
     }))
   } catch (e) {}
-  const { merged, idMap } = mergeSplitSamples(samples || [])
-  const newRecords = (publishRecords || []).map((r) => (idMap[r.sampleId] ? { ...r, sampleId: idMap[r.sampleId] } : r))
-  const newOrders = (orders || []).map((o) => (idMap[o.sampleId] ? { ...o, sampleId: idMap[o.sampleId] } : o))
-  try { localStorage.setItem('mig_merge_accounts_v3', '1') } catch (e) {}
-  return { samples: merged.map(normalizeSample), publishRecords: newRecords, orders: newOrders }
+  const { merged, idMap } = mergeSplitSamples(baseSamples)
+  const newRecords = baseRecords.map((r) => (idMap[r.sampleId] ? { ...r, sampleId: idMap[r.sampleId] } : r))
+  const newOrders = baseOrders.map((o) => (idMap[o.sampleId] ? { ...o, sampleId: idMap[o.sampleId] } : o))
+  // 孤儿记录回收：样品被删除时其发布记录/出单没跟着清，sampleId 指向了不存在的样品，
+  // 这些记录在列表里查不到样品名（显示为空）也会让统计对不上。按「名称」重新挂回同类样品。
+  const reclaimed = reclaimOrphanRecords(merged, newRecords, newOrders)
+  try { localStorage.setItem('mig_merge_accounts_v4', '1') } catch (e) {}
+  return {
+    samples: merged.map(normalizeSample),
+    publishRecords: reclaimed.publishRecords,
+    orders: reclaimed.orders,
+  }
+}
+
+// 孤儿记录回收：把 sampleId 已不在样品库里的发布记录/出单，按名称重新挂到同名样品上；
+// 名称也匹配不上（或样品已彻底不存在）的，保留原样不动——绝不静默删用户数据。
+function reclaimOrphanRecords(samples, publishRecords, orders) {
+  const alive = new Set((samples || []).map((s) => s.id))
+  const nameToId = new Map()   // 归一化名称 → 样品 id（重复则取第一个，与合并口径一致）
+  for (const s of (samples || [])) {
+    const k = normSampleNameKey(s.name)
+    if (k && !nameToId.has(k)) nameToId.set(k, s.id)
+  }
+  // 孤立 id 反查名称：优先查「已删除样品」的历史名称缓存，查不到则放弃
+  let legacyNames = {}
+  try { legacyNames = JSON.parse(localStorage.getItem('sample_name_cache_v1') || '{}') || {} } catch (e) {}
+  const resolve = (rec) => {
+    const sid = rec.sampleId
+    if (!sid || alive.has(sid)) return rec          // 无关联 或 样品健在 → 不动
+    const cachedName = legacyNames[sid]
+    if (!cachedName) return rec                      // 无从判断归属 → 不动
+    const target = nameToId.get(normSampleNameKey(cachedName))
+    return target ? { ...rec, sampleId: target } : rec
+  }
+  return {
+    publishRecords: (publishRecords || []).map(resolve),
+    orders: (orders || []).map(resolve),
+  }
 }
 
 // 存量样品分类回填：样品早期没有 category 字段（分类功能 2026-09 新增）。
@@ -3364,6 +3415,9 @@ export function normSampleNameKey(x) {
 // 新模型为「样品归属多账号」（accounts 数组）：一个产品一条，物流共享、执行状态按账号独立。
 // 注①：早期分组条件为「名称 + productId」，但历史数据 productId 常为空/不一致导致漏合并，现只按名称分组。
 // 注②：名称判等走 normSampleNameKey 归一化，避免「洁比兔 湿巾 / 洁比兔湿巾」这类空格差异漏合并。
+// 注③：统计值读取顺序为 countsByAccount[账号] → 顶层 publishCount/orderCount。
+//       新模型把次数存在 countsByAccount 里，顶层只是聚合影子字段；若直接读顶层，
+//       会把「旧条目的小数值」覆盖掉「新条目的大数值」，造成发布次数凭空丢失。
 function mergeSplitSamples(samples) {
   const groups = new Map()
   for (const s of samples) {
@@ -3386,29 +3440,45 @@ function mergeSplitSamples(samples) {
     const countsByAccount = {}
     const links = []
     const linkSeen = new Set()
-    for (const s of items) {
-      const acc = (s.account || (Array.isArray(s.accounts) && s.accounts[0]) || '').trim()
-      if (!acc) continue
-      const st = s.status
-      const exec = EXEC_STATUS[st] ? st : null
-      const cnt = Number(s.publishCount) || 0
-      const oc = Number(s.orderCount) || 0
-      const lp = s.lastPublishAt || ''
+    // 逐条把 (账号 → 计数/状态) 累进来；同账号重复时取「较大值」而非覆盖
+    const mergeOne = (acc, exec, cnt, oc, lp) => {
+      if (!acc) return
       const idx = accounts.indexOf(acc)
       if (idx === -1) {
         accounts.push(acc)
         execByAccount[acc] = exec
         countsByAccount[acc] = { publishCount: cnt, orderCount: oc, lastPublishAt: lp }
+        return
+      }
+      // 同账号重复（异常数据）：执行状态取第一个非空；计数取较大值，日期取较晚
+      if (!execByAccount[acc] && exec) execByAccount[acc] = exec
+      const cur = countsByAccount[acc]
+      countsByAccount[acc] = {
+        publishCount: Math.max(cnt, cur.publishCount || 0),
+        orderCount: Math.max(oc, cur.orderCount || 0),
+        lastPublishAt: (lp > (cur.lastPublishAt || '')) ? lp : (cur.lastPublishAt || ''),
+      }
+    }
+    for (const s of items) {
+      const st = s.status
+      const exec = EXEC_STATUS[st] ? st : null
+      const perAcc = (s.countsByAccount && typeof s.countsByAccount === 'object') ? s.countsByAccount : null
+      const accList = (Array.isArray(s.accounts) && s.accounts.length) ? s.accounts
+        : (s.account ? [s.account] : [])
+      if (perAcc && Object.keys(perAcc).length) {
+        // 优先用按账号明细（新模型），避免顶层聚合值把明细覆盖掉
+        for (const a of Object.keys(perAcc)) {
+          const c = perAcc[a] || {}
+          mergeOne(String(a).trim(), exec, Number(c.publishCount) || 0, Number(c.orderCount) || 0, c.lastPublishAt || '')
+        }
+        // 明细里没覆盖到的账号，用顶层值兜底补上
+        for (const a of accList) {
+          const acc = String(a || '').trim()
+          if (acc && !perAcc[acc]) mergeOne(acc, exec, Number(s.publishCount) || 0, Number(s.orderCount) || 0, s.lastPublishAt || '')
+        }
       } else {
-        // 同账号重复（异常数据）：执行状态取第一个非空；计数取较大值
-        if (!execByAccount[acc] && exec) execByAccount[acc] = exec
-        const cur = countsByAccount[acc]
-        if (cnt > (cur.publishCount || 0) || oc > (cur.orderCount || 0)) {
-          countsByAccount[acc] = {
-            publishCount: Math.max(cnt, cur.publishCount || 0),
-            orderCount: Math.max(oc, cur.orderCount || 0),
-            lastPublishAt: (lp > (cur.lastPublishAt || '')) ? lp : (cur.lastPublishAt || ''),
-          }
+        for (const a of accList) {
+          mergeOne(String(a || '').trim(), exec, Number(s.publishCount) || 0, Number(s.orderCount) || 0, s.lastPublishAt || '')
         }
       }
       for (const l of (Array.isArray(s.links) ? s.links : [])) {
@@ -3838,7 +3908,21 @@ export function StoreProvider({ children }) {
 
   const deleteSample = useCallback((id) => {
     recordDelete('blogger_workbench_data_v1', id)
-    setData((d) => ({ ...d, samples: d.samples.filter((s) => s.id !== id) }))
+    setData((d) => {
+      // 删样品前记下 id→名称，供日后回收孤儿发布记录/出单（sampleId 悬空时按名称找回归属）
+      try {
+        const s = (d.samples || []).find((x) => x.id === id)
+        if (s && s.name) {
+          const cache = JSON.parse(localStorage.getItem('sample_name_cache_v1') || '{}') || {}
+          cache[id] = s.name
+          // 只保留最近 500 条，避免无限增长
+          const keys = Object.keys(cache)
+          if (keys.length > 500) for (const k of keys.slice(0, keys.length - 500)) delete cache[k]
+          localStorage.setItem('sample_name_cache_v1', JSON.stringify(cache))
+        }
+      } catch (e) {}
+      return { ...d, samples: d.samples.filter((s) => s.id !== id) }
+    })
   }, [])
 
   const updateSample = useCallback((id, patch) => {
