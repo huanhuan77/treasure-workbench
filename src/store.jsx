@@ -3305,21 +3305,22 @@ function loadPublishRecords(old) {
 function migrateSamples(samples, publishRecords, orders) {
   // v1：按「名称 + productId」合并（历史按账号拆分的样品）
   // v2：改按「名称」合并（历史数据 productId 常为空/不一致，v1 会漏合并）
+  // v3：名称判等加归一化（去空格/全角/零宽/大小写），修「洁比兔 湿巾 vs 洁比兔湿巾」这类漏合并
   let marker = '0'
-  try { marker = localStorage.getItem('mig_merge_accounts_v2') || '0' } catch (e) {}
+  try { marker = localStorage.getItem('mig_merge_accounts_v3') || '0' } catch (e) {}
   if (marker === '1') {
     return { samples: (samples || []).map(normalizeSample), publishRecords: publishRecords || [], orders: orders || [] }
   }
   // 合并前先完整备份，极端情况下可回退
   try {
-    localStorage.setItem('mig_merge_accounts_backup_v2', JSON.stringify({
+    localStorage.setItem('mig_merge_accounts_backup_v3', JSON.stringify({
       samples: samples || [], publishRecords: publishRecords || [], orders: orders || [], at: Date.now(),
     }))
   } catch (e) {}
   const { merged, idMap } = mergeSplitSamples(samples || [])
   const newRecords = (publishRecords || []).map((r) => (idMap[r.sampleId] ? { ...r, sampleId: idMap[r.sampleId] } : r))
   const newOrders = (orders || []).map((o) => (idMap[o.sampleId] ? { ...o, sampleId: idMap[o.sampleId] } : o))
-  try { localStorage.setItem('mig_merge_accounts_v2', '1') } catch (e) {}
+  try { localStorage.setItem('mig_merge_accounts_v3', '1') } catch (e) {}
   return { samples: merged.map(normalizeSample), publishRecords: newRecords, orders: newOrders }
 }
 
@@ -3347,16 +3348,26 @@ function backfillSampleCategories(samples, products) {
   })
 }
 
+// 样品名称归一化：用于「同名合并」的判等。
+// 处理复制粘贴/手输带来的视觉同名但字符串不同的情况：
+//   中间空格、全角空格、不间断空格、零宽字符、全角字母数字、大小写差异。
+export function normSampleNameKey(x) {
+  return String(x || '')
+    .replace(/[\u200b-\u200f\ufeff\u00ad\u2060\u2028\u2029]/g, '') // 零宽/不可见字符
+    .replace(/[\uff01-\uff5e]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0)) // 全角→半角
+    .replace(/\s+/g, '')  // 折叠所有空白（含全角空格 \u3000、不间断空格 \u00a0）
+    .toLowerCase()
+}
+
 // 把「同名」的多个样品（即历史按账号拆分的产物）合并为一条实体。
 // 早期数据模型「一个样品属于一个账号」，同一产品发给多个账号会存成多条；
 // 新模型为「样品归属多账号」（accounts 数组）：一个产品一条，物流共享、执行状态按账号独立。
-// 注：早期分组条件为「名称 + productId」，但历史数据 productId 常为空/不一致导致漏合并，
-// 现改为只按名称分组（与用户口径一致）。
+// 注①：早期分组条件为「名称 + productId」，但历史数据 productId 常为空/不一致导致漏合并，现只按名称分组。
+// 注②：名称判等走 normSampleNameKey 归一化，避免「洁比兔 湿巾 / 洁比兔湿巾」这类空格差异漏合并。
 function mergeSplitSamples(samples) {
   const groups = new Map()
   for (const s of samples) {
-    const name = (s.name || '').trim()
-    const key = name
+    const key = normSampleNameKey(s.name)
     if (!groups.has(key)) groups.set(key, [])
     groups.get(key).push(s)
   }
