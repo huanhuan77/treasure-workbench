@@ -270,7 +270,7 @@ export function SensitiveCenterPage() {
         {tab === 'lib' ? (
           <>
             <div style={{ ...glassStyle, padding: '12px 14px', marginBottom: '14px', fontSize: '13px', color: 'var(--text-sub)', lineHeight: 1.6 }}>
-              🚫 平台会审核贬低、歧视、违规类词汇，命中后可能被扣分 / 罚没佣金 / 封号。下方词库在生成标题、话题和文案时会自动检测并替换。
+              🚫 平台会审核贬低、歧视、违规类词汇，命中后可能被扣分 / 罚没佣金 / 封号。下方词库在生成话题和文案时会自动检测并替换。
             </div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
               <input

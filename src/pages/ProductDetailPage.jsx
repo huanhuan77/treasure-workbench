@@ -5,8 +5,8 @@ import { useToast } from '../components/Toast'
 import { Modal, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
 import { copyText, todayStr, daysDiff } from '../utils/helpers'
 import {
-  generateTitle, generateTopics, generateSimilarCopy,
-  getStyles, buildTitleWithTopics,
+  generateTopics, generateSimilarCopy,
+  getStyles,
 } from '../utils/copyGenerator'
 
 // 风格选项（带 emoji 和颜色，参考图二）
@@ -175,7 +175,6 @@ export function ProductDetailPage() {
         id: Date.now() + Math.random(),
         style: styleKey,
         content: generateSimilarCopy(genModal.copy.content, product.name, product.brand, styleKey, sensitiveWords),
-        title: generateTitle(genModal.copy.content, product.name, product.brand, sensitiveWords),
         topics: generateTopics(genModal.copy.content, product.name, product.brand, sensitiveWords),
         collected: false,
       }))
@@ -190,7 +189,6 @@ export function ProductDetailPage() {
   const handleCollectResult = (result) => {
     addCopy(id, {
       content: result.content,
-      title: result.title,
       topics: result.topics,
       style: result.style,
     })
@@ -682,11 +680,6 @@ export function ProductDetailPage() {
                         </span>
                       </div>
 
-                      {/* 标题 */}
-                      <div style={{ fontSize: '15px', fontWeight: 600, lineHeight: 1.4, color: 'var(--text-main)', marginBottom: '6px' }}>
-                        {result.title}
-                      </div>
-
                       {/* 热门话题 */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '10px' }}>
                         {result.topics.map((t, i) => (
@@ -715,7 +708,7 @@ export function ProductDetailPage() {
                       {/* 操作按钮 */}
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
-                          onClick={() => handleCopyContent(buildTitleWithTopics(result.title, result.topics) + '\n\n' + result.content)}
+                          onClick={() => handleCopyContent(result.topics.join(' ') + '\n\n' + result.content)}
                           style={{
                             flex: 1,
                             padding: '9px',

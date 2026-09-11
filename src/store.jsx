@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { DEFAULT_SENSITIVE_WORDS, generateTitle, generateTopics } from './utils/copyGenerator'
+import { DEFAULT_SENSITIVE_WORDS, generateTopics } from './utils/copyGenerator'
 import { todayStr } from './utils/helpers'
 import { recordDelete, clearDelete, setWordTime } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
@@ -98,7 +98,6 @@ const jiemaoSeed = [
 ].map((c, i) => ({
   id: 'p_jiemao_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '植研加睫毛胶水', '植研加', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '植研加睫毛胶水', '植研加', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -184,7 +183,6 @@ const ollySeed = [
 ].map((c, i) => ({
   id: 'p_olly_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, 'olly女维', 'OLLY', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, 'olly女维', 'OLLY', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -414,7 +412,6 @@ const lengmoSeed = [
 ].map((c, i) => ({
   id: 'p_lengmo_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '珀芙研冷膜', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '珀芙研冷膜', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -548,7 +545,6 @@ const shanguangSeed = [
 ].map((c, i) => ({
   id: 'p_shanguang_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '珀芙研闪光棒', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '珀芙研闪光棒', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -694,7 +690,6 @@ const weiteSeed = [
 ].map((c, i) => ({
   id: 'p_weite_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '维特健灵祛湿轻', '维特健灵', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '维特健灵祛湿轻', '维特健灵', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -804,7 +799,6 @@ const tuimelSeed = [
 ].map((c, i) => ({
   id: 'p_tuimel_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '褪黑素', '', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '褪黑素', '', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -983,7 +977,6 @@ const coffeeSeed = [
 ].map((c, i) => ({
   id: 'p_coffee_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, 'PH地中海咖啡', 'PH', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, 'PH地中海咖啡', 'PH', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -1201,7 +1194,6 @@ const xiuhuazhengSeed = [
 ].map((c, i) => ({
   id: 'p_xiuhuazheng_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '珀芙研修护霜正装', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '珀芙研修护霜正装', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -1270,7 +1262,6 @@ const mianmianSeed = [
 ].map((c, i) => ({
   id: 'p_mianmian_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '绵绵的羊小莓好湿巾', '绵绵的羊', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '绵绵的羊小莓好湿巾', '绵绵的羊', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -1536,7 +1527,6 @@ const qingqingSeed = [
 ].map((c, i) => ({
   id: 'p_qingqing_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '百草园清清片', '百草园', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '百草园清清片', '百草园', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -1646,7 +1636,6 @@ const youminSeed = [
 ].map((c, i) => ({
   id: 'p_youmin_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '珀芙研油敏霜', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '珀芙研油敏霜', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -1898,7 +1887,6 @@ const runhouSeed = [
 ].map((c, i) => ({
   id: 'p_runhou_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '益美滋润喉糖', '益美滋', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '益美滋润喉糖', '益美滋', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -2032,7 +2020,6 @@ const xihuSeed = [
 ].map((c, i) => ({
   id: 'p_xihu_c' + (i + 1),
   content: c.content,
-  title: c.title || generateTitle(c.content, '洁比兔洗护液', '洁比兔', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '洁比兔洗护液', '洁比兔', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -2250,7 +2237,6 @@ const mianmoSeed = [
 ].map((c, i) => ({
   id: 'p_mianmo_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '珀芙研面膜', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '珀芙研面膜', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -2383,7 +2369,6 @@ const doboSeed = [
 ].map((c, i) => ({
   id: 'p_dobo_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, 'DOBO噗噗片', 'DOBO', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, 'DOBO噗噗片', 'DOBO', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -2528,7 +2513,6 @@ const xiuhuaxiaoSeed = [
 ].map((c, i) => ({
   id: 'p_xiuhuaxiao_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '珀芙研修护霜小样', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '珀芙研修护霜小样', '珀芙研', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -2551,7 +2535,6 @@ const jiebiwetSeed = [
 ].map((c, i) => ({
   id: 'p_jiebitudushijin_c' + (i + 1),
   content: c.content,
-  title: generateTitle(c.content, '洁比兔 湿巾', '洁比兔', DEFAULT_SENSITIVE_WORDS),
   topics: c.topics.length ? c.topics : generateTopics(c.content, '洁比兔 湿巾', '洁比兔', DEFAULT_SENSITIVE_WORDS),
   style: '',
   used: c.used,
@@ -3024,6 +3007,25 @@ function restoreLegacyPublishDate(records, samples) {
   })
 }
 
+// 文案「标题」功能已废弃：不再生成、不再写入，历史数据里的 title 字段也一并清掉。
+// 每次加载 / 每次同步落库都过一遍（无 title 时原样返回，不产生新对象），
+// 这样即使另一台未更新的设备把带 title 的旧文案同步回来，也不会在本地留存。
+function stripCopyTitles(products) {
+  if (!Array.isArray(products)) return products
+  return products.map((p) => {
+    if (!p || !Array.isArray(p.copies)) return p
+    if (!p.copies.some((c) => c && 'title' in c)) return p
+    return {
+      ...p,
+      copies: p.copies.map((c) => {
+        if (!c || !('title' in c)) return c
+        const { title, ...rest } = c
+        return rest
+      }),
+    }
+  })
+}
+
 function normalizeDates(d) {
   if (!d) return d
   return {
@@ -3076,7 +3078,7 @@ function loadData() {
       if (preset) {
         const seedCopies = preset.copies || []
         const userCopies = user.copies || []
-        // 以用户数据为准：种子仅用于补齐缺失字段（title/topics/style 等），
+        // 以用户数据为准：种子仅用于补齐缺失字段（topics/style 等），
         // 不再按索引对齐并把多出的种子条目追加进来——那会在每次加载时
         // 注入与用户已有文案内容相同的副本，是文案重复的根因。
         const filledCopies = userCopies
@@ -3088,7 +3090,6 @@ function loadData() {
               ...uc,
               id: uc.id || sc.id,
               content: uc.content || sc.content,
-              title: uc.title || sc.title,
               topics: (uc.topics && uc.topics.length) ? uc.topics : sc.topics,
               style: uc.style || sc.style,
               usedDate: uc.usedDate || sc.usedDate,
@@ -3136,7 +3137,6 @@ function loadData() {
           copies.push({
             id: 'mig_bomb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
             content: b.content,
-            title: generateTitle(b.content, '百草园清清片', '百草园', DEFAULT_SENSITIVE_WORDS),
             topics: [], style: '', used: false, usedDate: null, hasOrder: true, createdAt: Date.now(),
           })
         })
@@ -3163,6 +3163,8 @@ function loadData() {
     } catch(e) { console.warn('[loadData] 修复文案ID失败:', e) }
     // 自愈：按内容去重文案（同一产品下内容相同的条目合并为一条，保留用过/出单状态）
     try { productsFinal = dedupeProducts(productsFinal) } catch(e) { console.warn('[loadData] 文案去重失败:', e) }
+    // 文案标题已废弃：清掉历史数据里的 title 字段（每次加载都过一遍，避免同步把旧 title 带回来）
+    productsFinal = stripCopyTitles(productsFinal)
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
@@ -3675,7 +3677,6 @@ export function StoreProvider({ children }) {
     const newCopy = {
       id: uid(),
       content: copy.content || '',
-      title: copy.title || '',
       topics: copy.topics || [],
       style: copy.style || '',
       used: false,
@@ -3713,7 +3714,6 @@ export function StoreProvider({ children }) {
                   return {
                     id: uid(),
                     content: c.content || '',
-                    title: c.title || '',
                     topics: c.topics || [],
                     style: '',
                     used,
@@ -4183,6 +4183,8 @@ export function StoreProvider({ children }) {
       // 同步是「按 id 取并集」，云端残留的重复条目会把本地已删掉的再拉回来。
       // 这里在写入本地前再兜一次底，保证合并结果里同一产品下不出现重复内容。
       try { next.products = dedupeProducts(next.products) } catch (e) {}
+      // 文案标题已废弃：同步合并回来的数据也统一去掉 title
+      next.products = stripCopyTitles(next.products)
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch (e) {}
       return next
     })

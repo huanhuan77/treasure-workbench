@@ -32,7 +32,6 @@ export function dedupeCopies(copies) {
       used: keep.used || other.used,
       hasOrder: keep.hasOrder || other.hasOrder,
       usedDate: keep.usedDate || other.usedDate,
-      title: keep.title || other.title,
       topics: (keep.topics && keep.topics.length) ? keep.topics : other.topics,
     }
   }

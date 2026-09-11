@@ -61,7 +61,7 @@ export function checkSensitive(text, words = DEFAULT_SENSITIVE_WORDS) {
 }
 
 // 关键词提取
-// 从文案内容中提取关键词，用于生成标题 + 热门话题（默认 5 个）
+// 从文案内容中提取关键词，用于生成热门话题（默认 5 个）
 function extractKeywords(text) {
   if (!text) return []
   const clean = text.replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s]/g, ' ')
@@ -94,130 +94,6 @@ function fullNameOf(name, brand) {
   if (n.toLowerCase().startsWith(b.toLowerCase())) return n
   return b + n
 }
-
-// 生成标题：三类风格（闺蜜唠嗑 / 痛点种草 / 情绪共情）
-// 从文案真实内容里抽取卖点短语织进标题，让标题与内容强相关；
-// 按产品领域选场景词，杜绝「香水套湿巾 / 女生套男品」等牛头不对马嘴；
-// 私密叙事（被追问…）仅作可选风格、且仅香氛类才用香水梗
-function inferDomain(name, content) {
-  const t = ((name || '') + ' ' + (content || '')).toLowerCase()
-  if (/膜|霜|乳|精华|护肤|修护|油敏|面霜|眼霜|爽肤/.test(t)) return 'skincare'
-  if (/维|褪黑|祛湿|益生菌|健脾|养生|保健|静心|清清|噗噗|通/.test(t)) return 'health'
-  if (/咖啡|茶|饮|润喉糖|食品|奶/.test(t)) return 'food'
-  if (/睫毛|胶水|妆|眉|口红|眼线/.test(t)) return 'beauty'
-  if (/湿巾|香|洗|护|洁|口气|沐浴/.test(t)) return 'scent'
-  return 'default'
-}
-
-// 每个领域的情绪_adj（用于闺蜜唠嗑风）与是否偏女性受众
-const TITLE_FILL = {
-  scent:    { adj: '香',     female: true,  feel: '清爽舒适', benefit: '清新气息' },
-  health:   { adj: '状态好',  female: false, feel: '舒服自在', benefit: '身体轻松' },
-  skincare: { adj: '皮肤稳',  female: true,  feel: '水润舒服', benefit: '肌肤稳定' },
-  food:     { adj: '精神',    female: false, feel: '暖身舒服', benefit: '状态在线' },
-  beauty:   { adj: '眼睛亮',  female: true,  feel: '精致省心', benefit: '根根分明' },
-  default:  { adj: '状态好',  female: false, feel: '舒服自在', benefit: '状态变好' },
-}
-
-// 从文案中抽取「卖点短语」：优先短小、带利益/痛点词的陈述句，截到最后一个卖点词结束
-const BENEFIT_WORDS = ['舒服','清爽','自然','稳定','透亮','细腻','温柔','治愈','安心','明显','柔软','干净','温和','便利','便携','轻盈','水润','舒缓','好闻','去异味','不黏','透气','省心','精致','自在','红润','精神','在线','状态','绝','亮','香','美','闪','自由']
-const PAIN_WORDS = ['去','告别','拯救','解决','不再','没','无','不卡粉','根根分明']
-
-function extractHook(content) {
-  if (!content) return ''
-  const raw = content.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ')
-  // 同时按句号与逗号分句，避免一整段被当成一句而抽不到短卖点
-  const sentences = raw.split(/[。！？!?；;，,、]/).map((s) => s.trim()).filter((s) => s.length >= 6 && s.length <= 22)
-  if (!sentences.length) return ''
-  let best = '', bestScore = -1
-  for (const s of sentences) {
-    if (s.includes('？') || s.includes('?') || s.includes('吗')) continue
-    let score = 0
-    for (const w of BENEFIT_WORDS) if (s.includes(w)) score += 2
-    for (const w of PAIN_WORDS) if (s.includes(w)) score += 1
-    if (score <= 0) continue
-    score -= Math.max(0, s.length - 12)
-    if (score > bestScore) { bestScore = score; best = s }
-  }
-  if (!best) return ''
-  // 截到最后一个卖点/痛点词结束；若仍超 16 字，回退到 16 字内最后一个卖点词，杜绝半截词
-  let cut = -1
-  for (const w of [...BENEFIT_WORDS, ...PAIN_WORDS]) {
-    const i = best.lastIndexOf(w)
-    if (i !== -1) cut = Math.max(cut, i + w.length)
-  }
-  let phrase = cut > 0 ? best.slice(0, cut) : best
-  if (phrase.length > 16) {
-    let alt = -1
-    for (const w of [...BENEFIT_WORDS, ...PAIN_WORDS]) {
-      const i = best.lastIndexOf(w)
-      if (i !== -1 && i + w.length <= 16) alt = Math.max(alt, i + w.length)
-    }
-    phrase = alt > 0 ? best.slice(0, alt) : phrase.slice(0, 16)
-  }
-  return phrase
-}
-
-function hashStr(str) {
-  let h = 0
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0
-  return h
-}
-
-// 构建标题候选池（与产品名、品牌、内容卖点相关，但尚不确定选哪条）
-function buildTitleCandidates(content, productName, brand) {
-  if (!content) return []
-  const full = fullNameOf(productName, brand)
-  const product = full || productName || '这款好物'
-  const domain = inferDomain(productName, content)
-  const fill = TITLE_FILL[domain] || TITLE_FILL.default
-  // 抽取前先剥掉产品名与品牌，避免「润喉糖」里的「润」之类的品牌字被误当卖点
-  const stripped = (brand ? content.split(brand).join(' ') : content).split(product).join(' ')
-  const hook = extractHook(stripped) || fill.benefit
-  const isFragrance = /香|蔓越莓|果香|清香|氛|香水/.test((productName || '') + ' ' + (content || ''))
-  const chat = [
-    (domain === 'scent' && isFragrance)
-      ? `被男朋友追问喷了什么香水，其实只是用了${product}`
-      : `被闺蜜追着问最近怎么这么${fill.adj}，其实只是悄悄用上了${product}`,
-    `以为我偷偷卷了，其实只是随身带着${product}`,
-    `同事说我最近${fill.adj}，其实只是坚持用${product}`,
-    `${product}真是我的心机小物件，谁用谁知道`,
-  ]
-  const seed = [
-    `${product}，${hook}`,
-    `随手用就离不开的${product}，${hook}`,
-    `${hook}，${product}真的可以闭眼入`,
-    `日常常备${product}，${fill.feel}，${hook}`,
-  ]
-  const femTail = fill.female ? '女生别错过' : '闭眼入就对了'
-  const mood = [
-    `悄悄提升幸福感的${product}，${hook}`,
-    `懂生活的人都在用${product}，${hook}`,
-    `把仪式感拉满的${product}，${fill.female ? '治愈每个平凡日常' : '治愈每个日常'}`,
-    `温柔又自在的${product}，${femTail}`,
-  ]
-  return [...chat, ...seed, ...mood]
-}
-
-export function generateTitle(content, productName, brand, sensitiveWords) {
-  const candidates = buildTitleCandidates(content, productName, brand)
-  if (candidates.length === 0) return ''
-  // 基于内容+产品名稳定选一条（同一内容始终得到同一标题，便于导入/编辑时保持一致）
-  const product = fullNameOf(productName, brand) || productName || '这款好物'
-  const title = candidates[hashStr((content || '') + '|' + product) % candidates.length]
-  return sanitizeText(title, sensitiveWords).clean
-}
-
-// 重新生成标题：从同一候选池里随机挑一条，且尽量不同于当前标题（用于「↻ 重新生成标题」）
-export function regenerateTitle(content, productName, brand, sensitiveWords, currentTitle) {
-  const candidates = buildTitleCandidates(content, productName, brand)
-  if (candidates.length === 0) return ''
-  const pool = currentTitle ? candidates.filter((t) => t !== currentTitle) : candidates
-  const finalPool = pool.length > 0 ? pool : candidates
-  const pick = finalPool[Math.floor(Math.random() * finalPool.length)]
-  return sanitizeText(pick, sensitiveWords).clean
-}
-
 
 // 生成话题（提及品牌 + 产品名，格式 #品牌产品名#）
 export function generateTopics(content, productName, brand, sensitiveWords) {
@@ -297,9 +173,4 @@ export function generateSimilarCopy(content, productName, brand, style = '种草
     : `${kw1}和${kw2}都在线`
   let raw = `${prefix}${pName}${s.middle[0]}${highlight}，${kw1}方面真的能打，${kw2}也超出预期。${suffix}`
   return sanitizeText(raw, sensitiveWords).clean
-}
-
-// 把标题 + 话题拼成可一键复制的文本
-export function buildTitleWithTopics(title, topics) {
-  return `${title}\n${topics.join(' ')}`
 }

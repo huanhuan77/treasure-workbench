@@ -2,8 +2,6 @@ import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { generateTitle } from '../utils/copyGenerator'
-import { DEFAULT_SENSITIVE_WORDS } from '../utils/copyGenerator'
 import { parseBulkCopies } from '../utils/helpers'
 import { inputStyle, btnPrimary, btnGhost } from '../components/Modal'
 
@@ -36,7 +34,6 @@ export function BatchImportPage() {
     const baseTopics = product.topics && product.topics.length ? product.topics : DEFAULT_IMPORT_TOPICS
     const enriched = list.map((item) => ({
       content: item.content,
-      title: generateTitle(item.content, product.name, product.brand, DEFAULT_SENSITIVE_WORDS),
       topics: item.topics && item.topics.length ? item.topics : baseTopics,
       hasOrder: item.hasOrder,
     }))
