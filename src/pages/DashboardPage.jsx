@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { needPublishReminder, daysSincePublish, isOverdue, OVERDUE_STATES } from '../utils/publish'
+import { needPublishReminder, daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES } from '../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
 import { DRAMA_STATUS } from '../utils/dramaLib'
@@ -416,7 +416,14 @@ export function DashboardPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {reminders.map((s) => (
+            {reminders.map((s) => {
+              // 只显示还需要发视频的账号（从未发过 / 超 7 天没发）；都发过则显示全部
+              const pending = pendingAccounts(s)
+              const showAccounts = pending.length ? pending : getAccounts(s)
+              const daysText = pending.length
+                ? Math.max(...pending.map((a) => daysSincePublishByAccount(s, a)))
+                : daysSincePublish(s)
+              return (
               <div key={s.id} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -424,22 +431,26 @@ export function DashboardPage() {
                     <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                    {getAccounts(s).map((a) => (
+                    {showAccounts.map((a) => (
                       <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                     ))}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px', fontWeight: 600 }}>
-                    {isOverdue(s)
-                      ? `⚠ 已逾期（截止 ${s.deadline}）`
-                      : `⚠ ${(daysSincePublish(s) === Infinity ? '从未发布过视频' : `已 ${daysSincePublish(s)} 天没发视频`)}（出单品需持续发）`}
-                  </div>
+                  {/* 已发布的样品不显示时间提示（逾期/已 N 天没发） */}
+                  {s.status !== 'published' && (
+                    <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px', fontWeight: 600 }}>
+                      {isOverdue(s)
+                        ? `⚠ 已逾期（截止 ${s.deadline}）`
+                        : `⚠ ${(daysText === Infinity ? '从未发布过视频' : `已 ${daysText} 天没发视频`)}（出单品需持续发）`}
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
                   flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
                   fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                 }}>补记发布</button>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
