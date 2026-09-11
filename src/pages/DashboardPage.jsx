@@ -73,10 +73,10 @@ export function DashboardPage() {
   }
 
   // ── 待办清单：独立事项池（截止日期可有可无），管理页 /todos
-  // 排序：未完成在前 → 有截止日的按日期升序在前 → 无截止日的在后
+  // 总览页只显示未完成项（已完成去 /todos 页查看）
+  // 排序：有截止日的按日期升序在前 → 无截止日的在后（按创建时间倒序）
   const todoList = useMemo(() => {
-    return [...(todos || [])].sort((a, b) => {
-      if (!!a.done !== !!b.done) return a.done ? 1 : -1
+    return [...(todos || [])].filter((t) => !t.done).sort((a, b) => {
       if (a.due && b.due) return a.due < b.due ? -1 : a.due > b.due ? 1 : 0
       if (a.due) return -1
       if (b.due) return 1
@@ -287,16 +287,16 @@ export function DashboardPage() {
                 <span style={{ fontSize: '11px', fontWeight: 700, color: todoUndone > 0 ? '#d97706' : '#059669', padding: '1px 7px', borderRadius: '8px', background: todoUndone > 0 ? '#fef3c7' : '#d1fae5' }}>{todoUndone} 未完成</span>
               )}
             </div>
-            <span style={{ fontSize: '11px', color: '#9ca3af' }}>共 {(todos || []).length} 条</span>
+            <span style={{ fontSize: '11px', color: '#9ca3af' }}>未完成 {todoUndone} 条</span>
           </div>
 
-          {/* 事项列表：全部显示，溢出可滚动；点空白区也能跳 /todos */}
+          {/* 事项列表：只显示未完成，溢出可滚动；点空白区也能跳 /todos */}
           {todoList.length === 0 ? (
             <div
               onClick={() => go('/todos')}
               style={{ padding: '16px 2px 2px', fontSize: '12px', color: '#94a3b8', cursor: 'pointer' }}
             >
-              还没有待办，点此去添加一条
+              {(todos || []).length === 0 ? '还没有待办，点此去添加一条' : '待办都完成啦，点此查看全部'}
             </div>
           ) : (
             <div
@@ -330,7 +330,7 @@ export function DashboardPage() {
             <button onClick={() => go('/todos')} style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
               fontSize: '12px', color: '#db2777', fontWeight: 600,
-            }}>＋ 管理待办（新增 / 勾选 / 删除）›</button>
+            }}>＋ 管理待办（含已完成）›</button>
           </div>
         </div>
       </div>
