@@ -40,11 +40,14 @@ export function PublishRemindersPage() {
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '3px' }}>
-                    <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, lineHeight: 1.4 }}>
-                      {isOverdue(s)
-                        ? `⚠ 已逾期（截止 ${s.deadline}）`
-                        : `⚠ ${(days === Infinity ? '从未发布过视频' : `已 ${days} 天没发视频`)}（出单品需持续发）`}
-                    </span>
+                    {/* 已发布的样品不显示时间提示（逾期/已 N 天没发） */}
+                    {s.status !== 'published' && (
+                      <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, lineHeight: 1.4 }}>
+                        {isOverdue(s)
+                          ? `⚠ 已逾期（截止 ${s.deadline}）`
+                          : `⚠ ${(days === Infinity ? '从未发布过视频' : `已 ${days} 天没发视频`)}（出单品需持续发）`}
+                      </span>
+                    )}
                     {getAccounts(s).map((a) => (
                       <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
                     ))}
