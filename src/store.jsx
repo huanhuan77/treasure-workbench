@@ -3161,12 +3161,17 @@ function loadData() {
       seenRec.add(r.id)
       return true
     })
+    // 一次性订正：改名（洁比兔湿厕纸→洁比兔湿巾，产品库去空格）+ 同名产品合并。
+    // 须在样品同名合并之前执行：先把名称统一，再做按名称的分组合并。
+    const renamed = renameJiebiWipe(loadedSamples, productsFinal)
+    const prodMerged = mergeDuplicateProducts(renamed.products, renamed.samples, Array.isArray(old.orders) ? old.orders : [])
+    productsFinal = prodMerged.products
     // 样品归属多账号 → 不再拆分，合并为一条实体（物流共享、执行状态按账号独立）。
     // 历史按账号拆分的同产品样品在此一次性合并回去（先写备份，再合并并重定向记录）。
     const migrated = migrateSamples(
-      loadedSamples,
+      prodMerged.samples,
       loadedPublishRecords,
-      Array.isArray(old.orders) ? old.orders : [],
+      prodMerged.orders,
     )
     // 一次性清理：旧键 daily_publish_plan_v1 里的记录（幽灵数据）即使已被之前版本写入主存储，
     // 也在此按 id 彻底剔除，避免「删了还在」的残留。仅本次加载的旧键有效时执行一次。
@@ -3349,8 +3354,11 @@ function migrateSamples(samples, publishRecords, orders) {
   }
 }
 
-// 孤儿记录回收：把 sampleId 已不在样品库里的发布记录/出单，按名称重新挂到同名样品上；
-// 名称也匹配不上（或样品已彻底不存在）的，保留原样不动——绝不静默删用户数据。
+// 孤儿记录处理：把 sampleId 已不在样品库里的记录清理掉。
+//   发布记录：没有独立的样品名字段，离开样品就毫无意义 → 直接删除（用户已确认）。
+//   出单台账：有独立 name 字段（样品名快照），是真实收入记录 → 只清掉悬空的 sampleId，
+//             记录本身保留在台账里（删收入会影响收支统计，且删除后仍可见可查）。
+// 能按名称缓存回收的（sampleId 曾指向后来被合并/重建的同名样品）优先回收而不是删。
 function reclaimOrphanRecords(samples, publishRecords, orders) {
   const alive = new Set((samples || []).map((s) => s.id))
   const nameToId = new Map()   // 归一化名称 → 样品 id（重复则取第一个，与合并口径一致）
@@ -3361,17 +3369,89 @@ function reclaimOrphanRecords(samples, publishRecords, orders) {
   // 孤立 id 反查名称：优先查「已删除样品」的历史名称缓存，查不到则放弃
   let legacyNames = {}
   try { legacyNames = JSON.parse(localStorage.getItem('sample_name_cache_v1') || '{}') || {} } catch (e) {}
-  const resolve = (rec) => {
+  const resolveRec = (rec) => {
     const sid = rec.sampleId
     if (!sid || alive.has(sid)) return rec          // 无关联 或 样品健在 → 不动
     const cachedName = legacyNames[sid]
-    if (!cachedName) return rec                      // 无从判断归属 → 不动
-    const target = nameToId.get(normSampleNameKey(cachedName))
-    return target ? { ...rec, sampleId: target } : rec
+    if (cachedName) {
+      const target = nameToId.get(normSampleNameKey(cachedName))
+      if (target) return { ...rec, sampleId: target }
+    }
+    return null                                      // 无法归属 → 删除
+  }
+  const resolveOrd = (o) => {
+    const sid = o.sampleId
+    if (!sid || alive.has(sid)) return o             // 无关联 或 样品健在 → 不动
+    const cachedName = legacyNames[sid]
+    if (cachedName) {
+      const target = nameToId.get(normSampleNameKey(cachedName))
+      if (target) return { ...o, sampleId: target }
+    }
+    return { ...o, sampleId: '' }                    // 无法归属 → 只清关联，保留收入记录
   }
   return {
-    publishRecords: (publishRecords || []).map(resolve),
-    orders: (orders || []).map(resolve),
+    publishRecords: (publishRecords || []).map(resolveRec).filter(Boolean),
+    orders: (orders || []).map(resolveOrd),
+  }
+}
+
+// 一次性改名：样品「洁比兔湿厕纸」→「洁比兔湿巾」，与产品库统一（用户指定，中间不带空格）。
+// 产品库「洁比兔 湿巾」的空格也一并去掉，两边命名完全一致。判等走归一化，可覆盖空格变体。
+function renameJiebiWipe(samples, products) {
+  let done = false
+  try { done = localStorage.getItem('mig_rename_jiebi_v1') === '1' } catch (e) {}
+  if (done) return { samples, products }
+  try { localStorage.setItem('mig_rename_jiebi_v1', '1') } catch (e) {}
+  const SAMPLE_FROM = normSampleNameKey('洁比兔湿厕纸')
+  const WIPES = normSampleNameKey('洁比兔湿巾')
+  const nextSamples = (samples || []).map((s) => (
+    s && normSampleNameKey(s.name) === SAMPLE_FROM ? { ...s, name: '洁比兔湿巾' } : s
+  ))
+  const nextProducts = (products || []).map((p) => (
+    p && normSampleNameKey(p.name) === WIPES ? { ...p, name: '洁比兔湿巾' } : p
+  ))
+  return { samples: nextSamples, products: nextProducts }
+}
+
+// 一次性合并同名产品：历史上重复建过同名产品（如两条「褪黑素」，一条种子一条自建），
+// 文案分散在两处不好维护。按归一化名称分组，组内合并为一条：
+//   保留 id 带 p_ 前缀的（种子）优先，否则组内第一条；brand/category 取非空值；
+//   文案合并后按内容去重（dedupeCopies）；样品/出单的 productId 重定向到保留的产品。
+function mergeDuplicateProducts(products, samples, orders) {
+  let done = false
+  try { done = localStorage.getItem('mig_merge_dup_products_v1') === '1' } catch (e) {}
+  if (done) return { products, samples, orders }
+  const groups = new Map()
+  for (const p of (products || [])) {
+    const k = normSampleNameKey(p && p.name)
+    if (!k) continue
+    if (!groups.has(k)) groups.set(k, [])
+    groups.get(k).push(p)
+  }
+  const idMap = {}
+  let mergedAny = false
+  const out = []
+  for (const [, items] of groups) {
+    if (items.length === 1) { out.push(items[0]); continue }
+    mergedAny = true
+    const keep = items.find((p) => String(p.id || '').startsWith('p_')) || items[0]
+    let copies = []
+    for (const p of items) copies = copies.concat(Array.isArray(p.copies) ? p.copies : [])
+    copies = dedupeCopies(copies)
+    const brand = items.map((p) => p.brand).find(Boolean) || ''
+    const category = items.map((p) => p.category).find(Boolean) || ''
+    for (const p of items) if (p.id !== keep.id) idMap[p.id] = keep.id
+    out.push({ ...keep, brand, category, copies })
+  }
+  if (!mergedAny) {
+    try { localStorage.setItem('mig_merge_dup_products_v1', '1') } catch (e) {}
+    return { products, samples, orders }
+  }
+  try { localStorage.setItem('mig_merge_dup_products_v1', '1') } catch (e) {}
+  return {
+    products: out,
+    samples: (samples || []).map((s) => (s && idMap[s.productId] ? { ...s, productId: idMap[s.productId] } : s)),
+    orders: (orders || []).map((o) => (o && idMap[o.productId] ? { ...o, productId: idMap[o.productId] } : o)),
   }
 }
 
@@ -3602,14 +3682,17 @@ export function backfillLegacyPublishRecords(samples, records) {
 // 此前这类记录被按「截止日/收货日」还原，截止日常在未来 → 出现未来发布日（如 9/22）。
 // 真实录入的记录（无 legacy 标记）一律不动。
 function unifyLegacyPublishDate(records) {
-  let done = false
-  try { done = localStorage.getItem('mig_legacy_pub_date_unify_v1') === '1' } catch (e) {}
-  if (done) return records
-  try { localStorage.setItem('mig_legacy_pub_date_unify_v1', '1') } catch (e) {}
   if (!Array.isArray(records)) return records
-  return records.map((r) => (
-    r && r.legacy && r.publishDate !== LEGACY_PUB_DATE ? { ...r, publishDate: LEGACY_PUB_DATE } : r
-  ))
+  // 幂等：每次启动都订正（不再靠标记只跑一次）。原因：标记设置后若又从旧备份恢复了数据、
+  // 或其它补录路径重新产生了 legacy 记录，旧的「只跑一次」会让未来日期残留。
+  // legacy=true 的记录全部来自系统补录（用户手动添加的不带 legacy），统一到 LEGACY_PUB_DATE 无误伤。
+  let changed = false
+  const out = records.map((r) => {
+    if (r && r.legacy && r.publishDate !== LEGACY_PUB_DATE) { changed = true; return { ...r, publishDate: LEGACY_PUB_DATE } }
+    return r
+  })
+  if (changed) { try { localStorage.setItem('mig_legacy_pub_date_unify_v1', '1') } catch (e) {} }
+  return out
 }
 
 // 一次性补正：有发布记录（publishCount > 0）却仍停在物流阶段/已拍摄等状态的历史样品 → 对应账号置为「已发布」。
@@ -3921,7 +4004,15 @@ export function StoreProvider({ children }) {
           localStorage.setItem('sample_name_cache_v1', JSON.stringify(cache))
         }
       } catch (e) {}
-      return { ...d, samples: d.samples.filter((s) => s.id !== id) }
+      // 同步清理关联，否则会残留孤儿数据：
+      //   发布记录 → 删（离开样品无意义）
+      //   出单台账 → 保留记录、只清 sampleId（真实收入，按 name 快照仍可见）
+      return {
+        ...d,
+        samples: d.samples.filter((s) => s.id !== id),
+        publishRecords: (d.publishRecords || []).filter((r) => r.sampleId !== id),
+        orders: (d.orders || []).map((o) => (o.sampleId === id ? { ...o, sampleId: '' } : o)),
+      }
     })
   }, [])
 
