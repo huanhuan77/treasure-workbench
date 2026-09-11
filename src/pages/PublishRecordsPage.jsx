@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../utils/accounts'
-import { SwipeRow } from '../components/SwipeRow'
 import { DraggableFab } from '../components/DraggableFab'
 import { ConfirmModal } from '../components/Modal'
 
@@ -84,7 +83,7 @@ export function PublishRecordsPage() {
   const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
   const [datePreset, setDatePreset] = useState('') // 快捷时段：默认「全部」（避免昨天记的今天打开看不见）/yesterday/thisWeek/thisMonth/lastMonth
   const [expanded, setExpanded] = useState('')   // 展开查看全部日期的分组 key
-  const [delGroup, setDelGroup] = useState(null) // 待确认删除的分组
+  const [delTarget, setDelTarget] = useState(null) // 待确认删除：{ group, date } —— 按日期删，不是删整组
 
   const sampleMap = useMemo(() => Object.fromEntries((samples || []).map((s) => [s.id, s])), [samples])
   const records = useMemo(
@@ -150,12 +149,14 @@ export function PublishRecordsPage() {
     return [...set].sort().reverse()
   }, [records])
 
-  // 删除整组：该产品在该账号下的全部发布记录（一条记录挂多账号时按 id 去重）
-  const doDeleteGroup = (g) => {
-    const ids = [...new Set(g.records.map((r) => r.id))]
+  // 删除该分组里「某一个日期」的发布记录（一条记录挂多账号时按 id 去重）
+  const doDeleteDate = () => {
+    if (!delTarget) return
+    const { group, date } = delTarget
+    const ids = [...new Set(group.records.filter((r) => r.publishDate === date).map((r) => r.id))]
     ids.forEach((id) => deletePublishRecord(id))
-    show(ids.length > 1 ? `已删除 ${ids.length} 条发布记录` : '已删除', 'success')
-    setDelGroup(null)
+    show(ids.length > 1 ? `已删除 ${date} 的 ${ids.length} 条发布记录` : `已删除 ${date} 的发布记录`, 'success')
+    setDelTarget(null)
   }
 
   return (
@@ -261,23 +262,29 @@ export function PublishRecordsPage() {
               const n = g.records.length            // 该产品在该账号下发布了几次
               const canExpand = n > 1
               const accColor = ACCOUNT_COLOR[g.account] || { bg: 'rgba(0,0,0,0.06)', c: '#64748b' }
-              return (
-                <SwipeRow key={g.key} onDelete={() => setDelGroup(g)} radius={12}>
-                <div
-                  onClick={() => { if (canExpand) setExpanded(isOpen ? '' : g.key) }}
-                  style={{ position: 'relative', background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px', cursor: canExpand ? 'pointer' : 'default' }}
-                >
-                  {/* 右上角 细线灰× 圆形删除（删整组） */}
-                  <button onClick={(e) => { e.stopPropagation(); setDelGroup(g) }} aria-label="删除发布记录" style={{
-                    position: 'absolute', top: '6px', right: '6px',
-                    width: '30px', height: '30px', borderRadius: '50%',
-                    border: '1px solid rgba(236,72,153,0.18)', background: '#fce7f3',
-                    color: '#ec4899', cursor: 'pointer', padding: 0,
+              // 日期右侧的小删除按钮：只删这一天的发布记录
+              const dateDelBtn = (date, big) => (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setDelTarget({ group: g, date }) }}
+                  aria-label={`删除 ${date} 的发布记录`}
+                  title={`删除 ${date} 的记录`}
+                  style={{
+                    flexShrink: 0, padding: 0, cursor: 'pointer', lineHeight: 1,
+                    width: big ? '20px' : '18px', height: big ? '20px' : '18px',
+                    borderRadius: '50%', border: 'none',
+                    background: 'rgba(244,63,94,0.12)', color: '#f43f5e',
+                    fontSize: big ? '13px' : '12px',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><path d="M18 6 6 18M6 6l12 12" /></svg>
-                  </button>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '34px' }}>
+                  }}
+                >×</button>
+              )
+              return (
+                <div
+                  key={g.key}
+                  onClick={() => { if (canExpand) setExpanded(isOpen ? '' : g.key) }}
+                  style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px', cursor: canExpand ? 'pointer' : 'default' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '15px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
@@ -286,46 +293,52 @@ export function PublishRecordsPage() {
                       </div>
                     </div>
                   </div>
-                  {/* 账号 + 最近发布日期 + 共几次 */}
+                  {/* 账号 + 最近发布日期（带删除） + 共几次 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
                     {g.account && (
                       <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: accColor.bg, color: accColor.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{g.account}</span>
                     )}
-                    <span style={{ fontSize: '12px', color: '#9ca3af', marginLeft: 'auto', whiteSpace: 'nowrap', flexShrink: 0 }}>📅 {g.dates[0] || '—'}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', flexShrink: 0 }}>
+                      <span style={{ fontSize: '12px', color: '#9ca3af', whiteSpace: 'nowrap' }}>📅 {g.dates[0] || '—'}</span>
+                      {g.dates[0] && dateDelBtn(g.dates[0], true)}
+                    </span>
                     {canExpand && (
                       <span style={{ fontSize: '11px', fontWeight: 700, color: '#ec4899', background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.2)', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                         共 {n} 次 {isOpen ? '▲' : '▼'}
                       </span>
                     )}
                   </div>
-                  {/* 展开：列出全部发布日期 */}
+                  {/* 展开：列出全部发布日期，每个日期右侧可单独删除 */}
                   {canExpand && isOpen && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed rgba(236,72,153,0.18)' }}>
                       {g.dates.map((d) => (
-                        <span key={d} style={{ fontSize: '11px', color: '#9ca3af', background: 'rgba(236,72,153,0.07)', border: '1px solid rgba(236,72,153,0.14)', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>📅 {d}</span>
+                        <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#9ca3af', background: 'rgba(236,72,153,0.07)', border: '1px solid rgba(236,72,153,0.14)', padding: '2px 6px 2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+                          📅 {d}
+                          {dateDelBtn(d, false)}
+                        </span>
                       ))}
                     </div>
                   )}
                 </div>
-                </SwipeRow>
               )
             })}
           </div>
         )}
       </div>
 
-      {/* 删除确认（整组删除，弹窗里写清共几条） */}
+      {/* 删除确认（按日期删，弹窗里写清哪一天几条） */}
       <ConfirmModal
-        open={!!delGroup}
-        onClose={() => setDelGroup(null)}
-        onConfirm={() => delGroup && doDeleteGroup(delGroup)}
+        open={!!delTarget}
+        onClose={() => setDelTarget(null)}
+        onConfirm={doDeleteDate}
         title="删除发布记录"
-        message={delGroup ? (() => {
-          const ids = [...new Set(delGroup.records.map((r) => r.id))]
-          const acc = delGroup.account ? `「${delGroup.account}」` : ''
+        message={delTarget ? (() => {
+          const { group, date } = delTarget
+          const ids = [...new Set(group.records.filter((r) => r.publishDate === date).map((r) => r.id))]
+          const acc = group.account ? `「${group.account}」` : ''
           return ids.length > 1
-            ? `确定删除「${delGroup.name}」在${acc}下的 ${ids.length} 条发布记录吗？`
-            : `确定删除「${delGroup.name}」在${acc}的这条发布记录吗？`
+            ? `确定删除「${group.name}」在${acc}于 ${date} 的 ${ids.length} 条发布记录吗？`
+            : `确定删除「${group.name}」在${acc}于 ${date} 的这条发布记录吗？`
         })() : ''}
         confirmText="删除"
         danger
