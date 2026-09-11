@@ -288,7 +288,6 @@ export function PublishRecordsPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '15px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
-                        {g.legacy && <span style={{ flexShrink: 0, fontSize: '10px', fontWeight: 700, color: '#0891b2', background: 'rgba(6,182,212,0.10)', border: '1px solid rgba(6,182,212,0.28)', padding: '1px 6px', borderRadius: '8px' }}>历史</span>}
                         {g.qty > 1 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px' }}>×{g.qty}</span>}
                       </div>
                     </div>
