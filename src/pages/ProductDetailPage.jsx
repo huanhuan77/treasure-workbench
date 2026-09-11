@@ -69,6 +69,14 @@ export function ProductDetailPage() {
     setEditTopicIdx(null)
     setShowTopics(true)
   }
+  // 话题改动即时写回：产品话题池作为权威，所有文案话题统一对齐到该池
+  // （原来是点弹窗底部「保存」才写回，用户加完直接关弹窗就会以为没生效）
+  const applyTopics = (draft) => {
+    const norm = (arr) => [...new Set((arr || []).flatMap((t) => (t || '').split('#').map((x) => x.trim()).filter(Boolean).map((x) => '#' + x)))]
+    const pool = norm(draft)
+    const updatedCopies = (product.copies || []).map((c) => ({ ...c, topics: [...pool] }))
+    updateProduct(product.id, { copies: updatedCopies, topics: pool })
+  }
   const addTopic = () => {
     const raw = newTopic.trim()
     if (!raw) return
@@ -82,24 +90,26 @@ export function ProductDetailPage() {
     }
     if (addedCount === 0) { show('这些话题已存在', 'error'); return }
     setTopicDraft(next); setNewTopic('')
+    applyTopics(next)
     show(`已添加 ${addedCount} 个话题`, 'success')
   }
-  const removeTopic = (t) => setTopicDraft(topicDraft.filter((x) => x !== t))
+  const removeTopic = (t) => {
+    const next = topicDraft.filter((x) => x !== t)
+    setTopicDraft(next)
+    applyTopics(next)
+  }
   const startEditTopic = (i) => { setEditTopicIdx(i); setEditTopicVal(topicDraft[i]) }
   const saveEditTopic = () => {
     let t = editTopicVal.trim()
     if (!t) { setEditTopicIdx(null); return }
     if (!t.startsWith('#')) t = '#' + t
-    const next = [...topicDraft]; next[editTopicIdx] = t; setTopicDraft(next); setEditTopicIdx(null)
+    const next = [...topicDraft]; next[editTopicIdx] = t
+    setTopicDraft(next); setEditTopicIdx(null)
+    applyTopics(next)
   }
-  const saveTopics = () => {
-    // 保存即归一化：产品话题池作为权威，所有文案话题统一对齐到该池（拆分 #a#b 双话题）
-    const norm = (arr) => [...new Set((arr || []).flatMap((t) => (t || '').split('#').map((x) => x.trim()).filter(Boolean).map((x) => '#' + x)))]
-    const pool = norm(topicDraft)
-    const updatedCopies = (product.copies || []).map((c) => ({ ...c, topics: [...pool] }))
-    updateProduct(product.id, { copies: updatedCopies, topics: pool })
+  const doneTopics = () => {
     setShowTopics(false)
-    show(`已归一化 ${updatedCopies.length} 条文案话题`, 'success')
+    show(`话题已更新，${(product.copies || []).length} 条文案已同步`, 'success')
   }
 
   // 文案编辑
@@ -416,10 +426,7 @@ export function ProductDetailPage() {
         onClose={() => setShowTopics(false)}
         title="话题管理"
         footer={
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={btnGhost} onClick={() => setShowTopics(false)}>取消</button>
-            <button style={{ ...btnPrimary, flex: 1 }} onClick={saveTopics}>保存</button>
-          </div>
+          <button style={{ ...btnPrimary, width: '100%' }} onClick={doneTopics}>完成</button>
         }
       >
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
@@ -439,7 +446,8 @@ export function ProductDetailPage() {
             <>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '6px' }}>
                 <button onClick={async () => {
-                  const text = topicDraft.map(t => `#${t}#`).join(' ')
+                  // topicDraft 里已带 # 前缀，这里补尾部 # 组成 #话题# 形式
+                  const text = topicDraft.map(t => `${t}#`).join(' ')
                   const ok = await copyText(text)
                   show(ok ? `已复制 ${topicDraft.length} 个话题` : '复制失败', ok ? 'success' : 'error')
                 }} style={{
@@ -484,7 +492,7 @@ export function ProductDetailPage() {
           )}
         </div>
         <p style={{ fontSize: '12px', color: 'var(--gray-400)', margin: '10px 0 0' }}>
-          💡 列表来自所有文案的自带话题；保存时新增=全部加上，删除=全部移除，改名=在原条目上替换
+          💡 列表来自所有文案的自带话题；新增=全部加上，删除=全部移除，改名=在原条目上替换（改动即时生效）
         </p>
       </Modal>
 
