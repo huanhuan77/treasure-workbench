@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { needPublishReminder, daysSincePublish, isOverdue } from '../utils/publish'
+import { needPublishReminder, daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue } from '../utils/publish'
 import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 
@@ -31,6 +31,13 @@ export function PublishRemindersPage() {
             {list.map((s) => {
               const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.published
               const days = daysSincePublish(s)
+              // 只显示还需要发视频的账号（从未发过 / 超 7 天没发）；都发过则显示全部
+              const pending = pendingAccounts(s)
+              const showAccounts = pending.length ? pending : getAccounts(s)
+              // 文案里的天数也跟着「待发账号」走，避免出现「已 0 天没发」这类矛盾
+              const daysText = pending.length
+                ? Math.max(...pending.map((a) => daysSincePublishByAccount(s, a)))
+                : days
               return (
                 <div key={s.id} style={{ background: '#fff', border: '1px solid #fecdd3', borderRadius: '10px', padding: '8px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
@@ -45,10 +52,10 @@ export function PublishRemindersPage() {
                       <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, lineHeight: 1.4 }}>
                         {isOverdue(s)
                           ? `⚠ 已逾期（截止 ${s.deadline}）`
-                          : `⚠ ${(days === Infinity ? '从未发布过视频' : `已 ${days} 天没发视频`)}（出单品需持续发）`}
+                          : `⚠ ${(daysText === Infinity ? '从未发布过视频' : `已 ${daysText} 天没发视频`)}（出单品需持续发）`}
                       </span>
                     )}
-                    {getAccounts(s).map((a) => (
+                    {showAccounts.map((a) => (
                       <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
                     ))}
                   </div>

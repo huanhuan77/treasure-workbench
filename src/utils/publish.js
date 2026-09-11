@@ -1,5 +1,6 @@
 // 视频发布 / 出单关联 / N 天未发提醒 相关纯函数
 import { todayStr, daysDiff } from './helpers'
+import { getAccounts } from './accounts'
 
 // 提醒阈值：超过该天数未发视频即提醒
 export const N_PUBLISH_DAYS = 7
@@ -32,6 +33,26 @@ export function daysSincePublish(sample) {
   if (isNaN(last.getTime())) return Infinity
   const diff = Math.floor((now - last) / 86400000)
   return diff
+}
+
+// 某账号距上次发布天数（基于该账号自己的发布统计）。无记录返回 Infinity
+export function daysSincePublishByAccount(sample, account) {
+  const c = (sample && sample.countsByAccount && sample.countsByAccount[account]) || null
+  const d = c && c.lastPublishAt
+  if (!d) return Infinity
+  const last = new Date(d)
+  const now = new Date(todayStr())
+  if (isNaN(last.getTime())) return Infinity
+  return Math.floor((now - last) / 86400000)
+}
+
+// 样品下「还需要发视频」的账号：从未发过 或 超过 N_PUBLISH_DAYS 天没发。
+// 都发过（且未超期）时返回空数组
+export function pendingAccounts(sample) {
+  return getAccounts(sample).filter((a) => {
+    const d = daysSincePublishByAccount(sample, a)
+    return d === Infinity || d > N_PUBLISH_DAYS
+  })
 }
 
 // 是否逾期（有截止时间且已过今天）
