@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../utils/accounts'
 import { SwipeRow } from '../components/SwipeRow'
 import { DraggableFab } from '../components/DraggableFab'
+import { ConfirmModal } from '../components/Modal'
 
 const chipBase = {
   padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
@@ -82,6 +83,8 @@ export function PublishRecordsPage() {
   const [account, setAccount] = useState('')    // 账号单选筛选，''=全部账号
   const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
   const [datePreset, setDatePreset] = useState('today') // 快捷时段：默认「今天」/yesterday/thisWeek/thisMonth/lastMonth
+  const [expanded, setExpanded] = useState('')   // 展开查看全部日期的分组 key
+  const [delGroup, setDelGroup] = useState(null) // 待确认删除的分组
 
   const sampleMap = useMemo(() => Object.fromEntries((samples || []).map((s) => [s.id, s])), [samples])
   const records = useMemo(
@@ -93,9 +96,9 @@ export function PublishRecordsPage() {
   const pickMonth = (ym) => { setMonth(ym); setDatePreset('') }
   const resetDate = () => { setDatePreset(''); setMonth('') }
 
-  // 时间筛选 + 账号筛选
+  // 时间筛选 + 账号筛选，再按「同一产品 + 同一账号」合并成一条（日期收进 dates）
   const bounds = presetBounds(datePreset) || monthBounds(month)
-  const filtered = useMemo(() => {
+  const groups = useMemo(() => {
     const arr = records.filter((r) => {
       if (account && !(r.accounts || []).includes(account)) return false
       if (bounds) {
@@ -104,18 +107,35 @@ export function PublishRecordsPage() {
       }
       return true
     })
-    // 按「样品累计发布条数」降序：同一样品的多条记录聚合连续展示，
-    // 发布记录多的样品置顶，组内保持发布日期倒序（records 已按日期倒序）
-    const groups = new Map()
+    // 一条记录可能挂多个账号 → 按 (产品, 账号) 拆开，各自成组
+    const map = new Map()
     for (const r of arr) {
-      const k = r.sampleId || '_'
-      if (!groups.has(k)) groups.set(k, [])
-      groups.get(k).push(r)
+      const sm = sampleMap[r.sampleId]
+      const name = sm ? sm.name : '（样品已删除）'
+      const keyBase = r.sampleId || name
+      const accs = (r.accounts && r.accounts.length) ? r.accounts : getAccounts(sm || {})
+      const list = accs.length ? accs : ['']
+      for (const a of list) {
+        const k = `${keyBase}::${a}`
+        if (!map.has(k)) map.set(k, { key: k, name, account: a, records: [] })
+        map.get(k).records.push(r)
+      }
     }
-    return [...groups.entries()]
-      .sort((a, b) => b[1].length - a[1].length)
-      .flatMap(([, items]) => items)
-  }, [records, account, bounds])
+    return [...map.values()]
+      .map((g) => {
+        const dates = [...new Set(g.records.map((r) => r.publishDate).filter(Boolean))].sort().reverse()
+        const qty = g.records.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
+        return { ...g, dates, qty, legacy: g.records.some((r) => r.legacy) }
+      })
+      // 发布次数多的置顶；其次按最近发布日期倒序
+      .sort((a, b) => b.records.length - a.records.length
+        || String(b.dates[0] || '').localeCompare(String(a.dates[0] || '')))
+  }, [records, sampleMap, account, bounds])
+  // 合并后覆盖的记录条数（去重，一条挂两账号会出现在两组里）
+  const filteredCount = useMemo(
+    () => new Set(groups.flatMap((g) => g.records.map((r) => r.id))).size,
+    [groups],
+  )
 
   // 当前月份下拉里可用的月份（来自有日期的记录），新→旧
   const monthOptions = useMemo(() => {
@@ -130,8 +150,12 @@ export function PublishRecordsPage() {
     return [...set].sort().reverse()
   }, [records])
 
-  const handleDelete = (r) => {
-    if (confirm('删除该发布记录？')) { deletePublishRecord(r.id); show('已删除', 'success') }
+  // 删除整组：该产品在该账号下的全部发布记录（一条记录挂多账号时按 id 去重）
+  const doDeleteGroup = (g) => {
+    const ids = [...new Set(g.records.map((r) => r.id))]
+    ids.forEach((id) => deletePublishRecord(id))
+    show(ids.length > 1 ? `已删除 ${ids.length} 条发布记录` : '已删除', 'success')
+    setDelGroup(null)
   }
 
   return (
@@ -145,7 +169,7 @@ export function PublishRecordsPage() {
         }}>‹</button>
         <div style={{ flex: 1 }}>
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#111' }}>视频发布记录</h1>
-          <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#b3888f' }}>共 {records.length} 条 · 当前筛选 {filtered.length} 条</p>
+          <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#b3888f' }}>共 {records.length} 条 · 当前筛选 {filteredCount} 条（{groups.length} 组）</p>
         </div>
       </header>
 
@@ -225,21 +249,26 @@ export function PublishRecordsPage() {
 
       {/* 列表：独立滚动 */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', padding: '10px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
-        {filtered.length === 0 ? (
+        {groups.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🎬</div>
             <p style={{ fontSize: '14px', margin: 0 }}>{records.length === 0 ? '暂无发布记录' : '当前筛选下暂无记录'}</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {filtered.map((r) => {
-              const sm = sampleMap[r.sampleId]
-              const q = Number(r.qty) > 0 ? Number(r.qty) : 1
+            {groups.map((g) => {
+              const isOpen = expanded === g.key
+              const n = g.records.length            // 该产品在该账号下发布了几次
+              const canExpand = n > 1
+              const accColor = ACCOUNT_COLOR[g.account] || { bg: 'rgba(0,0,0,0.06)', c: '#64748b' }
               return (
-                <SwipeRow key={r.id} onDelete={() => handleDelete(r)} radius={12}>
-                <div style={{ position: 'relative', background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px' }}>
-                  {/* 右上角 细线灰× 圆形删除 */}
-                  <button onClick={() => handleDelete(r)} aria-label="删除发布记录" style={{
+                <SwipeRow key={g.key} onDelete={() => setDelGroup(g)} radius={12}>
+                <div
+                  onClick={() => { if (canExpand) setExpanded(isOpen ? '' : g.key) }}
+                  style={{ position: 'relative', background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px', cursor: canExpand ? 'pointer' : 'default' }}
+                >
+                  {/* 右上角 细线灰× 圆形删除（删整组） */}
+                  <button onClick={(e) => { e.stopPropagation(); setDelGroup(g) }} aria-label="删除发布记录" style={{
                     position: 'absolute', top: '6px', right: '6px',
                     width: '30px', height: '30px', borderRadius: '50%',
                     border: '1px solid rgba(236,72,153,0.18)', background: '#fce7f3',
@@ -251,19 +280,32 @@ export function PublishRecordsPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '34px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sm ? sm.name : '（样品已删除）'}</span>
-                        {r.legacy && <span style={{ flexShrink: 0, fontSize: '10px', fontWeight: 700, color: '#0891b2', background: 'rgba(6,182,212,0.10)', border: '1px solid rgba(6,182,212,0.28)', padding: '1px 6px', borderRadius: '8px' }}>历史</span>}
-                        {q > 1 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px' }}>×{q}</span>}
+                        <span style={{ fontSize: '15px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                        {g.legacy && <span style={{ flexShrink: 0, fontSize: '10px', fontWeight: 700, color: '#0891b2', background: 'rgba(6,182,212,0.10)', border: '1px solid rgba(6,182,212,0.28)', padding: '1px 6px', borderRadius: '8px' }}>历史</span>}
+                        {g.qty > 1 && <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px' }}>×{g.qty}</span>}
                       </div>
                     </div>
                   </div>
-                  {/* 账号与发布时间同一行：账号在前，时间紧跟其后（靠右对齐，不单独占一行） */}
+                  {/* 账号 + 最近发布日期 + 共几次 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                    {(r.accounts && r.accounts.length ? r.accounts : getAccounts(sm || {})).map((a) => (
-                      <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
-                    ))}
-                    <span style={{ fontSize: '12px', color: '#9ca3af', marginLeft: 'auto', whiteSpace: 'nowrap', flexShrink: 0 }}>📅 {r.publishDate}</span>
+                    {g.account && (
+                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: accColor.bg, color: accColor.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{g.account}</span>
+                    )}
+                    <span style={{ fontSize: '12px', color: '#9ca3af', marginLeft: 'auto', whiteSpace: 'nowrap', flexShrink: 0 }}>📅 {g.dates[0] || '—'}</span>
+                    {canExpand && (
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#ec4899', background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.2)', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        共 {n} 次 {isOpen ? '▲' : '▼'}
+                      </span>
+                    )}
                   </div>
+                  {/* 展开：列出全部发布日期 */}
+                  {canExpand && isOpen && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed rgba(236,72,153,0.18)' }}>
+                      {g.dates.map((d) => (
+                        <span key={d} style={{ fontSize: '11px', color: '#9ca3af', background: 'rgba(236,72,153,0.07)', border: '1px solid rgba(236,72,153,0.14)', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>📅 {d}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 </SwipeRow>
               )
@@ -271,6 +313,24 @@ export function PublishRecordsPage() {
           </div>
         )}
       </div>
+
+      {/* 删除确认（整组删除，弹窗里写清共几条） */}
+      <ConfirmModal
+        open={!!delGroup}
+        onClose={() => setDelGroup(null)}
+        onConfirm={() => delGroup && doDeleteGroup(delGroup)}
+        title="删除发布记录"
+        message={delGroup ? (() => {
+          const ids = [...new Set(delGroup.records.map((r) => r.id))]
+          const acc = delGroup.account ? `「${delGroup.account}」` : ''
+          return ids.length > 1
+            ? `确定删除「${delGroup.name}」在${acc}下的 ${ids.length} 条发布记录吗？`
+            : `确定删除「${delGroup.name}」在${acc}的这条发布记录吗？`
+        })() : ''}
+        confirmText="删除"
+        danger
+        compact
+      />
 
       <DraggableFab storageKey="publish-record" onClick={() => navigate('/publish-record/new')} round>
         {/* 加号+圆圈：与待办页一致，用 SVG 而非文字「＋」，避免圆内偏位 */}
