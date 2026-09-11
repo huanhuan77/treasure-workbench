@@ -13,6 +13,8 @@ export function EditCopyPage() {
   const copy = product?.copies?.find(c => c.id === copyId)
 
   const [content, setContent] = useState(copy?.content || '')
+  // 键盘弹起时的真实可见高度（px）。为空表示键盘未弹起，用 100dvh
+  const [kbHeight, setKbHeight] = useState(null)
 
   useEffect(() => {
     if (copy) setContent(copy.content)
@@ -22,6 +24,27 @@ export function EditCopyPage() {
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
+  }, [])
+
+  // 键盘弹起/收起时，把整页高度跟着可见区收缩，
+  // 否则输入框会把头部标题顶出屏幕（"滚到天上"）
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => {
+      const kb = window.innerHeight - vv.height
+      const active = kb > 100
+      setKbHeight(active ? Math.round(vv.height) : null)
+      // 键盘弹起时浏览器可能把整页上滚，把视口顶回顶部，保证头部始终可见
+      if (active && window.scrollY !== 0) window.scrollTo(0, 0)
+    }
+    onResize()
+    vv.addEventListener('resize', onResize)
+    vv.addEventListener('scroll', onResize)
+    return () => {
+      vv.removeEventListener('resize', onResize)
+      vv.removeEventListener('scroll', onResize)
+    }
   }, [])
 
   if (!product || !copy) {
@@ -49,9 +72,18 @@ export function EditCopyPage() {
   }
 
   return (
-    <div className="app-container">
+    <div
+      className="app-container"
+      style={{
+        display: 'flex', flexDirection: 'column',
+        height: kbHeight ? `${kbHeight}px` : '100dvh',
+        minHeight: 0, overflow: 'hidden',
+        // 无键盘时给底部导航让出 76px；键盘弹起时底部导航被键盘挡住，按钮直接贴键盘
+        paddingBottom: kbHeight ? 0 : 'calc(76px + var(--safe-bottom))',
+      }}
+    >
       {/* 头部 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
         <button onClick={() => navigate(-1)} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
         <div style={{ flex: 1 }}>
           <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>编辑文案</h1>
@@ -72,16 +104,16 @@ export function EditCopyPage() {
           style={{
             ...inputStyle, flex: 1, resize: 'none',
             lineHeight: 1.6, fontFamily: 'inherit', fontSize: '15px',
-            minHeight: '60vh',
+            minHeight: 0, overflowY: 'auto',
           }}
         />
       </div>
 
-      {/* 底部固定按钮 - 始终可见 */}
+      {/* 底部固定按钮 - 始终可见（固定高度容器内作为 flex 尾项，不用 sticky） */}
       <div style={{
-        position: 'sticky', bottom: 0,
+        flexShrink: 0,
         padding: '12px 16px calc(12px + var(--safe-bottom))',
-        background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        background: '#fff',
         borderTop: '1px solid rgba(0,0,0,0.06)',
         display: 'flex', gap: '10px',
       }}>
