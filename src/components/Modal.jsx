@@ -16,7 +16,7 @@ export const glassSoft = {
   borderRadius: '16px',
 }
 
-export function Modal({ open, onClose, title, children, footer, center, inline, compact }) {
+export function Modal({ open, onClose, title, children, footer, center, inline, compact, xs }) {
   const contentRef = useRef(null)
 
   // inline 模式：直接渲染，不弹窗（避免键盘问题）
@@ -121,7 +121,7 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
           backdropFilter: 'blur(30px) saturate(180%)',
           WebkitBackdropFilter: 'blur(30px) saturate(180%)',
           width: '100%',
-          maxWidth: compact ? '320px' : '480px',
+          maxWidth: xs ? '248px' : compact ? '320px' : '480px',
           margin: '0 auto',
           maxHeight: kbActive ? `calc(${availH}px - 52px)` : '85vh',
           transform: 'none',
@@ -137,7 +137,10 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
         <div style={{
           // 顶部 padding 加 iOS 状态栏/灵动岛安全区（兜底 44px）—— 避免标题/搜索框被系统状态栏压住
           // compact：小确认弹窗不预留 44px 状态栏兜底（居中弹窗不会顶到状态栏），整体更紧凑
-          padding: compact
+          // xs：删除类超小确认弹窗，再收一档
+          padding: xs
+            ? 'calc(11px + env(safe-area-inset-top, 0px)) 14px 7px'
+            : compact
             ? 'calc(14px + env(safe-area-inset-top, 0px)) 18px 10px'
             : 'calc(18px + max(env(safe-area-inset-top, 0px), 44px)) 22px 14px',
           borderBottom: '1px solid rgba(244, 114, 182, 0.12)',
@@ -146,19 +149,19 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
           alignItems: 'center',
           flexShrink: 0,
         }}>
-          <h3 style={{ margin: 0, fontSize: compact ? '15px' : '17px', fontWeight: 600, color: 'var(--text-main)' }}>{title}</h3>
+          <h3 style={{ margin: 0, fontSize: xs ? '14px' : compact ? '15px' : '17px', fontWeight: 600, color: 'var(--text-main)' }}>{title}</h3>
           <button
             onClick={onClose}
             style={{
-              width: '32px', height: '32px',
+              width: xs ? '26px' : '32px', height: xs ? '26px' : '32px',
               borderRadius: '50%',
               background: 'rgba(252, 231, 243, 0.7)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '16px', color: 'var(--text-sub)',
+              fontSize: xs ? '13px' : '16px', color: 'var(--text-sub)',
             }}
           >✕</button>
         </div>
-        <div ref={contentRef} style={{ flex: 1, overflow: 'auto', padding: '16px 22px', WebkitOverflowScrolling: 'touch' }}>
+        <div ref={contentRef} style={{ flex: 1, overflow: 'auto', padding: xs ? '12px 14px' : '16px 22px', WebkitOverflowScrolling: 'touch' }}>
           {children}
         </div>
         {footer && (
@@ -228,19 +231,20 @@ export const btnGhost = {
   whiteSpace: 'nowrap',
 }
 
-export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText = '确认', danger, compact }) {
+export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText = '确认', danger, compact, xs }) {
+  const small = compact || xs
   return (
-    <Modal open={open} onClose={onClose} title={title} center compact={compact}>
-      <p style={{ margin: 0, color: 'var(--text-sub)', fontSize: compact ? '13px' : '14px', lineHeight: 1.6 }}>{message}</p>
-      <div style={{ display: 'flex', gap: '10px', marginTop: compact ? '14px' : '20px' }}>
-        <button style={{ ...btnGhost, padding: compact ? '9px 14px' : btnGhost.padding, fontSize: compact ? '13px' : btnGhost.fontSize }} onClick={onClose}>取消</button>
+    <Modal open={open} onClose={onClose} title={title} center compact={small} xs={xs}>
+      <p style={{ margin: 0, color: 'var(--text-sub)', fontSize: xs ? '12.5px' : compact ? '13px' : '14px', lineHeight: 1.6 }}>{message}</p>
+      <div style={{ display: 'flex', gap: xs ? '8px' : '10px', marginTop: xs ? '12px' : compact ? '14px' : '20px' }}>
+        <button style={{ ...btnGhost, padding: xs ? '7px 12px' : compact ? '9px 14px' : btnGhost.padding, fontSize: xs ? '12.5px' : compact ? '13px' : btnGhost.fontSize }} onClick={onClose}>取消</button>
         <button
           style={{
             ...btnPrimary,
             background: danger ? 'linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)' : btnPrimary.background,
             flex: 1,
-            padding: compact ? '9px 14px' : btnPrimary.padding,
-            fontSize: compact ? '13px' : btnPrimary.fontSize,
+            padding: xs ? '7px 12px' : compact ? '9px 14px' : btnPrimary.padding,
+            fontSize: xs ? '12.5px' : compact ? '13px' : btnPrimary.fontSize,
           }}
           onClick={() => { onConfirm(); onClose() }}
         >

@@ -512,7 +512,7 @@ export function ProductDetailPage() {
         message="确定删除这条文案吗？"
         confirmText="删除"
         danger
-        compact
+        xs
       />
 
       <ConfirmModal
