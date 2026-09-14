@@ -90,10 +90,14 @@ export function DateFilterBar({ value, onChange }) {
   const sectionTitle = { fontSize: '11px', fontWeight: 700, color: '#b3888f', padding: '8px 10px 4px' }
 
   return (
-    <div className="hide-scrollbar" style={{
-      display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 4px',
-      overflowX: 'auto', whiteSpace: 'nowrap', flexShrink: 0, WebkitOverflowScrolling: 'touch',
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px 4px', flexShrink: 0,
     }}>
+      {/* 左侧：可横滑的筛选 chips */}
+      <div className="hide-scrollbar" style={{
+        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px',
+        overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
+      }}>
       <button onClick={() => onChange('')} style={{
         ...chipBase,
         border: !value ? 'none' : '1px solid rgba(244,114,182,0.35)',
@@ -111,9 +115,10 @@ export function DateFilterBar({ value, onChange }) {
           }}>{c.label}</button>
         )
       })}
-      {/* 日期选择弹窗入口：可选快捷键、具体某一天、本月/上月/近半年/本年 */}
+      </div>
+      {/* 日期弹窗入口：钉在筛选行右侧、始终完整可见可点（窄屏也会被挤出屏幕，故不能放横滑区里） */}
       <button ref={btnRef} onClick={toggle} style={{
-        ...chipBase, display: 'inline-flex', alignItems: 'center', gap: '4px',
+        ...chipBase, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px',
         position: 'relative', zIndex: open ? 41 : 'auto',
         border: (!isChip && value) ? 'none' : '1px solid rgba(244,114,182,0.35)',
         background: (!isChip && value) ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
