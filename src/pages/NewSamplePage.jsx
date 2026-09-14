@@ -61,7 +61,7 @@ export function NewSamplePage() {
       receiveDate, deadline, remark,
       category,
       commission: Number(commission),
-      links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), note: (l.note || '').trim() })),
+      links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), platform: (l.platform || '').trim(), note: (l.note || '').trim() })),
     })
     show(accounts.length > 1 ? `已创建（归属 ${accounts.length} 个账号，物流与拍摄共享，发布/出单按账号独立统计）` : '已添加', 'success')
     navigate('/samples')

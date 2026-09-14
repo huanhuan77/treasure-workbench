@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useStore, normSampleNameKey } from '../store'
+import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { formatDate, todayStr, deadlineDesc, addDays, copyText, toDateInput } from '../utils/helpers'
@@ -44,8 +44,6 @@ export function SamplesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
-  // 当前要查看/复制链接的样品 id（null=关闭弹窗）
-  const [linksSampleId, setLinksSampleId] = useState(null)
   const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'all')
   // 账号选择弹窗
   const [accountModalOpen, setAccountModalOpen] = useState(false)
@@ -120,12 +118,7 @@ export function SamplesPage() {
   const accountFiltered = useMemo(() => {
     let r = filtered
     if (accountFilter !== 'all') r = r.filter((s) => getAccounts(s).includes(accountFilter))
-    if (searchKeyword.trim()) {
-      // 归一化匹配：名称里的空格/全角/零宽字符/大小写差异不影响搜索，
-      // 这样「洁比兔湿巾」能搜到「洁比兔 湿巾」，与同名合并的判等口径保持一致。
-      const kw = normSampleNameKey(searchKeyword)
-      r = r.filter((s) => normSampleNameKey(s.name).includes(kw))
-    }
+    if (searchKeyword.trim()) r = r.filter((s) => s.name.toLowerCase().includes(searchKeyword.trim().toLowerCase()))
     return r
   }, [filtered, accountFilter, searchKeyword])
 
@@ -340,7 +333,6 @@ export function SamplesPage() {
                     hideAccount={hideAccount}
                     show={show}
                     onQuickPublish={handleQuickPublish}
-                    onOpenLinks={() => setLinksSampleId(s.id)}
                     onEdit={() => {
                       sessionStorage.setItem('samples_scroll', String(listRef.current?.scrollTop ?? 0))
                       sessionStorage.setItem('samples_filter', filter)
@@ -452,41 +444,6 @@ export function SamplesPage() {
         </div>
       </Modal>
 
-      {/* 定向链接查看/复制弹窗 */}
-      {(() => {
-        const ls = linksSampleId ? samples.find((x) => x.id === linksSampleId) : null
-        if (!ls) return null
-        const ll = getLinks(ls)
-        return (
-          <Modal open onClose={() => setLinksSampleId(null)} title={`定向链接 · ${ls.name || ''}`}>
-            {ll.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--text-sub)', fontSize: '13px' }}>该样品暂无链接</div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {ll.map((lk, i) => (
-                  <div key={lk.id || i} style={{ background: '#fff', border: '1px solid rgba(244,114,182,0.16)', borderRadius: '12px', padding: '10px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginBottom: '2px' }}>{lk.note ? `📝 ${lk.note}` : `链接 ${i + 1}`}</div>
-                        <div style={{ fontSize: '13px', color: 'var(--text-main)', wordBreak: 'break-all', lineHeight: 1.4 }}>{lk.url}</div>
-                      </div>
-                      <button onClick={async () => {
-                        const ok = await copyText(lk.url)
-                        show(ok ? '已复制链接' : '复制失败', ok ? 'success' : 'error')
-                      }} style={{
-                        flexShrink: 0, border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700,
-                        background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
-                        padding: '8px 14px', borderRadius: '9px',
-                      }}>复制链接</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Modal>
-        )
-      })()}
-
       {(showAdd || editing) && (
         <SampleForm
           sample={editing}
@@ -511,7 +468,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickPublish, onOpenLinks }) {
+function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickPublish }) {
   const logistics = getLogistics(s)
   const logInfo = LOGISTICS_STATUS[logistics]
   const logColor = logInfo ? logInfo.color : '#94a3b8'
@@ -568,26 +525,23 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
             {(() => {
               const links = getLinks(s)
               if (!links.length) return null
-              return (
+              // 每条链接一个复制按钮：有平台显示「复制·平台」，否则按序号「复制1、复制2 …」
+              const multi = links.length > 1
+              const fallback = (i) => (multi ? `复制${i + 1}` : '复制')
+              return links.map((lk, i) => (
                 <button
-                  onClick={(e) => {
+                  key={lk.id || i}
+                  onClick={async (e) => {
                     e.stopPropagation()
                     if (isSwiped) setSwipedId(null)
-                    if (links.length === 1) {
-                      // 只有一条定向链接：直接复制
-                      ;(async () => {
-                        const ok = await copyText(links[0].url)
-                        show(ok ? '已复制定向链接' : '复制失败', ok ? 'success' : 'error')
-                      })()
-                    } else {
-                      // 多条链接：打开选择弹窗逐条复制
-                      onOpenLinks && onOpenLinks()
-                    }
+                    const ok = await copyText(lk.url)
+                    const what = lk.platform ? `·${lk.platform}` : (multi ? `链接${i + 1}` : '定向链接')
+                    show(ok ? `已复制${what}` : '复制失败', ok ? 'success' : 'error')
                   }}
-                  title="复制定向链接"
+                  title={lk.url}
                   style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '5px', background: 'rgba(99,102,241,0.12)', color: '#4f46e5', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                >📋 复制</button>
-              )
+                >{lk.platform ? `复制·${lk.platform}` : fallback(i)}</button>
+              ))
             })()}
           </div>
           {/* 备注 */}

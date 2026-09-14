@@ -5,13 +5,21 @@ import { useToast } from '../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../utils/accounts'
 import { DraggableFab } from '../components/DraggableFab'
 import { ConfirmModal } from '../components/Modal'
-import { DateFilterBar, SortChips, dateBounds } from '../components/DateFilterBar'
+import { DateFilterBar, dateBounds } from '../components/DateFilterBar'
 
 const chipBase = {
   padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
   border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
   whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
 }
+
+// 排序按钮样式（与 DateFilterBar 的 SortChips 一致）
+const sortChipStyle = (sel) => ({
+  flex: '0 0 auto', padding: '4px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+  border: sel ? 'none' : '1px solid rgba(244,114,182,0.35)',
+  background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+  color: sel ? '#fff' : 'var(--text-main)', cursor: 'pointer', whiteSpace: 'nowrap',
+})
 
 // 解析 YYYY/MM/DD 或 YYYY-MM-DD
 function parseTs(v) {
@@ -104,6 +112,13 @@ export function PublishRecordsPage() {
     setDelTarget(null)
   }
 
+  // 排序：单个「日期」切换按钮（点一下升序↑ 再点降序↓），保留「发布最多」
+  const isDateMode = sortKey === 'dateDesc' || sortKey === 'dateAsc'
+  const dateAsc = sortKey === 'dateAsc'
+  const toggleDateSort = () => {
+    setSortKey((prev) => (prev === 'dateDesc' ? 'dateAsc' : 'dateDesc'))
+  }
+
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', color: '#1a1a1a', display: 'flex', flexDirection: 'column' }}>
       <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
@@ -175,17 +190,16 @@ export function PublishRecordsPage() {
       {/* 日期筛选：全部 / 今天 / 昨天 / 近7天 / 本周 / 本月 + 📅 日期（快捷键 / 具体某一天 / 本月·上月·近半年·本年） */}
       <DateFilterBar value={dateRange} onChange={setDateRange} />
 
-      {/* 排序：日期 新→旧 / 旧→新 / 发布最多 */}
-      <SortChips
-        items={[
-          { id: 'dateDesc', label: '日期新→旧' },
-          { id: 'dateAsc', label: '日期旧→新' },
-          { id: 'countDesc', label: '发布最多' },
-        ]}
-        value={sortKey}
-        onChange={setSortKey}
-        style={{ padding: '4px 16px 2px' }}
-      />
+      {/* 排序：单个「日期」切换按钮（点一下升序↑ 再点降序↓）+ 发布最多 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '4px 16px 2px' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
+        <button onClick={toggleDateSort} style={sortChipStyle(isDateMode)}>
+          日期 {dateAsc ? '↑' : '↓'}
+        </button>
+        <button onClick={() => setSortKey('countDesc')} style={sortChipStyle(sortKey === 'countDesc')}>
+          发布最多
+        </button>
+      </div>
 
       {/* 列表：独立滚动 */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', padding: '10px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
