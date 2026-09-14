@@ -73,10 +73,10 @@ export function DashboardPage() {
   }
 
   // ── 待办清单：独立事项池（截止日期可有可无），管理页 /todos
-  // 总览页只显示未完成项（已完成去 /todos 页查看）
-  // 排序：有截止日的按日期升序在前 → 无截止日的在后（按创建时间倒序）
+  // 排序：未完成在前 → 有截止日的按日期升序在前 → 无截止日的在后
   const todoList = useMemo(() => {
-    return [...(todos || [])].filter((t) => !t.done).sort((a, b) => {
+    return [...(todos || [])].sort((a, b) => {
+      if (!!a.done !== !!b.done) return a.done ? 1 : -1
       if (a.due && b.due) return a.due < b.due ? -1 : a.due > b.due ? 1 : 0
       if (a.due) return -1
       if (b.due) return 1
@@ -246,22 +246,8 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* 次要统计卡：样品 / 收支（统一白底素描边） */}
-      <div style={{ padding: '8px 16px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-
-        {/* 样品 */}
-        <div onClick={() => go('/samples')} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#8a8588', marginBottom: '6px' }}>样品</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-            <span style={{ fontSize: '24px', fontWeight: 700, color: '#111' }}>{stat.sTotal}</span>
-            <span style={{ fontSize: '11px', color: '#94a3b8' }}>个</span>
-          </div>
-          <div style={{ marginTop: '6px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {stat.urgent.length > 0 && <span style={{ fontSize: '11px', fontWeight: 600, color: '#dc2626' }}>{stat.urgent.length} 逾期</span>}
-            {stat.recent.length > 0 && <span style={{ fontSize: '11px', color: '#ea580c' }}>{stat.recent.length} 临期</span>}
-            {stat.urgent.length === 0 && stat.recent.length === 0 && <span style={{ fontSize: '11px', color: '#94a3b8' }}>无临期</span>}
-          </div>
-        </div>
+      {/* 次要统计卡：收支（统一白底素描边） */}
+      <div style={{ padding: '8px 16px 6px', display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
 
         {/* 收支（收入红 / 支出绿 反色配色） */}
         <div onClick={() => go('/finance')} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
@@ -287,16 +273,16 @@ export function DashboardPage() {
                 <span style={{ fontSize: '11px', fontWeight: 700, color: todoUndone > 0 ? '#d97706' : '#059669', padding: '1px 7px', borderRadius: '8px', background: todoUndone > 0 ? '#fef3c7' : '#d1fae5' }}>{todoUndone} 未完成</span>
               )}
             </div>
-            <span style={{ fontSize: '11px', color: '#9ca3af' }}>未完成 {todoUndone} 条</span>
+            <span style={{ fontSize: '11px', color: '#9ca3af' }}>共 {(todos || []).length} 条</span>
           </div>
 
-          {/* 事项列表：只显示未完成，溢出可滚动；点空白区也能跳 /todos */}
+          {/* 事项列表：全部显示，溢出可滚动；点空白区也能跳 /todos */}
           {todoList.length === 0 ? (
             <div
               onClick={() => go('/todos')}
               style={{ padding: '16px 2px 2px', fontSize: '12px', color: '#94a3b8', cursor: 'pointer' }}
             >
-              {(todos || []).length === 0 ? '还没有待办，点此去添加一条' : '待办都完成啦，点此查看全部'}
+              还没有待办，点此去添加一条
             </div>
           ) : (
             <div
@@ -330,27 +316,7 @@ export function DashboardPage() {
             <button onClick={() => go('/todos')} style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
               fontSize: '12px', color: '#db2777', fontWeight: 600,
-            }}>＋ 管理待办（含已完成）›</button>
-          </div>
-        </div>
-      </div>
-
-      {/* 视频发布记录快捷入口（合并为单卡：点卡看全部，按钮直接记发布） */}
-      <div style={{ padding: '8px 16px 4px' }}>
-        <div onClick={() => go('/publish-records')} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', marginBottom: '4px' }}>🎬 视频发布记录</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                <span style={{ fontSize: '22px', fontWeight: 700, color: '#111' }}>{(publishRecords || []).length}</span>
-                <span style={{ fontSize: '11px', color: '#94a3b8' }}>条记录 · 近 7 天 {last7Count} 条</span>
-              </div>
-              <div style={{ marginTop: '4px', fontSize: '11px', color: '#94a3b8' }}>可多选账号 · 一次记多条 · 查看全部 ›</div>
-            </div>
-            <button onClick={(e) => { e.stopPropagation(); go('/publish-record/new') }} style={{
-              flexShrink: 0, padding: '9px 16px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
-              fontSize: '13px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>＋ 记发布</button>
+            }}>＋ 管理待办（新增 / 勾选 / 删除）›</button>
           </div>
         </div>
       </div>
