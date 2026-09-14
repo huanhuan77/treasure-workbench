@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 // 日期筛选（出单记录 / 视频发布记录 共用）
 // 值 value 形式：'' 全部 | 'today' | 'yesterday' | 'last7' | 'thisWeek' | 'thisMonth'
@@ -75,7 +76,13 @@ export function DateFilterBar({ value, onChange }) {
     const el = btnRef.current
     if (el) {
       const r = el.getBoundingClientRect()
-      setPos({ top: r.bottom + 6, left: Math.max(8, Math.min(r.left - 150, window.innerWidth - 258)) })
+      const vw = window.innerWidth, vh = window.innerHeight
+      const left = Math.max(8, Math.min(r.left - 150, vw - 258))
+      // 底部放不下就上移，保证弹窗始终落在屏幕内
+      const panelMax = Math.min(vh * 0.7, 460)
+      let top = r.bottom + 6
+      if (top + panelMax > vh - 8) top = Math.max(8, vh - panelMax - 8)
+      setPos({ top, left })
     }
     setOpen((v) => !v)
   }
@@ -119,7 +126,6 @@ export function DateFilterBar({ value, onChange }) {
       {/* 日期弹窗入口：钉在筛选行右侧、始终完整可见可点（窄屏也会被挤出屏幕，故不能放横滑区里） */}
       <button ref={btnRef} onClick={toggle} style={{
         ...chipBase, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px',
-        position: 'relative', zIndex: open ? 41 : 'auto',
         border: (!isChip && value) ? 'none' : '1px solid rgba(244,114,182,0.35)',
         background: (!isChip && value) ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
         color: (!isChip && value) ? '#fff' : 'var(--text-main)',
@@ -127,11 +133,12 @@ export function DateFilterBar({ value, onChange }) {
         <span>📅 {dateLabel(value)}</span>
         <span style={{ fontSize: '9px', opacity: 0.8, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}>▼</span>
       </button>
-      {open && (
+      {/* 弹窗用 Portal 挂到 body：脱离页面内的层叠上下文/遮挡，手机上才稳定可见 */}
+      {open && createPortal(
         <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2147483000 }} />
           <div style={{
-            position: 'fixed', top: (pos?.top ?? 0), left: (pos?.left ?? 0), zIndex: 41,
+            position: 'fixed', top: (pos?.top ?? 0), left: (pos?.left ?? 0), zIndex: 2147483001,
             width: '250px', maxHeight: '70vh', overflowY: 'auto',
             background: '#fff', borderRadius: '14px', padding: '6px',
             border: '1px solid rgba(244,114,182,0.22)',
@@ -177,7 +184,8 @@ export function DateFilterBar({ value, onChange }) {
               </button>
             ))}
           </div>
-        </>
+        </>,
+        document.body,
       )}
     </div>
   )
