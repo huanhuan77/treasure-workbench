@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 // 日期筛选（出单记录 / 视频发布记录 共用）
@@ -70,94 +70,104 @@ function parseRange(value) {
   return m ? { start: m[1], end: m[2] } : { start: '', end: '' }
 }
 
-/* ---------- 双月日历弹窗 ---------- */
+/* ---------- 竖向滚动日历 ---------- */
 
 const WEEK_DAYS = ['一', '二', '三', '四', '五', '六', '日']
+const BLUE = '#3b82f6'
 
-// 生成某月的日历行（每行 7 个 cell），cell: { key, day, isCurrentMonth, dateObj }
-function buildMonth(year, month) {
-  // month: 0-based
-  const firstDay = new Date(year, month, 1)
-  // 周一为第 0 列：getDay()=0(日)→6, =1→0, ...
-  let startCol = firstDay.getDay() - 1
+// 生成从当前月起往前 count 个月的列表（升序）
+function buildMonths(endY, endM, count) {
+  const arr = []
+  for (let i = count - 1; i >= 0; i--) {
+    const d = new Date(endY, endM - i, 1)
+    arr.push({ y: d.getFullYear(), m: d.getMonth() })
+  }
+  return arr
+}
+
+// 某月日历格子（周一为第一列），返回数组，含前置空格
+function monthCells(year, month) {
+  const first = new Date(year, month, 1)
+  let startCol = first.getDay() - 1
   if (startCol < 0) startCol = 6
-  const daysInMonth = new Date(year, month + 1, 0).getDate()
-  const rows = []
-  let cells = []
-  // 前面补空
-  for (let i = 0; i < startCol; i++) cells.push({ key: `e-${i}`, day: 0, isCurrentMonth: false })
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push({ key: `${year}-${month}-${d}`, day: d, isCurrentMonth: true, dateObj: new Date(year, month, d) })
-    if (cells.length === 7) { rows.push(cells); cells = [] }
-  }
-  // 后面补空凑满最后一行
-  if (cells.length > 0) { while (cells.length < 7) cells.push({ key: `a-${cells.length}`, day: 0, isCurrentMonth: false }); rows.push(cells) }
-  return rows
+  const days = new Date(year, month + 1, 0).getDate()
+  const cells = []
+  for (let i = 0; i < startCol; i++) cells.push(null)
+  for (let d = 1; d <= days; d++) cells.push(d)
+  return cells
 }
 
-function sameDay(a, b) {
-  if (!a || !b) return false
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-}
+function CalendarMonths({ months, startTmp, endTmp, onSelect, todayStr }) {
+  const scrollRef = useRef(null)
 
-function CalendarPanel({ startTmp, endTmp, onSelect, viewYear, viewMonth }) {
-  const m1Rows = buildMonth(viewYear, viewMonth)
-  const y2 = viewMonth === 11 ? viewYear + 1 : viewYear
-  const m2 = (viewMonth + 1) % 12
-  const m2Rows = buildMonth(y2, m2)
-
-  const renderCell = (cell) => {
-    if (!cell.isCurrentMonth) return <div key={cell.key} style={{ height: '34px' }} />
-    const k = dayKey(cell.dateObj)
-    const isStart = startTmp && k === startTmp
-    const isEnd = endTmp && k === endTmp
-    const isInRange = startTmp && endTmp && k > startTmp && k < endTmp
-    const isSelected = isStart || isEnd
-
-    return (
-      <button key={k} onClick={() => onSelect(cell.dateObj)} style={{
-        height: '36px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        borderRadius: '8px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 500,
-        background: isSelected ? '#3b82f6' : isInRange ? '#dbeafe' : 'transparent',
-        color: isSelected ? '#fff' : isInRange ? '#1d4ed8' : 'var(--text-main)',
-        padding: 0, lineHeight: 1.2,
-      }}>
-        <span>{cell.day}</span>
-        {(isStart || isEnd) && (
-          <span style={{ fontSize: '9px', opacity: 0.85, fontWeight: 600 }}>{isStart ? '开始' : '结束'}</span>
-        )}
-      </button>
-    )
-  }
-
-  const monthTitle = (y, m) => (
-    <div style={{ textAlign: 'center', fontSize: '14px', fontWeight: 700, color: 'var(--text-main)', marginBottom: '6px' }}>
-      {y}年{m + 1}月
-    </div>
-  )
-
-  const weekRow = (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '2px', marginBottom: '2px' }}>
-      {WEEK_DAYS.map((w) => (
-        <div key={w} style={{ textAlign: 'center', fontSize: '11px', color: 'var(--text-sub)', fontWeight: 600, padding: '2px 0' }}>{w}</div>
-      ))}
-    </div>
-  )
-
-  const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '2px' }
+  // 打开后滚动到已选月份 / 当前月（等布局稳定再校正一次，避免露出上个月尾巴）
+  const focusKey = (startTmp ? startTmp.slice(0, 7) : todayStr.slice(0, 7))
+  useEffect(() => {
+    const doScroll = () => {
+      const cont = scrollRef.current
+      if (!cont) return
+      const el = cont.querySelector(`[data-mkey="${focusKey}"]`)
+      if (el) cont.scrollTop = el.offsetTop
+    }
+    doScroll()
+    const t = setTimeout(doScroll, 80)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
-    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {monthTitle(viewYear, viewMonth)}
-        {weekRow}
-        <div style={gridStyle}>{m1Rows.flat().map(renderCell)}</div>
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {monthTitle(y2, m2)}
-        {weekRow}
-        <div style={gridStyle}>{m2Rows.flat().map(renderCell)}</div>
-      </div>
+    <div ref={scrollRef} style={{
+      flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative', WebkitOverflowScrolling: 'touch',
+    }}>
+      {months.map(({ y, m }) => (
+        <div key={`${y}-${m}`} data-mkey={`${y}-${PAD(m + 1)}`}>
+          <div style={{
+            position: 'sticky', top: 0, zIndex: 2, background: '#fff',
+            textAlign: 'center', fontSize: '14px', fontWeight: 700, color: 'var(--text-main)',
+            padding: '8px 0',
+          }}>{y}年{m + 1}月</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', marginBottom: '2px' }}>
+            {WEEK_DAYS.map((w) => (
+              <div key={w} style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-sub)', fontWeight: 600, padding: '4px 0' }}>{w}</div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: '2px', paddingBottom: '8px' }}>
+            {monthCells(y, m).map((day, idx) => {
+              if (!day) return <div key={`e${idx}`} style={{ height: '46px' }} />
+              const dobj = new Date(y, m, day)
+              const k = dayKey(dobj)
+              const isFuture = k > todayStr
+              const isStart = !!startTmp && k === startTmp
+              const isEnd = !!endTmp && k === endTmp
+              const inRange = startTmp && endTmp && k > startTmp && k < endTmp
+              const selected = isStart || isEnd
+              const noEnd = !endTmp || endTmp === startTmp
+              let tag = ''
+              if (isStart) tag = noEnd ? '开始/结束' : '开始'
+              else if (isEnd) tag = '结束'
+
+              return (
+                <button
+                  key={k}
+                  disabled={isFuture}
+                  onClick={() => onSelect(k)}
+                  style={{
+                    height: '46px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    borderRadius: '8px', border: 'none', padding: 0, lineHeight: 1.1,
+                    cursor: isFuture ? 'default' : 'pointer',
+                    background: selected ? BLUE : inRange ? '#dbeafe' : 'transparent',
+                    color: isFuture ? '#cfcfcf' : selected ? '#fff' : inRange ? '#1d4ed8' : 'var(--text-main)',
+                    fontSize: '14px', fontWeight: selected ? 700 : 500,
+                  }}
+                >
+                  <span>{day}</span>
+                  {tag && <span style={{ fontSize: '9px', fontWeight: 600, marginTop: '1px' }}>{tag}</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -166,73 +176,40 @@ function CalendarPanel({ startTmp, endTmp, onSelect, viewYear, viewMonth }) {
 
 export function DateFilterBar({ value, onChange }) {
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState(null)
-  const btnRef = useRef(null)
-  // 弹窗内临时选中的日期
   const [startTmp, setStartTmp] = useState('')
   const [endTmp, setEndTmp] = useState('')
-  // 日历视图月份（打开时初始化）
-  const [viewY, setViewY] = useState(0)
-  const [viewM, setViewM] = useState(0)
 
-  const isChip = DATE_CHIPS.some((c) => c.id === value)
+  const todayStr = dayKey(new Date())
   const isRange = String(value || '').startsWith('range:')
+  const months = buildMonths(new Date().getFullYear(), new Date().getMonth(), 24)
+
   const toggle = () => {
-    const el = btnRef.current
-    if (el) {
-      const r = el.getBoundingClientRect()
-      const vw = window.innerWidth, vh = window.innerHeight
-      // 双月日历更宽，留 320px
-      const left = Math.max(8, Math.min(r.left - 160, vw - 340))
-      const panelMax = Math.min(vh * 0.78, 480)
-      let top = r.bottom + 6
-      if (top + panelMax > vh - 8) top = Math.max(8, vh - panelMax - 8)
-      setPos({ top, left })
-    }
     if (!open) {
       const { start, end } = parseRange(value)
       setStartTmp(start)
       setEndTmp(end)
-      // 视图月份：如果有已选开始日期就显示那个月，否则显示当前月
-      if (start) {
-        const d = new Date(start)
-        setViewY(d.getFullYear()); setViewM(d.getMonth())
-      } else {
-        const n = new Date()
-        setViewY(n.getFullYear()); setViewM(n.getMonth())
-      }
     }
     setOpen((v) => !v)
   }
 
-  const handleSelectDate = (dateObj) => {
-    const k = dayKey(dateObj)
+  const handleSelect = (k) => {
     if (!startTmp || (startTmp && endTmp)) {
-      // 新选开始（或重新开始）
-      setStartTmp(k)
-      setEndTmp('')
+      setStartTmp(k); setEndTmp('')
+    } else if (k >= startTmp) {
+      setEndTmp(k)
     } else {
-      // 已有开始，选结束
-      if (k >= startTmp) {
-        setEndTmp(k)
-      } else {
-        // 点了开始之前的日期 → 把它当新的开始
-        setStartTmp(k)
-        setEndTmp(startTmp)
-      }
+      setEndTmp(startTmp); setStartTmp(k)
     }
   }
 
   const confirm = () => {
-    if (startTmp && endTmp) {
-      onChange(`range:${startTmp}~${endTmp}`)
-    } else if (startTmp) {
-      onChange(`range:${startTmp}~${startTmp}`)
-    } else {
-      onChange('')
-    }
+    if (startTmp && endTmp) onChange(`range:${startTmp}~${endTmp}`)
+    else if (startTmp) onChange(`range:${startTmp}~${startTmp}`)
+    else onChange('')
     setOpen(false)
   }
+
+  const reset = () => { setStartTmp(''); setEndTmp('') }
 
   return (
     <div style={{
@@ -262,7 +239,7 @@ export function DateFilterBar({ value, onChange }) {
         })}
       </div>
       {/* 日期弹窗入口 */}
-      <button ref={btnRef} onClick={toggle} style={{
+      <button onClick={toggle} style={{
         ...chipBase, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px',
         border: (isRange && value) ? 'none' : '1px solid rgba(244,114,182,0.35)',
         background: (isRange && value) ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
@@ -271,46 +248,50 @@ export function DateFilterBar({ value, onChange }) {
         <span>📅 {dateLabel(value)}</span>
         <span style={{ fontSize: '9px', opacity: 0.8, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}>▼</span>
       </button>
-      {/* 弹窗：双月日历 */}
+      {/* 底部弹出式日历弹窗 */}
       {open && createPortal(
         <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2147483000 }} />
+          <div onClick={() => setOpen(false)} style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2147483000,
+            background: 'rgba(0,0,0,0.35)',
+          }} />
           <div style={{
-            position: 'fixed', top: (pos?.top ?? 0), left: (pos?.left ?? 0), zIndex: 2147483001,
-            width: '320px', maxHeight: '78vh', overflowY: 'auto',
-            background: '#fff', borderRadius: '14px', padding: '14px',
-            border: '1px solid rgba(244,114,182,0.22)',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.14)', textAlign: 'left', whiteSpace: 'normal',
+            position: 'fixed', left: 0, right: 0, bottom: 0, margin: '0 auto', maxWidth: '440px',
+            zIndex: 2147483001, height: '62vh', maxHeight: '520px',
+            display: 'flex', flexDirection: 'column',
+            background: '#fff', borderRadius: '16px 16px 0 0',
+            boxShadow: '0 -8px 32px rgba(0,0,0,0.18)',
+            paddingBottom: 'var(--safe-bottom, 0px)',
           }}>
-            {/* 关闭按钮 */}
-            <button onClick={() => setOpen(false)} style={{
-              position: 'absolute', top: '10px', right: '12px', background: 'none', border: 'none',
-              fontSize: '18px', color: 'var(--text-sub)', cursor: 'pointer', lineHeight: 1, padding: '2px',
-            }}>✕</button>
+            {/* 顶部标题行 */}
+            <div style={{ position: 'relative', flexShrink: 0, paddingTop: '6px' }}>
+              <div style={{ textAlign: 'center', fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', padding: '8px 0' }}>选择日期</div>
+              <button onClick={() => setOpen(false)} style={{
+                position: 'absolute', top: '6px', right: '10px', background: 'none', border: 'none',
+                fontSize: '20px', color: 'var(--text-sub)', cursor: 'pointer', lineHeight: 1, padding: '6px',
+              }}>✕</button>
+            </div>
 
-            {/* 全部按钮 */}
-            <button onClick={() => { onChange(''); setOpen(false) }} style={{
-              display: 'flex', alignItems: 'center', width: '100%',
-              padding: '8px 12px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '13px',
-              background: !value ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'transparent',
-              color: !value ? '#fff' : 'var(--text-main)', fontWeight: !value ? 700 : 500, marginBottom: '4px',
-            }}>
-              全部（不限时间）
-            </button>
+            {/* 已选提示 + 重置 */}
+            <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px 8px' }}>
+              <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>
+                {startTmp ? `${startTmp}${endTmp && endTmp !== startTmp ? ` ~ ${endTmp}` : ''}` : '点击选择开始日期'}
+              </span>
+              {(startTmp || endTmp) && (
+                <button onClick={reset} style={{ background: 'none', border: 'none', color: BLUE, fontSize: '12px', fontWeight: 600, cursor: 'pointer', padding: '2px 4px' }}>重置</button>
+              )}
+            </div>
 
-            {/* 双月日历 */}
-            <CalendarPanel
-              startTmp={startTmp} endTmp={endTmp}
-              onSelect={handleSelectDate}
-              viewYear={viewY} viewMonth={viewM}
-            />
+            {/* 日历滚动区 */}
+            <CalendarMonths months={months} startTmp={startTmp} endTmp={endTmp} onSelect={handleSelect} todayStr={todayStr} />
 
-            {/* 确定按钮 */}
-            <button onClick={confirm} style={{
-              width: '100%', marginTop: '12px', padding: '10px', borderRadius: '999px',
-              border: 'none', background: '#3b82f6',
-              color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-            }}>确定</button>
+            {/* 底部确定 */}
+            <div style={{ flexShrink: 0, padding: '10px 16px 14px' }}>
+              <button onClick={confirm} style={{
+                width: '100%', padding: '12px', borderRadius: '999px', border: 'none', background: BLUE,
+                color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer',
+              }}>确定</button>
+            </div>
           </div>
         </>,
         document.body,
