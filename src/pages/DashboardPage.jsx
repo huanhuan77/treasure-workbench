@@ -273,7 +273,7 @@ export function DashboardPage() {
                 <span style={{ fontSize: '11px', fontWeight: 700, color: todoUndone > 0 ? '#d97706' : '#059669', padding: '1px 7px', borderRadius: '8px', background: todoUndone > 0 ? '#fef3c7' : '#d1fae5' }}>{todoUndone} 未完成</span>
               )}
             </div>
-            <span style={{ fontSize: '11px', color: '#9ca3af' }}>共 {(todos || []).length} 条</span>
+            <span style={{ fontSize: '11px', color: '#9ca3af' }}>共 {todoUndone} 条</span>
           </div>
 
           {/* 事项列表：全部显示，溢出可滚动；点空白区也能跳 /todos */}
