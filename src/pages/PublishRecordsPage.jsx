@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../utils/accounts'
 import { DraggableFab } from '../components/DraggableFab'
 import { ConfirmModal } from '../components/Modal'
+import { DateFilterBar, SortChips, dateBounds } from '../components/DateFilterBar'
 
 const chipBase = {
   padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
@@ -18,70 +19,15 @@ function parseTs(v) {
   const d = new Date(String(v).replace(/\//g, '-'))
   return Number.isNaN(d.getTime()) ? null : d.getTime()
 }
-// 月份区间：返回 [startTs, endTs)；空字符串返回 null
-function monthBounds(ym) {
-  if (!ym) return null
-  const m = String(ym).match(/^(\d{4})-(\d{1,2})$/)
-  if (!m) return null
-  const y = Number(m[1]), mo = Number(m[2])
-  if (!y || !mo || mo < 1 || mo > 12) return null
-  const s = new Date(y, mo - 1, 1).getTime()
-  const e = new Date(y, mo, 1).getTime()
-  return [s, e]
-}
-function monthLabel(ym) {
-  const m = String(ym).match(/^(\d{4})-(\d{1,2})$/)
-  if (!m) return String(ym)
-  return `${m[1]}年${Number(m[2])}月`
-}
-
-// 快捷时间区间：返回 [startTs, endTs)；空字符串返回 null
-// today/yesterday/thisWeek(周一-周日)/thisMonth/lastMonth
-function presetBounds(preset) {
-  if (!preset) return null
-  const d = new Date()
-  // 今天 0:00 ~ 明天 0:00
-  if (preset === 'today') {
-    const s = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-    const e = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime()
-    return [s, e]
-  }
-  // 昨天 0:00 ~ 今天 0:00
-  if (preset === 'yesterday') {
-    const s = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1).getTime()
-    const e = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
-    return [s, e]
-  }
-  // 本周（周一 0:00 -> 下周一 0:00）
-  if (preset === 'thisWeek') {
-    const day = d.getDay() // 0(日)~6(六)
-    const offset = (day === 0 ? 6 : day - 1) // 周一为本周起点
-    const s = new Date(d.getFullYear(), d.getMonth(), d.getDate() - offset).getTime()
-    const e = new Date(d.getFullYear(), d.getMonth(), d.getDate() - offset + 7).getTime()
-    return [s, e]
-  }
-  // 本月 1号 0:00 -> 下月 1号 0:00
-  if (preset === 'thisMonth') {
-    const s = new Date(d.getFullYear(), d.getMonth(), 1).getTime()
-    const e = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime()
-    return [s, e]
-  }
-  // 上月 1号 -> 本月 1号
-  if (preset === 'lastMonth') {
-    const s = new Date(d.getFullYear(), d.getMonth() - 1, 1).getTime()
-    const e = new Date(d.getFullYear(), d.getMonth(), 1).getTime()
-    return [s, e]
-  }
-  return null
-}
 
 export function PublishRecordsPage() {
   const navigate = useNavigate()
   const { publishRecords, samples, deletePublishRecord } = useStore()
   const { show } = useToast()
   const [account, setAccount] = useState('')    // 账号单选筛选，''=全部账号
-  const [month, setMonth] = useState('')           // 月份筛选 YYYY-MM
-  const [datePreset, setDatePreset] = useState('') // 快捷时段：默认「全部」（避免昨天记的今天打开看不见）/yesterday/thisWeek/thisMonth/lastMonth
+  const [dateRange, setDateRange] = useState('') // 日期筛选：''=全部 / today|yesterday|last7|thisWeek|thisMonth|lastMonth|halfYear|thisYear / day:YYYY-MM-DD
+  const [keyword, setKeyword] = useState('')     // 产品名搜索
+  const [sortKey, setSortKey] = useState('dateDesc') // dateDesc | dateAsc | countDesc
   const [expanded, setExpanded] = useState('')   // 展开查看全部日期的分组 key
   const [delTarget, setDelTarget] = useState(null) // 待确认删除：{ group, date } —— 按日期删，不是删整组
 
@@ -90,19 +36,21 @@ export function PublishRecordsPage() {
     () => [...(publishRecords || [])].sort((a, b) => String(b.publishDate || '').localeCompare(String(a.publishDate || ''))),
     [publishRecords],
   )
-  // 快捷时段与月份下拉互斥：选 preset 清 month，选 month 清 preset
-  const toggleDatePreset = (p) => { setDatePreset((cur) => (cur === p ? '' : p)); if (p) setMonth('') }
-  const pickMonth = (ym) => { setMonth(ym); setDatePreset('') }
-  const resetDate = () => { setDatePreset(''); setMonth('') }
 
-  // 时间筛选 + 账号筛选，再按「同一产品 + 同一账号」合并成一条（日期收进 dates）
-  const bounds = presetBounds(datePreset) || monthBounds(month)
+  // 时间筛选 + 账号筛选 + 产品名搜索，再按「同一产品 + 同一账号」合并成一条（日期收进 dates）
+  const bounds = dateBounds(dateRange)
   const groups = useMemo(() => {
+    const kw = keyword.trim().toLowerCase()
     const arr = records.filter((r) => {
       if (account && !(r.accounts || []).includes(account)) return false
       if (bounds) {
         const t = parseTs(r.publishDate)
         if (t === null || t < bounds[0] || t >= bounds[1]) return false
+      }
+      if (kw) {
+        const sm = sampleMap[r.sampleId]
+        const name = String(sm ? sm.name : '')
+        if (!name.toLowerCase().includes(kw)) return false
       }
       return true
     })
@@ -120,34 +68,31 @@ export function PublishRecordsPage() {
         map.get(k).records.push(r)
       }
     }
+    const byDate = (a, b, dir) => {
+      const A = String(a.dates[0] || ''), B = String(b.dates[0] || '')
+      // 没有日期的排最后
+      if (!A && !B) return 0
+      if (!A) return 1
+      if (!B) return -1
+      return dir === 'asc' ? A.localeCompare(B) : B.localeCompare(A)
+    }
     return [...map.values()]
       .map((g) => {
         const dates = [...new Set(g.records.map((r) => r.publishDate).filter(Boolean))].sort().reverse()
         const qty = g.records.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
         return { ...g, dates, qty, legacy: g.records.some((r) => r.legacy) }
       })
-      // 发布次数多的置顶；其次按最近发布日期倒序
-      .sort((a, b) => b.records.length - a.records.length
-        || String(b.dates[0] || '').localeCompare(String(a.dates[0] || '')))
-  }, [records, sampleMap, account, bounds])
+      .sort((a, b) => {
+        if (sortKey === 'dateAsc') return byDate(a, b, 'asc') || (b.records.length - a.records.length)
+        if (sortKey === 'countDesc') return (b.records.length - a.records.length) || byDate(a, b, 'desc')
+        return byDate(a, b, 'desc') || (b.records.length - a.records.length)
+      })
+  }, [records, sampleMap, account, bounds, keyword, sortKey])
   // 合并后覆盖的记录条数（去重，一条挂两账号会出现在两组里）
   const filteredCount = useMemo(
     () => new Set(groups.flatMap((g) => g.records.map((r) => r.id))).size,
     [groups],
   )
-
-  // 当前月份下拉里可用的月份（来自有日期的记录），新→旧
-  const monthOptions = useMemo(() => {
-    const set = new Set()
-    for (const r of records) {
-      const t = parseTs(r.publishDate)
-      if (t === null) continue
-      const d = new Date(t)
-      const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-      set.add(ym)
-    }
-    return [...set].sort().reverse()
-  }, [records])
 
   // 删除该分组里「某一个日期」的发布记录（一条记录挂多账号时按 id 去重）
   const doDeleteDate = () => {
@@ -199,54 +144,48 @@ export function PublishRecordsPage() {
         })}
       </div>
 
-      {/* 产品筛选 + 时间筛选：左侧快捷项横向滚动，右侧「按月份」固定 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 16px 8px', flexShrink: 0 }}>
-        <div className="hide-scrollbar" style={{
-          flex: 1, minWidth: 0, display: 'flex', gap: '6px', alignItems: 'center',
-          overflowX: 'auto', whiteSpace: 'nowrap', padding: '2px 0', WebkitOverflowScrolling: 'touch',
-        }}>
-          {/* 全部：与 5 个快捷时段 + 月份下拉 互斥（单选“时间范围”语义） */}
-          <button onClick={resetDate} style={{
-            ...chipBase, flexShrink: 0,
-            borderColor: !datePreset && !month ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-            background: !datePreset && !month ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-            color: !datePreset && !month ? '#fff' : 'var(--text-sub)',
-          }}>全部</button>
-          {[
-            { k: 'today', label: '今天' },
-            { k: 'yesterday', label: '昨天' },
-            { k: 'thisWeek', label: '本周' },
-            { k: 'thisMonth', label: '本月' },
-            { k: 'lastMonth', label: '上月' },
-          ].map((it) => {
-            const sel = datePreset === it.k
-            return (
-              <button key={it.k} onClick={() => toggleDatePreset(it.k)} style={{
-                ...chipBase, flexShrink: 0,
-                borderColor: sel ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
-                background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-                color: sel ? '#fff' : 'var(--text-main)',
-              }}>{it.label}</button>
-            )
-          })}
+      {/* 产品名搜索 */}
+      <div style={{ padding: '10px 16px 0', flexShrink: 0 }}>
+        <div style={{ position: 'relative' }}>
+          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#c084a0' }}>🔍</span>
+          <input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="搜索产品名"
+            style={{
+              width: '100%', boxSizing: 'border-box', padding: '9px 34px 9px 32px', borderRadius: '999px',
+              border: '1px solid rgba(244,114,182,0.28)', background: '#fff', fontSize: '13px',
+              color: 'var(--text-main)', outline: 'none',
+            }}
+          />
+          {keyword && (
+            <button
+              onClick={() => setKeyword('')}
+              aria-label="清空搜索"
+              style={{
+                position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                width: '20px', height: '20px', borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: 'rgba(244,114,182,0.14)', color: '#db2777', fontSize: '12px', lineHeight: 1,
+              }}
+            >×</button>
+          )}
         </div>
-        {/* 「按月份」固定在右侧，不随快捷项横滚 */}
-        <select
-          value={month}
-          onChange={(e) => pickMonth(e.target.value)}
-          style={{
-            flexShrink: 0, padding: '6px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
-            border: month ? 'none' : '1px solid rgba(0,0,0,0.06)',
-            background: month ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-            color: month ? '#fff' : 'var(--text-main)', cursor: 'pointer', maxWidth: '112px',
-          }}
-        >
-          <option value="">📅 按月份</option>
-          {monthOptions.map((ym) => (
-            <option key={ym} value={ym} style={{ color: '#111' }}>{monthLabel(ym)}</option>
-          ))}
-        </select>
       </div>
+
+      {/* 日期筛选：全部 / 今天 / 昨天 / 近7天 / 本周 / 本月 + 📅 日期（快捷键 / 具体某一天 / 本月·上月·近半年·本年） */}
+      <DateFilterBar value={dateRange} onChange={setDateRange} />
+
+      {/* 排序：日期 新→旧 / 旧→新 / 发布最多 */}
+      <SortChips
+        items={[
+          { id: 'dateDesc', label: '日期新→旧' },
+          { id: 'dateAsc', label: '日期旧→新' },
+          { id: 'countDesc', label: '发布最多' },
+        ]}
+        value={sortKey}
+        onChange={setSortKey}
+        style={{ padding: '4px 16px 2px' }}
+      />
 
       {/* 列表：独立滚动 */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', padding: '10px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
