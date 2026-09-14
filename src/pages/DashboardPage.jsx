@@ -73,10 +73,10 @@ export function DashboardPage() {
   }
 
   // ── 待办清单：独立事项池（截止日期可有可无），管理页 /todos
-  // 排序：未完成在前 → 有截止日的按日期升序在前 → 无截止日的在后
+  // 总览只显示「未完成」的；已完成的项不进列表
+  // 排序：有截止日的按日期升序在前 → 无截止日的在后
   const todoList = useMemo(() => {
-    return [...(todos || [])].sort((a, b) => {
-      if (!!a.done !== !!b.done) return a.done ? 1 : -1
+    return [...(todos || [])].filter((t) => !t.done).sort((a, b) => {
       if (a.due && b.due) return a.due < b.due ? -1 : a.due > b.due ? 1 : 0
       if (a.due) return -1
       if (b.due) return 1
