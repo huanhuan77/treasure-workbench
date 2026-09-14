@@ -7,7 +7,7 @@
 // 因此本地加载和云端合并两条路径都必须跑这个函数，只修一处无法根治。
 export function dedupeCopies(copies) {
   if (!Array.isArray(copies) || copies.length < 2) return copies
-  const score = (c) => (c && c.hasOrder ? 4 : 0) + (c && c.used ? 2 : 0) + (c && c.usedDate ? 1 : 0)
+  const score = (c) => (c && c.hasHot ? 8 : 0) + (c && c.hasOrder ? 4 : 0) + (c && c.used ? 2 : 0) + (c && c.usedDate ? 1 : 0)
   // 归一化：删零宽/不可见字符 → 全角(标点/字母/数字)转半角 → 去所有空白。
   // 这样「复制粘贴带来的零宽字符」「全角空格/全角标点/全角数字」造成的视觉重复也能被合并。
   const norm = (s) =>
@@ -29,8 +29,10 @@ export function dedupeCopies(copies) {
     const other = keep === c ? cur : c
     out[idx] = {
       ...keep,
+      // 合并双方的「标记」：爆单/出单/用过 只要任一侧为真就保留（否则去重会把标记吃掉）
       used: keep.used || other.used,
       hasOrder: keep.hasOrder || other.hasOrder,
+      hasHot: keep.hasHot || other.hasHot,
       usedDate: keep.usedDate || other.usedDate,
       topics: (keep.topics && keep.topics.length) ? keep.topics : other.topics,
     }

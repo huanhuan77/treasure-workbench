@@ -140,7 +140,7 @@ export function ProductDetailPage() {
   const displayedCopies = (() => {
     let list = product.copies
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
-    else if (copyFilter === '爆单') list = list.filter((c) => c.used)
+    else if (copyFilter === '爆单') list = list.filter((c) => c.hasHot)
     return [...list].sort((a, b) => {
       if (!sortPending) {
         if (a.hasHot !== b.hasHot) return b.hasHot ? 1 : -1  // 爆单优先
