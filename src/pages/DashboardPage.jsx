@@ -252,12 +252,12 @@ export function DashboardPage() {
         {/* 收支（收入红 / 支出绿 反色配色） */}
         <div onClick={() => go('/finance')} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '14px', cursor: 'pointer', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           <div style={{ fontSize: '12px', fontWeight: 600, color: '#8a8588', marginBottom: '6px' }}>收支</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '22px', fontWeight: 700, color: '#111' }}>¥{fmt(stat.net)}</span>
-          </div>
-          <div style={{ marginTop: '6px', fontSize: '11px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <span style={{ color: '#dc2626', fontWeight: 600 }}>入 ¥{fmt(stat.income)}</span>
-            <span style={{ color: '#16a34a', fontWeight: 600 }}>出 ¥{fmt(stat.expense)}</span>
+            <span style={{ fontSize: '11px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <span style={{ color: '#dc2626', fontWeight: 600 }}>入 ¥{fmt(stat.income)}</span>
+              <span style={{ color: '#16a34a', fontWeight: 600 }}>出 ¥{fmt(stat.expense)}</span>
+            </span>
           </div>
         </div>
       </div>
