@@ -257,7 +257,7 @@ export function DateFilterBar({ value, onChange }) {
           }} />
           <div style={{
             position: 'fixed', left: 0, right: 0, bottom: 0, margin: '0 auto', maxWidth: '440px',
-            zIndex: 2147483001, height: '62vh', maxHeight: '520px',
+            zIndex: 2147483001, height: '82vh', maxHeight: '820px',
             display: 'flex', flexDirection: 'column',
             background: '#fff', borderRadius: '16px 16px 0 0',
             boxShadow: '0 -8px 32px rgba(0,0,0,0.18)',
