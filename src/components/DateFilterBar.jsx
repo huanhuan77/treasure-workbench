@@ -2,18 +2,39 @@ import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 // 日期筛选（出单记录 / 视频发布记录 共用）
-// 值 value 形式：'' 全部 | 'range:YYYY-MM-DD~YYYY-MM-DD'（时间段）
+// 值 value 形式：'' 全部 | 'today' | 'yesterday' | 'last7' | 'thisWeek' | 'thisMonth'
+//              | 'range:YYYY-MM-DD~YYYY-MM-DD'（时间段，弹窗里选）
+export const DATE_CHIPS = [
+  { id: 'today', label: '今天' },
+  { id: 'yesterday', label: '昨天' },
+  { id: 'last7', label: '近7天' },
+  { id: 'thisWeek', label: '本周' },
+  { id: 'thisMonth', label: '本月' },
+]
+
 const PAD = (n) => String(n).padStart(2, '0')
 export const dayKey = (d) => `${d.getFullYear()}-${PAD(d.getMonth() + 1)}-${PAD(d.getDate())}`
 
 // 计算筛选区间 [startTs, endTs)；'' 返回 null（不过滤）
 export function dateBounds(value) {
   if (!value) return null
+  const n = new Date()
+  const y = n.getFullYear(), m = n.getMonth(), d = n.getDate()
+  const today0 = new Date(y, m, d).getTime()
+  const tomorrow0 = new Date(y, m, d + 1).getTime()
+  if (value === 'today') return [today0, tomorrow0]
+  if (value === 'yesterday') return [new Date(y, m, d - 1).getTime(), today0]
+  if (value === 'last7') return [new Date(y, m, d - 6).getTime(), tomorrow0]
+  if (value === 'thisWeek') {
+    const day = n.getDay()
+    const off = day === 0 ? 6 : day - 1 // 周一为起点
+    return [new Date(y, m, d - off).getTime(), new Date(y, m, d - off + 7).getTime()]
+  }
+  if (value === 'thisMonth') return [new Date(y, m, 1).getTime(), new Date(y, m + 1, 1).getTime()]
   // 时间段 range:2026-09-01~2026-09-14
   const rm = String(value).match(/^range:(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/)
   if (rm) {
     const s = new Date(rm[1]).getTime()
-    // 结束日期含当天 → 到次日 00:00
     const ed = new Date(rm[2])
     const e = new Date(ed.getFullYear(), ed.getMonth(), ed.getDate() + 1).getTime()
     return [s, e]
@@ -30,6 +51,8 @@ export function dateBounds(value) {
 // 按钮上显示的文字
 export function dateLabel(value) {
   if (!value) return '日期'
+  const chip = DATE_CHIPS.find((c) => c.id === value)
+  if (chip) return chip.label
   const rm = String(value).match(/^range:(\d{4})-(\d{2})-(\d{2})~(\d{4})-(\d{2})-(\d{2})$/)
   if (rm) return `${rm[2]}/${rm[3]} ~ ${rm[5]}/${rm[6]}`
   const dm = String(value).match(/^day:(\d{4})-(\d{2})-(\d{2})$/)
@@ -55,6 +78,7 @@ export function DateFilterBar({ value, onChange }) {
   const [startTmp, setStartTmp] = useState('')
   const [endTmp, setEndTmp] = useState('')
 
+  const isChip = DATE_CHIPS.some((c) => c.id === value)
   const isRange = String(value || '').startsWith('range:')
   const toggle = () => {
     const el = btnRef.current
@@ -92,19 +116,13 @@ export function DateFilterBar({ value, onChange }) {
     background: '#fff', outline: 'none', fontFamily: 'inherit',
   }
   const labelStyle = { fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '4px' }
-  const rowStyle = (sel) => ({
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
-    padding: '10px 12px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '13px',
-    background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'transparent',
-    color: sel ? '#fff' : 'var(--text-main)', fontWeight: sel ? 700 : 500,
-  })
 
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px 4px', flexShrink: 0,
     }}>
-      {/* 左侧：全部 + 日期按钮 */}
-      <div style={{
+      {/* 左侧：可横滑的快捷筛选 chips（保留） */}
+      <div className="hide-scrollbar" style={{
         flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px',
         overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
       }}>
@@ -114,18 +132,29 @@ export function DateFilterBar({ value, onChange }) {
           background: !value ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
           color: !value ? '#fff' : 'var(--text-sub)',
         }}>全部</button>
+        {DATE_CHIPS.map((c) => {
+          const sel = value === c.id
+          return (
+            <button key={c.id} onClick={() => onChange(sel ? '' : c.id)} style={{
+              ...chipBase,
+              border: sel ? 'none' : '1px solid rgba(244,114,182,0.35)',
+              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+              color: sel ? '#fff' : 'var(--text-main)',
+            }}>{c.label}</button>
+          )
+        })}
       </div>
-      {/* 日期弹窗入口 */}
+      {/* 日期弹窗入口：选时间段 */}
       <button ref={btnRef} onClick={toggle} style={{
         ...chipBase, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px',
-        border: isRange ? 'none' : '1px solid rgba(244,114,182,0.35)',
-        background: isRange ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-        color: isRange ? '#fff' : 'var(--text-main)',
+        border: (isRange && value) ? 'none' : '1px solid rgba(244,114,182,0.35)',
+        background: (isRange && value) ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+        color: (isRange && value) ? '#fff' : 'var(--text-main)',
       }}>
         <span>📅 {dateLabel(value)}</span>
         <span style={{ fontSize: '9px', opacity: 0.8, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}>▼</span>
       </button>
-      {/* Portal 弹窗 */}
+      {/* 弹窗用 Portal 挂到 body：脱离页面内遮挡，手机上稳定可见 */}
       {open && createPortal(
         <>
           <div onClick={() => setOpen(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2147483000 }} />
@@ -136,7 +165,12 @@ export function DateFilterBar({ value, onChange }) {
             border: '1px solid rgba(244,114,182,0.22)',
             boxShadow: '0 12px 32px rgba(0,0,0,0.14)', textAlign: 'left', whiteSpace: 'normal',
           }}>
-            <button onClick={() => { onChange(''); setOpen(false) }} style={rowStyle(!value)}>
+            <button onClick={() => { onChange(''); setOpen(false) }} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%',
+              padding: '10px 12px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontSize: '13px',
+              background: !value ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'transparent',
+              color: !value ? '#fff' : 'var(--text-main)', fontWeight: !value ? 700 : 500,
+            }}>
               <span>全部（不限时间）</span>
             </button>
 
