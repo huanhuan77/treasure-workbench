@@ -1,9 +1,8 @@
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { HashRouter, useLocation, useNavigate } from 'react-router-dom'
 import { StoreProvider, useStore } from './store'
 import { ToastProvider, useToast } from './components/Toast'
 import { GlobalKeyboardFix } from './components/GlobalKeyboardFix'
-import { syncAll, GIST_ID_KEY, LAST_SYNC_KEY } from './utils/sync'
 import { BottomNav } from './components/BottomNav'
 import { DashboardPage } from './pages/DashboardPage'
 import { HomePage } from './pages/HomePage'
@@ -74,52 +73,6 @@ const routes = [
   { path: '/product/:id', element: <ProductDetailPage /> },
 ]
 
-// 自动云同步组件：双向同步（拉取云端 → 智能合并 → 写本地 → 推回云端）
-function AutoBackup() {
-  const { show } = useToast()
-  const { applySyncResult } = useStore()
-  const doSync = useCallback(async () => {
-    const token = localStorage.getItem('backup_github_token')
-    if (!token) return
-    try {
-      const gistId = localStorage.getItem(GIST_ID_KEY)
-      const result = await syncAll(token, gistId)
-      applySyncResult(result.merged['blogger_workbench_data_v1'])
-      localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString())
-      if (result.hasChanges) show('🔄 已自动同步云端数据')
-    } catch (e) {}
-  }, [show, applySyncResult])
-  useEffect(() => {
-    // 距上次同步超过 3 小时才算"需要同步"（首次无记录也视为需要）
-    const SYNC_INTERVAL = 3 * 60 * 60 * 1000
-    const shouldSync = () => {
-      const last = localStorage.getItem(LAST_SYNC_KEY)
-      if (!last) return true
-      const lastTime = new Date(last).getTime()
-      if (Number.isNaN(lastTime)) return true
-      return Date.now() - lastTime >= SYNC_INTERVAL
-    }
-    // iOS PWA 切后台会冻结 setInterval，改为：
-    //  1) 首次延迟 60 秒做一次初始同步
-    //  2) 回到前台 / 网络恢复时检查是否超过间隔，超过则补同步
-    const first = setTimeout(() => { if (shouldSync()) doSync() }, 60000)
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible' && shouldSync()) doSync()
-    }
-    const onOnline = () => {
-      if (shouldSync()) doSync()
-    }
-    document.addEventListener('visibilitychange', onVisibility)
-    window.addEventListener('online', onOnline)
-    return () => {
-      clearTimeout(first)
-      document.removeEventListener('visibilitychange', onVisibility)
-      window.removeEventListener('online', onOnline)
-    }
-  }, [doSync])
-  return null
-}
-
 // 启动强制落地「总览」：忽略 URL 里的 hash（#/reading 等），每次进来都从 / 开始。
 // 仅首次挂载时执行一次，不干扰应用内正常导航。
 function LaunchRedirect() {
@@ -139,9 +92,8 @@ function LaunchRedirect() {
 function App() {
   return (
     <StoreProvider>
-      <ToastProvider>
-        <AutoBackup />
-        <GlobalKeyboardFix />
+        <ToastProvider>
+          <GlobalKeyboardFix />
         <HashRouter>
           <LaunchRedirect />
           <KeepAliveRoutes routes={routes} />
