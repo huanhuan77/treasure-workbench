@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { OrderFormModal } from '../components/OrderFormModal'
+import { ConfirmModal } from '../components/Modal'
 import { ACCOUNTS, ACCOUNT_COLOR } from '../utils/accounts'
 import { ProductOrdersSheet } from '../components/ProductOrdersSheet'
 import { DraggableFab } from '../components/DraggableFab'
@@ -52,6 +53,7 @@ export function OrdersPage() {
   const [accountFilter, setAccountFilter] = useState('')  // ''=全部
   const [dateRange, setDateRange] = useState('')  // ''=全部 / today|yesterday|last7|thisWeek|thisMonth|lastMonth|halfYear|thisYear / day:YYYY-MM-DD
   const [sortKey, setSortKey] = useState('dateDesc')  // dateDesc | dateAsc | mostDesc(出单最多) | mostAsc(出单最少)
+  const [dateDelTarget, setDateDelTarget] = useState(null)  // { name, date, entries } —— 按日期删该产品当天的出单
 
   const list = useMemo(() => {
     // 排序：无日期的排最后，其余按日期新→旧
@@ -166,6 +168,16 @@ export function OrdersPage() {
     if (!window.confirm(`删除「${o.name}」这笔出单记录？`)) return
     deleteOrder(o.id)
     show('已删除', 'success')
+  }
+
+  // 删除「某产品某一天」的全部出单（在详情面板点日期右侧 ×）
+  const confirmDeleteDate = () => {
+    const t = dateDelTarget
+    if (!t) return
+    const ids = [...new Set(t.entries.map((e) => e.id))]
+    ids.forEach((id) => deleteOrder(id))
+    show(`已删除「${t.name}」${dispDate(t.date)} 的 ${ids.length} 笔出单`, 'success')
+    setDateDelTarget(null)
   }
 
   // 账号着色
@@ -335,8 +347,25 @@ export function OrdersPage() {
         onClose={() => setActiveName(null)}
         onEdit={(o) => { setActiveName(null); openEdit(o) }}
         onDelete={handleDelete}
+        onDeleteDate={(date, entries) => setDateDelTarget({ name: activeGroup?.name || '', date, entries })}
         onAddMore={addMoreForActive}
         accMeta={accMeta}
+      />
+
+      {/* 按日期删除确认 */}
+      <ConfirmModal
+        open={!!dateDelTarget}
+        onClose={() => setDateDelTarget(null)}
+        onConfirm={confirmDeleteDate}
+        title="删除该日期的出单记录"
+        compact
+        danger
+        confirmText="删除"
+        message={dateDelTarget ? (
+          dateDelTarget.entries.length > 1
+            ? `确定删除「${dateDelTarget.name}」${dispDate(dateDelTarget.date)} 的 ${dateDelTarget.entries.length} 笔出单记录吗？`
+            : `确定删除「${dateDelTarget.name}」${dispDate(dateDelTarget.date)} 的这笔出单记录吗？`
+        ) : ''}
       />
 
       <DraggableFab storageKey="orders" onClick={openAdd} round>
