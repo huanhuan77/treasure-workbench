@@ -221,16 +221,6 @@ export function InvestmentPage() {
     setShowAddInv(false)
   }
 
-  // 切换某条记录的资产类型（股票↔基金）
-  const toggleAssetType = (invIdx) => {
-    const inv = investments[invIdx]
-    if (!inv) return
-    const cur = getAssetType(inv)
-    const next = cur === 'stock' ? 'fund' : 'stock'
-    const updated = investments.map((item, i) => i === invIdx ? { ...item, assetType: next } : item)
-    saveInvestments(updated)
-  }
-
   // 按代码+买卖类型分组
   const groups = {}
   investments.forEach((inv, idx) => {
@@ -347,17 +337,13 @@ export function InvestmentPage() {
             }}>
               {/* 卡片头部 */}
               <div onClick={() => setExpandedInv(expanded ? null : key)} style={{ padding:'12px 14px', cursor:'pointer' }}>
-                {/* 第一行：类型标签(可点击切换) + 买卖标签 + 名称 + 代码 */}
+                {/* 第一行：类型标签 + 买卖标签 + 名称 + 代码 */}
                 <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'8px' }}>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleAssetType(latest._idx) }}
-                    title="点击切换股票/基金类型"
-                    style={{
-                      fontSize:'10px', padding:'2px 8px', borderRadius:'5px',
-                      background: ts.bg, color: ts.color, fontWeight:700, flexShrink:0,
-                      border:`1px solid ${ts.border}`, cursor:'pointer', letterSpacing:'0.3px',
-                    }}
-                  >{ts.label} ⇄</button>
+                  <span style={{
+                    fontSize:'10px', padding:'2px 8px', borderRadius:'5px',
+                    background: ts.bg, color: ts.color, fontWeight:700, flexShrink:0,
+                    border:`1px solid ${ts.border}`, letterSpacing:'0.3px',
+                  }}>{ts.label}</span>
                   <span style={{
                     fontSize:'10px', padding:'2px 7px', borderRadius:'5px', fontWeight:700, flexShrink:0,
                     background: isSell ? '#fef2f2' : '#f0fdf4',
@@ -432,15 +418,12 @@ export function InvestmentPage() {
                         background: i % 2 === 0 ? '#fff' : 'transparent',
                         borderBottom: i < items.length - 1 ? '1px solid #f1f5f9' : 'none',
                       }}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleAssetType(inv._idx) }}
-                          title="切换股票/基金"
-                          style={{
+                        <span style={{
                             fontSize:'9px', padding:'1px 5px', borderRadius:'4px',
                             background: irs.bg, color: irs.color, fontWeight:700,
-                            border:`1px solid ${irs.border}`, cursor:'pointer', flexShrink:0,
+                            border:`1px solid ${irs.border}`, flexShrink:0,
                           }}
-                        >{irs.label}</button>
+                        >{irs.label}</span>
                         <span style={{ flex:1, fontSize:'13px', color:'#1e293b', fontWeight:700 }}>{inv.sellPrice}</span>
                         {inv.shares > 0 && <span style={{ fontSize:'11px', color:'#64748b' }}>{inv.shares}份</span>}
                         {inv.amount > 0 && <span style={{ fontSize:'11px', color:'#059669', fontWeight:600 }}>¥{inv.amount.toFixed(2)}</span>}
