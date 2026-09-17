@@ -320,9 +320,9 @@ export function InvestmentPage() {
             <div key={key} style={{
               marginBottom:'10px', borderRadius:'14px',
               background:'#fff',
-              boxShadow:'0 1px 4px rgba(0,0,0,0.04)',
-              border:`1px solid ${ts.border}`,
-              borderLeft:`3px solid ${ts.dot}`,
+              boxShadow:`0 1px 4px ${profitColor}22`,
+              border:`1px solid ${profitColor}33`,
+              borderLeft:`3px solid ${profitColor}`,
               overflow:'hidden',
             }}>
               {/* 卡片头部 */}
