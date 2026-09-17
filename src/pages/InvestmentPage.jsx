@@ -345,7 +345,7 @@ export function InvestmentPage() {
                     border:`1px solid ${ts.border}`, letterSpacing:'0.3px',
                   }}>{ts.label}</span>
                   <span style={{
-                    fontSize:'10px', padding:'2px 7px', borderRadius:'5px', fontWeight:700, flexShrink:0,
+                    fontSize:'12px', padding:'3px 10px', borderRadius:'6px', fontWeight:700, flexShrink:0,
                     background: isSell ? '#fef2f2' : '#f0fdf4',
                     color: isSell ? '#dc2626' : '#16a34a',
                   }}>{isSell ? '卖出' : '买入'}</span>
