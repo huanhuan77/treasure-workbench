@@ -110,27 +110,17 @@ export function InvestmentPage() {
       const { StockSDK } = await import('stock-sdk')
       const sdk = new StockSDK()
       const code = invCode.trim().replace(/\D/g, '')
+      // 先获取实时行情拿名称
       if (invAssetType === 'fund') {
         const q = await sdk.quotes.fund([code])
         if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].nav) }
-        if (invSellDate) {
-          try {
-            const cb = 'fund_cb_' + Date.now()
-            const jsonpUrl = 'https://api.fund.eastmoney.com/f10/lsjz?callback=' + cb + '&fundCode=' + code + '&pageIndex=1&pageSize=90'
-            window[cb] = (d) => {
-              const found = d?.Data?.LSJZList?.find(x => x.FSRQ === invSellDate)
-              if (found) setInvSellPrice(String(parseFloat(found.DWJZ)))
-              delete window[cb]
-            }
-            const sc = document.createElement('script')
-            sc.src = jsonpUrl
-            document.body.appendChild(sc)
-            setTimeout(() => { if (window[cb]) { delete window[cb] } }, 8000)
-          } catch(e) {}
-        }
       } else {
         const q = await sdk.quotes.cn([code])
         if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].price) }
+      }
+      // 如果选了日期，自动获取该日期的历史价格填入
+      if (invSellDate) {
+        setTimeout(() => fetchHistoricalPrice(), 100)
       }
     } catch(e) { alert('获取行情失败: ' + e.message) }
   }
@@ -496,7 +486,7 @@ export function InvestmentPage() {
             width:'100%', boxSizing:'border-box', padding:'11px', borderRadius:'10px',
             border:'none', background:'linear-gradient(135deg,#6366f1,#818cf8)',
             color:'#fff', fontSize:'13px', fontWeight:700, cursor:'pointer', marginBottom:'10px',
-          }}>🔍 获取实时行情</button>
+          }}>🔍 获取行情</button>
 
           {invName && (
             <div style={{ margin:'0 0 10px', padding:'8px 10px', borderRadius:'8px', background:'#f8fafc', border:'1px solid #e2e8f0' }}>
