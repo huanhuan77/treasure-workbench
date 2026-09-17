@@ -47,7 +47,7 @@ export function InvestmentPage() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)) } catch(e) {}
   }
 
-  const [activeTab, setActiveTab] = useState('all') // all / stock / fund
+  const [activeTab, setActiveTab] = useState('stock') // stock / fund
   const [showAddInv, setShowAddInv] = useState(false)
   const [expandedInv, setExpandedInv] = useState(null)
   // 表单状态
@@ -256,7 +256,6 @@ export function InvestmentPage() {
   }
 
   const TABS = [
-    { key: 'all', label: '全部', count: investments.length },
     { key: 'stock', label: '股票', count: stockCount },
     { key: 'fund', label: '基金', count: fundCount },
   ]
@@ -315,7 +314,7 @@ export function InvestmentPage() {
         {filteredGroups.length === 0 && (
           <div style={{ textAlign:'center', padding:'48px 20px', color:'#cbd5e1' }}>
             <div style={{ fontSize:'40px', marginBottom:'10px' }}>📊</div>
-            <p style={{ fontSize:'13px', margin:0 }}>暂无{activeTab === 'stock' ? '股票' : activeTab === 'fund' ? '基金' : ''}投资记录</p>
+            <p style={{ fontSize:'13px', margin:0 }}>暂无{activeTab === 'stock' ? '股票' : '基金'}投资记录</p>
           </div>
         )}
 
