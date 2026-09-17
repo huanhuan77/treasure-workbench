@@ -299,7 +299,7 @@ export function InvestmentPage() {
       </div>
       {/* 固定区域结束 */}
 
-      <div style={{ padding:'140px 16px 0' }}>
+      <div style={{ padding:'200px 16px 0' }}>
         {filteredGroups.length === 0 && (
           <div style={{ textAlign:'center', padding:'48px 20px', color:'#cbd5e1' }}>
             <div style={{ fontSize:'40px', marginBottom:'10px' }}>📊</div>
