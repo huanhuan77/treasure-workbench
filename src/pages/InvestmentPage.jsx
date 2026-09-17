@@ -374,8 +374,13 @@ export function InvestmentPage() {
                       <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'1px' }}>当前价 / 涨跌幅</div>
                       <div style={{ display:'flex', alignItems:'baseline', gap:'5px' }}>
                         <span style={{ fontSize:'15px', fontWeight:700, color:'#475569' }}>{latest.currentPrice}</span>
-                        <span style={{ fontSize:'12px', fontWeight:700, color: profitColor }}>
-                          {latest.change != null ? (latest.change >= 0 ? '+' : '') + latest.change.toFixed(2) + '%' : '--'}
+                        <span style={{
+                          fontSize:'13px', fontWeight:800, color:'#fff',
+                          background: (latest.change ?? 0) >= 0 ? '#ef4444' : '#22c55e',
+                          padding:'3px 9px', borderRadius:'7px', flexShrink:0,
+                          letterSpacing:'0.3px',
+                        }}>
+                          {latest.change != null ? `${(latest.change >= 0 ? '↑ +' : '↓ ')}${latest.change.toFixed(2)}%` : '--'}
                         </span>
                       </div>
                     </div>
