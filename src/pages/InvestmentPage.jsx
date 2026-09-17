@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useStore } from '../store'
 import { recordDelete } from '../utils/sync'
+import { Modal } from '../components/Modal'
 
 const STORAGE_KEY = 'blogger_investments_v1'
 
@@ -380,17 +381,9 @@ export function InvestmentPage() {
           )
         })}
 
-        {/* 添加按钮 / 表单 */}
-        {showAddInv && (
-          <div style={{
-            marginTop:'8px', padding:'16px', borderRadius:'16px',
-            background:'#fff', border:'1px solid #ddd6fe',
-            boxShadow:'0 2px 12px rgba(124,58,237,0.1)',
-            boxSizing:'border-box',
-          }}>
-            <div style={{ fontSize:'15px', fontWeight:800, color:'#8b5cf6', marginBottom:'14px', display:'flex', alignItems:'center', gap:'6px' }}>
-              📝 添加记录
-            </div>
+        {/* 添加表单弹窗 */}
+        <Modal open={showAddInv} onClose={() => setShowAddInv(false)} title="📝 添加投资记录" center>
+          <div style={{ boxSizing:'border-box' }}>
             <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder='代码 如 600519（股票）/ 110011（基金）' style={{
               width:'100%', boxSizing:'border-box', padding:'12px 14px', borderRadius:'10px',
               border:'1.5px solid #ddd6fe', fontSize:'14px', outline:'none',
@@ -461,19 +454,21 @@ export function InvestmentPage() {
                 color:'#6d28d9', fontSize:'13px', fontWeight:600, cursor:'pointer',
               }}>📅 用 {invSellDate || '选定日'} 的价格填入</button>
             )}
-            <button onClick={confirmAddInv} style={{
-              width:'100%', boxSizing:'border-box', padding:'14px', borderRadius:'10px',
-              border:'none', background:'linear-gradient(135deg,#22c55e,#16a34a)',
-              color:'#fff', fontSize:'16px', fontWeight:800, cursor:'pointer',
-              boxShadow:'0 2px 8px rgba(34,197,94,0.3)',
-            }}>✓ 保存</button>
-            <button onClick={() => { setShowAddInv(false); setInvType('buy') }} style={{
-              width:'100%', boxSizing:'border-box', padding:'10px', borderRadius:'10px',
-              border:'none', background:'transparent', color:'#94a3b8', fontSize:'13px', cursor:'pointer',
-              marginTop:'6px',
-            }}>取消</button>
+            <div style={{ display:'flex', gap:'10px', marginTop:'16px' }}>
+              <button onClick={() => { setShowAddInv(false); setInvType('buy') }} style={{
+                flex:1, padding:'12px', borderRadius:'10px',
+                border:'1px solid #e2e8f0', background:'#f8fafc', color:'#64748b',
+                fontSize:'14px', fontWeight:600, cursor:'pointer',
+              }}>取消</button>
+              <button onClick={confirmAddInv} style={{
+                flex:1, padding:'12px', borderRadius:'10px',
+                border:'none', background:'linear-gradient(135deg,#7c3aed,#8b5cf6)',
+                color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer',
+                boxShadow:'0 2px 8px rgba(124,58,237,0.3)',
+              }}>保存</button>
+            </div>
           </div>
-        )}
+        </Modal>
       </div>
     </div>
   )
