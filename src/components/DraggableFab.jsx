@@ -14,7 +14,7 @@ export function DraggableFab({ storageKey = 'default', onClick, children, round,
 
   const clamp = (x, y, w, h) => ({
     x: Math.min(Math.max(8, x), Math.max(8, window.innerWidth - w - 8)),
-    y: Math.min(Math.max(76, y), Math.max(76, window.innerHeight - h - 100)),
+    y: Math.min(Math.max(76, y), Math.max(76, window.innerHeight - h - 130)),
   })
 
   // 初始化：有存档用存档，否则默认靠右、纵向 72%（避开底部导航）
@@ -95,7 +95,7 @@ export function DraggableFab({ storageKey = 'default', onClick, children, round,
         position: 'fixed',
         left: pos ? pos.x : -9999,
         top: pos ? pos.y : -9999,
-        zIndex: 50,
+        zIndex: 150,
         boxSizing: 'border-box',
         touchAction: 'none',
         cursor: 'grab',

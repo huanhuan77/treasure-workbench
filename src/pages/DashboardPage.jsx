@@ -150,7 +150,7 @@ export function DashboardPage() {
     [samples],
   )
   // 总览只展示前 5 条，其余进「查看全部」列表页
-  const reminders = allReminders.slice(0, 5)
+  const reminders = allReminders
 
   // 即将到期：有截止日期、且未发布/未放弃、7 天内到期（含已逾期），按截止日期升序
   const expiringSoon = useMemo(() => {
@@ -382,7 +382,7 @@ export function DashboardPage() {
             暂无需要发布提醒的样品
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
             {reminders.map((s) => {
               // 只显示还需要发视频的账号（从未发过 / 超 7 天没发）；都发过则显示全部
               const pending = pendingAccounts(s)
@@ -431,7 +431,7 @@ export function DashboardPage() {
             {expiringSoon.length > 0 && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#9ca3af', padding: '1px 7px', borderRadius: '8px' }}>{expiringSoon.length}</span>}
           </div>
           {expiringSoon.length > 0 && (
-            <button onClick={() => go('/samples')} style={{ fontSize: '12px', color: '#8a8588', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
+            <button onClick={() => go('/samples/expiring')} style={{ fontSize: '12px', color: '#8a8588', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
           )}
         </div>
         {expiringSoon.length === 0 ? (
