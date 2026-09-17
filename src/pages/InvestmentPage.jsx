@@ -263,8 +263,14 @@ export function InvestmentPage() {
   return (
     <div className="app-container" style={{ paddingBottom: '100px', background: '#f8fafc', minHeight: '100vh' }}>
       {/* 顶部 Header */}
+      {/* 顶部固定区域：Header + Tab，不随页面滚动 */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        background: '#f8fafc',
+        maxWidth: '480px', margin: '0 auto',
+      }}>
       <header style={{
-        padding: 'calc(18px + var(--safe-top)) 20px 16px',
+        padding: 'calc(14px + var(--safe-top)) 20px 14px',
         background: 'linear-gradient(135deg,#6366f1 0%,#818cf8 100%)',
         borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px',
         boxShadow: '0 2px 12px rgba(99,102,241,0.2)',
@@ -310,7 +316,10 @@ export function InvestmentPage() {
         })}
       </div>
 
-      <div style={{ padding:'0 16px' }}>
+      </div>
+      {/* 固定区域结束 */}
+
+      <div style={{ padding:'140px 16px 0' }}>
         {filteredGroups.length === 0 && (
           <div style={{ textAlign:'center', padding:'48px 20px', color:'#cbd5e1' }}>
             <div style={{ fontSize:'40px', marginBottom:'10px' }}>📊</div>
