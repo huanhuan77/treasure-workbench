@@ -17,17 +17,21 @@ function loadInvestments() {
   return []
 }
 
-// 判断基金：代码纯数字且长度 <= 6
-function isFundCode(code) {
-  if (!code) return false
+// 自动判断：纯数字且 <=6 位为基金，否则为股票（旧数据兜底）
+function autoDetectType(code) {
+  if (!code) return 'stock'
   const c = String(code).replace(/\D/g, '')
-  return c.length > 0 && c.length <= 6 && /^\d+$/.test(c)
+  return c.length > 0 && c.length <= 6 && /^\d+$/.test(c) ? 'fund' : 'stock'
 }
 
-function typeTag(code) {
-  return isFundCode(code)
-    ? { label: '基金', bg: '#ede9fe', color: '#6d28d9' }
-    : { label: '股票', bg: '#fef3c7', color: '#92400e' }
+// 获取记录的资产类型：优先用 assetType 字段，没有则自动判断
+function getAssetType(inv) {
+  return inv.assetType || autoDetectType(inv.code)
+}
+
+const TYPE_STYLE = {
+  stock: { label: '股票', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', dot: '#3b82f6' },
+  fund: { label: '基金', bg: '#fffbeb', color: '#b45309', border: '#fde68a', dot: '#f59e0b' },
 }
 
 export function InvestmentPage() {
@@ -43,8 +47,10 @@ export function InvestmentPage() {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)) } catch(e) {}
   }
 
+  const [activeTab, setActiveTab] = useState('all') // all / stock / fund
   const [showAddInv, setShowAddInv] = useState(false)
   const [expandedInv, setExpandedInv] = useState(null)
+  // 表单状态
   const [invCode, setInvCode] = useState('')
   const [invName, setInvName] = useState('')
   const [invCurrentPrice, setInvCurrentPrice] = useState(null)
@@ -52,6 +58,7 @@ export function InvestmentPage() {
   const [invSellDate, setInvSellDate] = useState('')
   const [invType, setInvType] = useState('buy')
   const [invShares, setInvShares] = useState('')
+  const [invAssetType, setInvAssetType] = useState('stock') // 新增时默认股票
 
   // 自动刷新行情
   const autoRefreshPrices = useCallback(async (list) => {
@@ -62,10 +69,10 @@ export function InvestmentPage() {
     const updated = await Promise.all(list.map(async (inv) => {
       if (!inv.code) return inv
       const code = inv.code.replace(/\D/g, '')
-      const fund = isFundCode(inv.code)
+      const at = getAssetType(inv)
       try {
         let newPrice = null
-        if (fund) {
+        if (at === 'fund') {
           const q = await sdk.quotes.fund([code])
           if (q?.[0]) newPrice = q[0].nav
         } else {
@@ -103,8 +110,7 @@ export function InvestmentPage() {
       const { StockSDK } = await import('stock-sdk')
       const sdk = new StockSDK()
       const code = invCode.trim().replace(/\D/g, '')
-      const fund = isFundCode(invCode)
-      if (fund) {
+      if (invAssetType === 'fund') {
         const q = await sdk.quotes.fund([code])
         if (q?.[0]) { setInvName(q[0].name); setInvCurrentPrice(q[0].nav) }
         if (invSellDate) {
@@ -133,11 +139,10 @@ export function InvestmentPage() {
     if (!invCode.trim()) { alert('请先填写代码'); return }
     if (!invSellDate) { alert('请先选择' + (invType==='buy' ? '买入日' : '卖出日')); return }
     const code = invCode.trim().replace(/\D/g, '')
-    const fund = isFundCode(invCode)
     try {
       const { StockSDK } = await import('stock-sdk')
       const sdk = new StockSDK()
-      if (fund) {
+      if (invAssetType === 'fund') {
         const cb = 'fund_cb_' + Date.now()
         const jsonpUrl = 'https://api.fund.eastmoney.com/f10/lsjz?callback=' + cb + '&fundCode=' + code + '&pageIndex=1&pageSize=120'
         await new Promise((resolve, reject) => {
@@ -206,9 +211,24 @@ export function InvestmentPage() {
     const normCode = invCode.trim()
     const shares = parseFloat(invShares) || 0
     const amount = shares * sp
-    const newItem = { id: uid(), code:normCode, name:invName, sellPrice:sp, currentPrice:cp, sellDate:invSellDate, type:invType, change, shares, amount, updatedAt: Date.now() }
-    setInvCode(''); setInvName(''); setInvCurrentPrice(null); setInvSellPrice(''); setInvSellDate(''); setInvType('buy'); setInvShares('')
+    const newItem = {
+      id: uid(), code: normCode, name: invName, sellPrice: sp, currentPrice: cp,
+      sellDate: invSellDate, type: invType, change, shares, amount,
+      assetType: invAssetType, updatedAt: Date.now(),
+    }
+    setInvCode(''); setInvName(''); setInvCurrentPrice(null); setInvSellPrice(''); setInvSellDate(''); setInvType('buy'); setInvShares(''); setInvAssetType('stock')
     setTimeout(() => saveInvestments([...investments, newItem]), 0)
+    setShowAddInv(false)
+  }
+
+  // 切换某条记录的资产类型（股票↔基金）
+  const toggleAssetType = (invIdx) => {
+    const inv = investments[invIdx]
+    if (!inv) return
+    const cur = getAssetType(inv)
+    const next = cur === 'stock' ? 'fund' : 'stock'
+    const updated = investments.map((item, i) => i === invIdx ? { ...item, assetType: next } : item)
+    saveInvestments(updated)
   }
 
   // 按代码+买卖类型分组
@@ -219,95 +239,143 @@ export function InvestmentPage() {
     groups[key].push({ ...inv, _idx: idx })
   })
 
+  // 按 Tab 过滤分组
+  const filteredGroups = Object.entries(groups).filter(([_, items]) => {
+    if (activeTab === 'all') return true
+    return getAssetType(items[0]) === activeTab
+  })
+
+  // 各类型数量
+  const stockCount = investments.filter(i => getAssetType(i) === 'stock').length
+  const fundCount = investments.filter(i => getAssetType(i) === 'fund').length
+
   const delItem = (delIdx) => {
     const item = investments[delIdx]
     if (item && item.id) recordDelete('blogger_investments_v1', item.id)
     saveInvestments(investments.filter((_, i) => i !== delIdx))
   }
 
+  const TABS = [
+    { key: 'all', label: '全部', count: investments.length },
+    { key: 'stock', label: '股票', count: stockCount },
+    { key: 'fund', label: '基金', count: fundCount },
+  ]
+
   return (
-    <div className="app-container" style={{ paddingBottom: '100px', background: 'linear-gradient(180deg,#f0f9ff 0%,#f8fafc 50%,#ffffff 100%)', minHeight: '100vh' }}>
-      {/* 顶部渐变 Header */}
+    <div className="app-container" style={{ paddingBottom: '100px', background: '#f8fafc', minHeight: '100vh' }}>
+      {/* 顶部 Header */}
       <header style={{
-        padding: 'calc(20px + var(--safe-top)) 20px 24px',
-        background: 'linear-gradient(135deg,#7c3aed 0%,#8b5cf6 50%,#a855f7 100%)',
-        borderBottomLeftRadius: '24px', borderBottomRightRadius: '24px',
-        boxShadow: '0 4px 20px rgba(124,58,237,0.3)',
+        padding: 'calc(18px + var(--safe-top)) 20px 16px',
+        background: 'linear-gradient(135deg,#6366f1 0%,#818cf8 100%)',
+        borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px',
+        boxShadow: '0 2px 12px rgba(99,102,241,0.2)',
       }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div>
-            <h1 style={{ margin:0, fontSize:'22px', fontWeight:800, color:'#fff', letterSpacing:'-0.3px' }}>📈 投资跟踪</h1>
-            <p style={{ margin:'6px 0 0', fontSize:'13px', color:'rgba(255,255,255,0.8)' }}>实时行情自动刷新 · 股票基金一目了然</p>
+            <h1 style={{ margin:0, fontSize:'20px', fontWeight:800, color:'#fff', letterSpacing:'-0.3px' }}>📈 投资跟踪</h1>
+            <p style={{ margin:'4px 0 0', fontSize:'12px', color:'rgba(255,255,255,0.75)' }}>实时行情自动刷新</p>
           </div>
           <button onClick={() => setShowAddInv(true)} style={{
-            width:'44px', height:'44px', borderRadius:'50%',
-            background:'rgba(255,255,255,0.2)', border:'1.5px solid rgba(255,255,255,0.4)',
-            color:'#fff', fontSize:'24px', fontWeight:300, cursor:'pointer',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            flexShrink:0, lineHeight:1, backdropFilter:'blur(8px)',
+            width:'40px', height:'40px', borderRadius:'50%',
+            background:'rgba(255,255,255,0.2)', border:'1.5px solid rgba(255,255,255,0.35)',
+            color:'#fff', fontSize:'22px', fontWeight:300, cursor:'pointer',
+            display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, lineHeight:1,
           }}>+</button>
         </div>
       </header>
 
-      <div style={{ marginTop:'16px', padding:'0 16px' }}>
-        {investments.length === 0 && (
-          <div style={{ textAlign:'center', padding:'40px 20px', color:'#a78bfa' }}>
-            <div style={{ fontSize:'44px', marginBottom:'12px' }}>📊</div>
-            <p style={{ fontSize:'14px', margin:0 }}>暂无投资记录，点下方「添加」开始记录</p>
+      {/* Tab 切换 */}
+      <div style={{ display:'flex', gap:'8px', padding:'14px 16px 8px' }}>
+        {TABS.map((tab) => {
+          const active = activeTab === tab.key
+          const dotColor = tab.key === 'stock' ? '#3b82f6' : tab.key === 'fund' ? '#f59e0b' : '#6366f1'
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              style={{
+                flex:1, padding:'9px 0', borderRadius:'10px',
+                border: active ? `1.5px solid ${dotColor}` : '1.5px solid #e2e8f0',
+                background: active ? '#fff' : 'transparent',
+                color: active ? dotColor : '#94a3b8',
+                fontSize:'13px', fontWeight: active ? 700 : 500, cursor:'pointer',
+                display:'flex', alignItems:'center', justifyContent:'center', gap:'5px',
+                boxShadow: active ? `0 1px 6px ${dotColor}22` : 'none',
+              }}
+            >
+              <span style={{ width:'6px', height:'6px', borderRadius:'50%', background: dotColor }} />
+              {tab.label}
+              <span style={{ fontSize:'10px', opacity:0.7 }}>({tab.count})</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div style={{ padding:'0 16px' }}>
+        {filteredGroups.length === 0 && (
+          <div style={{ textAlign:'center', padding:'48px 20px', color:'#cbd5e1' }}>
+            <div style={{ fontSize:'40px', marginBottom:'10px' }}>📊</div>
+            <p style={{ fontSize:'13px', margin:0 }}>暂无{activeTab === 'stock' ? '股票' : activeTab === 'fund' ? '基金' : ''}投资记录</p>
           </div>
         )}
 
         {/* 分组列表 */}
-        {Object.entries(groups).map(([key, items]) => {
+        {filteredGroups.map(([key, items]) => {
           items.sort((a, b) => (b.sellDate || '').localeCompare(a.sellDate || ''))
           const latest = items[0]
           const expanded = expandedInv === key
-          const tag = typeTag(latest.code)
+          const at = getAssetType(latest)
+          const ts = TYPE_STYLE[at]
           const isSell = latest.type === 'sell'
           const profitColor = (latest.change ?? 0) >= 0 ? '#ef4444' : '#22c55e'
           return (
             <div key={key} style={{
-              marginBottom:'10px', borderRadius:'16px',
-              background:'linear-gradient(135deg,#faf5ff 0%,#f5f3ff 100%)',
-              boxShadow:'0 2px 12px rgba(124,58,237,0.08)',
-              border:'1px solid #ede9fe',
+              marginBottom:'10px', borderRadius:'14px',
+              background:'#fff',
+              boxShadow:'0 1px 4px rgba(0,0,0,0.04)',
+              border:`1px solid ${ts.border}`,
+              borderLeft:`3px solid ${ts.dot}`,
               overflow:'hidden',
             }}>
-              {/* 卡片头部 - 可点击展开 */}
-              <div onClick={() => setExpandedInv(expanded ? null : key)} style={{ padding:'14px 16px', cursor:'pointer' }}>
-                {/* 第一行：标签 + 名称 + 代码 */}
-                <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'10px' }}>
+              {/* 卡片头部 */}
+              <div onClick={() => setExpandedInv(expanded ? null : key)} style={{ padding:'12px 14px', cursor:'pointer' }}>
+                {/* 第一行：类型标签(可点击切换) + 买卖标签 + 名称 + 代码 */}
+                <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'8px' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleAssetType(latest._idx) }}
+                    title="点击切换股票/基金类型"
+                    style={{
+                      fontSize:'10px', padding:'2px 8px', borderRadius:'5px',
+                      background: ts.bg, color: ts.color, fontWeight:700, flexShrink:0,
+                      border:`1px solid ${ts.border}`, cursor:'pointer', letterSpacing:'0.3px',
+                    }}
+                  >{ts.label} ⇄</button>
                   <span style={{
-                    fontSize:'10px', padding:'3px 8px', borderRadius:'6px',
-                    background: tag.bg, color: tag.color, fontWeight:700, flexShrink:0,
-                    letterSpacing:'0.3px',
-                  }}>{tag.label}</span>
-                  <span style={{
-                    fontSize:'10px', padding:'3px 8px', borderRadius:'6px', fontWeight:700, flexShrink:0,
+                    fontSize:'10px', padding:'2px 7px', borderRadius:'5px', fontWeight:700, flexShrink:0,
                     background: isSell ? '#fef2f2' : '#f0fdf4',
                     color: isSell ? '#dc2626' : '#16a34a',
                   }}>{isSell ? '卖出' : '买入'}</span>
                   <span style={{
-                    fontSize:'15px', fontWeight:700, color:'#4c1d95', flex:1, minWidth:0,
+                    fontSize:'14px', fontWeight:700, color:'#1e293b', flex:1, minWidth:0,
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
                   }}>{latest.name}</span>
                   <span style={{ fontSize:'11px', color:'#94a3b8', flexShrink:0, fontFamily:'monospace' }}>{latest.code}</span>
                 </div>
 
-                {/* 第二行：核心数据 - 价格大字体 */}
-                <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:'10px' }}>
+                {/* 第二行：价格 */}
+                <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:'8px' }}>
                   <div>
-                    <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'2px' }}>{isSell ? '卖出价' : '买入价'}</div>
-                    <div style={{ fontSize:'22px', fontWeight:800, color:'#5b21b6', letterSpacing:'-0.5px', lineHeight:1 }}>
+                    <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'1px' }}>{isSell ? '卖出价' : '买入价'}</div>
+                    <div style={{ fontSize:'20px', fontWeight:800, color:'#1e293b', letterSpacing:'-0.5px', lineHeight:1 }}>
                       {latest.sellPrice}
                     </div>
                   </div>
                   {latest.currentPrice != null && (
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'2px' }}>当前价 / 涨跌幅</div>
-                      <div style={{ display:'flex', alignItems:'baseline', gap:'6px' }}>
-                        <span style={{ fontSize:'16px', fontWeight:700, color:'#6d28d9' }}>{latest.currentPrice}</span>
-                        <span style={{ fontSize:'13px', fontWeight:700, color: profitColor }}>
+                      <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'1px' }}>当前价 / 涨跌幅</div>
+                      <div style={{ display:'flex', alignItems:'baseline', gap:'5px' }}>
+                        <span style={{ fontSize:'15px', fontWeight:700, color:'#475569' }}>{latest.currentPrice}</span>
+                        <span style={{ fontSize:'12px', fontWeight:700, color: profitColor }}>
                           {latest.change != null ? (latest.change >= 0 ? '+' : '') + latest.change.toFixed(2) + '%' : '--'}
                         </span>
                       </div>
@@ -315,161 +383,175 @@ export function InvestmentPage() {
                   )}
                 </div>
 
-                {/* 第三行：份额 + 金额 + 日期 + 展开指示 */}
+                {/* 第三行：明细 */}
                 <div style={{
-                  display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap',
-                  paddingTop:'10px', borderTop:'1px dashed #ddd6fe',
-                  fontSize:'12px', color:'#64748b',
+                  display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap',
+                  paddingTop:'8px', borderTop:'1px dashed #f1f5f9',
+                  fontSize:'11px', color:'#64748b',
                 }}>
-                  {latest.shares > 0 && (
-                    <span>份额 <b style={{ color:'#8b5cf6', fontWeight:700 }}>{latest.shares}</b></span>
-                  )}
-                  {latest.amount > 0 && (
-                    <span>金额 <b style={{ color:'#14b8a6', fontWeight:700 }}>¥{latest.amount.toFixed(2)}</b></span>
-                  )}
-                  {latest.sellDate && (
-                    <span style={{ color:'#94a3b8' }}>📅 {latest.sellDate}</span>
-                  )}
+                  {latest.shares > 0 && <span>份额 <b style={{ color: ts.color, fontWeight:700 }}>{latest.shares}</b></span>}
+                  {latest.amount > 0 && <span>金额 <b style={{ color:'#059669', fontWeight:700 }}>¥{latest.amount.toFixed(2)}</b></span>}
+                  {latest.sellDate && <span style={{ color:'#94a3b8' }}>📅 {latest.sellDate}</span>}
                   <span style={{
-                    marginLeft:'auto', fontSize:'11px', color:'#8b5cf6', fontWeight:600,
-                    background:'#f5f3ff', padding:'3px 10px', borderRadius:'8px',
-                  }}>
-                    {items.length} 条记录 {expanded ? '▲' : '▼'}
-                  </span>
+                    marginLeft:'auto', fontSize:'10px', color:'#94a3b8', fontWeight:600,
+                    background:'#f8fafc', padding:'2px 8px', borderRadius:'6px',
+                  }}>{items.length} 条 {expanded ? '▲' : '▼'}</span>
                 </div>
               </div>
 
               {/* 展开历史记录 */}
               {expanded && (
                 <div style={{
-                  borderTop:'1px solid #ede9fe',
-                  padding:'10px 16px 14px',
-                  background:'#f5f3ff',
+                  borderTop:'1px solid #f1f5f9',
+                  padding:'8px 14px 12px',
+                  background:'#f8fafc',
                 }}>
-                  <div style={{ fontSize:'11px', fontWeight:700, color:'#8b5cf6', marginBottom:'8px', letterSpacing:'0.3px' }}>
-                    📋 历史记录（按日期倒序）
+                  <div style={{ fontSize:'10px', fontWeight:700, color:'#64748b', marginBottom:'6px', letterSpacing:'0.3px' }}>
+                    📋 历史记录
                   </div>
-                  {items.map((inv, i) => (
-                    <div key={i} style={{
-                      display:'flex', alignItems:'center', gap:'8px',
-                      padding:'8px 10px', borderRadius:'8px',
-                      background: i % 2 === 0 ? '#faf5ff' : 'transparent',
-                      borderBottom: i < items.length - 1 ? '1px solid #ede9fe' : 'none',
-                    }}>
-                      <span style={{
-                        fontSize:'10px', color:'#fff', fontWeight:700,
-                        background:'linear-gradient(135deg,#7c3aed,#8b5cf6)', borderRadius:'4px',
-                        minWidth:'22px', textAlign:'center', padding:'2px 0', flexShrink:0,
-                      }}>#{items.length - i}</span>
-                      <span style={{ flex:1, fontSize:'14px', color:'#4c1d95', fontWeight:700 }}>{inv.sellPrice}</span>
-                      {inv.shares > 0 && <span style={{ fontSize:'11px', color:'#8b5cf6', fontWeight:600 }}>{inv.shares}份</span>}
-                      {inv.amount > 0 && <span style={{ fontSize:'11px', color:'#14b8a6', fontWeight:600 }}>¥{inv.amount.toFixed(2)}</span>}
-                      {inv.sellDate && <span style={{ fontSize:'11px', color:'#94a3b8' }}>{inv.sellDate}</span>}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); delItem(inv._idx) }}
-                        style={{
-                          background:'#fef2f2', border:'none', color:'#ef4444',
-                          fontSize:'14px', cursor:'pointer', width:'24px', height:'24px',
-                          borderRadius:'6px', lineHeight:1, flexShrink:0,
-                        }}
-                      >×</button>
-                    </div>
-                  ))}
+                  {items.map((inv, i) => {
+                    const iat = getAssetType(inv)
+                    const irs = TYPE_STYLE[iat]
+                    return (
+                      <div key={i} style={{
+                        display:'flex', alignItems:'center', gap:'6px',
+                        padding:'7px 8px', borderRadius:'8px',
+                        background: i % 2 === 0 ? '#fff' : 'transparent',
+                        borderBottom: i < items.length - 1 ? '1px solid #f1f5f9' : 'none',
+                      }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleAssetType(inv._idx) }}
+                          title="切换股票/基金"
+                          style={{
+                            fontSize:'9px', padding:'1px 5px', borderRadius:'4px',
+                            background: irs.bg, color: irs.color, fontWeight:700,
+                            border:`1px solid ${irs.border}`, cursor:'pointer', flexShrink:0,
+                          }}
+                        >{irs.label}</button>
+                        <span style={{ flex:1, fontSize:'13px', color:'#1e293b', fontWeight:700 }}>{inv.sellPrice}</span>
+                        {inv.shares > 0 && <span style={{ fontSize:'11px', color:'#64748b' }}>{inv.shares}份</span>}
+                        {inv.amount > 0 && <span style={{ fontSize:'11px', color:'#059669', fontWeight:600 }}>¥{inv.amount.toFixed(2)}</span>}
+                        {inv.sellDate && <span style={{ fontSize:'11px', color:'#94a3b8' }}>{inv.sellDate}</span>}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); delItem(inv._idx) }}
+                          style={{
+                            background:'#fef2f2', border:'none', color:'#ef4444',
+                            fontSize:'13px', cursor:'pointer', width:'22px', height:'22px',
+                            borderRadius:'5px', lineHeight:1, flexShrink:0,
+                          }}
+                        >×</button>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
           )
         })}
-
-        {/* 添加表单弹窗 */}
-        <Modal open={showAddInv} onClose={() => setShowAddInv(false)} title="📝 添加投资记录" center>
-          <div style={{ boxSizing:'border-box' }}>
-            <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder='代码 如 600519（股票）/ 110011（基金）' style={{
-              width:'100%', boxSizing:'border-box', padding:'12px 14px', borderRadius:'10px',
-              border:'1.5px solid #ddd6fe', fontSize:'14px', outline:'none',
-              marginBottom:'12px', minWidth:0, background:'#f8fafc',
-            }} />
-            <div style={{ display:'flex', gap:'10px', marginBottom:'12px' }}>
-              <button type='button' onClick={() => setInvType('buy')} style={{
-                flex:1, minWidth:0, padding:'12px 0', borderRadius:'10px',
-                border: invType==='buy' ? '2px solid #22c55e' : '1.5px solid #e2e8f0',
-                background: invType==='buy' ? '#22c55e' : '#fff',
-                color: invType==='buy' ? '#fff' : '#64748b',
-                fontSize:'14px', fontWeight:700, cursor:'pointer',
-              }}>📈 买入</button>
-              <button type='button' onClick={() => setInvType('sell')} style={{
-                flex:1, minWidth:0, padding:'12px 0', borderRadius:'10px',
-                border: invType==='sell' ? '2px solid #ef4444' : '1.5px solid #e2e8f0',
-                background: invType==='sell' ? '#ef4444' : '#fff',
-                color: invType==='sell' ? '#fff' : '#64748b',
-                fontSize:'14px', fontWeight:700, cursor:'pointer',
-              }}>📉 卖出</button>
-            </div>
-            <button onClick={fetchAndAdd} style={{
-              width:'100%', boxSizing:'border-box', padding:'13px', borderRadius:'10px',
-              border:'none', background:'linear-gradient(135deg,#7c3aed,#8b5cf6)',
-              color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer', marginBottom:'12px',
-              boxShadow:'0 2px 8px rgba(124,58,237,0.3)',
-            }}>🔍 获取实时行情</button>
-            {invName && (
-              <div style={{
-                margin:'0 0 12px', padding:'10px 12px', borderRadius:'10px',
-                background:'#f5f3ff', border:'1px solid #ddd6fe',
-              }}>
-                <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'4px' }}>
-                  <span style={{ fontSize:'10px', padding:'2px 6px', borderRadius:'4px', background: typeTag(invCode).bg, color: typeTag(invCode).color, fontWeight:700 }}>{typeTag(invCode).label}</span>
-                  <span style={{ fontSize:'14px', color:'#4c1d95', fontWeight:700 }}>{invName}</span>
-                </div>
-                <div style={{ fontSize:'12px', color:'#64748b' }}>当前价: <b style={{ color:'#8b5cf6' }}>{invCurrentPrice}</b></div>
-              </div>
-            )}
-            <div style={{ display:'flex', gap:'10px', marginBottom:'12px' }}>
-              <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入价' : '卖出价'} type='number' step='any' style={{
-                flex:1, minWidth:0, boxSizing:'border-box', padding:'12px 10px', borderRadius:'10px',
-                border:'1.5px solid #ddd6fe', fontSize:'14px', outline:'none', textAlign:'center',
-                background:'#f8fafc',
-              }} />
-              <input value={invShares} onChange={e => setInvShares(e.target.value)} placeholder='份额' type='number' step='any' style={{
-                flex:1, minWidth:0, boxSizing:'border-box', padding:'12px 10px', borderRadius:'10px',
-                border:'1.5px solid #ddd6fe', fontSize:'14px', outline:'none', textAlign:'center',
-                background:'#f8fafc',
-              }} />
-            </div>
-            {invSellPrice && invShares && (
-              <p style={{ margin:'0 0 12px', fontSize:'14px', color:'#14b8a6', fontWeight:700, textAlign:'center' }}>
-                💰 金额: ¥{(parseFloat(invSellPrice) * parseFloat(invShares)).toFixed(2)}
-              </p>
-            )}
-            <div style={{ display:'flex', gap:'10px', marginBottom:'12px' }}>
-              <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} type='date' style={{
-                flex:1, minWidth:0, boxSizing:'border-box', padding:'12px 10px', borderRadius:'10px',
-                border:'1.5px solid #ddd6fe', fontSize:'14px', outline:'none', textAlign:'center',
-                color:'#4c1d95', background:'#f8fafc',
-              }} />
-            </div>
-            {invCurrentPrice && (
-              <button type='button' onClick={fetchHistoricalPrice} style={{
-                width:'100%', boxSizing:'border-box', padding:'10px', marginBottom:'12px', borderRadius:'10px',
-                border:'1.5px dashed #8b5cf6', background:'transparent',
-                color:'#6d28d9', fontSize:'13px', fontWeight:600, cursor:'pointer',
-              }}>📅 用 {invSellDate || '选定日'} 的价格填入</button>
-            )}
-            <div style={{ display:'flex', gap:'10px', marginTop:'16px' }}>
-              <button onClick={() => { setShowAddInv(false); setInvType('buy') }} style={{
-                flex:1, padding:'12px', borderRadius:'10px',
-                border:'1px solid #e2e8f0', background:'#f8fafc', color:'#64748b',
-                fontSize:'14px', fontWeight:600, cursor:'pointer',
-              }}>取消</button>
-              <button onClick={confirmAddInv} style={{
-                flex:1, padding:'12px', borderRadius:'10px',
-                border:'none', background:'linear-gradient(135deg,#7c3aed,#8b5cf6)',
-                color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer',
-                boxShadow:'0 2px 8px rgba(124,58,237,0.3)',
-              }}>保存</button>
-            </div>
-          </div>
-        </Modal>
       </div>
+
+      {/* 添加表单弹窗 */}
+      <Modal open={showAddInv} onClose={() => setShowAddInv(false)} title="📝 添加投资记录" center>
+        <div style={{ boxSizing:'border-box' }}>
+          {/* 资产类型选择 */}
+          <div style={{ fontSize:'12px', fontWeight:600, color:'#475569', marginBottom:'6px' }}>资产类型</div>
+          <div style={{ display:'flex', gap:'8px', marginBottom:'14px' }}>
+            <button type='button' onClick={() => setInvAssetType('stock')} style={{
+              flex:1, padding:'10px 0', borderRadius:'10px',
+              border: invAssetType==='stock' ? '2px solid #3b82f6' : '1.5px solid #e2e8f0',
+              background: invAssetType==='stock' ? '#eff6ff' : '#fff',
+              color: invAssetType==='stock' ? '#2563eb' : '#94a3b8',
+              fontSize:'13px', fontWeight:700, cursor:'pointer',
+            }}>📈 股票</button>
+            <button type='button' onClick={() => setInvAssetType('fund')} style={{
+              flex:1, padding:'10px 0', borderRadius:'10px',
+              border: invAssetType==='fund' ? '2px solid #f59e0b' : '1.5px solid #e2e8f0',
+              background: invAssetType==='fund' ? '#fffbeb' : '#fff',
+              color: invAssetType==='fund' ? '#b45309' : '#94a3b8',
+              fontSize:'13px', fontWeight:700, cursor:'pointer',
+            }}>📊 基金</button>
+          </div>
+
+          <input value={invCode} onChange={e => setInvCode(e.target.value)} placeholder={invAssetType==='fund' ? '基金代码 如 110011' : '股票代码 如 600519'} style={{
+            width:'100%', boxSizing:'border-box', padding:'11px 12px', borderRadius:'10px',
+            border:'1.5px solid #e2e8f0', fontSize:'14px', outline:'none',
+            marginBottom:'10px', minWidth:0, background:'#f8fafc',
+          }} />
+
+          {/* 买卖方向 */}
+          <div style={{ display:'flex', gap:'8px', marginBottom:'10px' }}>
+            <button type='button' onClick={() => setInvType('buy')} style={{
+              flex:1, padding:'10px 0', borderRadius:'10px',
+              border: invType==='buy' ? '2px solid #22c55e' : '1.5px solid #e2e8f0',
+              background: invType==='buy' ? '#f0fdf4' : '#fff',
+              color: invType==='buy' ? '#16a34a' : '#94a3b8',
+              fontSize:'13px', fontWeight:700, cursor:'pointer',
+            }}>📈 买入</button>
+            <button type='button' onClick={() => setInvType('sell')} style={{
+              flex:1, padding:'10px 0', borderRadius:'10px',
+              border: invType==='sell' ? '2px solid #ef4444' : '1.5px solid #e2e8f0',
+              background: invType==='sell' ? '#fef2f2' : '#fff',
+              color: invType==='sell' ? '#dc2626' : '#94a3b8',
+              fontSize:'13px', fontWeight:700, cursor:'pointer',
+            }}>📉 卖出</button>
+          </div>
+
+          <button onClick={fetchAndAdd} style={{
+            width:'100%', boxSizing:'border-box', padding:'11px', borderRadius:'10px',
+            border:'none', background:'linear-gradient(135deg,#6366f1,#818cf8)',
+            color:'#fff', fontSize:'13px', fontWeight:700, cursor:'pointer', marginBottom:'10px',
+          }}>🔍 获取实时行情</button>
+
+          {invName && (
+            <div style={{ margin:'0 0 10px', padding:'8px 10px', borderRadius:'8px', background:'#f8fafc', border:'1px solid #e2e8f0' }}>
+              <div style={{ fontSize:'13px', color:'#1e293b', fontWeight:700 }}>{invName}</div>
+              <div style={{ fontSize:'12px', color:'#64748b', marginTop:'2px' }}>当前价: <b style={{ color:'#6366f1' }}>{invCurrentPrice}</b></div>
+            </div>
+          )}
+
+          <div style={{ display:'flex', gap:'8px', marginBottom:'10px' }}>
+            <input value={invSellPrice} onChange={e => setInvSellPrice(e.target.value)} placeholder={invType==='buy' ? '买入价' : '卖出价'} type='number' step='any' style={{
+              flex:1, minWidth:0, boxSizing:'border-box', padding:'10px', borderRadius:'10px',
+              border:'1.5px solid #e2e8f0', fontSize:'14px', outline:'none', textAlign:'center', background:'#f8fafc',
+            }} />
+            <input value={invShares} onChange={e => setInvShares(e.target.value)} placeholder='份额' type='number' step='any' style={{
+              flex:1, minWidth:0, boxSizing:'border-box', padding:'10px', borderRadius:'10px',
+              border:'1.5px solid #e2e8f0', fontSize:'14px', outline:'none', textAlign:'center', background:'#f8fafc',
+            }} />
+          </div>
+          {invSellPrice && invShares && (
+            <p style={{ margin:'0 0 10px', fontSize:'13px', color:'#059669', fontWeight:700, textAlign:'center' }}>
+              💰 金额: ¥{(parseFloat(invSellPrice) * parseFloat(invShares)).toFixed(2)}
+            </p>
+          )}
+          <div style={{ display:'flex', gap:'8px', marginBottom:'10px' }}>
+            <input value={invSellDate} onChange={e => setInvSellDate(e.target.value)} type='date' style={{
+              flex:1, minWidth:0, boxSizing:'border-box', padding:'10px', borderRadius:'10px',
+              border:'1.5px solid #e2e8f0', fontSize:'14px', outline:'none', textAlign:'center', background:'#f8fafc',
+            }} />
+          </div>
+          {invCurrentPrice && (
+            <button type='button' onClick={fetchHistoricalPrice} style={{
+              width:'100%', boxSizing:'border-box', padding:'8px', marginBottom:'14px', borderRadius:'10px',
+              border:'1.5px dashed #6366f1', background:'transparent',
+              color:'#6366f1', fontSize:'12px', fontWeight:600, cursor:'pointer',
+            }}>📅 用 {invSellDate || '选定日'} 的价格填入</button>
+          )}
+
+          <div style={{ display:'flex', gap:'10px' }}>
+            <button onClick={() => { setShowAddInv(false); setInvType('buy'); setInvAssetType('stock') }} style={{
+              flex:1, padding:'11px', borderRadius:'10px',
+              border:'1px solid #e2e8f0', background:'#f8fafc', color:'#64748b',
+              fontSize:'14px', fontWeight:600, cursor:'pointer',
+            }}>取消</button>
+            <button onClick={confirmAddInv} style={{
+              flex:1, padding:'11px', borderRadius:'10px',
+              border:'none', background:'linear-gradient(135deg,#6366f1,#818cf8)',
+              color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer',
+            }}>保存</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
