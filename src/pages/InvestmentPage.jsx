@@ -251,7 +251,7 @@ export function InvestmentPage() {
 
       <div style={{ marginTop:'16px', padding:'0 16px' }}>
         {investments.length === 0 && (
-          <div style={{ textAlign:'center', padding:'40px 20px', color:'#94a3b8' }}>
+          <div style={{ textAlign:'center', padding:'40px 20px', color:'#a78bfa' }}>
             <div style={{ fontSize:'44px', marginBottom:'12px' }}>📊</div>
             <p style={{ fontSize:'14px', margin:0 }}>暂无投资记录，点下方「添加」开始记录</p>
           </div>
@@ -268,9 +268,9 @@ export function InvestmentPage() {
           return (
             <div key={key} style={{
               marginBottom:'10px', borderRadius:'16px',
-              background:'#fff',
-              boxShadow:'0 2px 10px rgba(0,0,0,0.05)',
-              border:'1px solid #f1f5f9',
+              background:'linear-gradient(135deg,#faf5ff 0%,#f5f3ff 100%)',
+              boxShadow:'0 2px 12px rgba(124,58,237,0.08)',
+              border:'1px solid #ede9fe',
               overflow:'hidden',
             }}>
               {/* 卡片头部 - 可点击展开 */}
@@ -288,7 +288,7 @@ export function InvestmentPage() {
                     color: isSell ? '#dc2626' : '#16a34a',
                   }}>{isSell ? '卖出' : '买入'}</span>
                   <span style={{
-                    fontSize:'15px', fontWeight:700, color:'#0f172a', flex:1, minWidth:0,
+                    fontSize:'15px', fontWeight:700, color:'#4c1d95', flex:1, minWidth:0,
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
                   }}>{latest.name}</span>
                   <span style={{ fontSize:'11px', color:'#94a3b8', flexShrink:0, fontFamily:'monospace' }}>{latest.code}</span>
@@ -298,7 +298,7 @@ export function InvestmentPage() {
                 <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:'10px' }}>
                   <div>
                     <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'2px' }}>{isSell ? '卖出价' : '买入价'}</div>
-                    <div style={{ fontSize:'22px', fontWeight:800, color:'#0f172a', letterSpacing:'-0.5px', lineHeight:1 }}>
+                    <div style={{ fontSize:'22px', fontWeight:800, color:'#5b21b6', letterSpacing:'-0.5px', lineHeight:1 }}>
                       {latest.sellPrice}
                     </div>
                   </div>
@@ -306,7 +306,7 @@ export function InvestmentPage() {
                     <div style={{ textAlign:'right' }}>
                       <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'2px' }}>当前价 / 涨跌幅</div>
                       <div style={{ display:'flex', alignItems:'baseline', gap:'6px' }}>
-                        <span style={{ fontSize:'16px', fontWeight:700, color:'#334155' }}>{latest.currentPrice}</span>
+                        <span style={{ fontSize:'16px', fontWeight:700, color:'#6d28d9' }}>{latest.currentPrice}</span>
                         <span style={{ fontSize:'13px', fontWeight:700, color: profitColor }}>
                           {latest.change != null ? (latest.change >= 0 ? '+' : '') + latest.change.toFixed(2) + '%' : '--'}
                         </span>
@@ -318,7 +318,7 @@ export function InvestmentPage() {
                 {/* 第三行：份额 + 金额 + 日期 + 展开指示 */}
                 <div style={{
                   display:'flex', alignItems:'center', gap:'12px', flexWrap:'wrap',
-                  paddingTop:'10px', borderTop:'1px dashed #e2e8f0',
+                  paddingTop:'10px', borderTop:'1px dashed #ddd6fe',
                   fontSize:'12px', color:'#64748b',
                 }}>
                   {latest.shares > 0 && (
@@ -342,9 +342,9 @@ export function InvestmentPage() {
               {/* 展开历史记录 */}
               {expanded && (
                 <div style={{
-                  borderTop:'1px solid #f1f5f9',
+                  borderTop:'1px solid #ede9fe',
                   padding:'10px 16px 14px',
-                  background:'#f8fafc',
+                  background:'#f5f3ff',
                 }}>
                   <div style={{ fontSize:'11px', fontWeight:700, color:'#8b5cf6', marginBottom:'8px', letterSpacing:'0.3px' }}>
                     📋 历史记录（按日期倒序）
@@ -353,15 +353,15 @@ export function InvestmentPage() {
                     <div key={i} style={{
                       display:'flex', alignItems:'center', gap:'8px',
                       padding:'8px 10px', borderRadius:'8px',
-                      background: i % 2 === 0 ? '#fff' : 'transparent',
-                      borderBottom: i < items.length - 1 ? '1px solid #f1f5f9' : 'none',
+                      background: i % 2 === 0 ? '#faf5ff' : 'transparent',
+                      borderBottom: i < items.length - 1 ? '1px solid #ede9fe' : 'none',
                     }}>
                       <span style={{
                         fontSize:'10px', color:'#fff', fontWeight:700,
-                        background:'#8b5cf6', borderRadius:'4px',
+                        background:'linear-gradient(135deg,#7c3aed,#8b5cf6)', borderRadius:'4px',
                         minWidth:'22px', textAlign:'center', padding:'2px 0', flexShrink:0,
                       }}>#{items.length - i}</span>
-                      <span style={{ flex:1, fontSize:'14px', color:'#0f172a', fontWeight:700 }}>{inv.sellPrice}</span>
+                      <span style={{ flex:1, fontSize:'14px', color:'#4c1d95', fontWeight:700 }}>{inv.sellPrice}</span>
                       {inv.shares > 0 && <span style={{ fontSize:'11px', color:'#8b5cf6', fontWeight:600 }}>{inv.shares}份</span>}
                       {inv.amount > 0 && <span style={{ fontSize:'11px', color:'#14b8a6', fontWeight:600 }}>¥{inv.amount.toFixed(2)}</span>}
                       {inv.sellDate && <span style={{ fontSize:'11px', color:'#94a3b8' }}>{inv.sellDate}</span>}
