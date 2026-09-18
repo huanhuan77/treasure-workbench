@@ -457,7 +457,7 @@ export function DashboardPage() {
                 </div>
               </div>
               <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
-                flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#8b5cf6', color: '#fff',
+                flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
                 fontSize: '12px', fontWeight: 600, cursor: 'pointer',
               }}>补发布</button>
             </div>
