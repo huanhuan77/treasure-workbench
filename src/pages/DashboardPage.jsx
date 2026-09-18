@@ -466,13 +466,8 @@ export function DashboardPage() {
         <div style={{ padding: '0 16px' }}>
           {remindTab === 'reminders' && (
             <>
-              {/* 汇总行：全量展示，不再有「查看全部」入口（条目数已由 Tab 气泡表达，
-                  这里只补充排序说明） */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', minHeight: '18px' }}>
-                <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
-                  {allReminders.length > 0 ? '按紧急度排序' : '暂无待补发产品'}
-                </span>
-              </div>
+              {/* 原「按紧急度排序」说明行已去掉：条目数由 Tab 气泡表达，排序规则对用户无意义。
+                  空数据时由下方列表的空状态卡片提示，这里不再重复。 */}
               {reminders.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   暂无需要发布提醒的样品
@@ -527,11 +522,7 @@ export function DashboardPage() {
 
           {remindTab === 'low' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', minHeight: '18px' }}>
-                <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
-                  {lowPublish.length > 0 ? '按发布条数排序' : `暂无发布不足 ${LOW_PUBLISH_LIMIT} 条的样品`}
-                </span>
-              </div>
+              {/* 原「按发布条数排序」说明行已去掉，空数据由下方空状态卡片提示 */}
               {lowPublish.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   暂无发布不足 {LOW_PUBLISH_LIMIT} 条的样品
@@ -567,11 +558,7 @@ export function DashboardPage() {
 
           {remindTab === 'expiring' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', minHeight: '18px' }}>
-                <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
-                  {expiringSoon.length > 0 ? '按截止日期排序' : `近 ${EXPIRING_DAYS} 天没有即将到期的样品`}
-                </span>
-              </div>
+              {/* 原「按截止日期排序」说明行已去掉，空数据由下方空状态卡片提示 */}
               {expiringSoon.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   近 {EXPIRING_DAYS} 天没有即将到期的样品
