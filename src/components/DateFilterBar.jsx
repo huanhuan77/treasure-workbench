@@ -213,10 +213,14 @@ export function DateFilterBar({ value, onChange }) {
   const reset = () => { setStartTmp(''); setEndTmp('') }
 
   return (
-    <div className="hide-scrollbar" style={{
-      display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 16px 2px', flexShrink: 0,
-      overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
+    <div style={{
+      display: 'flex', alignItems: 'center', padding: '4px 16px 2px', flexShrink: 0,
     }}>
+      {/* 左侧：快捷日期chips，可横滑 */}
+      <div className="hide-scrollbar" style={{
+        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '4px',
+        overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
+      }}>
       <button onClick={() => onChange('')} style={{
         ...chipBase,
         borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
@@ -232,9 +236,10 @@ export function DateFilterBar({ value, onChange }) {
           }}>{c.label}</button>
         )
       })}
-      {/* 日期弹窗入口 */}
+      </div>
+      {/* 右侧：日期弹窗入口，固定不滚动 */}
       <button onClick={toggle} style={{
-        ...chipBase, display: 'inline-flex', alignItems: 'center', gap: '2px',
+        ...chipBase, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '2px',
         borderBottom: (isRange && value) ? '2px solid #ec4899' : '2px solid transparent',
         color: (isRange && value) ? '#ec4899' : 'var(--text-main)',
       }}>
