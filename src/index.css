@@ -165,11 +165,15 @@ a {
    media query 里设了 overflow:hidden，会把吸附范围限死在容器内（等于不吸），故桌面端放开。
    放开后 sticky 改为相对视口吸附，因此 top 必须补上容器自身的 20px 上外边距，
    否则 Tab 会吸到浏览器顶边、跑到手机容器外面。overflow 与 top 两者必须成对改。
-   手机端容器本就无 overflow / 无圆角 / 无外边距，top 保持 0 即可。
+   桌面端再叠加 --safe-top 兜底（桌面浏览器该值通常为 0）。
+   手机端容器本就无 overflow / 无圆角 / 无外边距，但 top 必须留出状态栏高度：
+   真机 / 模拟器的刘海、灵动岛会盖住视口顶部，top:0 会让 Tab 被时间、信号、电量压住，
+   所以用 --safe-top（= env(safe-area-inset-top)）。无安全区的设备该值为 0，不影响原布局。
+   注意：--safe-top 只在 :root 定义，而非继承自 .app-container 的局部变量。
    放开 overflow 后 32px 圆角无法再裁剪背景，改直角以免「圆角但内容溢出」的错位观感。
    注意：top 只能在这里给，JSX 里不能写内联 top（内联会压过媒体查询）。 */
 .dash-sticky-bar {
-  top: 0;
+  top: var(--safe-top, 0px);
 }
 @media (min-width: 481px) {
   .app-container.dash-sticky-page {
@@ -177,7 +181,7 @@ a {
     border-radius: 0;
   }
   .app-container.dash-sticky-page .dash-sticky-bar {
-    top: 20px;
+    top: calc(20px + var(--safe-top, 0px));
   }
 }
 
