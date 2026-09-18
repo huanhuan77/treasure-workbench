@@ -171,3 +171,14 @@ a {
   width: 0;
   height: 0;
 }
+
+/* 总览「提醒中心」Tab：窄屏（<=350px，如 iPhone SE 320 / 小屏安卓）用短标签，
+   否则三字以上的「发布不足5条」在均分宽度下会被省略号截断。
+   350~360px 起均分宽度已足够显示完整标签（实测 360px 无截断），故断点取 350px。
+   注意：这两个类必须成对覆盖，且 span 上不能写内联 display。 */
+.dashTabFull { display: inline-block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dashTabShort { display: none; }
+@media (width <= 350px) {
+  .dashTabFull { display: none; }
+  .dashTabShort { display: inline-block; }
+}
