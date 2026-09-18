@@ -253,7 +253,7 @@ export function OrdersPage() {
       <DateFilterBar value={dateRange} onChange={setDateRange} />
 
       {/* 账号筛选：一行不换行，可横滚 */}
-      <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '6px', flexWrap: 'nowrap', alignItems: 'center', flexShrink: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ padding: '4px 16px 2px', display: 'flex', gap: '6px', flexWrap: 'nowrap', alignItems: 'center', flexShrink: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <button onClick={() => setAccountFilter('')} style={{
           flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
           border: accountFilter === '' ? 'none' : '1px solid rgba(244,114,182,0.35)',
@@ -277,7 +277,7 @@ export function OrdersPage() {
       </div>
 
       {/* 排序 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flexShrink: 0, padding: '6px 16px 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flexShrink: 0, padding: '2px 16px 2px' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
         <button onClick={toggleDateSort} style={sortChipStyle(isDateMode)}>
           日期 {dateAsc ? '↑' : '↓'}

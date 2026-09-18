@@ -213,7 +213,7 @@ export function DateFilterBar({ value, onChange }) {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px 4px', flexShrink: 0,
+      display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 16px 2px', flexShrink: 0,
     }}>
       {/* 左侧：可横滑的快捷筛选 chips */}
       <div className="hide-scrollbar" style={{

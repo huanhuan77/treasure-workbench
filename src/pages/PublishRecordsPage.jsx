@@ -158,7 +158,7 @@ export function PublishRecordsPage() {
 
       {/* 账号筛选：单行横向滚动，不换行 */}
       <div className="hide-scrollbar" style={{
-        display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px 6px',
+        display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px 2px',
         flexShrink: 0, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
       }}>
         <button onClick={() => setAccount('')} style={{
@@ -185,7 +185,7 @@ export function PublishRecordsPage() {
       <DateFilterBar value={dateRange} onChange={setDateRange} />
 
       {/* 排序：单个「日期」切换按钮（点一下升序↑ 再点降序↓）+ 发布最多 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '4px 16px 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '2px 16px 2px' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
         <button onClick={toggleDateSort} style={sortChipStyle(isDateMode)}>
           日期 {dateAsc ? '↑' : '↓'}
