@@ -160,6 +160,27 @@ a {
   }
 }
 
+/* 总览页「提醒中心」Tab 栏吸顶。
+   sticky 的吸附参照物是「最近的 overflow 非 visible 祖先」：.app-container 在桌面端
+   media query 里设了 overflow:hidden，会把吸附范围限死在容器内（等于不吸），故桌面端放开。
+   放开后 sticky 改为相对视口吸附，因此 top 必须补上容器自身的 20px 上外边距，
+   否则 Tab 会吸到浏览器顶边、跑到手机容器外面。overflow 与 top 两者必须成对改。
+   手机端容器本就无 overflow / 无圆角 / 无外边距，top 保持 0 即可。
+   放开 overflow 后 32px 圆角无法再裁剪背景，改直角以免「圆角但内容溢出」的错位观感。
+   注意：top 只能在这里给，JSX 里不能写内联 top（内联会压过媒体查询）。 */
+.dash-sticky-bar {
+  top: 0;
+}
+@media (min-width: 481px) {
+  .app-container.dash-sticky-page {
+    overflow: visible;
+    border-radius: 0;
+  }
+  .app-container.dash-sticky-page .dash-sticky-bar {
+    top: 20px;
+  }
+}
+
 /* 隐藏滚动条但保留滚动能力：用于账号/标签等可横滑的单行按钮组 */
 .hide-scrollbar {
   -ms-overflow-style: none;
@@ -172,13 +193,21 @@ a {
   height: 0;
 }
 
-/* 总览「提醒中心」Tab：窄屏（<=350px，如 iPhone SE 320 / 小屏安卓）用短标签，
-   否则三字以上的「发布不足5条」在均分宽度下会被省略号截断。
-   350~360px 起均分宽度已足够显示完整标签（实测 360px 无截断），故断点取 350px。
-   注意：这两个类必须成对覆盖，且 span 上不能写内联 display。 */
+/* 总览「提醒中心」Tab：三个标签在均分宽度下按屏宽分三档显示，避免长标签被省略号截断。
+   实测数据（390px 基准，标签字号 12.5px、数量气泡计入宽度）：
+     - 「发布不足5条」+气泡 需要 107px；按钮可用宽 = (视口 - 32px/容器内边距 - 12px/胶囊内边距 - 边框) / 3
+     - 390px → 107px 刚好放下；360px → 97px 差 3px 被截断（连数量气泡都会被吃掉）
+     - 320px → 约 85px 更紧，此时「不足5条」这种中标签才放得下
+   故断点取两档：<=360px 用中标签，<=350px（320 级别窄屏）用短标签。
+   注意：这三类必须成对覆盖，否则会出现两个标签同时可见；且 span 上不能写内联 display。 */
 .dashTabFull { display: inline-block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dashTabMid { display: none; }
 .dashTabShort { display: none; }
-@media (width <= 350px) {
+@media (width <= 380px) {
   .dashTabFull { display: none; }
+  .dashTabMid { display: inline-block; }
+}
+@media (width <= 340px) {
+  .dashTabMid { display: none; }
   .dashTabShort { display: inline-block; }
 }
