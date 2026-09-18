@@ -53,6 +53,7 @@ export function OrdersPage() {
   const [accountFilter, setAccountFilter] = useState('')  // ''=全部
   const [dateRange, setDateRange] = useState('')  // ''=全部 / today|yesterday|last7|thisWeek|thisMonth|lastMonth|halfYear|thisYear / day:YYYY-MM-DD
   const [sortKey, setSortKey] = useState('dateDesc')  // dateDesc | dateAsc | mostDesc(出单最多) | mostAsc(出单最少)
+  const [productFilter, setProductFilter] = useState('')  // ''=全部产品
   const [dateDelTarget, setDateDelTarget] = useState(null)  // { name, date, entries } —— 按日期删该产品当天的出单
 
   const list = useMemo(() => {
@@ -69,17 +70,17 @@ export function OrdersPage() {
   const filtered = useMemo(() => {
     let arr = list
     if (accountFilter) arr = arr.filter((o) => o.account === accountFilter)
+    if (productFilter) arr = arr.filter((o) => (o.name || '') === productFilter)
     const bounds = dateBounds(dateRange)
     if (bounds) {
       const [s, e] = bounds
       arr = arr.filter((o) => {
         const t = parseTs(o?.date)
-        // 无日期的在非"全部"时不显示，避免归类困难
         return t !== null && t >= s && t < e
       })
     }
     return arr
-  }, [list, accountFilter, dateRange])
+  }, [list, accountFilter, productFilter, dateRange])
 
   // 汇总：跟着 range+accountFilter 走
   const summary = useMemo(() => {
@@ -198,43 +199,27 @@ export function OrdersPage() {
         onBack={() => navigate('/')}
       />
 
-      {/* 顶部汇总：白底+浅边框 2×3 卡；账号行做成 chip 风格单行不换行 */}
+      {/* 顶部汇总：只显示每个账号出单数量 */}
       <div style={{ padding: '10px 16px 4px', flexShrink: 0 }}>
         <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '4px', rowGap: '6px',
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '4px',
           background: '#fff',
           border: '1px solid rgba(244,114,182,0.18)',
-          borderRadius: '12px', padding: '8px 4px 10px',
+          borderRadius: '12px', padding: '10px 4px',
         }}>
-          {/* 第 1 行：累计出单 / 涉及产品 / 总笔数 */}
-          {[
-            { label: '累计出单', value: summary.totalQty, unit: '件' },
-            { label: '涉及产品', value: groups.length, unit: '款' },
-            { label: '总笔数', value: summary.totalEntries, unit: '笔' },
-          ].map((c, i) => (
-            <div key={i} style={{ padding: '4px 8px', minWidth: 0, textAlign: 'center' }}>
-              <div style={{ fontSize: '10.5px', color: 'var(--text-sub)' }}>{c.label}</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--primary-dark)', lineHeight: 1.15, marginTop: '2px' }}>
-                {c.value}<span style={{ fontSize: '10.5px', fontWeight: 500, marginLeft: '2px', color: 'var(--text-sub)' }}>{c.unit}</span>
-              </div>
-            </div>
-          ))}
-          {/* 分隔线：横向贯穿三格 */}
-          <div style={{ gridColumn: '1 / -1', height: '1px', background: 'rgba(244,114,182,0.14)', margin: '2px 4px 0' }} />
-          {/* 第 2 行：三账号件数，用账号主色 chip 风格、账号名单行省略不换行 */}
           {ACCOUNTS.map((a) => {
             const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
             const stat = summary.perAccount[a] || { count: 0, qty: 0 }
             return (
-              <div key={a} style={{ padding: '4px 6px 0', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+              <div key={a} style={{ padding: '4px 6px', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
                 <span style={{
-                  fontSize: '10.5px', fontWeight: 700,
-                  padding: '2px 8px', borderRadius: '999px',
+                  fontSize: '12px', fontWeight: 700,
+                  padding: '3px 10px', borderRadius: '999px',
                   background: col.bg, color: col.c,
                   whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>{a}</span>
-                <div style={{ fontSize: '18px', fontWeight: 800, color: col.c, lineHeight: 1.15 }}>
-                  {stat.qty}<span style={{ fontSize: '10.5px', fontWeight: 500, marginLeft: '2px', color: 'var(--text-sub)' }}>件</span>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: col.c, lineHeight: 1.15 }}>
+                  {stat.count}<span style={{ fontSize: '11px', fontWeight: 500, marginLeft: '2px', color: 'var(--text-sub)' }}>笔</span>
                 </div>
               </div>
             )
@@ -245,10 +230,10 @@ export function OrdersPage() {
       {/* 日期筛选：全部 / 今天 / 昨天 / 近7天 / 本周 / 本月 + 📅 日期（快捷键 / 具体某一天 / 本月·上月·近半年·本年） */}
       <DateFilterBar value={dateRange} onChange={setDateRange} />
 
-      {/* 账号筛选：chip 自适应内容宽度（不带数字） */}
-      <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '5px', flexWrap: 'wrap', alignItems: 'center', flexShrink: 0 }}>
+      {/* 账号筛选：大一点的 chip */}
+      <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', flexShrink: 0 }}>
         <button onClick={() => setAccountFilter('')} style={{
-          flex: '0 0 auto', padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
+          flex: '0 0 auto', padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
           border: accountFilter === '' ? 'none' : '1px solid rgba(244,114,182,0.35)',
           background: accountFilter === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
           color: accountFilter === '' ? '#fff' : 'var(--text-main)', cursor: 'pointer',
@@ -259,7 +244,7 @@ export function OrdersPage() {
           const sel = accountFilter === a
           return (
             <button key={a} onClick={() => setAccountFilter(a)} style={{
-              flex: '0 0 auto', padding: '4px 12px', borderRadius: '999px', fontSize: '11px', fontWeight: 600,
+              flex: '0 0 auto', padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
               border: sel ? 'none' : `1px solid ${col.c}`,
               background: sel ? col.c : '#fff',
               color: sel ? '#fff' : col.c, cursor: 'pointer',
@@ -269,8 +254,8 @@ export function OrdersPage() {
         })}
       </div>
 
-      {/* 排序：单个按钮切换（点一下升序↑ 再点降序↓）——「日期」与「出单」各一个 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '4px 16px 2px' }}>
+      {/* 排序 + 产品筛选 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', flexShrink: 0, padding: '6px 16px 2px' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
         <button onClick={toggleDateSort} style={sortChipStyle(isDateMode)}>
           日期 {dateAsc ? '↑' : '↓'}
@@ -278,6 +263,23 @@ export function OrdersPage() {
         <button onClick={toggleCountSort} style={sortChipStyle(isCountMode)}>
           出单 {mostAsc ? '↑' : '↓'}
         </button>
+        {/* 产品下拉筛选：只列出有出单记录的产品 */}
+        <select
+          value={productFilter}
+          onChange={(e) => setProductFilter(e.target.value)}
+          style={{
+            flex: '0 0 auto', padding: '5px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+            border: productFilter ? '1.5px solid var(--primary)' : '1px solid rgba(244,114,182,0.35)',
+            background: productFilter ? 'rgba(99,102,241,0.08)' : '#fff',
+            color: productFilter ? '#4f46e5' : 'var(--text-sub)', cursor: 'pointer',
+            outline: 'none', maxWidth: '45vw',
+          }}
+        >
+          <option value="">全部产品</option>
+          {groups.map((g) => (
+            <option key={g.name} value={g.name}>{g.name}</option>
+          ))}
+        </select>
       </div>
 
       {/* 列表：独立滚动 */}

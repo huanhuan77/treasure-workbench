@@ -402,12 +402,14 @@ export function DashboardPage() {
                       <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                     ))}
                   </div>
-                  {/* 已发布的样品不显示时间提示（逾期/已 N 天没发） */}
-                  {s.status !== 'published' && (
+                  {/* 显示天数提示：逾期红色，已发布超时橙色 */}
+                  {isOverdue(s) ? (
                     <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px', fontWeight: 600 }}>
-                      {isOverdue(s)
-                        ? `⚠ 已逾期（截止 ${s.deadline}）`
-                        : `⚠ ${(daysText === Infinity ? '从未发布过视频' : `已 ${daysText} 天没发视频`)}（出单品需持续发）`}
+                      ⚠ 已逾期（截止 {s.deadline}）
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '11px', color: s.status === 'published' ? '#f59e0b' : '#ef4444', marginTop: '4px', fontWeight: 600 }}>
+                      {daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}
                     </div>
                   )}
                 </div>

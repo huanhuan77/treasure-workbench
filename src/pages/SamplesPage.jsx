@@ -55,6 +55,8 @@ export function SamplesPage() {
     return map[v] || v || 'all'
   })
   const [searchKeyword, setSearchKeyword] = useState('')
+  // 已出单/未出单子筛选（仅在已发布tab下显示）
+  const [orderFilter, setOrderFilter] = useState('all') // all | has | none
   // 排序：默认＝自定义顺序（可拖动）；也可按收货日期/截止日期排序
   const [sortKey, setSortKey] = useState('custom')
   const [sortDir, setSortDir] = useState('desc')
@@ -119,8 +121,15 @@ export function SamplesPage() {
     let r = filtered
     if (accountFilter !== 'all') r = r.filter((s) => getAccounts(s).includes(accountFilter))
     if (searchKeyword.trim()) r = r.filter((s) => s.name.toLowerCase().includes(searchKeyword.trim().toLowerCase()))
+    // 已出单/未出单筛选（仅在已发布tab下生效）
+    if (filter === 'published' && orderFilter !== 'all') {
+      r = r.filter((s) => {
+        const hasOrder = getAccounts(s).some((a) => (getCounts(s, a).orderCount || 0) > 0)
+        return orderFilter === 'has' ? hasOrder : !hasOrder
+      })
+    }
     return r
-  }, [filtered, accountFilter, searchKeyword])
+  }, [filtered, accountFilter, searchKeyword, filter, orderFilter])
 
   // 按所选方式排序；custom 时保持 store 顺序（可拖动自定义）
   const displayed = useMemo(() => {
@@ -291,6 +300,30 @@ export function SamplesPage() {
           )
         })}
       </div>
+
+      {/* 已发布tab下的出单筛选子chips */}
+      {filter === 'published' && (
+        <div style={{ display: 'flex', gap: '6px', padding: '0 16px 6px', overflowX: 'auto', flexShrink: 0 }}>
+          {[
+            { key: 'all', label: '全部已发布' },
+            { key: 'has', label: '已出单' },
+            { key: 'none', label: '未出单' },
+          ].map((o) => {
+            const active = orderFilter === o.key
+            const cnt = o.key === 'all' ? filtered.length :
+              o.key === 'has' ? filtered.filter((s) => getAccounts(s).some((a) => (getCounts(s, a).orderCount || 0) > 0)).length :
+              filtered.filter((s) => !getAccounts(s).some((a) => (getCounts(s, a).orderCount || 0) > 0)).length
+            return (
+              <button key={o.key} onClick={() => setOrderFilter(o.key)} style={{
+                flex: '0 0 auto', padding: '5px 14px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+                border: active ? 'none' : '1px solid rgba(244,114,182,0.3)',
+                background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.6)',
+                color: active ? '#fff' : 'var(--text-sub)', cursor: 'pointer', whiteSpace: 'nowrap',
+              }}>{o.label} ({cnt})</button>
+            )
+          })}
+        </div>
+      )}
 
       {/* 未分类样品入口：存在无分类样品时提示，点进去可批量补分类 */}
       {uncatCount > 0 && (
