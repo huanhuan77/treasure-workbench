@@ -1,78 +1,87 @@
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { needPublishReminder, daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue } from '../utils/publish'
 import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
+import { selectPublishReminders } from '../utils/reminders'
+import { ReminderListPage, ReminderCard, CardTitleRow, CardActions } from '../components/ReminderListPage'
 
-function PageHeader({ title, onBack }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(236,72,153,0.12)', background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 100%)' }}>
-      <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
-      <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>{title}</h1>
-    </div>
-  )
-}
+const ACCENT = '#ec4899'
 
+// 「发布提醒」列表页
+// 口径来自 utils/reminders → publish.needPublishReminder，与总览 Tab 计数同源
 export function PublishRemindersPage() {
-  const navigate = useNavigate()
   const { samples } = useStore()
-  const list = (samples || []).filter((s) => needPublishReminder(s))
+  const navigate = useNavigate()
+
+  const base = useMemo(() => selectPublishReminders(samples), [samples])
+
+  const SORTS = useMemo(() => [
+    // 最该处理的排前面：逾期优先，其次「多久没发视频」由久到近
+    {
+      key: 'urgent',
+      label: '最紧急优先',
+      compare: (a, b) => {
+        const oa = isOverdue(a) ? 1 : 0
+        const ob = isOverdue(b) ? 1 : 0
+        if (oa !== ob) return ob - oa
+        const da = daysSincePublish(a)
+        const db = daysSincePublish(b)
+        const na = da === Infinity ? Number.MAX_SAFE_INTEGER : da
+        const nb = db === Infinity ? Number.MAX_SAFE_INTEGER : db
+        return nb - na
+      },
+    },
+    { key: 'name', label: '名称', compare: (a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN') },
+  ], [])
 
   return (
-    <div className="app-container" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', minHeight: '100vh' }}>
-      <PageHeader title={`发布提醒（${list.length}）`} onBack={() => navigate(-1)} />
-      <div style={{ padding: '10px 12px 16px' }}>
-        {list.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '30px 16px', textAlign: 'center', color: '#16a34a', fontSize: '13px' }}>
-            🎉 没有需要提醒的样品，都已按时发了视频
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {list.map((s) => {
-              const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.published
-              const days = daysSincePublish(s)
-              // 只显示还需要发视频的账号（从未发过 / 超 7 天没发）；都发过则显示全部
-              const pending = pendingAccounts(s)
-              const showAccounts = pending.length ? pending : getAccounts(s)
-              // 文案里的天数也跟着「待发账号」走，避免出现「已 0 天没发」这类矛盾
-              const daysText = pending.length
-                ? Math.max(...pending.map((a) => daysSincePublishByAccount(s, a)))
-                : days
-              return (
-                <div key={s.id} style={{ background: '#fff', border: '1px solid #fecdd3', borderRadius: '10px', padding: '8px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</div>
-                    <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: st.color, background: st.bg, fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
-                      {st.icon} {st.label}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '3px' }}>
-                    {/* 已发布的样品不显示时间提示（逾期/已 N 天没发） */}
-                    {s.status !== 'published' && (
-                      <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, lineHeight: 1.4 }}>
-                        {isOverdue(s)
-                          ? `⚠ 已逾期（截止 ${s.deadline}）`
-                          : `⚠ ${(daysText === Infinity ? '从未发布过视频' : `已 ${daysText} 天没发视频`)}（出单品需持续发）`}
-                      </span>
-                    )}
-                    {showAccounts.map((a) => (
-                      <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
-                    ))}
-                  </div>
-                  <div style={{ marginTop: '7px', display: 'flex', gap: '8px' }}>
-                    <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
-                      flex: 1, padding: '7px 0', borderRadius: '8px', border: 'none', background: '#ec4899', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                    }}>📹 补记发布</button>
-                    <button onClick={() => navigate(`/samples/${s.id}/edit`)} style={{
-                      flex: 1, padding: '7px 0', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', background: 'rgba(255,255,255,0.6)', color: 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                    }}>调整状态</button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-    </div>
+    <ReminderListPage
+      title={`发布提醒（${base.length}）`}
+      accent={ACCENT}
+      base={base}
+      sorts={SORTS}
+      emptyText="🎉 没有需要提醒的样品，都已按时发了视频"
+      noMatchText="没有符合筛选条件的样品"
+    >
+      {(s) => {
+        const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.published
+        const days = daysSincePublish(s)
+        // 只显示还需要发视频的账号（从未发过 / 超阈值没发）；都发过则显示全部
+        const pending = pendingAccounts(s)
+        const showAccounts = pending.length ? pending : getAccounts(s)
+        // 文案里的天数也跟着「待发账号」走，避免出现「已 0 天没发」这类矛盾
+        const daysText = pending.length
+          ? Math.max(...pending.map((a) => daysSincePublishByAccount(s, a)))
+          : days
+        return (
+          <ReminderCard key={s.id} borderColor="#fecdd3">
+            <CardTitleRow
+              name={s.name}
+              badge={(
+                <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: st.color, background: st.bg, fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
+                  {st.icon} {st.label}
+                </span>
+              )}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '3px' }}>
+              {/* 已发布的样品不显示时间提示（逾期/已 N 天没发） */}
+              {s.status !== 'published' && (
+                <span style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, lineHeight: 1.4 }}>
+                  {isOverdue(s)
+                    ? `⚠ 已逾期（截止 ${s.deadline}）`
+                    : `⚠ ${(daysText === Infinity ? '从未发布过视频' : `已 ${daysText} 天没发视频`)}（出单品需持续发）`}
+                </span>
+              )}
+              {showAccounts.map((a) => (
+                <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
+              ))}
+            </div>
+            <CardActions sample={s} onEdit={() => navigate(`/samples/${s.id}/edit`)} />
+          </ReminderCard>
+        )
+      }}
+    </ReminderListPage>
   )
 }

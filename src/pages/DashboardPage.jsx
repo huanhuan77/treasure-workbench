@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { needPublishReminder, daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES } from '../utils/publish'
+import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
@@ -154,28 +155,16 @@ export function DashboardPage() {
   }, [autoAbandoned.length, show])
 
   // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
-  const allReminders = useMemo(
-    () => (samples || []).filter((s) => needPublishReminder(s)),
-    [samples],
-  )
+  // 口径统一从 utils/reminders 取，保证与列表页「卡片数字 = 点进去的条数」
+  const allReminders = useMemo(() => selectPublishReminders(samples), [samples])
   // 总览只展示前 5 条，其余进「查看全部」列表页
   const reminders = allReminders
 
   // 已发布但发布不足5条的样品
-  const lowPublish = useMemo(
-    () => (samples || []).filter((s) => s.status === 'published' && (Number(s.publishCount) || 0) < 5 && (Number(s.orderCount) || 0) === 0),
-    [samples],
-  )
+  const lowPublish = useMemo(() => selectLowPublish(samples), [samples])
 
   // 即将到期：有截止日期、且未发布/未放弃、7 天内到期（含已逾期），按截止日期升序
-  const expiringSoon = useMemo(() => {
-    const list = (samples || []).filter((s) => {
-      if (!s.deadline || s.status === 'published' || s.status === 'abandoned') return false
-      const d = daysUntil(s.deadline)
-      return d !== null && d <= 7
-    })
-    return list.sort((a, b) => (daysUntil(a.deadline) ?? 999) - (daysUntil(b.deadline) ?? 999))
-  }, [samples])
+  const expiringSoon = useMemo(() => selectExpiringSoon(samples), [samples])
   // 近 7 天发布条数（按 qty 累加）
   const last7Count = useMemo(() => {
     const from = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10)
@@ -185,24 +174,16 @@ export function DashboardPage() {
   }, [publishRecords])
 
   // ── 提醒中心 Tab 配置（三个区块合并为一个 Tab 组）
-  // all：全部数据；limit 10 条为页面预览上限，超出时底部出现「查看全部」入口跳对应列表页
-  const REMIND_TABS = [
-    {
-      id: 'reminders', label: '发布提醒', short: '待发布',
-      count: allReminders.length, accent: '#ec4899',
-      moreTo: '/publish-reminders', moreText: '查看全部',
-    },
-    {
-      id: 'low', label: '发布不足5条', short: '不足5条',
-      count: lowPublish.length, accent: '#8b5cf6',
-      moreTo: '/samples/low-publish', moreText: '查看全部',
-    },
-    {
-      id: 'expiring', label: '即将到期', short: '将到期',
-      count: expiringSoon.length, accent: '#f97316',
-      moreTo: '/samples/expiring', moreText: '查看全部',
-    },
-  ]
+  // 标签与跳转目标来自 utils/reminders 的 REMINDER_TABS，这里只补上各自的计数，
+  // 避免「标签/路径」在总览和列表页各写一份导致对不上
+  const REMIND_TABS = useMemo(() => {
+    const counts = {
+      reminders: allReminders.length,
+      low: lowPublish.length,
+      expiring: expiringSoon.length,
+    }
+    return REMINDER_TABS.map((t) => ({ ...t, count: counts[t.id], moreTo: t.to, moreText: '查看全部' }))
+  }, [allReminders.length, lowPublish.length, expiringSoon.length])
   // 预览条数上限：每个 Tab 最多显示 10 条
   const TAB_PREVIEW_LIMIT = 10
   // 合并后的总数：不同区块可能命中同一产品，这里按 id 去重后再计
@@ -530,13 +511,13 @@ export function DashboardPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', minHeight: '18px' }}>
                 <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
                   {lowPublish.length > TAB_PREVIEW_LIMIT
-                    ? `共 ${lowPublish.length} 个产品发布不足 5 条 · 显示前 ${TAB_PREVIEW_LIMIT} 条`
-                    : `共 ${lowPublish.length} 个产品发布不足 5 条`}
+                    ? `共 ${lowPublish.length} 个产品发布不足 ${LOW_PUBLISH_LIMIT} 条 · 显示前 ${TAB_PREVIEW_LIMIT} 条`
+                    : `共 ${lowPublish.length} 个产品发布不足 ${LOW_PUBLISH_LIMIT} 条`}
                 </span>
               </div>
               {lowPublish.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
-                  暂无发布不足 5 条的样品
+                  暂无发布不足 {LOW_PUBLISH_LIMIT} 条的样品
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -581,14 +562,14 @@ export function DashboardPage() {
                 <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
                   {expiringSoon.length > 0
                     ? (expiringSoon.length > TAB_PREVIEW_LIMIT
-                      ? `共 ${expiringSoon.length} 个样品近 7 天到期 · 显示前 ${TAB_PREVIEW_LIMIT} 条`
-                      : `共 ${expiringSoon.length} 个样品近 7 天到期`)
-                    : '近 7 天没有即将到期的样品'}
+                      ? `共 ${expiringSoon.length} 个样品近 ${EXPIRING_DAYS} 天到期 · 显示前 ${TAB_PREVIEW_LIMIT} 条`
+                      : `共 ${expiringSoon.length} 个样品近 ${EXPIRING_DAYS} 天到期`)
+                    : `近 ${EXPIRING_DAYS} 天没有即将到期的样品`}
                 </span>
               </div>
               {expiringSoon.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
-                  近 7 天没有即将到期的样品
+                  近 {EXPIRING_DAYS} 天没有即将到期的样品
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
