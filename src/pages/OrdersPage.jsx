@@ -207,7 +207,7 @@ export function OrdersPage() {
             value={productFilter}
             onChange={(e) => setProductFilter(e.target.value)}
             style={{
-              width: '100%', boxSizing: 'border-box', padding: '7px 28px 7px 30px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+              width: '100%', boxSizing: 'border-box', padding: '10px 28px 10px 30px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
               border: '1px solid rgba(244,114,182,0.28)', background: '#fff',
               color: productFilter ? '#4f46e5' : 'var(--text-sub)', cursor: 'pointer',
               outline: 'none', appearance: 'auto',
