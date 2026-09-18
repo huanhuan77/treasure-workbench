@@ -446,13 +446,19 @@ export function DashboardPage() {
                   <span className="dashTabShort">{t.short}</span>
                   {/* 数量气泡：零值用灰底，避免一串「0」看起来像异常。
                      数字用 tabular-nums（等宽数字）：默认比例数字下「66」比「5」宽，
-                      气泡一横移下划线的安全间距就跟着变，等宽数字让宽度与位置稳定可预期。 */}
+                      气泡一横移下划线的安全间距就跟着变，等宽数字让宽度与位置稳定可预期。
+                     垂直居中：inline-flex + alignItems:center 让数字在气泡盒内居中；
+                      但 lineHeight 必须是 normal 而非 1 —— 实测 lineHeight:1 时数字墨迹
+                      在气泡内偏上 1.38px（上留白 14、下留白 36，按 8x 折算），
+                      因为固定行高会把数字字形盒顶到行盒顶部、空白全堆在下方。
+                      改回 normal 后上下留白一致，各屏宽/各字号下都居中。 */}
                   <span style={{
-                    fontSize: '10.5px', fontWeight: 800, lineHeight: 1,
+                    fontSize: '10.5px', fontWeight: 800, lineHeight: 'normal',
                     fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
-                    borderRadius: '999px', padding: '2px 6px', marginLeft: '4px',
-                    display: 'inline-block', verticalAlign: '1px',
+                    borderRadius: '999px', padding: '0 6px', marginLeft: '4px',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    height: '14px', boxSizing: 'border-box',
                   }}>{t.count}</span>
                 </div>
                 {/* 选中下划线：用绝对定位贴底，不参与布局，切换时不引起抖动。
@@ -548,10 +554,21 @@ export function DashboardPage() {
                           <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>已发 {s.publishCount || 0} 条</span>
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                          {/* 账号标签统一用各自的账号主题色：原先「不足5条」会把标签刷成琥珀黄，
+                              同一账号在不同条目/不同 Tab 里颜色不一致，反而认不出是哪个号；
+                              是否达标改由括号里的条数 + 下方「还差 N 条」文案表达。
+                              不足的账号加同色描边，既保留账号识别度又让异常项更显眼。 */}
                           {getAccounts(s).map((a) => {
                             const acctCount = (s.countsByAccount && s.countsByAccount[a]?.publishCount) || 0
+                            const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+                            const short = acctCount < LOW_PUBLISH_LIMIT
                             return (
-                              <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: acctCount < 5 ? '#fef3c7' : (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: acctCount < 5 ? '#d97706' : (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}({acctCount}条)</span>
+                              <span key={a} style={{
+                                fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
+                                background: col.bg, color: col.c, fontWeight: 600,
+                                border: short ? `1px solid ${col.c}` : '1px solid transparent',
+                                whiteSpace: 'nowrap', flexShrink: 0,
+                              }}>{a}({acctCount}条)</span>
                             )
                           })}
                         </div>
