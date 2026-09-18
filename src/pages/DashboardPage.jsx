@@ -395,7 +395,7 @@ export function DashboardPage() {
       <div style={{ paddingTop: '12px' }}>
         {/* Tab：纯文字标签 + 数量气泡，选中项下方一条粗色条。
             position:sticky 让它滚到视口顶部后吸附住，下方列表继续滚动（列表滚动、Tab 不动）。
-            背景必须接近不透明 + 毛玻璃，否则下方列表文字会从 Tab 下面透出来。
+            背景用半透明 + 毛玻璃：既有通透感，又靠 blur 让下方滚过的文字糊掉、不至于透字干扰阅读。
             zIndex 取 2（对齐 DateFilterBar 的既有习惯），远低于 BottomNav 的 100。
             注意：sticky 的 top 由 index.css 的 .dash-sticky-bar 给（手机 0 / 桌面 20px），
             这里绝对不能写内联 top —— 内联优先级最高会压过媒体查询，
@@ -403,10 +403,11 @@ export function DashboardPage() {
         <div className="dash-sticky-bar" style={{
           display: 'flex',
           position: 'sticky', zIndex: 2,
-          background: 'rgba(255,255,255,0.92)',
-          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-          padding: '8px 16px 10px',
-          boxShadow: '0 2px 10px rgba(120,90,100,0.06)',
+          background: 'rgba(255, 245, 249, 0.62)',
+          backdropFilter: 'blur(12px) saturate(150%)',
+          WebkitBackdropFilter: 'blur(12px) saturate(150%)',
+          padding: '4px 16px 5px',
+          boxShadow: '0 1px 8px rgba(120,90,100,0.05)',
         }}>
           {/* 内层胶囊：保留原有圆角与描边视觉 */}
           <div style={{
@@ -422,7 +423,7 @@ export function DashboardPage() {
                 onClick={() => pickTab(t.id)}
                 style={{
                   flex: '1 1 0', minWidth: 0, position: 'relative',
-                  padding: '9px 4px 10px', border: 'none', background: 'transparent',
+                  padding: '5px 4px 6px', border: 'none', background: 'transparent',
                   cursor: 'pointer',
                 }}
               >
@@ -448,8 +449,8 @@ export function DashboardPage() {
                 </div>
                 {/* 选中下划线：用绝对定位贴底，不参与布局，切换时不引起抖动 */}
                 <div style={{
-                  position: 'absolute', left: '16%', right: '16%', bottom: '2px',
-                  height: '3px', borderRadius: '3px',
+                  position: 'absolute', left: '16%', right: '16%', bottom: '1px',
+                  height: '2.5px', borderRadius: '3px',
                   background: active ? t.accent : 'transparent',
                   transition: 'background .15s',
                 }} />
