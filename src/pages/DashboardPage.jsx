@@ -402,19 +402,21 @@ export function DashboardPage() {
                       <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                     ))}
                   </div>
-                  {/* 显示天数提示：红色胶囊标签 */}
-                  {isOverdue(s) ? (
-                    <div style={{ marginTop: '4px' }}>
-                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>⚠ 已逾期（截止 {s.deadline}）</span>
-                    </div>
-                  ) : (
-                    <div style={{ marginTop: '4px' }}>
-                      <span style={{
-                        fontSize: '10px', fontWeight: 700, color: '#fff',
-                        background: s.status === 'published' ? '#f59e0b' : '#ef4444',
-                        padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap',
-                      }}>{daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}</span>
-                    </div>
+                  {/* 显示天数提示：红色胶囊标签（已发布的不显示） */}
+                  {s.status !== 'published' && (
+                    isOverdue(s) ? (
+                      <div style={{ marginTop: '4px' }}>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>⚠ 已逾期（截止 {s.deadline}）</span>
+                      </div>
+                    ) : (
+                      <div style={{ marginTop: '4px' }}>
+                        <span style={{
+                          fontSize: '10px', fontWeight: 700, color: '#fff',
+                          background: '#ef4444',
+                          padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap',
+                        }}>{daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}</span>
+                      </div>
+                    )
                   )}
                 </div>
                 <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
