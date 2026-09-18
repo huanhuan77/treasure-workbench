@@ -203,10 +203,7 @@ export function InvestmentPage() {
       // 如果识别不全，显示原始文本帮助调试
       const missing = !parsed.price || !parsed.shares || !parsed.date
       if (missing) {
-        alert('识别到部分信息，请检查并手动补全。
-
-原始识别文本：
-' + text.substring(0, 500))
+        alert('识别到部分信息，请检查并手动补全。\n\n原始识别文本：\n' + text.substring(0, 500))
       } else {
         alert('识别完成，请确认信息后保存')
       }
