@@ -194,7 +194,7 @@ export function OrdersPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'transparent', color: 'var(--text-main)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: 'calc(12px + var(--safe-top)) 16px 10px', borderBottom: '1px solid rgba(244,114,182,0.12)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: 'calc(12px + var(--safe-top)) 16px 6px', borderBottom: '1px solid rgba(244,114,182,0.12)', flexShrink: 0 }}>
         <button onClick={() => navigate('/')} style={{
           width: '38px', height: '38px', borderRadius: '50%', border: 'none',
           background: 'rgba(244,114,182,0.12)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0,
@@ -222,7 +222,7 @@ export function OrdersPage() {
       </div>
 
       {/* 顶部汇总：只显示每个账号出单数量 */}
-      <div style={{ padding: '10px 16px 4px', flexShrink: 0 }}>
+      <div style={{ padding: '6px 16px 4px', flexShrink: 0 }}>
         <div style={{
           display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '4px',
           background: '#fff',

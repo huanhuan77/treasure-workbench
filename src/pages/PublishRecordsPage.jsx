@@ -121,7 +121,7 @@ export function PublishRecordsPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', color: '#1a1a1a', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ padding: 'calc(14px + var(--safe-top)) 16px 10px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
+      <header style={{ padding: 'calc(14px + var(--safe-top)) 16px 6px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
         <button onClick={() => navigate(-1)} style={{
           width: '38px', height: '38px', borderRadius: '50%',
           background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
