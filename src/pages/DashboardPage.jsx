@@ -431,10 +431,16 @@ export function DashboardPage() {
                   alignItems: 'center', justifyContent: 'center',
                 }}
               >
+                {/* 内层改成 flex 行容器：原本标签与气泡都是 inline 级元素、按 baseline 对齐，
+                    而气泡高度 14px、内部行高 20px（为让数字墨迹在气泡里居中而设），
+                    它的 baseline 被自己的行盒推到了接近底边 → 气泡整体比标签文字低约 4px。
+                    baseline 对齐在这种「两块尺寸差很多」的组合下必然错位，
+                    改成 flex + alignItems:center 让两者按几何中线对齐，才真正「数字相对文字居中」。 */}
                 <div style={{
                   fontSize: '12.5px', fontWeight: 700,
                   color: active ? t.accent : 'var(--text-sub)',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  display: 'flex', alignItems: 'center',
                 }}>
                   {/* 三档标签按屏宽切换（见 index.css 的 .dashTabFull/Mid/Short）。
                       实测「发布不足5条」+ 数量气泡在 360~430px 这段最吃宽度：
@@ -446,16 +452,22 @@ export function DashboardPage() {
                   {/* 数量气泡：零值用灰底，避免一串「0」看起来像异常。
                      数字用 tabular-nums（等宽数字）：默认比例数字下「66」比「5」宽，
                       气泡一横移下划线的安全间距就跟着变，等宽数字让宽度与位置稳定可预期。
-                     垂直居中：height 钉死 14px + inline-flex 居中只解决了「盒」的居中，
-                      数字字形在盒里仍会偏 —— 因为数字没有下伸部（descender），
-                      基线下方的半行空白会全部堆在气泡底部，看起来就是数字偏上。
-                      故用 lineHeight 反向补偿：气泡高 14、字号 10.5，取 lineHeight:20px
-                      时行盒比气泡高，居中后基线恰好落在视觉中线，上下墨迹留白一致。 */}
+
+                     垂直对齐踩过两次坑，记录在此以免回退：
+                     ① 最初靠 inline 布局的 baseline 对齐 —— 气泡高 14px、标签文字 12.5px，
+                        两块尺寸差太多，baseline 对齐必然错位，实测气泡比标签文字低 4px。
+                        解法：父层（上面的 div）改 flex + alignItems:center，改后行盒中心差归零。
+                     ② 父层是 flex 后，气泡成为 flex item，**它自己的 lineHeight 不再影响对齐**
+                        （实测 1/14/16/20/normal 全部输出同一个值），所以 lineHeight 在这里是
+                        无效属性，已移除。此时数字相对标签文字仅剩 +1.81px 的墨迹偏上 ——
+                        根因是数字无下伸部，10.5px 的行盒在 14px 盒内居中后墨迹整体偏上。
+                        解法：padding-top 推 4px。注意因 align-items 会先扣除 padding 再居中，
+                        实际位移约为 padding 的一半，故 4px 对应约 2px 位移，实测偏差 +0.19px。 */}
                   <span style={{
-                    fontSize: '10.5px', fontWeight: 800, lineHeight: '20px',
+                    fontSize: '10.5px', fontWeight: 800,
                     fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
-                    borderRadius: '999px', padding: '0 6px', marginLeft: '4px',
+                    borderRadius: '999px', padding: '4px 6px 0', marginLeft: '4px',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     height: '14px', boxSizing: 'border-box',
                   }}>{t.count}</span>
