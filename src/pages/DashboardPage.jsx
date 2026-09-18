@@ -402,14 +402,18 @@ export function DashboardPage() {
                       <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                     ))}
                   </div>
-                  {/* 显示天数提示：逾期红色，已发布超时橙色 */}
+                  {/* 显示天数提示：红色胶囊标签 */}
                   {isOverdue(s) ? (
-                    <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '4px', fontWeight: 600 }}>
-                      ⚠ 已逾期（截止 {s.deadline}）
+                    <div style={{ marginTop: '4px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>⚠ 已逾期（截止 {s.deadline}）</span>
                     </div>
                   ) : (
-                    <div style={{ fontSize: '11px', color: s.status === 'published' ? '#f59e0b' : '#ef4444', marginTop: '4px', fontWeight: 600 }}>
-                      {daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}
+                    <div style={{ marginTop: '4px' }}>
+                      <span style={{
+                        fontSize: '10px', fontWeight: 700, color: '#fff',
+                        background: s.status === 'published' ? '#f59e0b' : '#ef4444',
+                        padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap',
+                      }}>{daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}</span>
                     </div>
                   )}
                 </div>
