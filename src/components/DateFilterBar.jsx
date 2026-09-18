@@ -222,11 +222,13 @@ export function DateFilterBar({ value, onChange }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', flexShrink: 0,
-      margin: '6px 12px 4px', padding: '5px 6px',
-      background: '#fff',
-      border: '1px solid rgba(244,114,182,0.12)',
+      margin: '4px 12px 8px', padding: '5px 6px',
+      background: 'rgba(255,255,255,0.5)',
+      border: '1px solid rgba(244,114,182,0.16)',
       borderRadius: '14px',
       boxShadow: '0 1px 3px rgba(244,114,182,0.06)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
     }}>
       {/* 左侧：快捷日期chips，等分撑满，超出时才横滑 */}
       <div className="hide-scrollbar" style={{
