@@ -266,7 +266,7 @@ export function HomePage() {
   return (
     <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
       <header style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 12px',
+        padding: 'calc(16px + var(--safe-top)) 16px 6px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px',
         flexShrink: 0,
       }}>
@@ -297,9 +297,9 @@ export function HomePage() {
       </header>
 
       {/* 分类筛选：固定不滚动 */}
-      <div style={{ padding: '4px 16px 4px', flexShrink: 0 }}>
+      <div style={{ padding: '0 16px 4px', flexShrink: 0 }}>
         {/* 分类筛选：横向 chip 条，直接可见、可滑动 */}
-        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingTop: '6px', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingTop: '4px', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
           <button onClick={() => setCategoryFilter('')} style={{
             flex: '0 0 auto', padding: '4px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
             border: categoryFilter === '' ? 'none' : '1px solid rgba(244,114,182,0.35)',
