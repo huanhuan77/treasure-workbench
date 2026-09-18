@@ -61,8 +61,9 @@ export function dateLabel(value) {
 }
 
 const chipBase = {
-  padding: '5px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+  padding: '4px 2px', borderRadius: 0, fontSize: '13px', fontWeight: 600,
   cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto',
+  border: 'none', background: 'transparent',
 }
 
 function parseRange(value) {
@@ -222,18 +223,16 @@ export function DateFilterBar({ value, onChange }) {
       }}>
         <button onClick={() => onChange('')} style={{
           ...chipBase,
-          border: !value ? 'none' : '1px solid rgba(244,114,182,0.35)',
-          background: !value ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-          color: !value ? '#fff' : 'var(--text-sub)',
+          borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
+          color: !value ? '#ec4899' : 'var(--text-sub)',
         }}>全部</button>
         {DATE_CHIPS.map((c) => {
           const sel = value === c.id
           return (
             <button key={c.id} onClick={() => onChange(sel ? '' : c.id)} style={{
               ...chipBase,
-              border: sel ? 'none' : '1px solid rgba(244,114,182,0.35)',
-              background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-              color: sel ? '#fff' : 'var(--text-main)',
+              borderBottom: sel ? '2px solid #ec4899' : '2px solid transparent',
+              color: sel ? '#ec4899' : 'var(--text-main)',
             }}>{c.label}</button>
           )
         })}
@@ -241,9 +240,8 @@ export function DateFilterBar({ value, onChange }) {
       {/* 日期弹窗入口 */}
       <button onClick={toggle} style={{
         ...chipBase, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px',
-        border: (isRange && value) ? 'none' : '1px solid rgba(244,114,182,0.35)',
-        background: (isRange && value) ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-        color: (isRange && value) ? '#fff' : 'var(--text-main)',
+        borderBottom: (isRange && value) ? '2px solid #ec4899' : '2px solid transparent',
+        color: (isRange && value) ? '#ec4899' : 'var(--text-main)',
       }}>
         <span>📅 {dateLabel(value)}</span>
         <span style={{ fontSize: '9px', opacity: 0.8, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}>▼</span>
