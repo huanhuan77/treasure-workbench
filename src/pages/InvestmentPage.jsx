@@ -278,6 +278,7 @@ export function InvestmentPage() {
   return (
     <div className="app-container" style={{ paddingBottom: '100px', background: '#f8fafc', minHeight: '100vh' }}
       onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+      <style>{`@keyframes ip-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       {/* 下拉刷新指示器 */}
       <div style={{
         position: 'fixed', top: '0', left: '50%', transform: `translateX(-50%) translateY(calc(${-60 + pullDistance}px))`,
@@ -290,8 +291,9 @@ export function InvestmentPage() {
           background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '16px',
-          transform: refreshing ? 'rotate(360deg)' : `rotate(${pullDistance * 3}deg)`,
-          transition: refreshing ? 'transform 0.8s linear infinite' : 'transform 0.2s',
+          transform: refreshing ? 'none' : `rotate(${pullDistance * 3}deg)`,
+          transition: refreshing ? 'none' : 'transform 0.2s',
+          animation: refreshing ? 'ip-spin 0.7s linear infinite' : 'none',
         }}>🔄</div>
         <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, whiteSpace: 'nowrap' }}>
           {refreshing ? '刷新中…' : pullDistance >= PULL_THRESHOLD ? '松开刷新' : pullDistance > 0 ? '下拉刷新' : ''}
