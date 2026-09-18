@@ -66,6 +66,11 @@ const chipBase = {
   border: 'none', background: 'transparent',
 }
 
+// 快捷日期chips 均分样式：flex 1 撑满，minWidth 保证文字不被压扁
+const chipFill = {
+  flex: '1 1 0', minWidth: 'max-content', textAlign: 'center',
+}
+
 function parseRange(value) {
   const m = String(value || '').match(/^range:(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/)
   return m ? { start: m[1], end: m[2] } : { start: '', end: '' }
@@ -216,13 +221,13 @@ export function DateFilterBar({ value, onChange }) {
     <div style={{
       display: 'flex', alignItems: 'center', padding: '4px 8px 2px', flexShrink: 0,
     }}>
-      {/* 左侧：快捷日期chips，可横滑 */}
+      {/* 左侧：快捷日期chips，等分撑满，超出时才横滑 */}
       <div className="hide-scrollbar" style={{
-        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '1px',
+        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center',
         overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
       }}>
       <button onClick={() => onChange('')} style={{
-        ...chipBase,
+        ...chipBase, ...chipFill,
         borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
         color: !value ? '#ec4899' : 'var(--text-sub)',
       }}>全部</button>
@@ -230,7 +235,7 @@ export function DateFilterBar({ value, onChange }) {
         const sel = value === c.id
         return (
           <button key={c.id} onClick={() => onChange(sel ? '' : c.id)} style={{
-            ...chipBase,
+            ...chipBase, ...chipFill,
             borderBottom: sel ? '2px solid #ec4899' : '2px solid transparent',
             color: sel ? '#ec4899' : 'var(--text-main)',
           }}>{c.label}</button>
