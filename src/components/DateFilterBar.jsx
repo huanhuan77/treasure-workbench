@@ -61,7 +61,7 @@ export function dateLabel(value) {
 }
 
 const chipBase = {
-  padding: '4px 6px', borderRadius: 0, fontSize: '13px', fontWeight: 600, textAlign: 'center',
+  padding: '4px 12px', borderRadius: 0, fontSize: '13px', fontWeight: 600, textAlign: 'center',
   cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto',
   border: 'none', background: 'transparent',
 }
