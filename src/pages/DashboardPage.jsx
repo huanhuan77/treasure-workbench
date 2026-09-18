@@ -59,6 +59,7 @@ export function DashboardPage() {
     document.head.appendChild(s)
   }, [])
   const [checking, setChecking] = useState(false)
+  const [showAllLow, setShowAllLow] = useState(false)
   const handleCheckUpdate = async () => {
     setChecking(true)
     const result = await checkForUpdate(true)
