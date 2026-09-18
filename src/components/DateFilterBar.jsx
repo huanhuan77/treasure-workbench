@@ -66,9 +66,11 @@ const chipBase = {
   border: 'none', background: 'transparent',
 }
 
-// 快捷日期chips 均分样式：flex 1 撑满，minWidth 保证文字不被压扁
+// 快捷日期chips 均分样式：flex 1 撑满、minWidth 0 允许收缩、overflow hidden 防文字溢出
 const chipFill = {
-  flex: '1 1 0', minWidth: 'max-content', textAlign: 'center',
+  flex: '1 1 0', minWidth: 0, textAlign: 'center',
+  overflow: 'hidden', textOverflow: 'ellipsis',
+  paddingLeft: 2, paddingRight: 2,
 }
 
 function parseRange(value) {
@@ -219,7 +221,12 @@ export function DateFilterBar({ value, onChange }) {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', padding: '4px 8px 2px', flexShrink: 0,
+      display: 'flex', alignItems: 'center', flexShrink: 0,
+      margin: '6px 12px 4px', padding: '5px 6px',
+      background: '#fff',
+      border: '1px solid rgba(244,114,182,0.12)',
+      borderRadius: '14px',
+      boxShadow: '0 1px 3px rgba(244,114,182,0.06)',
     }}>
       {/* 左侧：快捷日期chips，等分撑满，超出时才横滑 */}
       <div className="hide-scrollbar" style={{
