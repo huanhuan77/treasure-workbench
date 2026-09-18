@@ -443,9 +443,12 @@ export function DashboardPage() {
             发布不足5条
             <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#8b5cf6', padding: '1px 7px', borderRadius: '8px' }}>{lowPublish.length}</span>
           </div>
+          {lowPublish.length > 5 && (
+            <button onClick={() => setShowAllLow(!showAllLow)} style={{ fontSize: '12px', color: '#8b5cf6', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{showAllLow ? '收起' : `展开全部 ${lowPublish.length} 条`} ›</button>
+          )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {lowPublish.map((s) => (
+          {(showAllLow ? lowPublish : lowPublish.slice(0, 5)).map((s) => (
             <div key={s.id} style={{ background: '#fff', border: '1px solid #ede9fe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
