@@ -154,7 +154,7 @@ export function DashboardPage() {
 
   // 已发布但发布不足5条的样品
   const lowPublish = useMemo(
-    () => (samples || []).filter((s) => s.status === 'published' && (Number(s.publishCount) || 0) < 5),
+    () => (samples || []).filter((s) => s.status === 'published' && (Number(s.publishCount) || 0) < 5 && (Number(s.orderCount) || 0) === 0),
     [samples],
   )
 
@@ -454,6 +454,11 @@ export function DashboardPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                   <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>已发 {s.publishCount || 0} 条</span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                  {getAccounts(s).map((a) => (
+                    <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
+                  ))}
                 </div>
               </div>
               <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
