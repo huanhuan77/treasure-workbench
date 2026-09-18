@@ -457,9 +457,12 @@ export function DashboardPage() {
                   <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>已发 {s.publishCount || 0} 条</span>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                  {getAccounts(s).map((a) => (
-                    <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
-                  ))}
+                  {getAccounts(s).map((a) => {
+                    const acctCount = (s.countsByAccount && s.countsByAccount[a]?.publishCount) || 0
+                    return (
+                      <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: acctCount < 5 ? '#fef3c7' : (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: acctCount < 5 ? '#d97706' : (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}({acctCount}条)</span>
+                    )
+                  })}
                 </div>
               </div>
               <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
