@@ -299,6 +299,22 @@ export function InvestmentPage() {
           {refreshing ? '刷新中…' : pullDistance >= PULL_THRESHOLD ? '松开刷新' : pullDistance > 0 ? '下拉刷新' : ''}
         </span>
       </div>
+      {/* 全屏 Loading 遮罩 */}
+      {refreshing && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(248,250,252,0.75)', backdropFilter: 'blur(4px)',
+          zIndex: 100, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: '12px',
+        }}>
+          <div style={{
+            width: '48px', height: '48px', borderRadius: '50%',
+            border: '3px solid #e0e7ff', borderTopColor: '#6366f1',
+            animation: 'ip-spin 0.7s linear infinite',
+          }} />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#6366f1' }}>正在刷新行情…</span>
+        </div>
+      )}
       {/* 顶部 Header */}
       {/* 顶部固定区域：Header + Tab，不随页面滚动 */}
       <div style={{
