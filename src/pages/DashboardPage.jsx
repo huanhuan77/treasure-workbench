@@ -392,10 +392,15 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* ── 提醒中心：发布提醒 / 发布不足5条 / 即将到期 三合一（数据卡片式 Tab） ── */}
+      {/* ── 提醒中心：发布提醒 / 发布不足5条 / 即将到期 三合一（下划线标签式 Tab） ── */}
       <div style={{ padding: '12px 16px 4px' }}>
-        {/* Tab：三张数据卡片，每张显示标题 + 数量大数字；选中项描边高亮 */}
-        <div style={{ display: 'flex', gap: '7px', marginBottom: '12px' }}>
+        {/* Tab：纯文字标签 + 数量气泡，选中项下方一条粗色条；比卡片式更轻量，把高度留给列表 */}
+        <div style={{
+          display: 'flex', marginBottom: '10px',
+          background: 'rgba(255,255,255,0.55)', borderRadius: '12px',
+          border: '1px solid rgba(255,255,255,0.9)',
+          boxShadow: '0 2px 10px rgba(120,90,100,0.06)', padding: '0 6px',
+        }}>
           {REMIND_TABS.map((t) => {
             const active = remindTab === t.id
             return (
@@ -403,18 +408,13 @@ export function DashboardPage() {
                 key={t.id}
                 onClick={() => pickTab(t.id)}
                 style={{
-                  flex: '1 1 0', minWidth: 0, padding: '10px 9px', borderRadius: '12px',
-                  textAlign: 'left', cursor: 'pointer',
-                  border: active ? `1.5px solid ${t.accent}` : '1px solid rgba(255,255,255,0.9)',
-                  background: active ? '#fff' : 'rgba(255,255,255,0.62)',
-                  boxShadow: active
-                    ? `0 4px 12px ${t.accent}29`
-                    : '0 2px 8px rgba(120,90,100,0.05)',
-                  transition: 'border-color .15s, background .15s, box-shadow .15s',
+                  flex: '1 1 0', minWidth: 0, position: 'relative',
+                  padding: '9px 4px 10px', border: 'none', background: 'transparent',
+                  cursor: 'pointer',
                 }}
               >
                 <div style={{
-                  fontSize: '10.5px', fontWeight: 700, marginBottom: '4px',
+                  fontSize: '12.5px', fontWeight: 700,
                   color: active ? t.accent : 'var(--text-sub)',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>
@@ -422,11 +422,21 @@ export function DashboardPage() {
                       注意：显示/隐藏必须走 CSS 类，不能用内联 display（内联优先级最高会压过媒体查询） */}
                   <span className="dashTabFull">{t.label}</span>
                   <span className="dashTabShort">{t.short}</span>
+                  {/* 数量气泡：零值用灰底，避免一串「0」看起来像异常 */}
+                  <span style={{
+                    fontSize: '10.5px', fontWeight: 800, lineHeight: 1,
+                    color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
+                    borderRadius: '999px', padding: '2px 6px', marginLeft: '4px',
+                    display: 'inline-block', verticalAlign: '1px',
+                  }}>{t.count}</span>
                 </div>
+                {/* 选中下划线：用绝对定位贴底，不参与布局，切换时不引起抖动 */}
                 <div style={{
-                  fontSize: '23px', fontWeight: 800, lineHeight: 1,
-                  color: t.count > 0 ? '#111' : '#cfc4c8',
-                }}>{t.count}</div>
+                  position: 'absolute', left: '16%', right: '16%', bottom: '2px',
+                  height: '3px', borderRadius: '3px',
+                  background: active ? t.accent : 'transparent',
+                  transition: 'background .15s',
+                }} />
               </button>
             )
           })}
@@ -436,14 +446,12 @@ export function DashboardPage() {
         <div>
           {remindTab === 'reminders' && (
             <>
-              {/* 汇总行：Tab 已表达标题，这里只留「共 N 个」 */}
+              {/* 汇总行：数量已在 Tab 气泡里表达，这里只补充 Tab 说不清的「只显示前 N 条」 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', minHeight: '18px' }}>
                 <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
-                  {allReminders.length > 0
-                    ? (allReminders.length > TAB_PREVIEW_LIMIT
-                      ? `共 ${allReminders.length} 个产品待补发 · 显示前 ${TAB_PREVIEW_LIMIT} 条`
-                      : `共 ${allReminders.length} 个产品待补发`)
-                    : '暂无待补发产品'}
+                  {allReminders.length > TAB_PREVIEW_LIMIT
+                    ? `显示前 ${TAB_PREVIEW_LIMIT} 条 · 共 ${allReminders.length} 个待补发`
+                    : (allReminders.length > 0 ? '按紧急度排序' : '暂无待补发产品')}
                 </span>
               </div>
               {reminders.length === 0 ? (
@@ -511,8 +519,8 @@ export function DashboardPage() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', minHeight: '18px' }}>
                 <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
                   {lowPublish.length > TAB_PREVIEW_LIMIT
-                    ? `共 ${lowPublish.length} 个产品发布不足 ${LOW_PUBLISH_LIMIT} 条 · 显示前 ${TAB_PREVIEW_LIMIT} 条`
-                    : `共 ${lowPublish.length} 个产品发布不足 ${LOW_PUBLISH_LIMIT} 条`}
+                    ? `显示前 ${TAB_PREVIEW_LIMIT} 条 · 共 ${lowPublish.length} 个发布不足 ${LOW_PUBLISH_LIMIT} 条`
+                    : (lowPublish.length > 0 ? `按发布条数排序` : `暂无发布不足 ${LOW_PUBLISH_LIMIT} 条的样品`)}
                 </span>
               </div>
               {lowPublish.length === 0 ? (
@@ -560,11 +568,9 @@ export function DashboardPage() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', minHeight: '18px' }}>
                 <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
-                  {expiringSoon.length > 0
-                    ? (expiringSoon.length > TAB_PREVIEW_LIMIT
-                      ? `共 ${expiringSoon.length} 个样品近 ${EXPIRING_DAYS} 天到期 · 显示前 ${TAB_PREVIEW_LIMIT} 条`
-                      : `共 ${expiringSoon.length} 个样品近 ${EXPIRING_DAYS} 天到期`)
-                    : `近 ${EXPIRING_DAYS} 天没有即将到期的样品`}
+                  {expiringSoon.length > TAB_PREVIEW_LIMIT
+                    ? `显示前 ${TAB_PREVIEW_LIMIT} 条 · 共 ${expiringSoon.length} 个近 ${EXPIRING_DAYS} 天到期`
+                    : (expiringSoon.length > 0 ? `按截止日期排序` : `近 ${EXPIRING_DAYS} 天没有即将到期的样品`)}
                 </span>
               </div>
               {expiringSoon.length === 0 ? (
