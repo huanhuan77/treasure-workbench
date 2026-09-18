@@ -61,7 +61,7 @@ export function dateLabel(value) {
 }
 
 const chipBase = {
-  padding: '4px 12px', borderRadius: 0, fontSize: '13px', fontWeight: 600, textAlign: 'center',
+  padding: '4px 7px', borderRadius: 0, fontSize: '12px', fontWeight: 600, textAlign: 'center',
   cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto',
   border: 'none', background: 'transparent',
 }
@@ -214,11 +214,11 @@ export function DateFilterBar({ value, onChange }) {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', padding: '4px 16px 2px', flexShrink: 0,
+      display: 'flex', alignItems: 'center', padding: '4px 8px 2px', flexShrink: 0,
     }}>
       {/* 左侧：快捷日期chips，可横滑 */}
       <div className="hide-scrollbar" style={{
-        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '4px',
+        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '1px',
         overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
       }}>
       <button onClick={() => onChange('')} style={{
