@@ -236,17 +236,25 @@ export function DateFilterBar({ value, onChange }) {
       }}>
       <button onClick={() => onChange('')} style={{
         ...chipBase, ...chipFill,
-        borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
         color: !value ? '#ec4899' : 'var(--text-sub)',
-      }}>全部</button>
+      }}>
+        <span style={{
+          display: 'inline-block', position: 'relative', paddingBottom: '3px',
+          borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
+        }}>全部</span>
+      </button>
       {DATE_CHIPS.map((c) => {
         const sel = value === c.id
         return (
           <button key={c.id} onClick={() => onChange(sel ? '' : c.id)} style={{
             ...chipBase, ...chipFill,
-            borderBottom: sel ? '2px solid #ec4899' : '2px solid transparent',
             color: sel ? '#ec4899' : 'var(--text-main)',
-          }}>{c.label}</button>
+          }}>
+            <span style={{
+              display: 'inline-block', position: 'relative', paddingBottom: '3px',
+              borderBottom: sel ? '2px solid #ec4899' : '2px solid transparent',
+            }}>{c.label}</span>
+          </button>
         )
       })}
       </div>
