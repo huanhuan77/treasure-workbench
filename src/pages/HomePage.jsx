@@ -267,35 +267,37 @@ export function HomePage() {
     <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
       <header style={{
         padding: 'calc(16px + var(--safe-top)) 16px 12px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px',
         flexShrink: 0,
       }}>
-        <div>
+        <div style={{ flexShrink: 0 }}>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.3px' }}>宝藏工作台</h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>{products.length}个产品 · {(products || []).reduce((s, p) => s + (p.copies?.length || 0), 0)}条文案</p>
         </div>
-      </header>
-
-      {/* 搜索 + 分类筛选：固定不滚动 */}
-      <div style={{ padding: '8px 16px 4px', flexShrink: 0 }}>
+        {/* 搜索框：与标题同行，靠右 */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: '8px', background: '#fff',
-          borderRadius: '8px', padding: '6px 8px 6px 14px', boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)',
+          flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px',
+          background: '#fff', borderRadius: '999px', padding: '8px 10px 8px 12px',
+          boxShadow: '0 2px 10px rgba(244, 114, 182, 0.06)',
         }}>
-          <span style={{ fontSize: '16px', opacity: 0.6 }}>🔍</span>
+          <span style={{ fontSize: '14px', opacity: 0.6, flexShrink: 0 }}>🔍</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索产品 / 品牌"
-            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', fontSize: '15px', color: 'var(--text-main)', background: 'transparent' }}
+            style={{ flex: 1, minWidth: 0, border: 'none', outline: 'none', fontSize: '13px', color: 'var(--text-main)', background: 'transparent' }}
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              style={{ border: 'none', background: 'rgba(0,0,0,0.06)', color: 'var(--text-sub)', width: '20px', height: '20px', borderRadius: '50%', fontSize: '12px', lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}
+              style={{ border: 'none', background: 'rgba(0,0,0,0.06)', color: 'var(--text-sub)', width: '18px', height: '18px', borderRadius: '50%', fontSize: '11px', lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}
             >×</button>
           )}
         </div>
+      </header>
+
+      {/* 分类筛选：固定不滚动 */}
+      <div style={{ padding: '4px 16px 4px', flexShrink: 0 }}>
         {/* 分类筛选：横向 chip 条，直接可见、可滑动 */}
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingTop: '6px', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
           <button onClick={() => setCategoryFilter('')} style={{
