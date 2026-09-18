@@ -255,7 +255,7 @@ export function OrdersPage() {
       {/* 账号筛选：一行不换行，可横滚 */}
       <div style={{ padding: '4px 16px 2px', display: 'flex', gap: '6px', flexWrap: 'nowrap', alignItems: 'center', flexShrink: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <button onClick={() => setAccountFilter('')} style={{
-          flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+          flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
           border: accountFilter === '' ? 'none' : '1px solid rgba(244,114,182,0.35)',
           background: accountFilter === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
           color: accountFilter === '' ? '#fff' : 'var(--text-main)', cursor: 'pointer',
@@ -266,7 +266,7 @@ export function OrdersPage() {
           const sel = accountFilter === a
           return (
             <button key={a} onClick={() => setAccountFilter(a)} style={{
-              flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+              flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
               border: sel ? 'none' : `1px solid ${col.c}`,
               background: sel ? col.c : '#fff',
               color: sel ? '#fff' : col.c, cursor: 'pointer',
