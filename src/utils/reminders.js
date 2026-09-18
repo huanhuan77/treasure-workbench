@@ -3,6 +3,7 @@
 // 总览页的 Tab 计数与三个列表页的列表内容都从这里取，
 // 避免同一个口径散落在多处、改一处漏一处导致「卡片数字 ≠ 点进去的条数」。
 import { needPublishReminder } from './publish'
+import { getAccounts, getCounts } from './sampleStatus'
 
 // 发布不足的阈值：某产品发布数低于它即视为「发布不足」
 export const LOW_PUBLISH_LIMIT = 5
@@ -36,13 +37,45 @@ export function selectPublishReminders(samples) {
   return (samples || []).filter((s) => needPublishReminder(s))
 }
 
-// 2) 发布不足5条：已发布、发布数低于阈值、且尚未出单
+// 2) 发布不足5条：按「账号」粒度统计（不是样品粒度）。
+//
+// 为什么必须按账号：
+//   样品 = 一个实体，可归属多个账号（见 sampleStatus.js 的数据模型）。
+//   顶层 s.publishCount / s.orderCount 是**所有账号的合计**，用它判断会出两个错：
+//     · 漏报：刘亦菲发 1 条、富婆发 6 条 → 合计 7 ≥ 5，整个样品被排除，
+//             但刘亦菲那个账号明明发布不足。
+//     · 误排除：只要任一账号出过单，合计 orderCount > 0，样品整体被排除，
+//             哪怕另一个账号既没出单又发布不足。
+//   所以这里逐个账号判断，三个条件全部落在同一账号上：
+//     该账号已发布过（publishCount > 0）
+//     && 该账号发布数 < 阈值
+//     && 该账号尚未出单（orderCount === 0）
+//
+// 返回值是「样品 × 账号」的扁平条目数组，每条形如
+//   { sample, account, publishCount, orderCount, lack }
+// 而不是样品数组 —— 因为一个样品可能有多个账号各自发布不足，
+// 它们要作为独立条目各自计数、各自展示。
 export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT) {
-  return (samples || []).filter(
-    (s) => s.status === 'published'
-      && (Number(s.publishCount) || 0) < limit
-      && (Number(s.orderCount) || 0) === 0,
-  )
+  const out = []
+  for (const s of samples || []) {
+    for (const a of getAccounts(s)) {
+      const c = getCounts(s, a)
+      const publishCount = c.publishCount
+      const orderCount = c.orderCount
+      // 「已发布」按账号判定：该账号发布数 > 0 即视为该账号已发布（与 sampleStatus 的口径一致）
+      if (publishCount <= 0) continue
+      if (publishCount >= limit) continue
+      if (orderCount !== 0) continue
+      out.push({
+        sample: s,
+        account: a,
+        publishCount,
+        orderCount,
+        lack: limit - publishCount,
+      })
+    }
+  }
+  return out
 }
 
 // 3) 即将到期：有截止日期、且未发布/未放弃、EXPIRING_DAYS 天内到期（含已逾期），按截止日升序

@@ -160,7 +160,8 @@ export function DashboardPage() {
   // 总览页内直接展示全部，不再跳列表页（保留别名以免大范围改动下方渲染代码）
   const reminders = allReminders
 
-  // 已发布但发布不足5条的样品
+  // 已发布但发布不足5条 —— 按「账号」粒度返回「样品×账号」条目数组，
+  // 一个样品可能贡献多条（多个账号各自发布不足），计数与列表都基于它，保证同源。
   const lowPublish = useMemo(() => selectLowPublish(samples), [samples])
 
   // 即将到期：有截止日期、且未发布/未放弃、7 天内到期（含已逾期），按截止日期升序
@@ -567,43 +568,41 @@ export function DashboardPage() {
               {/* 原「按发布条数排序」说明行已去掉，空数据由下方空状态卡片提示 */}
               {lowPublish.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
-                  暂无发布不足 {LOW_PUBLISH_LIMIT} 条的样品
+                  暂无发布不足 {LOW_PUBLISH_LIMIT} 条的账号
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {lowPublish.map((s) => (
-                    <div key={s.id} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>已发 {s.publishCount || 0} 条</span>
+                  {/* 条目粒度是「样品 × 账号」：同一个样品若有多个账号各自发布不足，
+                      会作为多条独立展示。这样「还差 N 条」才是针对具体某个账号的，
+                      而不是含糊的样品合计值。key 必须用 sampleId+account 组合，
+                      单用 s.id 在多个账号时会撞 key。 */}
+                  {lowPublish.map(({ sample: s, account, publishCount, lack }) => {
+                    const col = ACCOUNT_COLOR[account] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+                    return (
+                      <div key={`${s.id}::${account}`} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>已发 {publishCount} 条 · 还差 {lack}</span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                            {/* 账号标签统一用各自的账号主题色（同一账号在不同 Tab 里颜色一致，便于辨认）+ 同色描边突出异常项 */}
+                            <span style={{
+                              fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
+                              background: col.bg, color: col.c, fontWeight: 600,
+                              border: `1px solid ${col.c}`,
+                              whiteSpace: 'nowrap', flexShrink: 0,
+                            }}>{account}</span>
+                            <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: '#16a34a', background: 'rgba(22,163,74,0.12)', fontWeight: 600, whiteSpace: 'nowrap', alignSelf: 'center' }}>未出单</span>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                          {/* 账号标签统一用各自的账号主题色：原先「不足5条」会把标签刷成琥珀黄，
-                              同一账号在不同条目/不同 Tab 里颜色不一致，反而认不出是哪个号；
-                              是否达标改由括号里的条数 + 下方「还差 N 条」文案表达。
-                              不足的账号加同色描边，既保留账号识别度又让异常项更显眼。 */}
-                          {getAccounts(s).map((a) => {
-                            const acctCount = (s.countsByAccount && s.countsByAccount[a]?.publishCount) || 0
-                            const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
-                            const short = acctCount < LOW_PUBLISH_LIMIT
-                            return (
-                              <span key={a} style={{
-                                fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
-                                background: col.bg, color: col.c, fontWeight: 600,
-                                border: short ? `1px solid ${col.c}` : '1px solid transparent',
-                                whiteSpace: 'nowrap', flexShrink: 0,
-                              }}>{a}({acctCount}条)</span>
-                            )
-                          })}
-                        </div>
+                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: [account] } })} style={{
+                          flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
+                          fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                        }}>补发布</button>
                       </div>
-                      <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
-                        flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
-                        fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                      }}>补发布</button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </>

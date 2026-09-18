@@ -50,10 +50,20 @@ function Pill({ active, onClick, children, accent = '#ec4899' }) {
  * @param emptyText   基础口径为空时的文案
  * @param noMatchText 有数据但被筛选/搜索筛空时的文案
  * @param children    渲染单条卡片：(item) => JSX
+ * @param getItem     条目适配器，把 base 里的一项解析成 { sample, account }
+ *
+ * 为什么需要 getItem：
+ *   本组件原先假设 base 是「样品数组」，筛选/搜索都直接读 item.name 与 getAccounts(item)。
+ *   但「发布不足5条」的口径是**按账号**的，它的 base 是「样品 × 账号」扁平条目
+ *   { sample, account, ... }，直接读 name 会拿到 undefined、筛选也会失效。
+ *   故把「如何从条目取出样品与账号」抽象成注入项：
+ *   默认实现对应样品数组（账号取第一个，用于账号筛选的兜底匹配），
+ *   按账号口径的页面传入自定义实现即可，筛选与搜索逻辑无需各写一套。
  */
 export function ReminderListPage({
   title, accent = '#ec4899', base, sorts, searchKeys, extraTop,
   emptyText = '暂无数据', noMatchText = '没有符合筛选条件的样品', children,
+  getItem = (it) => ({ sample: it, account: null }),
 }) {
   const navigate = useNavigate()
   const [accountFilter, setAccountFilter] = useState('all')
@@ -62,17 +72,24 @@ export function ReminderListPage({
 
   const list = useMemo(() => {
     let r = base || []
-    if (accountFilter !== 'all') r = r.filter((s) => getAccounts(s).includes(accountFilter))
+    // 账号筛选：条目自带 account 时按它精确匹配，否则退回「样品归属账号」判断。
+    // 按账号口径的条目必须走前一条 —— 用「样品归属」会把同样品其它账号的条目也带进来。
+    if (accountFilter !== 'all') {
+      r = r.filter((it) => {
+        const { sample, account } = getItem(it)
+        return account ? account === accountFilter : getAccounts(sample).includes(accountFilter)
+      })
+    }
     const kw = keyword.trim().toLowerCase()
     if (kw) {
-      const keys = searchKeys || [(s) => s.name]
-      r = r.filter((s) => keys.some((k) => String(k(s) || '').toLowerCase().includes(kw)))
+      const keys = searchKeys || [({ sample }) => sample?.name]
+      r = r.filter((it) => keys.some((k) => String(k(it) || '').toLowerCase().includes(kw)))
     }
     const arr = [...r]
     const cur = sorts.find((o) => o.key === sortKey) || sorts[0]
     if (cur?.compare) arr.sort(cur.compare)
     return arr
-  }, [base, accountFilter, keyword, sortKey, sorts, searchKeys])
+  }, [base, accountFilter, keyword, sortKey, sorts, searchKeys, getItem])
 
   const filtered = accountFilter !== 'all' || keyword.trim() !== ''
 
