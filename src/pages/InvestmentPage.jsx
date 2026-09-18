@@ -60,6 +60,41 @@ export function InvestmentPage() {
   const [invShares, setInvShares] = useState('')
   const [invAssetType, setInvAssetType] = useState('stock') // 新增时默认股票
 
+  // 下拉刷新
+  const [pullDistance, setPullDistance] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const touchStartY = useRef(0)
+  const touchMoved = useRef(false)
+  const PULL_THRESHOLD = 70 // 触发刷新的距离
+
+  const onTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY
+    touchMoved.current = false
+  }
+  const onTouchMove = (e) => {
+    if (refreshing) return
+    const scrollTop = window.scrollY || document.documentElement.scrollTop
+    if (scrollTop > 0) return
+    const dy = e.touches[0].clientY - touchStartY.current
+    if (dy > 0) {
+      touchMoved.current = true
+      setPullDistance(Math.min(dy * 0.5, 120))
+    }
+  }
+  const onTouchEnd = async () => {
+    if (!touchMoved.current) { setPullDistance(0); return }
+    touchMoved.current = false
+    if (pullDistance >= PULL_THRESHOLD) {
+      setRefreshing(true)
+      setPullDistance(50)
+      await autoRefreshPrices(invRef.current)
+      setRefreshing(false)
+      setPullDistance(0)
+    } else {
+      setPullDistance(0)
+    }
+  }
+
   // 自动刷新行情
   const autoRefreshPrices = useCallback(async (list) => {
     if (!list || list.length === 0) return
@@ -241,7 +276,27 @@ export function InvestmentPage() {
   ]
 
   return (
-    <div className="app-container" style={{ paddingBottom: '100px', background: '#f8fafc', minHeight: '100vh' }}>
+    <div className="app-container" style={{ paddingBottom: '100px', background: '#f8fafc', minHeight: '100vh' }}
+      onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+      {/* 下拉刷新指示器 */}
+      <div style={{
+        position: 'fixed', top: '0', left: '50%', transform: `translateX(-50%) translateY(calc(${-60 + pullDistance}px))`,
+        zIndex: 60, transition: refreshing ? 'none' : 'transform 0.2s',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
+        pointerEvents: 'none',
+      }}>
+        <div style={{
+          width: '36px', height: '36px', borderRadius: '50%',
+          background: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '16px',
+          transform: refreshing ? 'rotate(360deg)' : `rotate(${pullDistance * 3}deg)`,
+          transition: refreshing ? 'transform 0.8s linear infinite' : 'transform 0.2s',
+        }}>🔄</div>
+        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, whiteSpace: 'nowrap' }}>
+          {refreshing ? '刷新中…' : pullDistance >= PULL_THRESHOLD ? '松开刷新' : pullDistance > 0 ? '下拉刷新' : ''}
+        </span>
+      </div>
       {/* 顶部 Header */}
       {/* 顶部固定区域：Header + Tab，不随页面滚动 */}
       <div style={{
