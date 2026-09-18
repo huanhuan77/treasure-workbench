@@ -20,8 +20,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
-    "stock-sdk": "^2.4.0",
-    "tesseract.js": "^7.0.0"
+    "stock-sdk": "^2.4.0"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
