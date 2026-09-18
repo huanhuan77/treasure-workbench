@@ -156,9 +156,12 @@ export function PublishRecordsPage() {
         </div>
       </header>
 
+      {/* 日期筛选 */}
+      <DateFilterBar value={dateRange} onChange={setDateRange} />
+
       {/* 账号筛选：单行横向滚动，不换行 */}
       <div className="hide-scrollbar" style={{
-        display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px 2px', marginTop: '7px',
+        display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 16px 2px',
         flexShrink: 0, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
       }}>
         <button onClick={() => setAccount('')} style={{
@@ -180,9 +183,6 @@ export function PublishRecordsPage() {
           )
         })}
       </div>
-
-      {/* 日期筛选：全部 / 今天 / 昨天 / 近7天 / 本周 / 本月 + 📅 日期（快捷键 / 具体某一天 / 本月·上月·近半年·本年） */}
-      <DateFilterBar value={dateRange} onChange={setDateRange} />
 
       {/* 排序：单个「日期」切换按钮（点一下升序↑ 再点降序↓）+ 发布最多 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '2px 16px 2px' }}>
