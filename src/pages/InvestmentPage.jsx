@@ -631,7 +631,7 @@ export function InvestmentPage() {
       {/* 添加表单弹窗 */}
       <Modal open={showAddInv} onClose={() => setShowAddInv(false)} title="📝 添加投资记录" center>
         <div style={{ boxSizing:'border-box' }}>
-          <input ref={fileInputRef} type="file" accept="image/*" capture="environment" style={{ display:'none' }} onChange={handleOcrFile} />
+          <input ref={fileInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleOcrFile} />
           <button onClick={handleOcrClick} disabled={ocrLoading} style={{
             width:'100%', boxSizing:'border-box', padding:'10px', marginBottom:'12px', borderRadius:'10px',
             border:'1.5px dashed #6366f1', background: ocrLoading ? '#eef2ff' : 'transparent',
