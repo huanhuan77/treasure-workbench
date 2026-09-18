@@ -26,7 +26,7 @@ function dispDate(v) {
 
 // 排序按钮样式（与 DateFilterBar 的 SortChips 一致）
 const sortChipStyle = (sel) => ({
-  flex: '0 0 auto', padding: '4px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+  flex: '0 0 auto', padding: '7px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
   border: sel ? 'none' : '1px solid rgba(244,114,182,0.35)',
   background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
   color: sel ? '#fff' : 'var(--text-main)', cursor: 'pointer', whiteSpace: 'nowrap',
