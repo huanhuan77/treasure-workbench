@@ -17,14 +17,36 @@
   --gray-100: #fce7f3;
   --gray-200: #fbcfe8;
   --gray-300: #f9a8d4;
-  --gray-400: #b88a99;
+  --gray-400: #a97b8c;
   --gray-500: #8b6f7a;
   --gray-600: #6b5260;
   --gray-700: #4a2c3a;
   --gray-800: #3a1f2d;
   --gray-900: #2d1622;
-  --text-main: #4a2c3a;
-  --text-sub: #8b6f7a;
+  /* 文字色：比原值加深 1~2 档（色相不变），提升看板数字与正文的对比度。
+     这是全站自动受益的部分 —— --text-main 被引用 138 处、--text-sub 189 处、--gray-400 11 处，
+     改这里等于 32 个页面的文字层次一起升级，且无需改动任何页面的 JSX。 */
+  --text-main: #2d1622;
+  --text-sub: #6b5260;
+
+  /* ── 看板风设计令牌（新增，不影响既有页面）─────────────────────
+     注意：本项目 index.css 只有 7 个类选择器（.app-container / .dash-sticky-bar /
+     .dashTab* / .hide-scrollbar / .scroll-lock-page），**没有任何卡片类**；
+     各业务页的卡片样式都是页面内联的。所以下面这组令牌只服务总览页的看板重构，
+     属「新增不删」，改动它们不会波及其他页面。 */
+  --surface: #ffffff;
+  --surface-muted: #fdfafb;
+  --border-hair: rgba(236, 72, 153, 0.10);
+  /* 三级层次阴影：主卡用 level-2，卡内次级块用 level-1（不加投影，避免层层阴影糊成一片），
+     浮层/强调块用 level-3 */
+  --level-1: 0 1px 2px rgba(120, 90, 100, 0.06);
+  --level-2: 0 4px 14px rgba(244, 114, 182, 0.10);
+  --level-3: 0 10px 28px rgba(244, 114, 182, 0.16);
+  --radius-card: 16px;
+  --radius-inner: 12px;
+
+  /* ⚠️ 以下两个值不得改动：全站吸顶/底部安全区都依赖它们，
+     且只在此处定义（不是 .app-container 的局部变量）。 */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
@@ -38,8 +60,9 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  /* 蜜桃粉系渐变背景 */
-  background: linear-gradient(160deg, #ffe4e6 0%, #fce7f3 40%, #fef3c7 100%);
+  /* 蜜桃粉系渐变背景：比原版更「透气」——顶部略收、中段提亮，让白卡片浮起来，
+     配合加深后的文字色形成更清晰的看板层次。 */
+  background: linear-gradient(170deg, #ffe0ea 0%, #ffeef5 38%, #fff8f4 100%);
   background-attachment: fixed;
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
