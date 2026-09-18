@@ -61,7 +61,7 @@ export function dateLabel(value) {
 }
 
 const chipBase = {
-  padding: '4px 2px', borderRadius: 0, fontSize: '13px', fontWeight: 600,
+  padding: '4px 2px', borderRadius: 0, fontSize: '15px', fontWeight: 600, textAlign: 'center',
   cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto',
   border: 'none', background: 'transparent',
 }
@@ -214,36 +214,30 @@ export function DateFilterBar({ value, onChange }) {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 16px 2px', flexShrink: 0,
+      display: 'flex', alignItems: 'center', padding: '4px 12px 2px', flexShrink: 0,
     }}>
-      {/* 左侧：可横滑的快捷筛选 chips */}
-      <div className="hide-scrollbar" style={{
-        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px',
-        overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
-      }}>
-        <button onClick={() => onChange('')} style={{
-          ...chipBase,
-          borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
-          color: !value ? '#ec4899' : 'var(--text-sub)',
-        }}>全部</button>
-        {DATE_CHIPS.map((c) => {
-          const sel = value === c.id
-          return (
-            <button key={c.id} onClick={() => onChange(sel ? '' : c.id)} style={{
-              ...chipBase,
-              borderBottom: sel ? '2px solid #ec4899' : '2px solid transparent',
-              color: sel ? '#ec4899' : 'var(--text-main)',
-            }}>{c.label}</button>
-          )
-        })}
-      </div>
+      <button onClick={() => onChange('')} style={{
+        ...chipBase, flex: 1,
+        borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
+        color: !value ? '#ec4899' : 'var(--text-sub)',
+      }}>全部</button>
+      {DATE_CHIPS.map((c) => {
+        const sel = value === c.id
+        return (
+          <button key={c.id} onClick={() => onChange(sel ? '' : c.id)} style={{
+            ...chipBase, flex: 1,
+            borderBottom: sel ? '2px solid #ec4899' : '2px solid transparent',
+            color: sel ? '#ec4899' : 'var(--text-main)',
+          }}>{c.label}</button>
+        )
+      })}
       {/* 日期弹窗入口 */}
       <button onClick={toggle} style={{
-        ...chipBase, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '4px',
+        ...chipBase, flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '2px',
         borderBottom: (isRange && value) ? '2px solid #ec4899' : '2px solid transparent',
         color: (isRange && value) ? '#ec4899' : 'var(--text-main)',
       }}>
-        <span>📅 {dateLabel(value)}</span>
+        <span>📅{dateLabel(value)}</span>
         <span style={{ fontSize: '9px', opacity: 0.8, transition: 'transform .15s', transform: open ? 'rotate(180deg)' : 'none' }}>▼</span>
       </button>
       {/* 底部弹出式日历弹窗 */}
