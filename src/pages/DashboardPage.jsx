@@ -409,15 +409,14 @@ export function DashboardPage() {
           padding: '7px 16px 8px',
           boxShadow: '0 1px 8px rgba(120,90,100,0.05)',
         }}>
-          {/* 内层胶囊：保留原有圆角与描边视觉。
-              固定 boxHeight（高 34px）是必要的：按钮高度由标签行高决定，而三档标签
-              （dashTabFull / dashTabMid / dashTabShort）的行盒高并不相同 —— 全标签 22px、
-              中/短标签 19px，导致窄屏（320 / 360）下整条 Tab 比宽屏矮 3px。
-              钉死高度后，各屏宽下 Tab 栏高度一致，不会「换个手机就变矮」。 */}
+          {/* 内层不再画白色胶囊底（原来是 rgba(255,255,255,0.6) + 白色描边），
+              避免在吸顶条的半透明毛玻璃上再叠一层白，出现「白底套白边」的浑浊感。
+              但**保留这一层 div** —— 它是 flex 布局的载体：高度 34px 由它钉死
+              （按钮高度若由标签行高决定，三档标签行盒高不同会导致窄屏比宽屏矮 3px），
+              同时 padding 0 6px 让最外侧标签与吸顶条左右边留出内缩量。 */}
           <div style={{
             display: 'flex', flex: 1, minWidth: 0, height: '34px',
-            background: 'rgba(255,255,255,0.6)', borderRadius: '12px',
-            border: '1px solid rgba(255,255,255,0.9)', padding: '0 6px',
+            padding: '0 6px',
           }}>
           {REMIND_TABS.map((t) => {
             const active = remindTab === t.id
@@ -447,13 +446,13 @@ export function DashboardPage() {
                   {/* 数量气泡：零值用灰底，避免一串「0」看起来像异常。
                      数字用 tabular-nums（等宽数字）：默认比例数字下「66」比「5」宽，
                       气泡一横移下划线的安全间距就跟着变，等宽数字让宽度与位置稳定可预期。
-                     垂直居中：inline-flex + alignItems:center 让数字在气泡盒内居中；
-                      但 lineHeight 必须是 normal 而非 1 —— 实测 lineHeight:1 时数字墨迹
-                      在气泡内偏上 1.38px（上留白 14、下留白 36，按 8x 折算），
-                      因为固定行高会把数字字形盒顶到行盒顶部、空白全堆在下方。
-                      改回 normal 后上下留白一致，各屏宽/各字号下都居中。 */}
+                     垂直居中：height 钉死 14px + inline-flex 居中只解决了「盒」的居中，
+                      数字字形在盒里仍会偏 —— 因为数字没有下伸部（descender），
+                      基线下方的半行空白会全部堆在气泡底部，看起来就是数字偏上。
+                      故用 lineHeight 反向补偿：气泡高 14、字号 10.5，取 lineHeight:20px
+                      时行盒比气泡高，居中后基线恰好落在视觉中线，上下墨迹留白一致。 */}
                   <span style={{
-                    fontSize: '10.5px', fontWeight: 800, lineHeight: 'normal',
+                    fontSize: '10.5px', fontWeight: 800, lineHeight: '20px',
                     fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
                     borderRadius: '999px', padding: '0 6px', marginLeft: '4px',
