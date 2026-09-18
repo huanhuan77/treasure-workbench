@@ -187,11 +187,12 @@ export function DashboardPage() {
   }, [publishRecords])
 
   // ── 提醒中心 Tab 配置（三个区块合并为一个 Tab 组）
-  // short：窄屏（<=340px）用的短标签，避免长标签被省略号截断
+  // short：窄屏（<=350px）用的短标签，避免长标签被省略号截断
+  // color/bg：数量徽章未选中态的前景色与底色
   const REMIND_TABS = [
-    { id: 'reminders', label: '发布提醒', short: '待发布', count: allReminders.length, color: '#9ca3af' },
-    { id: 'low', label: '发布不足5条', short: '不足5条', count: lowPublish.length, color: '#8b5cf6' },
-    { id: 'expiring', label: '即将到期', short: '将到期', count: expiringSoon.length, color: '#9ca3af' },
+    { id: 'reminders', label: '发布提醒', short: '待发布', count: allReminders.length, color: '#ec4899', bg: '#fce7f3' },
+    { id: 'low', label: '发布不足5条', short: '不足5条', count: lowPublish.length, color: '#8b5cf6', bg: '#ede9fe' },
+    { id: 'expiring', label: '即将到期', short: '将到期', count: expiringSoon.length, color: '#f97316', bg: '#ffedd5' },
   ]
   // 合并后的总数：不同区块可能命中同一产品，这里按 id 去重后再计
   const remindTotal = useMemo(() => {
@@ -414,60 +415,66 @@ export function DashboardPage() {
       )}
 
       {/* ── 提醒中心：发布提醒 / 发布不足5条 / 即将到期 三合一 Tab ── */}
+      {/* Tab 与内容同处一张白卡：Tab 行有淡粉底 + 选中项底部色条，天然形成「同一组」的容器感 */}
       <div style={{ padding: '12px 16px 4px' }}>
-        {/* Tab 切换条（均分撑满，选中态粉色渐变胶囊） */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
-          {REMIND_TABS.map((t) => {
-            const active = remindTab === t.id
-            return (
-              <button
-                key={t.id}
-                onClick={() => pickTab(t.id)}
-                style={{
-                  flex: '1 1 0', minWidth: 0, padding: '6px 4px', borderRadius: '999px',
-                  fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                  border: active ? 'none' : '1px solid rgba(244,114,182,0.3)',
-                  background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(255,255,255,0.6)',
-                  color: active ? '#fff' : 'var(--text-sub)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {/* 窄屏（<=350px）用短标签，避免「发布不足5条」被省略号截断。
-                    注意：显示/隐藏必须走 CSS 类，不能用内联 display（内联优先级最高会压过媒体查询） */}
-                <span className="dashTabFull">{t.label}</span>
-                <span className="dashTabShort">{t.short}</span>
-                {/* 数量徽章：选中态用半透明白底，未选中有数据才显示 */}
-                {t.count > 0 && (
-                  <span style={{
-                    fontSize: '10px', fontWeight: 700, lineHeight: 1,
-                    padding: '1px 5px', borderRadius: '8px',
-                    background: active ? 'rgba(255,255,255,0.3)' : `${t.color}1f`,
-                    color: active ? '#fff' : t.color,
-                    flexShrink: 0,
-                  }}>{t.count}</span>
-                )}
-              </button>
-            )
-          })}
-        </div>
+        <div style={{
+          background: '#fff', border: '1px solid #ece3e6', borderRadius: '14px',
+          overflow: 'hidden', boxShadow: '0 1px 3px rgba(120,90,100,0.06)',
+        }}>
+          {/* Tab 切换条：淡粉底 + 均分；选中项白底 + 粉色下划线 */}
+          <div style={{ display: 'flex', background: '#fdf8fa', borderBottom: '1px solid #f2ebee' }}>
+            {REMIND_TABS.map((t) => {
+              const active = remindTab === t.id
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => pickTab(t.id)}
+                  style={{
+                    flex: '1 1 0', minWidth: 0, padding: '11px 4px 10px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                    border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+                    fontSize: '12.5px', fontWeight: active ? 700 : 600,
+                    background: active ? '#fff' : 'transparent',
+                    color: active ? '#ec4899' : 'var(--text-sub)',
+                    borderBottom: active ? '2.5px solid #ec4899' : '2.5px solid transparent',
+                    marginBottom: '-1px',
+                    transition: 'color .15s, background .15s',
+                  }}
+                >
+                  {/* 窄屏（<=350px）用短标签，避免「发布不足5条」被省略号截断。
+                      注意：显示/隐藏必须走 CSS 类，不能用内联 display（内联优先级最高会压过媒体查询） */}
+                  <span className="dashTabFull">{t.label}</span>
+                  <span className="dashTabShort">{t.short}</span>
+                  {/* 数量徽章：选中态实心粉底白字；未选中浅底 + 同色字，避免实心灰块显脏 */}
+                  {t.count > 0 && (
+                    <span style={{
+                      fontSize: '10px', fontWeight: 700, lineHeight: 1,
+                      padding: '1px 5px', borderRadius: '8px',
+                      background: active ? '#ec4899' : t.bg,
+                      color: active ? '#fff' : t.color,
+                      flexShrink: 0,
+                    }}>{t.count}</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
 
-        {/* Tab 内容：只渲染当前选中项 */}
-        <div>
+          {/* Tab 内容：只渲染当前选中项；每项自带「汇总行（共 N 个 · 操作入口）+ 列表」 */}
+          <div style={{ padding: '12px 12px 10px' }}>
           {remindTab === 'reminders' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
-                  <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#d0c4c8' }} />
-                  发布提醒
-                  {allReminders.length > 0 && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#9ca3af', padding: '1px 7px', borderRadius: '8px' }}>{allReminders.length}</span>}
-                </div>
+              {/* 汇总行：Tab 已表达标题，这里只留「共 N 个」+ 操作入口，避免与 Tab 重复 */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', minHeight: '18px' }}>
+                <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
+                  {allReminders.length > 0 ? `共 ${allReminders.length} 个产品待补发` : '暂无待补发产品'}
+                </span>
                 {allReminders.length > 0 && (
-                  <button onClick={() => go('/publish-reminders')} style={{ fontSize: '12px', color: '#8a8588', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 {allReminders.length} 条 ›</button>
+                  <button onClick={() => go('/publish-reminders')} style={{ fontSize: '12px', color: '#ec4899', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
                 )}
               </div>
               {reminders.length === 0 ? (
-                <div style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 16px', fontSize: '12px', color: '#94a3b8' }}>
+                <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   暂无需要发布提醒的样品
                 </div>
               ) : (
@@ -480,7 +487,7 @@ export function DashboardPage() {
                       ? Math.max(...pending.map((a) => daysSincePublishByAccount(s, a)))
                       : daysSincePublish(s)
                     return (
-                      <div key={s.id} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div key={s.id} style={{ background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
@@ -520,24 +527,22 @@ export function DashboardPage() {
 
           {remindTab === 'low' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
-                  <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#8b5cf6' }} />
-                  发布不足5条
-                  {lowPublish.length > 0 && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#8b5cf6', padding: '1px 7px', borderRadius: '8px' }}>{lowPublish.length}</span>}
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', minHeight: '18px' }}>
+                <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
+                  {lowPublish.length > 0 ? `共 ${lowPublish.length} 个产品发布不足 5 条` : '暂无发布不足 5 条的样品'}
+                </span>
                 {lowPublish.length > 5 && (
                   <button onClick={() => setShowAllLow(!showAllLow)} style={{ fontSize: '12px', color: '#8b5cf6', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>{showAllLow ? '收起' : `展开全部 ${lowPublish.length} 条`} ›</button>
                 )}
               </div>
               {lowPublish.length === 0 ? (
-                <div style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 16px', fontSize: '12px', color: '#94a3b8' }}>
+                <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   暂无发布不足 5 条的样品
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {(showAllLow ? lowPublish : lowPublish.slice(0, 5)).map((s) => (
-                    <div key={s.id} style={{ background: '#fff', border: '1px solid #ede9fe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div key={s.id} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
@@ -565,18 +570,16 @@ export function DashboardPage() {
 
           {remindTab === 'expiring' && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '7px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
-                  <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#d0c4c8' }} />
-                  即将到期
-                  {expiringSoon.length > 0 && <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#9ca3af', padding: '1px 7px', borderRadius: '8px' }}>{expiringSoon.length}</span>}
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', minHeight: '18px' }}>
+                <span style={{ fontSize: '11px', color: '#a1a1aa' }}>
+                  {expiringSoon.length > 0 ? `共 ${expiringSoon.length} 个样品近 7 天到期` : '近 7 天没有即将到期的样品'}
+                </span>
                 {expiringSoon.length > 0 && (
-                  <button onClick={() => go('/samples/expiring')} style={{ fontSize: '12px', color: '#8a8588', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
+                  <button onClick={() => go('/samples/expiring')} style={{ fontSize: '12px', color: '#ec4899', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>查看全部 ›</button>
                 )}
               </div>
               {expiringSoon.length === 0 ? (
-                <div style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 16px', fontSize: '12px', color: '#94a3b8' }}>
+                <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   近 7 天没有即将到期的样品
                 </div>
               ) : (
@@ -589,7 +592,7 @@ export function DashboardPage() {
                       : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
                     const color = overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
                     return (
-                      <div key={s.id} style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div key={s.id} style={{ background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
@@ -609,6 +612,7 @@ export function DashboardPage() {
               )}
             </>
           )}
+          </div>
         </div>
       </div>
 
