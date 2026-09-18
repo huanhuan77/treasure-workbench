@@ -406,12 +406,16 @@ export function DashboardPage() {
           background: 'rgba(255, 245, 249, 0.62)',
           backdropFilter: 'blur(12px) saturate(150%)',
           WebkitBackdropFilter: 'blur(12px) saturate(150%)',
-          padding: '4px 16px 5px',
+          padding: '7px 16px 8px',
           boxShadow: '0 1px 8px rgba(120,90,100,0.05)',
         }}>
-          {/* 内层胶囊：保留原有圆角与描边视觉 */}
+          {/* 内层胶囊：保留原有圆角与描边视觉。
+              固定 boxHeight（高 34px）是必要的：按钮高度由标签行高决定，而三档标签
+              （dashTabFull / dashTabMid / dashTabShort）的行盒高并不相同 —— 全标签 22px、
+              中/短标签 19px，导致窄屏（320 / 360）下整条 Tab 比宽屏矮 3px。
+              钉死高度后，各屏宽下 Tab 栏高度一致，不会「换个手机就变矮」。 */}
           <div style={{
-            display: 'flex', flex: 1, minWidth: 0,
+            display: 'flex', flex: 1, minWidth: 0, height: '34px',
             background: 'rgba(255,255,255,0.6)', borderRadius: '12px',
             border: '1px solid rgba(255,255,255,0.9)', padding: '0 6px',
           }}>
@@ -423,8 +427,9 @@ export function DashboardPage() {
                 onClick={() => pickTab(t.id)}
                 style={{
                   flex: '1 1 0', minWidth: 0, position: 'relative',
-                  padding: '5px 4px 6px', border: 'none', background: 'transparent',
-                  cursor: 'pointer',
+                  padding: '0 4px', border: 'none', background: 'transparent',
+                  cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
                 }}
               >
                 <div style={{
@@ -439,19 +444,25 @@ export function DashboardPage() {
                   <span className="dashTabFull">{t.label}</span>
                   <span className="dashTabMid">{t.mid}</span>
                   <span className="dashTabShort">{t.short}</span>
-                  {/* 数量气泡：零值用灰底，避免一串「0」看起来像异常 */}
+                  {/* 数量气泡：零值用灰底，避免一串「0」看起来像异常。
+                     数字用 tabular-nums（等宽数字）：默认比例数字下「66」比「5」宽，
+                      气泡一横移下划线的安全间距就跟着变，等宽数字让宽度与位置稳定可预期。 */}
                   <span style={{
                     fontSize: '10.5px', fontWeight: 800, lineHeight: 1,
+                    fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
                     borderRadius: '999px', padding: '2px 6px', marginLeft: '4px',
                     display: 'inline-block', verticalAlign: '1px',
                   }}>{t.count}</span>
                 </div>
                 {/* 选中下划线：用绝对定位贴底，不参与布局，切换时不引起抖动。
-                    宽度收窄到标签文字附近（约按钮宽 36%），比原来的 68% 更精致，
-                    也不再随标签宽度变化而显得长短不一。 */}
+                    宽度必须留在标签文字以内 —— 这是「两个颜色重叠」的根因：
+                    数量气泡（背景色 = t.accent，与下划线同色）紧跟在标签文字右侧，
+                    原来内缩 32%（占按钮宽 36%）时右端会顶到甚至压住气泡（实测间距 -1.6px），
+                    同色图形挨在一起就糊成一团。故收窄到 24%（内缩 38%）留出安全间距。
+                    左端同样收窄，保证视觉居中于文字。 */}
                 <div style={{
-                  position: 'absolute', left: '32%', right: '32%', bottom: '1px',
+                  position: 'absolute', left: '38%', right: '38%', bottom: '2px',
                   height: '2.5px', borderRadius: '3px',
                   background: active ? t.accent : 'transparent',
                   transition: 'background .15s',
