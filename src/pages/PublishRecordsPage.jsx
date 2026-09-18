@@ -121,30 +121,24 @@ export function PublishRecordsPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', color: '#1a1a1a', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
+      <header style={{ padding: 'calc(14px + var(--safe-top)) 16px 10px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
         <button onClick={() => navigate(-1)} style={{
-          width: '44px', height: '44px', borderRadius: '50%',
+          width: '38px', height: '38px', borderRadius: '50%',
           background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
           color: 'var(--text-main)', fontSize: '20px', cursor: 'pointer', display: 'flex',
           alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>‹</button>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: '#111' }}>视频发布记录</h1>
-          <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#b3888f' }}>共 {records.length} 条 · 当前筛选 {filteredCount} 条（{groups.length} 组）</p>
-        </div>
-      </header>
-
-      {/* 产品名搜索 — 放最上面 */}
-      <div style={{ padding: '12px 16px 6px', flexShrink: 0 }}>
-        <div style={{ position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', color: '#c084a0' }}>🔍</span>
+        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#111', whiteSpace: 'nowrap', flexShrink: 0 }}>视频发布记录</h1>
+        {/* 搜索框放标题旁边 */}
+        <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+          <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#c084a0' }}>🔍</span>
           <input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="搜索产品名"
             style={{
-              width: '100%', boxSizing: 'border-box', padding: '9px 34px 9px 32px', borderRadius: '999px',
-              border: '1px solid rgba(244,114,182,0.28)', background: '#fff', fontSize: '13px',
+              width: '100%', boxSizing: 'border-box', padding: '7px 28px 7px 28px', borderRadius: '999px',
+              border: '1px solid rgba(244,114,182,0.28)', background: '#fff', fontSize: '12px',
               color: 'var(--text-main)', outline: 'none',
             }}
           />
@@ -153,14 +147,14 @@ export function PublishRecordsPage() {
               onClick={() => setKeyword('')}
               aria-label="清空搜索"
               style={{
-                position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
-                width: '20px', height: '20px', borderRadius: '50%', border: 'none', cursor: 'pointer',
-                background: 'rgba(244,114,182,0.14)', color: '#db2777', fontSize: '12px', lineHeight: 1,
+                position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)',
+                width: '18px', height: '18px', borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: 'rgba(244,114,182,0.14)', color: '#db2777', fontSize: '11px', lineHeight: 1,
               }}
             >×</button>
           )}
         </div>
-      </div>
+      </header>
 
       {/* 账号筛选：单行横向滚动，不换行 */}
       <div className="hide-scrollbar" style={{
