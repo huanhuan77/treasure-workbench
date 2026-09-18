@@ -230,10 +230,10 @@ export function OrdersPage() {
       {/* 日期筛选：全部 / 今天 / 昨天 / 近7天 / 本周 / 本月 + 📅 日期（快捷键 / 具体某一天 / 本月·上月·近半年·本年） */}
       <DateFilterBar value={dateRange} onChange={setDateRange} />
 
-      {/* 账号筛选：大一点的 chip */}
-      <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center', flexShrink: 0 }}>
+      {/* 账号筛选：一行不换行，可横滚 */}
+      <div style={{ padding: '10px 16px 4px', display: 'flex', gap: '6px', flexWrap: 'nowrap', alignItems: 'center', flexShrink: 0, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         <button onClick={() => setAccountFilter('')} style={{
-          flex: '0 0 auto', padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+          flex: '0 0 auto', padding: '7px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
           border: accountFilter === '' ? 'none' : '1px solid rgba(244,114,182,0.35)',
           background: accountFilter === '' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
           color: accountFilter === '' ? '#fff' : 'var(--text-main)', cursor: 'pointer',
@@ -244,7 +244,7 @@ export function OrdersPage() {
           const sel = accountFilter === a
           return (
             <button key={a} onClick={() => setAccountFilter(a)} style={{
-              flex: '0 0 auto', padding: '8px 18px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+              flex: '0 0 auto', padding: '7px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
               border: sel ? 'none' : `1px solid ${col.c}`,
               background: sel ? col.c : '#fff',
               color: sel ? '#fff' : col.c, cursor: 'pointer',
