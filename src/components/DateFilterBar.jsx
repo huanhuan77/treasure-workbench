@@ -222,7 +222,7 @@ export function DateFilterBar({ value, onChange }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', flexShrink: 0,
-      margin: '4px 0 8px', padding: '5px 10px',
+      margin: '4px 0 0', padding: '5px 10px',
       background: 'rgba(255,255,255,0.5)',
       borderTop: '1px solid rgba(244,114,182,0.16)',
       borderBottom: '1px solid rgba(244,114,182,0.16)',
