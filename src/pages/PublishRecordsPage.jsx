@@ -158,7 +158,7 @@ export function PublishRecordsPage() {
 
       {/* 账号筛选：单行横向滚动，不换行 */}
       <div className="hide-scrollbar" style={{
-        display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px 2px',
+        display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px 2px', marginTop: '7px',
         flexShrink: 0, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
       }}>
         <button onClick={() => setAccount('')} style={{
