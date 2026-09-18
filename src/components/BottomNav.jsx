@@ -21,7 +21,10 @@ const mainTabs = [
 ]
 
 // 更多侧边栏 tab（总览已有入口的不重复列出）
+// 「收支」「追剧」原先在总览页，按用户要求移到此处，总览不再占位
 const sideTabs = [
+  { to: '/finance', label: '收支', icon: '💰' },
+  { to: '/dramas', label: '追剧', icon: '📺' },
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/daily', label: '每日计划', icon: '📋' },
   { to: '/reading', label: '读书成长', icon: '📚' },

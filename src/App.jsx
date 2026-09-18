@@ -28,6 +28,7 @@ import { EditTransactionPage } from './pages/EditTransactionPage'
 import { NewSamplePage } from './pages/NewSamplePage'
 import { UncategorizedSamplesPage } from './pages/UncategorizedSamplesPage'
 import { ExpiringSamplesPage } from './pages/ExpiringSamplesPage'
+import { LowPublishSamplesPage } from './pages/LowPublishSamplesPage'
 import { EditSamplePage } from './pages/EditSamplePage'
 import { NewProductPage, EditProductPage } from './pages/NewProductPage'
 import { DailyPlanPage } from './pages/DailyPlanPage'
@@ -68,6 +69,7 @@ const routes = [
   { path: '/dramas/new', element: <NewDramaPage /> },
   { path: '/samples/uncategorized', element: <UncategorizedSamplesPage /> },
   { path: '/samples/expiring', element: <ExpiringSamplesPage /> },
+  { path: '/samples/low-publish', element: <LowPublishSamplesPage /> },
   { path: '/samples/new', element: <NewSamplePage /> },
   { path: '/samples/:id/edit', element: <EditSamplePage /> },
   { path: '/finance/new', element: <NewTransactionPage /> },
