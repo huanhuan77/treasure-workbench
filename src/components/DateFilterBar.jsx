@@ -222,11 +222,10 @@ export function DateFilterBar({ value, onChange }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', flexShrink: 0,
-      margin: '4px 12px 8px', padding: '5px 6px',
+      margin: '4px 0 8px', padding: '5px 10px',
       background: 'rgba(255,255,255,0.5)',
-      border: '1px solid rgba(244,114,182,0.16)',
-      borderRadius: '14px',
-      boxShadow: '0 1px 3px rgba(244,114,182,0.06)',
+      borderTop: '1px solid rgba(244,114,182,0.16)',
+      borderBottom: '1px solid rgba(244,114,182,0.16)',
       backdropFilter: 'blur(8px)',
       WebkitBackdropFilter: 'blur(8px)',
     }}>
