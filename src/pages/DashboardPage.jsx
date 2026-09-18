@@ -447,9 +447,11 @@ export function DashboardPage() {
                     display: 'inline-block', verticalAlign: '1px',
                   }}>{t.count}</span>
                 </div>
-                {/* 选中下划线：用绝对定位贴底，不参与布局，切换时不引起抖动 */}
+                {/* 选中下划线：用绝对定位贴底，不参与布局，切换时不引起抖动。
+                    宽度收窄到标签文字附近（约按钮宽 36%），比原来的 68% 更精致，
+                    也不再随标签宽度变化而显得长短不一。 */}
                 <div style={{
-                  position: 'absolute', left: '16%', right: '16%', bottom: '1px',
+                  position: 'absolute', left: '32%', right: '32%', bottom: '1px',
                   height: '2.5px', borderRadius: '3px',
                   background: active ? t.accent : 'transparent',
                   transition: 'background .15s',
