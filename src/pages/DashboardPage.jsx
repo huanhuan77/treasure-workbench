@@ -453,23 +453,33 @@ export function DashboardPage() {
                      数字用 tabular-nums（等宽数字）：默认比例数字下「66」比「5」宽，
                       气泡一横移下划线的安全间距就跟着变，等宽数字让宽度与位置稳定可预期。
 
-                     垂直对齐踩过两次坑，记录在此以免回退：
-                     ① 最初靠 inline 布局的 baseline 对齐 —— 气泡高 14px、标签文字 12.5px，
-                        两块尺寸差太多，baseline 对齐必然错位，实测气泡比标签文字低 4px。
-                        解法：父层（上面的 div）改 flex + alignItems:center，改后行盒中心差归零。
-                     ② 父层是 flex 后，气泡成为 flex item，**它自己的 lineHeight 不再影响对齐**
-                        （实测 1/14/16/20/normal 全部输出同一个值），所以 lineHeight 在这里是
-                        无效属性，已移除。此时数字相对标签文字仅剩 +1.81px 的墨迹偏上 ——
-                        根因是数字无下伸部，10.5px 的行盒在 14px 盒内居中后墨迹整体偏上。
-                        解法：padding-top 推 4px。注意因 align-items 会先扣除 padding 再居中，
-                        实际位移约为 padding 的一半，故 4px 对应约 2px 位移，实测偏差 +0.19px。 */}
+                     垂直对齐踩过几次坑，记录在此以免回退：
+                     ① inline baseline 对齐 —— 气泡 14px、标签文字 12.5px，两块尺寸差太多，
+                        baseline 必然错位，实测气泡比标签文字低 4px。
+                        解法：父层（上面的 div）改 flex + alignItems:center。
+                     ② 父层成 flex 后，气泡是 flex item，**它自己的 lineHeight 完全失效**
+                        （实测 1/14/16/20/normal 输出同一值），别再试图用它调。
+                     ③ 曾用 padding-top 修数字墨迹偏上 —— 但 padding 会先被 align-items:center
+                        扣除，属于「半效」位移，且它同时改变气泡盒的居中结果，
+                        导致「气泡内居中」和「相对标签居中」互相拉扯。
+                        实测 padding-top 对两个指标的响应系数分别是 1.067 与 0.533，
+                        在 height:14px 下无解（一个归零时另一个必然偏 0.8px 左右）。
+                     ④ 加内层 span 承载偏移 —— 内层 inline-block 的行盒会参与外层高度计算，
+                        把气泡挤矮（实测 14px → 13px / 12px，反而更糟），已放弃。
+
+                     最终解法：气泡 height 由 14px 放到 15px，腾出 1px 余量，
+                     再用 padding '1px 6px 0'（非对称）做微调。
+                     15px 下两个指标同时成立：
+                       · 气泡内居中：上留白 3.75 / 下留白 3.88，差 -0.12px
+                       · 相对标签：数字墨迹中心 - 标签文字墨迹中心 = -0.81px
+                     1px 的高度差肉眼不可辨，且气泡与下划线的垂直间距仍有 5px，不会重叠。 */}
                   <span style={{
                     fontSize: '10.5px', fontWeight: 800,
                     fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
-                    borderRadius: '999px', padding: '4px 6px 0', marginLeft: '4px',
+                    borderRadius: '999px', padding: '1px 6px 0', marginLeft: '4px',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    height: '14px', boxSizing: 'border-box',
+                    height: '15px', boxSizing: 'border-box',
                   }}>{t.count}</span>
                 </div>
                 {/* 选中下划线：用绝对定位贴底，不参与布局，切换时不引起抖动。
