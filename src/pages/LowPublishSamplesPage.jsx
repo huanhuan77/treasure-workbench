@@ -82,10 +82,12 @@ export function LowPublishSamplesPage() {
               )}
             />
 
-            {/* 账号标签 + 各自条数 + 未出单标记。
+            {/* 账号标签 + 各自条数。
                 标签用账号主题色（同一账号在各页面颜色一致，便于辨认）。
                 条数取该账号自己的统计；老数据没有分账号明细时会回退成样品的
-                合计值（getCounts 的兼容行为），此时各账号显示同一个数字。 */}
+                合计值（getCounts 的兼容行为），此时各账号显示同一个数字。
+                不再显示「未出单」标记：能进这个列表本身就意味着未出单，
+                那个标签是全量重复的冗余信息，白占一行宽度。 */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
               {getAccounts(s).map((a) => {
                 const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
@@ -97,7 +99,6 @@ export function LowPublishSamplesPage() {
                   }}>{a}({acctCount}条)</span>
                 )
               })}
-              <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: '#16a34a', background: 'rgba(22,163,74,0.12)', fontWeight: 600, whiteSpace: 'nowrap', alignSelf: 'center' }}>未出单</span>
             </div>
 
             <CardActions

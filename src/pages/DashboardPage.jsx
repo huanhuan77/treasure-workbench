@@ -673,7 +673,6 @@ export function DashboardPage() {
                                 }}>{a}({acctCount}条)</span>
                               )
                             })}
-                            <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: '#16a34a', background: 'rgba(22,163,74,0.12)', fontWeight: 600, whiteSpace: 'nowrap', alignSelf: 'center' }}>未出单</span>
                           </div>
                         </div>
                         <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
