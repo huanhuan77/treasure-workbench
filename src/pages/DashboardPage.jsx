@@ -6,7 +6,7 @@ import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
-import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, getAutoAbandonedAccounts, getCounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 
 // 顶部问候（按时段）
@@ -177,14 +177,15 @@ export function DashboardPage() {
   const matchAcct = (s, a) => a === 'all' || getAccounts(s).includes(a)
 
   // 筛选后的三组数据 —— 列表渲染与 Tab 气泡计数都读它们，保证「气泡数 = 点进去的条数」。
-  // 「发布不足5条」是「样品×账号」条目，按条目自带的 account 精确匹配，
-  // 不能用 matchAcct（那会把同样品其它账号的条目也带进来）。
+  // 三个列表现在都是**样品粒度**，账号筛选统一走 matchAcct（样品归属账号命中即显示）。
+  // 「发布不足5条」曾短暂改成「样品×账号」条目、按条目 account 精确匹配，
+  // 但那会让多账号样品被拆成多条（详见 utils/reminders 里 selectLowPublish 的注释）。
   const fReminders = useMemo(
     () => reminders.filter((s) => matchAcct(s, remindAccount)),
     [reminders, remindAccount],
   )
   const fLowPublish = useMemo(
-    () => lowPublish.filter((it) => remindAccount === 'all' || it.account === remindAccount),
+    () => lowPublish.filter((s) => matchAcct(s, remindAccount)),
     [lowPublish, remindAccount],
   )
   const fExpiring = useMemo(
@@ -216,10 +217,9 @@ export function DashboardPage() {
   const remindTotal = useMemo(() => {
     // 用筛选后的数据：筛选后三个 Tab 可能都空了，此时自动切换 Tab 的兜底逻辑
     // 应当基于「当前筛选下还剩什么」，否则筛到没数据的账号会停在空 Tab。
-    // 注意 lowPublish 是「样品×账号」条目，取 sample.id 参与去重。
+    // 三个列表现在都是样品粒度，直接按样品 id 去重。
     const map = new Map()
-    ;[...fReminders, ...fExpiring].forEach((s) => map.set(s.id, s))
-    fLowPublish.forEach((it) => map.set(it.sample.id, it.sample))
+    ;[...fReminders, ...fExpiring, ...fLowPublish].forEach((s) => map.set(s.id, s))
     return map.size
   }, [fReminders, fLowPublish, fExpiring])
 
@@ -641,38 +641,42 @@ export function DashboardPage() {
               {fLowPublish.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   {remindAccount === 'all'
-                    ? `暂无发布不足 ${LOW_PUBLISH_LIMIT} 条的账号`
+                    ? `暂无发布不足 ${LOW_PUBLISH_LIMIT} 条的样品`
                     : `${remindAccount} 没有发布不足 ${LOW_PUBLISH_LIMIT} 条的样品`}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {/* 条目粒度是「样品 × 账号」：同一个样品若有多个账号各自发布不足，
-                      会作为多条独立展示。这样「还差 N 条」才是针对具体某个账号的，
-                      而不是含糊的样品合计值。key 必须用 sampleId+account 组合，
-                      单用 s.id 在多个账号时会撞 key。 */}
-                  {fLowPublish.map(({ sample: s, account, publishCount, lack }) => {
-                    const col = ACCOUNT_COLOR[account] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+                  {/* 条目粒度是**样品**：一个样品一条，计数与列表一一对应。
+                      账号维度由卡片里的「账号(N条)」标签表达，不拆条。 */}
+                  {fLowPublish.map((s) => {
+                    const publishCount = Number(s.publishCount) || 0
+                    const lack = Math.max(0, LOW_PUBLISH_LIMIT - publishCount)
                     return (
-                      <div key={`${s.id}::${account}`} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div key={s.id} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                             <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>已发 {publishCount} 条 · 还差 {lack}</span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {/* 账号标签统一用各自的账号主题色（同一账号在不同 Tab 里颜色一致，便于辨认）+ 同色描边突出异常项 */}
-                            <span style={{
-                              fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
-                              background: col.bg, color: col.c, fontWeight: 600,
-                              border: `1px solid ${col.c}`,
-                              whiteSpace: 'nowrap', flexShrink: 0,
-                            }}>{account}</span>
+                            {/* 账号标签统一用各自的账号主题色（同一账号在不同 Tab 里颜色一致，便于辨认）。
+                                条数取该账号自己的统计；老数据没有分账号明细时会回退成样品合计值。 */}
+                            {getAccounts(s).map((a) => {
+                              const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+                              const acctCount = getCounts(s, a).publishCount
+                              return (
+                                <span key={a} style={{
+                                  fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
+                                  background: col.bg, color: col.c, fontWeight: 600,
+                                  border: `1px solid ${col.c}`,
+                                  whiteSpace: 'nowrap', flexShrink: 0,
+                                }}>{a}({acctCount}条)</span>
+                              )
+                            })}
                             <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: '#16a34a', background: 'rgba(22,163,74,0.12)', fontWeight: 600, whiteSpace: 'nowrap', alignSelf: 'center' }}>未出单</span>
                           </div>
                         </div>
-                        {/* 传 account 单值而非 accounts 数组：发布记录页优先读 account，
-                            且这里语义上就是「给这一个账号补发布」，单值更准确 */}
-                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, account } })} style={{
+                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
                           flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
                           fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                         }}>补发布</button>

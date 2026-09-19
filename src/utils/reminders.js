@@ -3,7 +3,6 @@
 // 总览页的 Tab 计数与三个列表页的列表内容都从这里取，
 // 避免同一个口径散落在多处、改一处漏一处导致「卡片数字 ≠ 点进去的条数」。
 import { needPublishReminder } from './publish'
-import { getAccounts, getCounts } from './sampleStatus'
 
 // 发布不足的阈值：某产品发布数低于它即视为「发布不足」
 export const LOW_PUBLISH_LIMIT = 5
@@ -37,45 +36,39 @@ export function selectPublishReminders(samples) {
   return (samples || []).filter((s) => needPublishReminder(s))
 }
 
-// 2) 发布不足5条：按「账号」粒度统计（不是样品粒度）。
+// 2) 发布不足5条：**按样品**统计，一个样品最多贡献一条。
 //
-// 为什么必须按账号：
-//   样品 = 一个实体，可归属多个账号（见 sampleStatus.js 的数据模型）。
-//   顶层 s.publishCount / s.orderCount 是**所有账号的合计**，用它判断会出两个错：
-//     · 漏报：刘亦菲发 1 条、富婆发 6 条 → 合计 7 ≥ 5，整个样品被排除，
-//             但刘亦菲那个账号明明发布不足。
-//     · 误排除：只要任一账号出过单，合计 orderCount > 0，样品整体被排除，
-//             哪怕另一个账号既没出单又发布不足。
-//   所以这里逐个账号判断，三个条件全部落在同一账号上：
-//     该账号已发布过（publishCount > 0）
-//     && 该账号发布数 < 阈值
-//     && 该账号尚未出单（orderCount === 0）
+// 为什么回到样品粒度（2026-09-19 修正）：
+//   曾短暂改为「按账号」逐个判定并返回「样品×账号」扁平条目，理由是顶层
+//   s.publishCount / s.orderCount 是所有账号的合计，多账号下会漏判。但实测发现
+//   那个改动会把列表撑大：早期「一个样品属于一个账号」的数据，同一产品发给 N 个
+//   账号会存成 N 条，mergeSplitSamples 迁移把它们合并成一条实体并把顶层计数
+//   **原样复制给每个账号**（store.jsx 见「明细里没覆盖到的账号，用顶层值兜底补上」）。
+//   于是「已发 3 条」的多账号样品被当成 3 个账号各自「已发 3 条」，
+//   一个样品拆出 N 条，列表凭空变长（用户实测 25 条被拆成更多）。
 //
-// 返回值是「样品 × 账号」的扁平条目数组，每条形如
-//   { sample, account, publishCount, orderCount, lack }
-// 而不是样品数组 —— 因为一个样品可能有多个账号各自发布不足，
-// 它们要作为独立条目各自计数、各自展示。
+//   现在的口径：一个样品一条，条数与出单都读样品级合计（getAggregateCounts）。
+//   这样计数与列表条数天然一一对应，不会再出现同一份数字被复制到每个账号的虚增。
+//
+// 保留 b6c2b01 修对的部分：只算「已发布过」且「未出单」的样品，
+//   而不是把未发布（0 条）的样品也算进来。
 export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT) {
-  const out = []
-  for (const s of samples || []) {
-    for (const a of getAccounts(s)) {
-      const c = getCounts(s, a)
-      const publishCount = c.publishCount
-      const orderCount = c.orderCount
-      // 「已发布」按账号判定：该账号发布数 > 0 即视为该账号已发布（与 sampleStatus 的口径一致）
-      if (publishCount <= 0) continue
-      if (publishCount >= limit) continue
-      if (orderCount !== 0) continue
-      out.push({
-        sample: s,
-        account: a,
-        publishCount,
-        orderCount,
-        lack: limit - publishCount,
-      })
-    }
-  }
-  return out
+  return (samples || []).filter((s) => {
+    const publishCount = Number(s?.publishCount) || 0
+    const orderCount = Number(s?.orderCount) || 0
+    // 一条都没发不算「发布不足」，那是「还没发」（属于发布提醒的关注范围）
+    if (publishCount <= 0) return false
+    if (publishCount >= limit) return false
+    // 已出单就不算「发布不足」这个待办事项了
+    if (orderCount !== 0) return false
+    return true
+  })
+}
+
+// 单条「发布不足」的展示计数（卡片文案「已发 N 条 · 还差 M」用）
+export function lowPublishCounts(s, limit = LOW_PUBLISH_LIMIT) {
+  const publishCount = Number(s?.publishCount) || 0
+  return { publishCount, lack: Math.max(0, limit - publishCount) }
 }
 
 // 3) 即将到期：有截止日期、且未发布/未放弃、EXPIRING_DAYS 天内到期（含已逾期），按截止日升序

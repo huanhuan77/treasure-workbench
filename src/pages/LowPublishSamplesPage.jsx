@@ -2,18 +2,22 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { ACCOUNT_COLOR } from '../utils/accounts'
+import { getAccounts, getCounts } from '../utils/sampleStatus'
 import { LOW_PUBLISH_LIMIT, selectLowPublish } from '../utils/reminders'
 import { ReminderListPage, ReminderCard, CardTitleRow, CardActions } from '../components/ReminderListPage'
 
 const ACCENT = '#8b5cf6'
 
-// 发布数分布条：1/2/3/4 条各有多少个账号条目。
-// 0 条不在此列表内 —— 口径要求「已发布」，某账号 0 条即该账号未发布。
+// 发布数分布条：1/2/3/4 条各有多少条。
+// 0 条不在此列表内 —— 口径要求「已发布」，0 条即未发布。
 // 抽成独立组件而不是内联在 extraTop 里：extraTop 是渲染函数，
 // 内联时想先算一次 dist 再复用，只能上 IIFE 或重复调用，都不好看。
 function DistBar({ list }) {
   const dist = { 1: 0, 2: 0, 3: 0, 4: 0 }
-  for (const it of list || []) if (dist[it.publishCount] !== undefined) dist[it.publishCount]++
+  for (const s of list || []) {
+    const n = Number(s.publishCount) || 0
+    if (dist[n] !== undefined) dist[n]++
+  }
   return (
     <div style={{ padding: '4px 16px 2px', display: 'flex', gap: '6px', flexShrink: 0 }}>
       {[1, 2, 3, 4].map((n) => (
@@ -32,8 +36,13 @@ function DistBar({ list }) {
 
 // 「发布不足 N 条」列表页
 // 口径来自 utils/reminders，与总览 Tab 计数同源。
-// 条目粒度是「样品 × 账号」：selectLowPublish 返回扁平条目而非样品数组，
-// 因为一个样品可能多个账号各自发布不足，它们要独立计数、独立展示。
+//
+// 条目粒度是**样品**：一个样品一条。曾经短暂改成「样品 × 账号」粒度，
+// 但那会把列表撑大 —— 早期「一个样品属于一个账号」的数据在 mergeSplitSamples
+// 合并后，顶层计数被原样复制给每个账号，导致「已发 3 条」的三账号样品
+// 被当成三个账号各自「已发 3 条」而拆成 3 条。改成样品粒度后计数与列表一一对应。
+// 账号维度改用「标签 + 各自条数」表达：主数字仍是样品合计，账号标签后附该账号
+// 自己的条数（无分账号明细时即为合计值），既能看出是哪些账号，又不会因此拆条。
 export function LowPublishSamplesPage() {
   const { samples } = useStore()
   const navigate = useNavigate()
@@ -42,9 +51,9 @@ export function LowPublishSamplesPage() {
 
   // 依赖数组必须稳定：sorts 每次渲染都新建会导致 useMemo 失效，这里提到组件外
   const SORTS = useMemo(() => [
-    { key: 'countAsc', label: '条数少→多', compare: (a, b) => a.publishCount - b.publishCount },
-    { key: 'countDesc', label: '条数多→少', compare: (a, b) => b.publishCount - a.publishCount },
-    { key: 'name', label: '名称', compare: (a, b) => (a.sample.name || '').localeCompare(b.sample.name || '', 'zh-Hans-CN') },
+    { key: 'countAsc', label: '条数少→多', compare: (a, b) => (Number(a.publishCount) || 0) - (Number(b.publishCount) || 0) },
+    { key: 'countDesc', label: '条数多→少', compare: (a, b) => (Number(b.publishCount) || 0) - (Number(a.publishCount) || 0) },
+    { key: 'name', label: '名称', compare: (a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN') },
   ], [])
 
   return (
@@ -53,21 +62,17 @@ export function LowPublishSamplesPage() {
       accent={ACCENT}
       base={base}
       sorts={SORTS}
-      emptyText={`🎉 所有已发布账号都发满 ${LOW_PUBLISH_LIMIT} 条了`}
-      noMatchText="没有符合筛选条件的账号"
-      // base 是「样品 × 账号」条目，需告知容器如何解析：
-      // 账号筛选要按条目自带的 account 精确匹配（否则会把同样品其它账号的条目也带进来）
-      getItem={(it) => ({ sample: it.sample, account: it.account })}
+      emptyText={`🎉 所有已发布样品都发满 ${LOW_PUBLISH_LIMIT} 条了`}
+      noMatchText="没有符合筛选条件的样品"
       // 分布条读 list（筛选后）而非 base（全量）：
       // 否则筛了账号后上方数字不变、与下方列表对不上，用户会以为筛选没生效。
       extraTop={({ list }) => list.length > 0 && <DistBar list={list} />}
     >
-      {(it) => {
-        const s = it.sample
-        const { account, publishCount, lack } = it
-        const col = ACCOUNT_COLOR[account] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+      {(s) => {
+        const publishCount = Number(s.publishCount) || 0
+        const lack = Math.max(0, LOW_PUBLISH_LIMIT - publishCount)
         return (
-          <ReminderCard key={`${s.id}::${account}`} borderColor="#ede9fe">
+          <ReminderCard key={s.id} borderColor="#ede9fe">
             <CardTitleRow
               name={s.name}
               badge={(
@@ -77,20 +82,26 @@ export function LowPublishSamplesPage() {
               )}
             />
 
-            {/* 账号标签 + 未出单标记：三个筛选条件（已发布 / 不足阈值 / 未出单）都落在同一账号上 */}
+            {/* 账号标签 + 各自条数 + 未出单标记。
+                标签用账号主题色（同一账号在各页面颜色一致，便于辨认）。
+                条数取该账号自己的统计；老数据没有分账号明细时会回退成样品的
+                合计值（getCounts 的兼容行为），此时各账号显示同一个数字。 */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-              <span style={{
-                fontSize: '10px', padding: '2px 8px', borderRadius: '6px', fontWeight: 600, whiteSpace: 'nowrap',
-                background: col.bg, color: col.c, border: `1px solid ${col.c}`,
-              }}>{account}({publishCount}条)</span>
+              {getAccounts(s).map((a) => {
+                const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+                const acctCount = getCounts(s, a).publishCount
+                return (
+                  <span key={a} style={{
+                    fontSize: '10px', padding: '2px 8px', borderRadius: '6px', fontWeight: 600, whiteSpace: 'nowrap',
+                    background: col.bg, color: col.c, border: `1px solid ${col.c}`,
+                  }}>{a}({acctCount}条)</span>
+                )
+              })}
               <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: '#16a34a', background: 'rgba(22,163,74,0.12)', fontWeight: 600, whiteSpace: 'nowrap', alignSelf: 'center' }}>未出单</span>
             </div>
 
-            {/* account 必须传：否则「补发布」会带该样品的全部账号进发布页，
-                而用户是从某个具体账号的条目点进来的 */}
             <CardActions
               sample={s}
-              account={account}
               onEdit={() => navigate(`/samples/${s.id}/edit`)}
               publishText="📹 补发布"
             />

@@ -54,16 +54,15 @@ function Pill({ active, onClick, children, accent = '#ec4899' }) {
  * @param noMatchText 有数据但被筛选/搜索筛空时的文案
  * @param children    渲染单条卡片：(item, { accountFilter }) => JSX。
  *                    accountFilter 为当前选中的账号（'all' 表示未筛）。
- *                    样品粒度的页面可用它把卡片内的账号收窄到所选账号。
- * @param getItem     条目适配器，把 base 里的一项解析成 { sample, account }
+ *                    卡片内若列出多账号，可用它把展示收窄到所选账号。
+ * @param getItem     条目适配器，把 base 里的一项解析成 { sample, account }。
+ *                    默认对应「base 就是样品数组」的常规情形。
  *
- * 为什么需要 getItem：
- *   本组件原先假设 base 是「样品数组」，筛选/搜索都直接读 item.name 与 getAccounts(item)。
- *   但「发布不足5条」的口径是**按账号**的，它的 base 是「样品 × 账号」扁平条目
- *   { sample, account, ... }，直接读 name 会拿到 undefined、筛选也会失效。
- *   故把「如何从条目取出样品与账号」抽象成注入项：
- *   默认实现对应样品数组（账号取第一个，用于账号筛选的兜底匹配），
- *   按账号口径的页面传入自定义实现即可，筛选与搜索逻辑无需各写一套。
+ * 历史说明：本组件曾为「发布不足5条」的**账号粒度**条目引入 getItem 注入，
+ * 用来把 { sample, account } 扁平条目解析回样品与账号。后来该页面改回样品粒度
+ * （多账号样品拆条会让列表凭空变长，详见 utils/reminders 的 selectLowPublish），
+ * 三个页面现在都传样品数组，getItem 走默认实现即可。
+ * 保留这个参数是为了不破坏既有调用契约，新页面无需关心。
  */
 export function ReminderListPage({
   title, accent = '#ec4899', base, sorts, searchKeys, extraTop,
@@ -195,10 +194,10 @@ export function CardTitleRow({ name, badge }) {
 
 // 卡片按钮行：补发布 / 调整状态，三页文案统一
 //
-// account 为可选：按账号口径的列表页（发布不足5条）必须传它，否则「补发布」
-// 会把该样品的**全部**账号带进发布记录页，而用户明明是从某个账号的条目点进来的。
-// 发布记录页优先读 account 单值（见 NewPublishRecordPage.jsx:36），
-// 传单值即可精确预选，无需再动 accounts 数组。
+// account 为可选：传了就只把该账号带进发布记录页。
+// 三个列表页现在都是样品粒度，默认不传（带全部账号）；
+// 若将来某个页面按账号拆分展示，可传单值精确预选
+// （发布记录页优先读 account 单值，见 NewPublishRecordPage.jsx:36）。
 export function CardActions({ sample, account, onEdit, publishText = '📹 补记发布' }) {
   const navigate = useNavigate()
   return (
