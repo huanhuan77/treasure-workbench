@@ -596,7 +596,9 @@ export function DashboardPage() {
                             <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', color: '#16a34a', background: 'rgba(22,163,74,0.12)', fontWeight: 600, whiteSpace: 'nowrap', alignSelf: 'center' }}>未出单</span>
                           </div>
                         </div>
-                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: [account] } })} style={{
+                        {/* 传 account 单值而非 accounts 数组：发布记录页优先读 account，
+                            且这里语义上就是「给这一个账号补发布」，单值更准确 */}
+                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, account } })} style={{
                           flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
                           fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                         }}>补发布</button>

@@ -46,7 +46,10 @@ function Pill({ active, onClick, children, accent = '#ec4899' }) {
  * @param base        基础口径过滤后的数组（页面的「全部」数据）
  * @param sorts       排序项 [{ key, label, compare(a,b) }]，第一项为默认
  * @param searchKeys  搜索匹配的字段访问器数组，默认按 name
- * @param extraTop    筛选区下方的额外内容（如分布条），接收 { base, list }
+ * @param extraTop    筛选区下方的额外内容（如分布条），接收 { base, list }。
+ *                    base = 未筛选的全量，list = 当前筛选后的结果 ——
+ *                    分布条这类「跟着筛选走」的展示请读 list，
+ *                    需要「总量」参照时才读 base。
  * @param emptyText   基础口径为空时的文案
  * @param noMatchText 有数据但被筛选/搜索筛空时的文案
  * @param children    渲染单条卡片：(item) => JSX
@@ -184,12 +187,21 @@ export function CardTitleRow({ name, badge }) {
 }
 
 // 卡片按钮行：补发布 / 调整状态，三页文案统一
-export function CardActions({ sample, onEdit, publishText = '📹 补记发布' }) {
+//
+// account 为可选：按账号口径的列表页（发布不足5条）必须传它，否则「补发布」
+// 会把该样品的**全部**账号带进发布记录页，而用户明明是从某个账号的条目点进来的。
+// 发布记录页优先读 account 单值（见 NewPublishRecordPage.jsx:36），
+// 传单值即可精确预选，无需再动 accounts 数组。
+export function CardActions({ sample, account, onEdit, publishText = '📹 补记发布' }) {
   const navigate = useNavigate()
   return (
     <div style={{ marginTop: '7px', display: 'flex', gap: '8px' }}>
       <button
-        onClick={() => navigate('/publish-record/new', { state: { sampleId: sample.id, accounts: getAccounts(sample) } })}
+        onClick={() => navigate('/publish-record/new', {
+          state: account
+            ? { sampleId: sample.id, account }
+            : { sampleId: sample.id, accounts: getAccounts(sample) },
+        })}
         style={{ flex: 1, padding: '7px 0', borderRadius: '8px', border: 'none', background: '#ec4899', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
       >{publishText}</button>
       <button
