@@ -3,10 +3,9 @@
  * 运行：pnpm check:lowpublish
  * （必须用 vite-node：源码是 Vite 风格的无扩展名导入，node 直跑会 ERR_MODULE_NOT_FOUND）
  *
- * 口径：**逐账号判定，按样品聚合**。
- *   每个账号各算各的 —— 某账号自己发满 5 条就该账号达标，
- *   与同样品别的账号发了多少无关。
- *   列表一个样品一条，条目里带未达标账号明细，不按账号拆条。
+ * 口径：**按样品合计判定**，一个未达标样品占一条。
+ *   把样品所有账号的发布数加在一起，合计 < 5 且未出单才算「发布不足」。
+ *   卡片上列出各账号条数分布，仅供参考该给谁补。
  */
 import { selectLowPublish, LOW_PUBLISH_LIMIT } from './reminders'
 
@@ -19,7 +18,7 @@ function check(name, actual, expected) {
 
 const A = '广东刘亦菲', B = '晚梨不吃梨', C = '努力成为富婆'
 
-// 构造样品：countsByAccount 是判定依据（逐账号读）
+// 构造样品：countsByAccount 是判定依据
 const mk = (id, name, counts, opts = {}) => {
   const accounts = Object.keys(counts)
   return {
@@ -43,75 +42,65 @@ check('发3条',
   ['X:广东刘亦菲=3'])
 
 console.log()
-console.log('② 该账号已出单 → 该账号达标，样品落选')
+console.log('② 已出单 → 落选')
 check('发3条已出单1',
   selectLowPublish([mk(2, 'X', { [A]: { publishCount: 3, orderCount: 1 } })]).length, 0)
 
 console.log()
-console.log('③ 该账号发满 5 条 → 达标')
+console.log('③ 合计发满 5 条 → 达标')
 check('发5条未出单',
   selectLowPublish([mk(3, 'X', { [A]: { publishCount: 5, orderCount: 0 } })]).length, 0)
 
 console.log()
-console.log('④ 该账号 0 条 → 不算「发布不足」（那是「还没发」）')
+console.log('④ 一条都没发 → 不算「发布不足」（那是「还没发」）')
 check('发0条',
   selectLowPublish([mk(4, 'X', { [A]: { publishCount: 0, orderCount: 0 } })]).length, 0)
 
 console.log()
-console.log('⑤【核心】各账号单独算：一账号达标不代表另一账号达标')
-// 刘亦菲发 6 条（达标）、富婆发 1 条（不足）→ 只该提醒富婆。
-// 合计口径（旧实现）会得 7 ≥ 5 而整体排除，把富婆漏掉。
-check('只留未达标的账号',
-  flat(selectLowPublish([mk(5, '混合', {
-    [A]: { publishCount: 6, orderCount: 0 },
-    [C]: { publishCount: 1, orderCount: 0 },
-  })])),
-  ['混合:努力成为富婆=1'])
+console.log('⑤【核心】按合计判定：多账号凑够 5 条 → 整体达标，落选')
+// 用户拍板要合计口径：A 发 3 + B 发 3 = 6 ≥ 5 → 不提醒。
+// 这是合计口径的固有取舍（A、B 各自不足 5 条，但样品整体够了）。
+const s5 = selectLowPublish([mk(5, '凑够', {
+  [A]: { publishCount: 3, orderCount: 0 },
+  [B]: { publishCount: 3, orderCount: 0 },
+})])
+check('合计 6 ≥ 5 → 落选', s5.length, 0)
 
 console.log()
-console.log('⑥【核心】各账号各 2 条 → 三个都未达标，全都要提醒')
-// 合计 6 ≥ 5，合计口径会整体漏报；按账号则应全部入选。
+console.log('⑥【核心】合计不足 5 → 入选，一个样品只占一条')
+// A 发 2 + B 发 2 = 4 < 5 → 入选；卡片列出两个账号的分布。
 const s6 = selectLowPublish([mk(6, '三号', {
   [A]: { publishCount: 2, orderCount: 0 },
   [B]: { publishCount: 2, orderCount: 0 },
-  [C]: { publishCount: 2, orderCount: 0 },
 })])
-check('三个账号都入选', flat(s6), ['三号:广东刘亦菲=2,晚梨不吃梨=2,努力成为富婆=2'])
-check('仍只占 1 条（不拆条）', s6.length, 1)
+check('入选且列出各账号分布', flat(s6), ['三号:广东刘亦菲=2,晚梨不吃梨=2'])
+check('只占 1 条（不按账号拆条）', s6.length, 1)
 
 console.log()
-console.log('⑦【核心】出单只看该账号自己：A 未出单、B 已出单 → 只提醒 A')
-check('别的账号出单不影响 A',
-  flat(selectLowPublish([mk(7, '混合出单', {
-    [A]: { publishCount: 2, orderCount: 0 },
-    [B]: { publishCount: 2, orderCount: 5 },
-  })])),
-  ['混合出单:广东刘亦菲=2'])
+console.log('⑦ 合计已够 5 条 → 落选（即便每个账号都不足）')
+check('合计 8 ≥ 5 → 落选',
+  selectLowPublish([mk(7, '各四条', {
+    [A]: { publishCount: 4, orderCount: 0 },
+    [C]: { publishCount: 4, orderCount: 0 },
+  })]).length, 0)
 
 console.log()
-console.log('⑧ 多账号都未达标 → 一条条目带多个账号，按条数升序')
+console.log('⑧ 合计缺口计算 + 账号按条数升序')
 const s8 = selectLowPublish([mk(8, '排序', {
-  [C]: { publishCount: 3, orderCount: 0 },
+  [C]: { publishCount: 2, orderCount: 0 },
   [A]: { publishCount: 1, orderCount: 0 },
 })])
 check('账号按条数升序', s8[0].accounts.map((x) => `${x.account}=${x.publishCount}`),
-  ['广东刘亦菲=1', '努力成为富婆=3'])
-check('minPublishCount 取最小值', s8[0].minPublishCount, 1)
-check('minLack = 5-1', s8[0].minLack, 4)
+  ['广东刘亦菲=1', '努力成为富婆=2'])
+check('minLack = 5 - 合计3 = 2', s8[0].minLack, 2)
+check('publishCount = 合计 3', s8[0].publishCount, 3)
 
 console.log()
-console.log('⑨【防虚增】明细缺失的账号跳过，不用顶层合计顶替')
-// 老数据没跑过迁移时，getCounts 会回退成顶层合计，多账号下等于把同一份
-// 数字复制给每个账号 → 虚增。这里明确要求：明细缺失就跳过该账号。
-const noDetail = { id: 9, name: '无明细', accounts: [A, B], countsByAccount: {}, publishCount: 3, orderCount: 0 }
-check('明细缺失 → 不入选（宁可不报不虚报）', selectLowPublish([noDetail]).length, 0)
-const partial = {
-  id: 10, name: '半明细', accounts: [A, B],
-  countsByAccount: { [A]: { publishCount: 2, orderCount: 0 } },
-  publishCount: 2, orderCount: 0,
-}
-check('只有 A 有明细 → 只提醒 A',
-  flat(selectLowPublish([partial])), ['半明细:广东刘亦菲=2'])
+console.log('⑨ 老数据形态：只有顶层计数、无 countsByAccount 明细')
+// getCounts 会回退到顶层值，单账号场景求和后仍正确
+const legacy = { id: 9, name: '老数据', accounts: [A], countsByAccount: {}, publishCount: 3, orderCount: 0 }
+check('顶层计数 3 < 5 → 入选', selectLowPublish([legacy]).length, 1)
+check('minLack = 2', selectLowPublish([legacy])[0].minLack, 2)
 
 console.log()
 console.log('⑩ 列表条数 = 未达标样品数（不是账号数）')
@@ -120,21 +109,20 @@ const all = [
   mk(12, 'P2', {
     [A]: { publishCount: 2, orderCount: 0 },
     [B]: { publishCount: 1, orderCount: 0 },
-  }),                                                                                          // 入选（2 个账号，仍 1 条）
-  mk(13, 'P3', { [B]: { publishCount: 4, orderCount: 1 } }),                                   // 落选（自己出单）
-  mk(14, 'P4', { [C]: { publishCount: 5, orderCount: 0 } }),                                   // 落选（自己发满）
+  }),                                                                                          // 入选（合计3，2 个账号，仍 1 条）
+  mk(13, 'P3', { [B]: { publishCount: 4, orderCount: 1 } }),                                   // 落选（已出单）
+  mk(14, 'P4', { [C]: { publishCount: 5, orderCount: 0 } }),                                   // 落选（合计够）
   mk(15, 'P5', {
     [A]: { publishCount: 9, orderCount: 0 },
     [C]: { publishCount: 4, orderCount: 0 },
-  }),                                                                                          // 入选（只剩 C 未达标）
+  }),                                                                                          // 落选（合计13 ≥ 5）
 ]
 const r10 = selectLowPublish(all)
-check('共 3 条', r10.length, 3)
-check('明细正确', flat(r10), ['P1:广东刘亦菲=1', 'P2:晚梨不吃梨=1,广东刘亦菲=2', 'P5:努力成为富婆=4'])
-check('账号总数 = 4', r10.reduce((n, it) => n + it.accounts.length, 0), 4)
-check('每条都至少一个未达标账号', r10.every((it) => it.accounts.length > 0), true)
-check('未达标账号都满足 0 < 条数 < 5', r10.every((it) => it.accounts.every((x) => x.publishCount > 0 && x.publishCount < 5)), true)
-check('未达标账号都未出单', r10.every((it) => it.accounts.every((x) => x.orderCount === 0)), true)
+check('共 2 条', r10.length, 2)
+check('明细正确', flat(r10), ['P1:广东刘亦菲=1', 'P2:晚梨不吃梨=1,广东刘亦菲=2'])
+check('每条合计都 0 < 合计 < 5', r10.every((it) => it.publishCount > 0 && it.publishCount < 5), true)
+check('每条都未出单', r10.every((it) => it.orderCount === 0), true)
+check('minLack = 5 - 合计', r10.every((it) => it.minLack === 5 - it.publishCount), true)
 
 console.log()
 console.log('⑪【关键】已放弃/归档的样品不提醒')
@@ -160,6 +148,18 @@ console.log()
 console.log('⑫ 未归档的样品不受影响（回归）')
 check('正常样品照常入选',
   selectLowPublish([mkArchived(26, 'A6', {})]).length, 1)
+
+console.log()
+console.log('⑬【防虚增】多账号样品不会因为明细被复制而条数变多')
+// 历史故障：mergeSplitSamples 把顶层合计复制给每个账号，导致一个样品被拆成多条。
+// 现在按样品判定，一个样品**恒定只占一条**，与账号数无关。
+const multi = [
+  mk(31, 'M1', { [A]: { publishCount: 1, orderCount: 0 }, [B]: { publishCount: 1, orderCount: 0 } }),
+  mk(32, 'M2', { [A]: { publishCount: 1, orderCount: 0 }, [B]: { publishCount: 1, orderCount: 0 }, [C]: { publishCount: 1, orderCount: 0 } }),
+]
+const r13 = selectLowPublish(multi)
+check('2 个样品 → 恰好 2 条', r13.length, 2)
+check('3 账号的样品也只占 1 条', r13.filter((it) => it.sample.name === 'M2').length, 1)
 
 console.log()
 console.log(`===== 通过 ${pass} / ${pass + fail} =====`)

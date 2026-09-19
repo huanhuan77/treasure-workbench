@@ -7,17 +7,15 @@ import { ReminderListPage, ReminderCard, CardTitleRow, CardActions } from '../co
 
 const ACCENT = '#8b5cf6'
 
-// 发布数分布条：1/2/3/4 条各有多少个**未达标账号**。
+// 发布数分布条：1/2/3/4 条各有多少个**样品**。
 // 0 条不在此列表内 —— 口径要求「已发布」，0 条即未发布。
-// 注意统计的是账号数而非样品数：一个样品可能有多个账号各自发布不足，
-// 分布条想回答的是「有多少个账号卡在 1 条 / 2 条…」，按账号计数才有意义。
+// 判定是样品级的（合计 < 5），所以分布也按样品计数：
+// 一个样品即使有多个账号，它在「合计几条」这个维度上只有一个值。
 function DistBar({ list }) {
   const dist = { 1: 0, 2: 0, 3: 0, 4: 0 }
   for (const it of list || []) {
-    for (const acc of it.accounts || []) {
-      const n = Number(acc.publishCount) || 0
-      if (dist[n] !== undefined) dist[n]++
-    }
+    const n = Number(it.publishCount) || 0
+    if (dist[n] !== undefined) dist[n]++
   }
   return (
     <div style={{ padding: '4px 16px 2px', display: 'flex', gap: '6px', flexShrink: 0 }}>
@@ -38,8 +36,8 @@ function DistBar({ list }) {
 // 「发布不足 N 条」列表页
 // 口径来自 utils/reminders，与总览 Tab 计数同源。
 //
-// 判定**按账号**：某账号自己发满 5 条就算它达标，与同样品别的账号无关。
-// 展示**按样品**：一个样品一条，卡片里只列出未达标的账号（各带条数），
+// 判定**按样品合计**：把样品所有账号的发布数加在一起，合计 < 5 且未出单才入选。
+// 展示**按样品**：一个样品一条，卡片里列出各账号的条数分布供参考，
 //   不按账号拆条 —— 拆条会让列表凭空变长（曾经踩过：25 条被拆成更多）。
 // 已放弃/归档的样品不在此列表（它已经不做了，再催补发布是错的）。
 export function LowPublishSamplesPage() {
@@ -66,7 +64,7 @@ export function LowPublishSamplesPage() {
       emptyText={`🎉 所有样品都发满 ${LOW_PUBLISH_LIMIT} 条了`}
       noMatchText="没有符合筛选条件的样品"
       // base 是 { sample, accounts, ... } 条目，需告知容器如何取出样品与账号：
-      // 账号筛选按「该样品有任一未达标账号命中」匹配，语义与页面口径一致。
+      // 账号筛选按「该样品有任一账号命中」匹配，语义与页面口径一致。
       getItem={(it) => ({ sample: it.sample, account: null })}
       // 分布条读 list（筛选后）而非 base（全量）：
       // 否则筛了账号后上方数字不变、与下方列表对不上，用户会以为筛选没生效。
@@ -85,8 +83,8 @@ export function LowPublishSamplesPage() {
               )}
             />
 
-            {/* 只列未达标的账号，各带自己的条数（账号主题色，跨页面一致）。
-                没列出来的账号说明它已达标（发满 5 条或已出单）。
+            {/* 列出各账号的条数分布（账号主题色，跨页面一致），供参考该给谁补。
+                判定在样品级，所以这里列的是「有发布记录的账号」，不是「未达标账号」。
                 不显示「未出单」标记：能进这个列表本身就意味着未出单，属冗余信息。 */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
               {it.accounts.map(({ account: a, publishCount: n }) => {
@@ -100,8 +98,8 @@ export function LowPublishSamplesPage() {
               })}
             </div>
 
-            {/* 带未达标账号：从卡片点「补发布」时只预选这些账号，
-                而不是把该样品全部账号都带上（已达标的不用补） */}
+            {/* 带这些账号：从卡片点「补发布」时预选它们，
+                与卡片上展示的分布保持一致，不用用户再手选 */}
             <CardActions
               sample={s}
               onEdit={() => navigate(`/samples/${s.id}/edit`)}

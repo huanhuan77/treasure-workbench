@@ -646,8 +646,8 @@ export function DashboardPage() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {/* 条目粒度是**样品**（不拆条），但判定是**按账号**：
-                      卡片里只列未达标的账号并各自标条数，标题的「还差 N」取最紧的那个。 */}
+                  {/* 条目粒度是**样品**，判定也是**按样品合计**：
+                      卡片里列出各账号的条数分布供参考，标题的「还差 N」按合计算。 */}
                   {fLowPublish.map((it) => {
                     const s = it.sample
                     return (
@@ -660,8 +660,8 @@ export function DashboardPage() {
                             </span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {/* 只列未达标的账号，各带自己的条数（账号主题色，跨页面一致）。
-                                没列出来的账号表示它已达标（发满 5 条或已出单）。 */}
+                            {/* 列出各账号的条数分布（账号主题色，跨页面一致），供参考该给谁补。
+                                判定在样品级，所以这是「有发布记录的账号」，不是「未达标账号」。 */}
                             {it.accounts.map(({ account: a, publishCount: n }) => {
                               const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
                               return (
@@ -679,7 +679,7 @@ export function DashboardPage() {
                           flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
                           fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                         }}>补发布</button>
-                        {/* 只带未达标账号：已达标的不用补，带全量会让人误以为都欠发布 */}
+                        {/* 预选这些账号：与卡片展示的分布一致，不用用户再手选 */}
                       </div>
                     )
                   })}

@@ -3,7 +3,7 @@
 // 总览页的 Tab 计数与三个列表页的列表内容都从这里取，
 // 避免同一个口径散落在多处、改一处漏一处导致「卡片数字 ≠ 点进去的条数」。
 import { needPublishReminder } from './publish'
-import { getAccounts, isArchivedSample } from './sampleStatus'
+import { getAccounts, getAggregateCounts, isArchivedSample } from './sampleStatus'
 
 // 发布不足的阈值：某产品发布数低于它即视为「发布不足」
 export const LOW_PUBLISH_LIMIT = 5
@@ -37,34 +37,31 @@ export function selectPublishReminders(samples) {
   return (samples || []).filter((s) => needPublishReminder(s))
 }
 
-// 2) 发布不足5条：**逐账号判定**，但**按样品聚合展示**。
+// 2) 发布不足5条：**按样品合计**判定，一个未达标样品占一条。
 //
-// 口径（2026-09-19 确定）：
-//   每个账号**各算各的** —— 某账号自己发满 5 条就算它达标，
-//   与这个样品一共挂了几个账号、别的账号发了多少**无关**。
-//   三个条件必须落在同一个账号上：
-//     该账号已发布过（publishCount > 0）
-//     && 该账号发布数 < 阈值
-//     && 该账号自己尚未出单（orderCount === 0，别的账号出单不影响）
+// 口径（2026-09-19 最终确定，用户拍板）：
+//   把样品**所有账号的发布数加在一起**看。合计 < 5 且没出单，才算「发布不足」。
+//   一个样品只占一条，卡片上标出各账号的条数分布，供参考该给谁补。
 //
-// 为什么不是读样品合计（上一版的做法，已废弃）：
-//   顶层 s.publishCount 是所有账号的合计。一个样品挂 3 个账号、各发 2 条，
-//   合计 6 ≥ 5，整个样品就被排除了 —— 但这三个账号**每个都没发满 5 条**，
-//   本该全部提醒却集体漏报。合计口径在多账号下必然出错。
+// 为什么不用「逐账号各算各的」（上一版的做法，已废弃）：
+//   那样每个账号自己够不够 5 条单独判定，会把「几个账号凑一凑合计够 5 条」的
+//   样品也全部捞出来（用户实测列表从 25 条涨到 40 条）。
+//   用户明确要的是**按样品合计**的口径，所以改回合计判定。
 //
-// 为什么不返回「样品×账号」扁平条目（更早一版的做法，已废弃）：
-//   那样一个样品有几个账号未达标就占几行，列表被撑长（用户实测 25 条变更多）。
-//   现在改为**一个样品一条**，条目里带上未达标账号的明细数组：
-//     { sample, accounts: [{ account, publishCount, orderCount, lack }], minPublishCount }
-//   列表条数 = 未达标的样品数，稳定且可预期。
+//   代价（已知并接受）：一个样品挂 A、B 两个账号、各发 3 条，合计 6 ≥ 5 →
+//   整个样品判为达标、不提醒，尽管 A、B 各自都没发满 5 条。这是合计口径的
+//   固有行为，不是 bug。用户知悉该取舍后仍选择合计口径。
 //
-// ⚠️ 关于老数据的虚增隐患（务必理解，否则会改错）：
-//   getCounts(s, a) 在 countsByAccount[a] 缺失时会回退成**顶层合计**，
-//   多账号样品若没跑过迁移，每个账号都会拿到同一个合计数。
-//   但 store 的 aggregatePublish 迁移（store.jsx）会给每个账号补
-//   { publishCount: 0 } 的明细，所以正常数据下不会触发该回退。
-//   为了稳妥，这里额外校验：若某账号的明细整个缺失，就**跳过该账号**，
-//   宁可不报也不虚报（虚报会让用户看到根本不存在的「发布不足」）。
+// ⚠️ 合计用 getAggregateCounts（按账号求和），不用顶层 s.publishCount：
+//   顶层 publishCount 是 store 迁移维护的**影子字段**，历史数据可能没跟上；
+//   getAggregateCounts 现算各账号之和，更能反映真实分布。
+//   但老数据若只有顶层计数、没有 countsByAccount 明细，getCounts 会回退到顶层值，
+//   求和后也正确（单账号场景），所以两种形态都兜得住。
+//
+// 返回形状（保持与「逐账号判定」版一致，UI 无需再改）：
+//   { sample, accounts: [{account, publishCount, orderCount, lack}], minPublishCount, minLack }
+//   注意 accounts 现在列的是**该样品所有有发布记录的账号**（供展示分布），
+//   不再是「未达标账号」——因为判定已经上移到样品级，账号本身不再单独判定。
 export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT) {
   const out = []
   for (const s of samples || []) {
@@ -72,28 +69,33 @@ export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT) {
     // 用 isArchivedSample 而非只看 s.status：它同时兼容 archived 布尔、
     // execByAccount 全 abandoned、以及老的顶层 status 三种形态。
     if (isArchivedSample(s)) continue
-    const short = []
-    for (const a of getAccounts(s)) {
-      // 明细缺失 → 该账号条数不可信，跳过（见上方说明）
-      const raw = s?.countsByAccount?.[a]
-      if (!raw) continue
-      const publishCount = Number(raw.publishCount) || 0
-      const orderCount = Number(raw.orderCount) || 0
-      // 一条都没发不算「发布不足」，那是「还没发」（属于发布提醒的关注范围）
-      if (publishCount <= 0) continue
-      if (publishCount >= limit) continue
-      // 只看该账号自己有没有出单，别的账号出单不影响
-      if (orderCount !== 0) continue
-      short.push({ account: a, publishCount, orderCount, lack: limit - publishCount })
-    }
-    if (!short.length) continue
-    // 未达标账号按条数升序，最该补的排前面；供卡片顶部显示「还差 N 条」取最小值
-    short.sort((x, y) => x.publishCount - y.publishCount)
+
+    const { publishCount, orderCount } = getAggregateCounts(s)
+    // 一条都没发不算「发布不足」，那是「还没发」（属于发布提醒的关注范围）
+    if (publishCount <= 0) continue
+    if (publishCount >= limit) continue
+    // 整个样品已出单就不算「发布不足」这个待办事项了
+    if (orderCount !== 0) continue
+
+    // 各账号的条数分布（仅供参考展示，不参与判定）
+    const accounts = getAccounts(s)
+      .map((a) => {
+        const c = s?.countsByAccount?.[a]
+        const n = Number(c?.publishCount) || 0
+        return { account: a, publishCount: n, orderCount: Number(c?.orderCount) || 0, lack: limit - n }
+      })
+      // 只展示有发布记录的账号，没发过的不用列出来占位置
+      .filter((x) => x.publishCount > 0)
+      .sort((x, y) => x.publishCount - y.publishCount)
+
     out.push({
       sample: s,
-      accounts: short,
-      minPublishCount: short[0].publishCount,
-      minLack: short[0].lack,
+      accounts,
+      publishCount,
+      orderCount,
+      minPublishCount: accounts.length ? accounts[0].publishCount : publishCount,
+      // 还差多少条：按样品合计算，这才是「补发布」的实际缺口
+      minLack: limit - publishCount,
     })
   }
   return out
