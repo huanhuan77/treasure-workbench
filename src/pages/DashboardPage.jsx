@@ -6,7 +6,7 @@ import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
-import { SAMPLE_STATUS, getAutoAbandonedAccounts, getCounts } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 
 // 顶部问候（按时段）
@@ -646,39 +646,40 @@ export function DashboardPage() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {/* 条目粒度是**样品**：一个样品一条，计数与列表一一对应。
-                      账号维度由卡片里的「账号(N条)」标签表达，不拆条。 */}
-                  {fLowPublish.map((s) => {
-                    const publishCount = Number(s.publishCount) || 0
-                    const lack = Math.max(0, LOW_PUBLISH_LIMIT - publishCount)
+                  {/* 条目粒度是**样品**（不拆条），但判定是**按账号**：
+                      卡片里只列未达标的账号并各自标条数，标题的「还差 N」取最紧的那个。 */}
+                  {fLowPublish.map((it) => {
+                    const s = it.sample
                     return (
                       <div key={s.id} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>已发 {publishCount} 条 · 还差 {lack}</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+                              还差 {it.minLack} 条{it.accounts.length > 1 ? ` · ${it.accounts.length} 个账号` : ''}
+                            </span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {/* 账号标签统一用各自的账号主题色（同一账号在不同 Tab 里颜色一致，便于辨认）。
-                                条数取该账号自己的统计；老数据没有分账号明细时会回退成样品合计值。 */}
-                            {getAccounts(s).map((a) => {
+                            {/* 只列未达标的账号，各带自己的条数（账号主题色，跨页面一致）。
+                                没列出来的账号表示它已达标（发满 5 条或已出单）。 */}
+                            {it.accounts.map(({ account: a, publishCount: n }) => {
                               const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
-                              const acctCount = getCounts(s, a).publishCount
                               return (
                                 <span key={a} style={{
                                   fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
                                   background: col.bg, color: col.c, fontWeight: 600,
                                   border: `1px solid ${col.c}`,
                                   whiteSpace: 'nowrap', flexShrink: 0,
-                                }}>{a}({acctCount}条)</span>
+                                }}>{a}({n}条)</span>
                               )
                             })}
                           </div>
                         </div>
-                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
+                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } })} style={{
                           flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
                           fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                         }}>补发布</button>
+                        {/* 只带未达标账号：已达标的不用补，带全量会让人误以为都欠发布 */}
                       </div>
                     )
                   })}

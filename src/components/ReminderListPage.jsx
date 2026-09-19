@@ -194,19 +194,19 @@ export function CardTitleRow({ name, badge }) {
 
 // 卡片按钮行：补发布 / 调整状态，三页文案统一
 //
-// account 为可选：传了就只把该账号带进发布记录页。
-// 三个列表页现在都是样品粒度，默认不传（带全部账号）；
-// 若将来某个页面按账号拆分展示，可传单值精确预选
-// （发布记录页优先读 account 单值，见 NewPublishRecordPage.jsx:36）。
-export function CardActions({ sample, account, onEdit, publishText = '📹 补记发布' }) {
+// 账号预选优先级：publishAccounts（数组）> account（单值）> 该样品全部账号。
+// 「发布不足5条」用 publishAccounts 只带上**未达标**的账号 ——
+// 已达标的账号没必要再补发布，带全量会让用户误以为所有账号都欠发布。
+export function CardActions({ sample, account, publishAccounts, onEdit, publishText = '📹 补记发布' }) {
   const navigate = useNavigate()
+  const preset = Array.isArray(publishAccounts) && publishAccounts.length
+    ? { accounts: publishAccounts }
+    : (account ? { account } : { accounts: getAccounts(sample) })
   return (
     <div style={{ marginTop: '7px', display: 'flex', gap: '8px' }}>
       <button
         onClick={() => navigate('/publish-record/new', {
-          state: account
-            ? { sampleId: sample.id, account }
-            : { sampleId: sample.id, accounts: getAccounts(sample) },
+          state: { sampleId: sample.id, ...preset },
         })}
         style={{ flex: 1, padding: '7px 0', borderRadius: '8px', border: 'none', background: '#ec4899', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
       >{publishText}</button>
