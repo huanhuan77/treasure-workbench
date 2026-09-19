@@ -166,6 +166,31 @@ export function DashboardPage() {
 
   // 即将到期：有截止日期、且未发布/未放弃、7 天内到期（含已逾期），按截止日期升序
   const expiringSoon = useMemo(() => selectExpiringSoon(samples), [samples])
+
+  // ── 提醒中心的账号筛选（三个 Tab 共用一排胶囊）
+  // 'all' = 全部账号。筛选只作用于下方列表与 Tab 气泡计数，
+  // 不影响上方「出单 / 待办」两张卡。
+  const [remindAccount, setRemindAccount] = useState('all')
+  const ACC_META = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+
+  // 样品是否归属某账号（未筛时全部通过）
+  const matchAcct = (s, a) => a === 'all' || getAccounts(s).includes(a)
+
+  // 筛选后的三组数据 —— 列表渲染与 Tab 气泡计数都读它们，保证「气泡数 = 点进去的条数」。
+  // 「发布不足5条」是「样品×账号」条目，按条目自带的 account 精确匹配，
+  // 不能用 matchAcct（那会把同样品其它账号的条目也带进来）。
+  const fReminders = useMemo(
+    () => reminders.filter((s) => matchAcct(s, remindAccount)),
+    [reminders, remindAccount],
+  )
+  const fLowPublish = useMemo(
+    () => lowPublish.filter((it) => remindAccount === 'all' || it.account === remindAccount),
+    [lowPublish, remindAccount],
+  )
+  const fExpiring = useMemo(
+    () => expiringSoon.filter((s) => matchAcct(s, remindAccount)),
+    [expiringSoon, remindAccount],
+  )
   // 近 7 天发布条数（按 qty 累加）
   const last7Count = useMemo(() => {
     const from = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10)
@@ -178,19 +203,25 @@ export function DashboardPage() {
   // 标签与跳转目标来自 utils/reminders 的 REMINDER_TABS，这里只补上各自的计数，
   // 避免「标签/路径」在总览和列表页各写一份导致对不上
   const REMIND_TABS = useMemo(() => {
+    // 计数用**筛选后**的数据：筛了账号后气泡数字要跟着变，
+    // 否则「气泡 57」点进去只有 20 条，又是「卡片数字 ≠ 点进去的条数」那个老问题。
     const counts = {
-      reminders: allReminders.length,
-      low: lowPublish.length,
-      expiring: expiringSoon.length,
+      reminders: fReminders.length,
+      low: fLowPublish.length,
+      expiring: fExpiring.length,
     }
     return REMINDER_TABS.map((t) => ({ ...t, count: counts[t.id] }))
-  }, [allReminders.length, lowPublish.length, expiringSoon.length])
+  }, [fReminders.length, fLowPublish.length, fExpiring.length])
   // 合并后的总数：不同区块可能命中同一产品，这里按 id 去重后再计
   const remindTotal = useMemo(() => {
+    // 用筛选后的数据：筛选后三个 Tab 可能都空了，此时自动切换 Tab 的兜底逻辑
+    // 应当基于「当前筛选下还剩什么」，否则筛到没数据的账号会停在空 Tab。
+    // 注意 lowPublish 是「样品×账号」条目，取 sample.id 参与去重。
     const map = new Map()
-    ;[...allReminders, ...lowPublish, ...expiringSoon].forEach((s) => map.set(s.id, s))
+    ;[...fReminders, ...fExpiring].forEach((s) => map.set(s.id, s))
+    fLowPublish.forEach((it) => map.set(it.sample.id, it.sample))
     return map.size
-  }, [allReminders, lowPublish, expiringSoon])
+  }, [fReminders, fLowPublish, fExpiring])
 
   // 当前 Tab 若因数据变化而「暂时为空」，自动切到第一个非空 Tab（仅切一次，避免切走用户选择）
   // 注意：仍然允许用户手动切到空 Tab 去看空状态文案，所以只在数据驱动下兜底
@@ -501,6 +532,47 @@ export function DashboardPage() {
           </div>
         </div>
 
+        {/* 账号筛选：三个 Tab 共用一排胶囊，作用于下方列表与 Tab 气泡计数。
+            样式与「出单记录」页的账号筛选保持一致（同色描边 / 选中填充同色），
+            让同一套筛选在两处看起来是同一个东西。
+            横向可滚，账号变多也不会挤成两行。 */}
+        <div
+          className="hide-scrollbar"
+          style={{
+            padding: '6px 16px 4px', display: 'flex', gap: '6px',
+            flexWrap: 'nowrap', alignItems: 'center', flexShrink: 0,
+            overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          <button
+            onClick={() => setRemindAccount('all')}
+            style={{
+              flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px',
+              fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              border: remindAccount === 'all' ? 'none' : '1px solid rgba(244,114,182,0.35)',
+              background: remindAccount === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
+              color: remindAccount === 'all' ? '#fff' : 'var(--text-main)',
+            }}
+          >全部账号</button>
+          {ACCOUNTS.map((a) => {
+            const col = ACC_META(a)
+            const sel = remindAccount === a
+            return (
+              <button
+                key={a}
+                onClick={() => setRemindAccount(sel ? 'all' : a)}
+                style={{
+                  flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px',
+                  fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                  border: sel ? 'none' : `1px solid ${col.c}`,
+                  background: sel ? col.c : '#fff',
+                  color: sel ? '#fff' : col.c,
+                }}
+              >{a}</button>
+            )
+          })}
+        </div>
+
         {/* Tab 内容区：左右 16px 内边距放这里，与上方 Tab 的左右对齐；只渲染当前选中项。
             paddingTop 5px 是给吸顶条与首张卡片留的呼吸位 —— 原来为 0，卡片直接贴着
             吸顶条下沿，毛玻璃边缘和卡片圆角挨在一起显得很挤。
@@ -511,13 +583,13 @@ export function DashboardPage() {
             <>
               {/* 原「按紧急度排序」说明行已去掉：条目数由 Tab 气泡表达，排序规则对用户无意义。
                   空数据时由下方列表的空状态卡片提示，这里不再重复。 */}
-              {reminders.length === 0 ? (
+              {fReminders.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
-                  暂无需要发布提醒的样品
+                  {remindAccount === 'all' ? '暂无需要发布提醒的样品' : `${remindAccount} 没有需要发布提醒的样品`}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
-                  {reminders.map((s) => {
+                  {fReminders.map((s) => {
                     // 只显示还需要发视频的账号（从未发过 / 超 7 天没发）；都发过则显示全部
                     const pending = pendingAccounts(s)
                     const showAccounts = pending.length ? pending : getAccounts(s)
@@ -566,9 +638,11 @@ export function DashboardPage() {
           {remindTab === 'low' && (
             <>
               {/* 原「按发布条数排序」说明行已去掉，空数据由下方空状态卡片提示 */}
-              {lowPublish.length === 0 ? (
+              {fLowPublish.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
-                  暂无发布不足 {LOW_PUBLISH_LIMIT} 条的账号
+                  {remindAccount === 'all'
+                    ? `暂无发布不足 ${LOW_PUBLISH_LIMIT} 条的账号`
+                    : `${remindAccount} 没有发布不足 ${LOW_PUBLISH_LIMIT} 条的样品`}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -576,7 +650,7 @@ export function DashboardPage() {
                       会作为多条独立展示。这样「还差 N 条」才是针对具体某个账号的，
                       而不是含糊的样品合计值。key 必须用 sampleId+account 组合，
                       单用 s.id 在多个账号时会撞 key。 */}
-                  {lowPublish.map(({ sample: s, account, publishCount, lack }) => {
+                  {fLowPublish.map(({ sample: s, account, publishCount, lack }) => {
                     const col = ACCOUNT_COLOR[account] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
                     return (
                       <div key={`${s.id}::${account}`} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -613,13 +687,13 @@ export function DashboardPage() {
           {remindTab === 'expiring' && (
             <>
               {/* 原「按截止日期排序」说明行已去掉，空数据由下方空状态卡片提示 */}
-              {expiringSoon.length === 0 ? (
+              {fExpiring.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
-                  近 {EXPIRING_DAYS} 天没有即将到期的样品
+                  {remindAccount === 'all' ? `近 ${EXPIRING_DAYS} 天没有即将到期的样品` : `${remindAccount} 没有即将到期的样品`}
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {expiringSoon.map((s) => {
+                  {fExpiring.map((s) => {
                     const du = daysUntil(s.deadline)
                     const overdue = du !== null && du < 0
                     const text = overdue
