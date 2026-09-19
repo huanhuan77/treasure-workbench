@@ -52,7 +52,9 @@ function Pill({ active, onClick, children, accent = '#ec4899' }) {
  *                    需要「总量」参照时才读 base。
  * @param emptyText   基础口径为空时的文案
  * @param noMatchText 有数据但被筛选/搜索筛空时的文案
- * @param children    渲染单条卡片：(item) => JSX
+ * @param children    渲染单条卡片：(item, { accountFilter }) => JSX。
+ *                    accountFilter 为当前选中的账号（'all' 表示未筛）。
+ *                    样品粒度的页面可用它把卡片内的账号收窄到所选账号。
  * @param getItem     条目适配器，把 base 里的一项解析成 { sample, account }
  *
  * 为什么需要 getItem：
@@ -159,7 +161,12 @@ export function ReminderListPage({
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {list.map((s) => children(s))}
+            {/* children 除条目本身外，再收到 { accountFilter }：
+                样品粒度的页面（发布提醒/即将到期）一行代表一个样品，
+                卡片内可能列出该样品的多个账号。用户筛了某个账号后，
+                行内若仍把所有账号都列出来，看起来就像筛选没生效。
+                故把筛选态透传给卡片，由卡片决定只显示哪个账号。 */}
+            {list.map((s) => children(s, { accountFilter }))}
           </div>
         )}
       </div>

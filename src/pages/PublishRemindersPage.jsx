@@ -45,12 +45,18 @@ export function PublishRemindersPage() {
       emptyText="🎉 没有需要提醒的样品，都已按时发了视频"
       noMatchText="没有符合筛选条件的样品"
     >
-      {(s) => {
+      {(s, { accountFilter } = {}) => {
         const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.published
         const days = daysSincePublish(s)
         // 只显示还需要发视频的账号（从未发过 / 超阈值没发）；都发过则显示全部
         const pending = pendingAccounts(s)
-        const showAccounts = pending.length ? pending : getAccounts(s)
+        const all = pending.length ? pending : getAccounts(s)
+        // 用户筛了账号就只显示该账号 —— 否则从「广东刘亦菲」进来却看到
+        // 「努力成为富婆」的标签，会以为筛选没生效。
+        // 若所选账号不在本样品的待发名单里（本不该出现，防御性处理），退回全量避免卡片空标签。
+        const showAccounts = (accountFilter && accountFilter !== 'all' && all.includes(accountFilter))
+          ? [accountFilter]
+          : all
         // 文案里的天数也跟着「待发账号」走，避免出现「已 0 天没发」这类矛盾
         const daysText = pending.length
           ? Math.max(...pending.map((a) => daysSincePublishByAccount(s, a)))
@@ -78,7 +84,12 @@ export function PublishRemindersPage() {
                 <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
               ))}
             </div>
-            <CardActions sample={s} onEdit={() => navigate(`/samples/${s.id}/edit`)} />
+            {/* 筛了账号就把该账号带进发布页；未筛则交给 CardActions 默认带全部账号 */}
+            <CardActions
+              sample={s}
+              account={accountFilter && accountFilter !== 'all' ? accountFilter : undefined}
+              onEdit={() => navigate(`/samples/${s.id}/edit`)}
+            />
           </ReminderCard>
         )
       }}

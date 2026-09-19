@@ -32,7 +32,7 @@ export function ExpiringSamplesPage() {
       emptyText={`🎉 近 ${EXPIRING_DAYS} 天没有即将到期的样品`}
       noMatchText="没有符合筛选条件的样品"
     >
-      {(s) => {
+      {(s, { accountFilter } = {}) => {
         const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.published
         const du = daysUntilDeadline(s.deadline)
         const overdue = du !== null && du < 0
@@ -40,6 +40,11 @@ export function ExpiringSamplesPage() {
           ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
           : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
         const color = overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
+        // 用户筛了账号就只显示该账号，避免"筛了一个账号却看到别的账号标签"
+        const all = getAccounts(s)
+        const showAccounts = (accountFilter && accountFilter !== 'all' && all.includes(accountFilter))
+          ? [accountFilter]
+          : all
         return (
           <ReminderCard key={s.id} borderColor="#fecdd3">
             <CardTitleRow
@@ -52,11 +57,15 @@ export function ExpiringSamplesPage() {
             />
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '3px' }}>
               <span style={{ fontSize: '11px', color, fontWeight: 600, lineHeight: 1.4 }}>⏰ {text}</span>
-              {getAccounts(s).map((a) => (
+              {showAccounts.map((a) => (
                 <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
               ))}
             </div>
-            <CardActions sample={s} onEdit={() => navigate(`/samples/${s.id}/edit`)} />
+            <CardActions
+              sample={s}
+              account={accountFilter && accountFilter !== 'all' ? accountFilter : undefined}
+              onEdit={() => navigate(`/samples/${s.id}/edit`)}
+            />
           </ReminderCard>
         )
       }}
