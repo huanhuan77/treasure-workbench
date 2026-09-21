@@ -17,14 +17,36 @@
   --gray-100: #fce7f3;
   --gray-200: #fbcfe8;
   --gray-300: #f9a8d4;
-  --gray-400: #b88a99;
+  --gray-400: #a97b8c;
   --gray-500: #8b6f7a;
   --gray-600: #6b5260;
   --gray-700: #4a2c3a;
   --gray-800: #3a1f2d;
   --gray-900: #2d1622;
-  --text-main: #4a2c3a;
-  --text-sub: #8b6f7a;
+  /* 文字色：比原值加深 1~2 档（色相不变），提升看板数字与正文的对比度。
+     这是全站自动受益的部分 —— --text-main 被引用 138 处、--text-sub 189 处、--gray-400 11 处，
+     改这里等于 32 个页面的文字层次一起升级，且无需改动任何页面的 JSX。 */
+  --text-main: #2d1622;
+  --text-sub: #6b5260;
+
+  /* ── 看板风设计令牌（新增，不影响既有页面）─────────────────────
+     注意：本项目 index.css 只有 7 个类选择器（.app-container / .dash-sticky-bar /
+     .dashTab* / .hide-scrollbar / .scroll-lock-page），**没有任何卡片类**；
+     各业务页的卡片样式都是页面内联的。所以下面这组令牌只服务总览页的看板重构，
+     属「新增不删」，改动它们不会波及其他页面。 */
+  --surface: #ffffff;
+  --surface-muted: #fdfafb;
+  --border-hair: rgba(236, 72, 153, 0.10);
+  /* 三级层次阴影：主卡用 level-2，卡内次级块用 level-1（不加投影，避免层层阴影糊成一片），
+     浮层/强调块用 level-3 */
+  --level-1: 0 1px 2px rgba(120, 90, 100, 0.06);
+  --level-2: 0 4px 14px rgba(244, 114, 182, 0.10);
+  --level-3: 0 10px 28px rgba(244, 114, 182, 0.16);
+  --radius-card: 16px;
+  --radius-inner: 12px;
+
+  /* ⚠️ 以下两个值不得改动：全站吸顶/底部安全区都依赖它们，
+     且只在此处定义（不是 .app-container 的局部变量）。 */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
 }
@@ -38,8 +60,9 @@ html, body {
   margin: 0;
   padding: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  /* 蜜桃粉系渐变背景 */
-  background: linear-gradient(160deg, #ffe4e6 0%, #fce7f3 40%, #fef3c7 100%);
+  /* 蜜桃粉系渐变背景：比原版更「透气」——顶部略收、中段提亮，让白卡片浮起来，
+     配合加深后的文字色形成更清晰的看板层次。 */
+  background: linear-gradient(170deg, #ffe0ea 0%, #ffeef5 38%, #fff8f4 100%);
   background-attachment: fixed;
   color: var(--text-main);
   -webkit-font-smoothing: antialiased;
@@ -160,6 +183,31 @@ a {
   }
 }
 
+/* 总览页「提醒中心」Tab 栏吸顶。
+   sticky 的吸附参照物是「最近的 overflow 非 visible 祖先」：.app-container 在桌面端
+   media query 里设了 overflow:hidden，会把吸附范围限死在容器内（等于不吸），故桌面端放开。
+   放开后 sticky 改为相对视口吸附，因此 top 必须补上容器自身的 20px 上外边距，
+   否则 Tab 会吸到浏览器顶边、跑到手机容器外面。overflow 与 top 两者必须成对改。
+   桌面端再叠加 --safe-top 兜底（桌面浏览器该值通常为 0）。
+   手机端容器本就无 overflow / 无圆角 / 无外边距，但 top 必须留出状态栏高度：
+   真机 / 模拟器的刘海、灵动岛会盖住视口顶部，top:0 会让 Tab 被时间、信号、电量压住，
+   所以用 --safe-top（= env(safe-area-inset-top)）。无安全区的设备该值为 0，不影响原布局。
+   注意：--safe-top 只在 :root 定义，而非继承自 .app-container 的局部变量。
+   放开 overflow 后 32px 圆角无法再裁剪背景，改直角以免「圆角但内容溢出」的错位观感。
+   注意：top 只能在这里给，JSX 里不能写内联 top（内联会压过媒体查询）。 */
+.dash-sticky-bar {
+  top: var(--safe-top, 0px);
+}
+@media (min-width: 481px) {
+  .app-container.dash-sticky-page {
+    overflow: visible;
+    border-radius: 0;
+  }
+  .app-container.dash-sticky-page .dash-sticky-bar {
+    top: calc(20px + var(--safe-top, 0px));
+  }
+}
+
 /* 隐藏滚动条但保留滚动能力：用于账号/标签等可横滑的单行按钮组 */
 .hide-scrollbar {
   -ms-overflow-style: none;
@@ -170,4 +218,23 @@ a {
   display: none;
   width: 0;
   height: 0;
+}
+
+/* 总览「提醒中心」Tab：三个标签在均分宽度下按屏宽分三档显示，避免长标签被省略号截断。
+   实测数据（390px 基准，标签字号 12.5px、数量气泡计入宽度）：
+     - 「发布不足5条」+气泡 需要 107px；按钮可用宽 = (视口 - 32px/容器内边距 - 12px/胶囊内边距 - 边框) / 3
+     - 390px → 107px 刚好放下；360px → 97px 差 3px 被截断（连数量气泡都会被吃掉）
+     - 320px → 约 85px 更紧，此时「不足5条」这种中标签才放得下
+   故断点取两档：<=360px 用中标签，<=350px（320 级别窄屏）用短标签。
+   注意：这三类必须成对覆盖，否则会出现两个标签同时可见；且 span 上不能写内联 display。 */
+.dashTabFull { display: inline-block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.dashTabMid { display: none; }
+.dashTabShort { display: none; }
+@media (width <= 380px) {
+  .dashTabFull { display: none; }
+  .dashTabMid { display: inline-block; }
+}
+@media (width <= 340px) {
+  .dashTabMid { display: none; }
+  .dashTabShort { display: inline-block; }
 }

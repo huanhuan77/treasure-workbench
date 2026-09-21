@@ -61,9 +61,16 @@ export function dateLabel(value) {
 }
 
 const chipBase = {
-  padding: '4px 12px', borderRadius: 0, fontSize: '13px', fontWeight: 600, textAlign: 'center',
+  padding: '4px 7px', borderRadius: 0, fontSize: '12px', fontWeight: 600, textAlign: 'center',
   cursor: 'pointer', whiteSpace: 'nowrap', flex: '0 0 auto',
   border: 'none', background: 'transparent',
+}
+
+// 快捷日期chips 均分样式：flex 1 撑满、minWidth 0 允许收缩、overflow hidden 防文字溢出
+const chipFill = {
+  flex: '1 1 0', minWidth: 0, textAlign: 'center',
+  overflow: 'hidden', textOverflow: 'ellipsis',
+  paddingLeft: 2, paddingRight: 2,
 }
 
 function parseRange(value) {
@@ -214,26 +221,40 @@ export function DateFilterBar({ value, onChange }) {
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', padding: '4px 16px 2px', flexShrink: 0,
+      display: 'flex', alignItems: 'center', flexShrink: 0,
+      margin: '4px 0 0', padding: '5px 10px',
+      background: 'rgba(255,255,255,0.5)',
+      borderTop: '1px solid rgba(244,114,182,0.16)',
+      borderBottom: '1px solid rgba(244,114,182,0.16)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
     }}>
-      {/* 左侧：快捷日期chips，可横滑 */}
+      {/* 左侧：快捷日期chips，等分撑满，超出时才横滑 */}
       <div className="hide-scrollbar" style={{
-        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '4px',
+        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center',
         overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
       }}>
       <button onClick={() => onChange('')} style={{
-        ...chipBase,
-        borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
+        ...chipBase, ...chipFill,
         color: !value ? '#ec4899' : 'var(--text-sub)',
-      }}>全部</button>
+      }}>
+        <span style={{
+          display: 'inline-block', position: 'relative', paddingBottom: '3px',
+          borderBottom: !value ? '2px solid #ec4899' : '2px solid transparent',
+        }}>全部</span>
+      </button>
       {DATE_CHIPS.map((c) => {
         const sel = value === c.id
         return (
           <button key={c.id} onClick={() => onChange(sel ? '' : c.id)} style={{
-            ...chipBase,
-            borderBottom: sel ? '2px solid #ec4899' : '2px solid transparent',
+            ...chipBase, ...chipFill,
             color: sel ? '#ec4899' : 'var(--text-main)',
-          }}>{c.label}</button>
+          }}>
+            <span style={{
+              display: 'inline-block', position: 'relative', paddingBottom: '3px',
+              borderBottom: sel ? '2px solid #ec4899' : '2px solid transparent',
+            }}>{c.label}</span>
+          </button>
         )
       })}
       </div>
