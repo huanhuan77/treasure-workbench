@@ -60,6 +60,7 @@ export function DashboardPage() {
   }, [])
   const [checking, setChecking] = useState(false)
   const [showAllLow, setShowAllLow] = useState(false)
+  const [showAllReminders, setShowAllReminders] = useState(false)
   const handleCheckUpdate = async () => {
     setChecking(true)
     const result = await checkForUpdate(true)
@@ -390,7 +391,7 @@ export function DashboardPage() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
-            {reminders.map((s) => {
+            {(showAllReminders ? reminders : reminders.slice(0, 5)).map((s) => {
               // 只显示还需要发视频的账号（从未发过 / 超 7 天没发）；都发过则显示全部
               const pending = pendingAccounts(s)
               const showAccounts = pending.length ? pending : getAccounts(s)
@@ -431,6 +432,9 @@ export function DashboardPage() {
               </div>
               )
             })}
+            {reminders.length > 5 && (
+              <button onClick={() => setShowAllReminders(!showAllReminders)} style={{ fontSize: '12px', color: '#8a8588', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600, padding: '4px 0' }}>{showAllReminders ? '收起' : `展开全部 ${reminders.length} 条`} ›</button>
+            )}
           </div>
         )}
       </div>
