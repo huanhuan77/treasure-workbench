@@ -418,7 +418,7 @@ export function DashboardPage() {
                     <div style={{ marginTop: '4px' }}>
                       <span style={{
                         fontSize: '10px', fontWeight: 700, color: '#fff',
-                        background: '#f59e0b',
+                        background: '#ef4444',
                         padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap',
                       }}>{daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}</span>
                     </div>
