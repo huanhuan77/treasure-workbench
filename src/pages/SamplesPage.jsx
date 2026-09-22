@@ -198,6 +198,7 @@ export function SamplesPage() {
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>样品记录</h1>
           <div style={{ flex: 1 }} />
           <input value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)}
+            onBlur={() => { window.scrollTo(0, 0); if (listRef.current) listRef.current.scrollTop = 0 }}
             placeholder="搜索产品名称…"
             style={{ width: 'min(42vw, 180px)', boxSizing:'border-box', padding:'6px 12px', borderRadius:'999px',
               border:'1px solid rgba(255,255,255,0.6)', background:'rgba(255,255,255,0.5)',
