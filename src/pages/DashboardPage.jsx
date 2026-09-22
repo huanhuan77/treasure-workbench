@@ -185,7 +185,7 @@ export function DashboardPage() {
     [reminders, remindAccount],
   )
   const fLowPublish = useMemo(
-    () => lowPublish.filter((s) => matchAcct(s, remindAccount)),
+    () => lowPublish.filter((item) => remindAccount === 'all' || getAccounts(item.sample).includes(remindAccount)),
     [lowPublish, remindAccount],
   )
   const fExpiring = useMemo(
