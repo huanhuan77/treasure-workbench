@@ -99,10 +99,20 @@ export function GlobalKeyboardFix() {
       fire(320)
       fire(620)
     }
+    let prevKb = 0
     const onViewportChange = () => {
       const a = document.activeElement
+      const kb = kbOccupied()
+      // 键盘从有到无（收起）：重置滚动避免空白
+      if (prevKb > 0 && kb === 0) {
+        timers.forEach(clearTimeout)
+        timers = []
+        timers.push(setTimeout(() => { window.scrollTo(0, 0); document.querySelectorAll('.app-container').forEach(el => { el.scrollTop = 0 }) }, 200))
+        timers.push(setTimeout(() => { window.scrollTo(0, 0); document.querySelectorAll('.app-container').forEach(el => { el.scrollTop = 0 }) }, 500))
+      }
+      prevKb = kb
       if (!isEditable(a) || insideModal(a)) return
-      if (kbOccupied() > 0) {
+      if (kb > 0) {
         timers.forEach(clearTimeout)
         timers = []
         fire(60)
