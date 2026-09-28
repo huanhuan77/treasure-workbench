@@ -3911,9 +3911,13 @@ export function StoreProvider({ children }) {
     const token = localStorage.getItem('backup_github_token')
     if (!token) return
     const gistId = localStorage.getItem('backup_gist_id')
-    syncAll(token.trim(), gistId, { forcePush: true }).catch((e) => {
-      console.warn('[forceSync] 删除后强制同步失败:', e.message)
-    })
+    // 延迟执行：setData 后 useEffect 才异步写入 localStorage，
+    // 立即同步会读到旧数据（含已删除文案），导致删除"复活"。
+    setTimeout(() => {
+      syncAll(token.trim(), gistId, { forcePush: true }).catch((e) => {
+        console.warn('[forceSync] 删除后强制同步失败:', e.message)
+      })
+    }, 150)
   }, [])
 
   const deleteCopy = useCallback((productId, copyId) => {
