@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { DEFAULT_SENSITIVE_WORDS, generateTopics } from './utils/copyGenerator'
 import { todayStr } from './utils/helpers'
-import { recordDelete, clearDelete, setWordTime } from './utils/sync'
+import { recordDelete, clearDelete, setWordTime, syncAll } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
 import { ACCOUNT_MAP, mapAccount } from './utils/accounts'
 import {
@@ -3916,7 +3916,8 @@ export function StoreProvider({ children }) {
           : p
       ),
     }))
-  }, [])
+    forceSyncAfterDelete()
+  }, [forceSyncAfterDelete])
 
   // 清空某产品的全部文案（用于全量重新导入前，避免和旧文案重复）
   const clearCopies = useCallback((productId) => {
@@ -3928,7 +3929,8 @@ export function StoreProvider({ children }) {
         return { ...p, copies: [], updatedAt: Date.now() }
       }),
     }))
-  }, [])
+    forceSyncAfterDelete()
+  }, [forceSyncAfterDelete])
 
   const updateCopy = useCallback((productId, copyId, patch) => {
     setData((d) => ({
@@ -4384,6 +4386,16 @@ export function StoreProvider({ children }) {
       next.products = stripCopyTitles(next.products)
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch (e) {}
       return next
+    })
+  }, [])
+
+  // 删除文案后自动强制同步到云端，防止云端残留数据把删掉的文案"复活"
+  const forceSyncAfterDelete = useCallback(() => {
+    const token = localStorage.getItem('backup_github_token')
+    if (!token) return
+    const gistId = localStorage.getItem('backup_gist_id')
+    syncAll(token.trim(), gistId, { forcePush: true }).catch((e) => {
+      console.warn('[forceSync] 删除后强制同步失败:', e.message)
     })
   }, [])
 
