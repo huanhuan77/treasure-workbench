@@ -3906,6 +3906,16 @@ export function StoreProvider({ children }) {
     }))
   }, [])
 
+  // 删除文案后自动强制同步到云端，防止云端残留数据把删掉的文案"复活"
+  const forceSyncAfterDelete = useCallback(() => {
+    const token = localStorage.getItem('backup_github_token')
+    if (!token) return
+    const gistId = localStorage.getItem('backup_gist_id')
+    syncAll(token.trim(), gistId, { forcePush: true }).catch((e) => {
+      console.warn('[forceSync] 删除后强制同步失败:', e.message)
+    })
+  }, [])
+
   const deleteCopy = useCallback((productId, copyId) => {
     recordDelete('blogger_workbench_data_v1', copyId)
     setData((d) => ({
@@ -4386,16 +4396,6 @@ export function StoreProvider({ children }) {
       next.products = stripCopyTitles(next.products)
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch (e) {}
       return next
-    })
-  }, [])
-
-  // 删除文案后自动强制同步到云端，防止云端残留数据把删掉的文案"复活"
-  const forceSyncAfterDelete = useCallback(() => {
-    const token = localStorage.getItem('backup_github_token')
-    if (!token) return
-    const gistId = localStorage.getItem('backup_gist_id')
-    syncAll(token.trim(), gistId, { forcePush: true }).catch((e) => {
-      console.warn('[forceSync] 删除后强制同步失败:', e.message)
     })
   }, [])
 
