@@ -273,50 +273,6 @@ export function DashboardPage() {
         </div>
       </header>
 
-      {/* 出单台账主入口（白底紧凑布局） */}
-      <div style={{ padding: '12px 16px 2px' }}>
-        <div onClick={() => go('/orders')} style={{
-          background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '11px 14px', cursor: 'pointer',
-          boxShadow: '0 1px 3px rgba(120,90,100,0.06)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ec4899', flexShrink: 0 }} />
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#111', letterSpacing: '0.3px' }}>出单</span>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: '#db2777', background: '#fdf2f7', padding: '1px 7px', borderRadius: '8px', whiteSpace: 'nowrap' }}>本周</span>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <span style={{ fontSize: '20px', fontWeight: 700, color: '#111', lineHeight: 1 }}>{fmt(stat.orderWeekTotal)}</span>
-                <span style={{ fontSize: '11px', color: '#c9a3ab' }}>笔 · 本周出单 {stat.orderWeekQty} 单</span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-              <button onClick={(e) => { e.stopPropagation(); navigate('/orders/new') }} style={{
-                border: 'none', background: 'transparent', padding: 0, cursor: 'pointer',
-                fontSize: '12px', color: '#db2777', fontWeight: 700,
-              }}>＋ 记出单</button>
-              <span style={{ fontSize: '16px', color: '#f9a8d4' }}>›</span>
-            </div>
-          </div>
-          {/* 按账号分列（固定三个账号，各显示本周单数） */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-            {ACCOUNTS.map((a) => (
-              <span key={a} style={{
-                fontSize: '11px', color: '#666', background: ACCOUNT_COLOR[a]?.bg || '#fdf2f7',
-                padding: '2px 8px', borderRadius: '10px', whiteSpace: 'nowrap',
-              }}>
-                {a} <b style={{ color: ACCOUNT_COLOR[a]?.c || '#db2777' }}>{fmt(stat.orderWeekPerAccount[a] || 0)}</b>
-              </span>
-            ))}
-            <span style={{
-              fontSize: '11px', color: '#db2777', background: '#fdf2f7',
-              padding: '2px 8px', borderRadius: '10px', whiteSpace: 'nowrap', fontWeight: 700,
-            }}>
-              本周共 {fmt(stat.orderWeekTotal)} 笔
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* 收支卡片已移到「更多」侧边栏（/finance），总览不再占位 */}
 
       {/* 待办清单（独立事项池：截止日期可有可无；管理入口 /todos） */}
