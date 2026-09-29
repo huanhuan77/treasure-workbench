@@ -16,7 +16,6 @@ export function OrderFormModal({ open, onClose, editing, onSave, prefill }) {
   const [sampleId, setSampleId] = useState(editing?.sampleId || prefill?.sampleId || '')
   const [name, setName] = useState(editing?.name || prefill?.name || '')
   const [date, setDate] = useState(editing?.date || todayStr())
-  const [qty, setQty] = useState(editing?.qty ? String(editing.qty) : '1')
   const [remark, setRemark] = useState(editing?.remark || '')
   const [sampleOpen, setSampleOpen] = useState(false)  // 样品搜索面板展开
   const [sampleQuery, setSampleQuery] = useState('')    // 样品搜索关键词
@@ -78,7 +77,7 @@ export function OrderFormModal({ open, onClose, editing, onSave, prefill }) {
       account,
       sampleId,
       productId: sm?.productId || '',
-      qty: Number(qty) || 1,
+      qty: 1,
       remark: remark.trim(),
     })
   }
@@ -168,11 +167,6 @@ export function OrderFormModal({ open, onClose, editing, onSave, prefill }) {
 
         <Field label="出单日期">
           <input type="date" style={inputStyle} value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-
-        <Field label="出单数量" required>
-          <input type="number" min="1" style={inputStyle} value={qty} onChange={(e) => setQty(e.target.value)} />
-          <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '4px' }}>只记本次出单数量，同一产品会按数量累计</div>
         </Field>
 
         <Field label="备注（选填）">

@@ -316,7 +316,7 @@ export function OrdersPage() {
             {groups.map((g) => {
               return (
                 <div key={g.name} style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(244,114,182,0.12)', background: '#fff' }}>
-                  {/* 卡片头：品名 + 大字累计数量（点击查看该产品的出单记录） */}
+                  {/* 卡片头：品名 + 笔数（点击查看该产品的出单记录） */}
                   <button onClick={() => setActiveName(g.name)} style={{
                     width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
                     padding: '12px 14px', border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left',
@@ -334,10 +334,6 @@ export function OrdersPage() {
                           })}
                         </div>
                       )}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '3px', flexShrink: 0 }}>
-                      <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--primary-dark)', lineHeight: 1 }}>{g.qty}</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>单</span>
                     </div>
                     <span style={{ flexShrink: 0, fontSize: '17px', color: '#c9a3ab', lineHeight: 1 }}>›</span>
                   </button>

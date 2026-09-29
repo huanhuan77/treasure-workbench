@@ -27,7 +27,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
       .map(([date, entries]) => ({
         date,
         entries,
-        qty: entries.reduce((s, e) => s + (Number(e.qty) || 0), 0),
+        
       }))
       .sort((a, b) => (a.date === b.date ? 0 : a.date < b.date ? 1 : -1))
   }, [group])
@@ -74,7 +74,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
               {group.name}
             </div>
             <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '3px' }}>
-              共 {group.count} 笔 · 累计 <b style={{ color: 'var(--primary-dark)' }}>{group.qty}</b> 单
+              共 {group.count} 笔
             </div>
             {group.accounts.length > 0 && (
               <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '6px' }}>
@@ -99,7 +99,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
           {group.entries.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--text-sub)', fontSize: '13px' }}>暂无记录</div>
           ) : (
-            byDate.map(({ date, entries, qty }) => (
+            byDate.map(({ date, entries }) => (
               <div key={date || '__nodate__'}>
                 {/* 日期分组头 */}
                 <div style={{
@@ -110,7 +110,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
                     📅 {dispDate(date)}
                   </span>
                   <span style={{ fontSize: '11px', color: '#9ca3af' }}>
-                    {entries.length} 笔 · {qty} 单
+                    {entries.length} 笔
                   </span>
                   <span style={{ marginLeft: 'auto', flexShrink: 0 }}>
                     {dateDelBtn(date, entries, true)}
@@ -139,7 +139,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
                             <span style={{ flexShrink: 0, width: '9px', height: '9px', borderRadius: '50%', background: meta.c }} />
                             <span style={{ fontSize: '12px', color: o.account ? meta.c : '#94a3b8', flexShrink: 0 }}>{o.account || '未选账号'}</span>
                             <span style={{ flex: 1, fontSize: '12px', color: 'var(--text-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.remark || ''}</span>
-                            <span style={{ flexShrink: 0, fontSize: '14px', fontWeight: 700, color: 'var(--primary-dark)' }}>+{fmtQty(o.qty)}</span>
+                            
                           </span>
                           {/* 单条删除（右滑手势外，也提供直接点击） */}
                           <button

@@ -48,7 +48,7 @@ export function NewOrderPage() {
   const [date, setDate] = useState(init.date || todayStr())         // 出单日期
   // 多个产品 + 各自数量（行结构）：{ sampleId, qty }
   const [entries, setEntries] = useState(
-    initSample ? [{ sampleId: initSample, qty: '1' }] : [{ sampleId: '', qty: '1' }]
+    initSample ? [{ sampleId: initSample }] : [{ sampleId: '' }]
   )
   const [showSamples, setShowSamples] = useState(false)
   const [activeEntryIdx, setActiveEntryIdx] = useState(0)
@@ -107,7 +107,7 @@ export function NewOrderPage() {
   }
 
   // 增删改 entry 行
-  const addEntry = () => setEntries((prev) => [...prev, { sampleId: '', qty: '1' }])
+  const addEntry = () => setEntries((prev) => [...prev, { sampleId: '' }])
   const removeEntry = (idx) => setEntries((prev) => prev.filter((_, i) => i !== idx))
   const updateEntry = (idx, patch) => setEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)))
   // 弹窗多选确认：按列表显示顺序写出多行；保留锚点之前的行；锚点之后的行剔除已被多选包含的样品
@@ -123,7 +123,7 @@ export function NewOrderPage() {
       const after = prev.slice(idx + 1).filter((e) => !pickedIds.has(e.sampleId))
       return [
         ...before,
-        ...pickedArr.map((id) => ({ sampleId: id, qty: '1' })),
+        ...pickedArr.map((id) => ({ sampleId: id })),
         ...after,
       ]
     })
@@ -134,8 +134,8 @@ export function NewOrderPage() {
 
   const handleSave = () => {
     if (!account) { show('请选择账号', 'error'); return }
-    const valid = entries.filter((e) => e.sampleId && Number(e.qty) >= 1)
-    if (valid.length === 0) { show('请至少选择 1 个产品并填写数量', 'error'); return }
+    const valid = entries.filter((e) => e.sampleId)
+    if (valid.length === 0) { show('请至少选择 1 个产品', 'error'); return }
     for (const e of valid) {
       const sm = (samples || []).find((s) => s.id === e.sampleId)
       addOrder({
@@ -144,7 +144,7 @@ export function NewOrderPage() {
         account,
         sampleId: e.sampleId,
         productId: sm?.productId || '',
-        qty: Math.max(1, Number(e.qty) || 1),
+        qty: 1,
       })
     }
     show(`已记 ${valid.length} 条出单`, 'success')
@@ -255,7 +255,7 @@ export function NewOrderPage() {
         {/* 多产品行：每行一个样品 + 各自数量 */}
         <div style={{ marginBottom: '14px' }}>
           <div style={{ ...sectionTitle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>关联产品 & 出单数量（可多选，每产品独立计数）</span>
+            <span>关联产品（可多选）</span>
             <button onClick={addEntry} style={{
               flexShrink: 0, padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700,
               border: '1.5px solid rgba(244,114,182,0.35)', background: '#fff', color: 'var(--primary)', cursor: 'pointer',
@@ -281,26 +281,6 @@ export function NewOrderPage() {
                   }}>
                     {sm ? sm.name : '点击选择产品'}
                   </button>
-                  {/* 出单数量 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                    <button type="button" onClick={() => updateEntry(idx, { qty: String(Math.max(1, (Number(e.qty) || 1) - 1)) })} style={qtyBtn}>−</button>
-                    <input
-                      type="number" min="1" step="1"
-                      value={e.qty}
-                      onChange={(ev) => {
-                        const n = parseInt(ev.target.value, 10)
-                        if (Number.isNaN(n) || n < 1) updateEntry(idx, { qty: '' })
-                        else updateEntry(idx, { qty: String(n) })
-                      }}
-                      onBlur={() => { if (Number(e.qty) < 1) updateEntry(idx, { qty: '1' }) }}
-                      style={{
-                        width: '46px', height: '30px', textAlign: 'center', fontSize: '14px', fontWeight: 700,
-                        border: '1.5px solid rgba(0,0,0,0.08)', borderRadius: '8px', background: '#fff',
-                        color: 'var(--text-main)', boxSizing: 'border-box',
-                      }}
-                    />
-                    <button type="button" onClick={() => updateEntry(idx, { qty: String((Number(e.qty) || 1) + 1) })} style={qtyBtn}>＋</button>
-                  </div>
                   {/* 删除该行（仅 1 行时禁用）：细线 × 圆形图标 */}
                   <button
                     type="button"
