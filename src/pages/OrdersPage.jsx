@@ -221,34 +221,6 @@ export function OrdersPage() {
         </div>
       </div>
 
-      {/* 顶部汇总：只显示每个账号出单数量 */}
-      <div style={{ padding: '6px 16px 4px', flexShrink: 0 }}>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', columnGap: '4px',
-          background: '#fff',
-          border: '1px solid rgba(244,114,182,0.18)',
-          borderRadius: '12px', padding: '10px 4px',
-        }}>
-          {ACCOUNTS.map((a) => {
-            const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
-            const stat = summary.perAccount[a] || { count: 0, qty: 0 }
-            return (
-              <div key={a} style={{ padding: '4px 6px', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-                <span style={{
-                  fontSize: '12px', fontWeight: 700,
-                  padding: '3px 10px', borderRadius: '999px',
-                  background: col.bg, color: col.c,
-                  whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
-                }}>{a}</span>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: col.c, lineHeight: 1.15 }}>
-                  {stat.count}<span style={{ fontSize: '11px', fontWeight: 500, marginLeft: '2px', color: 'var(--text-sub)' }}>笔</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
       {/* 日期筛选：全部 / 今天 / 昨天 / 近7天 / 本周 / 本月 + 📅 日期（快捷键 / 具体某一天 / 本月·上月·近半年·本年） */}
       <DateFilterBar value={dateRange} onChange={setDateRange} />
 
