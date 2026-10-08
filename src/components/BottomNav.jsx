@@ -139,7 +139,7 @@ export function BottomNav() {
         }}
       >
         {mainTabs.map(({ Icon, ...tab }) => (
-          <TabItem key={tab.to} {...tab} Icon={Icon} badge={getBadge(tab.to)} />
+          <TabItem key={tab.to} {...tab} Icon={Icon} badge={getBadge(tab.to)} onClick={() => setSidebarOpen(false)} />
         ))}
         {/* 更多按钮 */}
         <button
