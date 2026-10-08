@@ -132,7 +132,9 @@ export function BottomNav() {
           borderTop: '1px solid rgba(255, 255, 255, 0.7)',
           display: 'flex',
           paddingBottom: 'var(--safe-bottom)',
-          zIndex: 100,
+          zIndex: 999,
+          pointerEvents: 'auto',
+          touchAction: 'manipulation',
           boxShadow: '0 -4px 20px rgba(244, 114, 182, 0.06)',
         }}
       >
