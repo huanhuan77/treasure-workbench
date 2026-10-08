@@ -35,7 +35,7 @@ export function SamplePickerPage({
   }
 
   return (
-    <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.5)' }}>
+    <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column', background: 'linear-gradient(170deg, #ffe0ea 0%, #ffeef5 38%, #fff8f4 100%)', zIndex: 1000, position: 'relative' }}>
       {/* 全屏头部 */}
       <header style={{
         padding: 'calc(16px + var(--safe-top)) 16px 14px',
