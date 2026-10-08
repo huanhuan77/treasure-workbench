@@ -14,7 +14,7 @@ function getDateLabel(dateStr) {
 
 const fieldBox = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  width: '100%', padding: '13px 14px', borderRadius: '10px',
+  width: '100%', padding: '13px 14px', borderRadius: '12px',
   background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
   fontSize: '15px', color: 'var(--text-main)', cursor: 'pointer', boxSizing: 'border-box',
 }
@@ -276,7 +276,7 @@ export function NewPublishRecordPage() {
                 <div key={idx} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
-                  borderRadius: '10px', padding: '10px 12px',
+                  borderRadius: '12px', padding: '10px 12px',
                 }}>
                   <button onClick={() => openSamplePicker(idx)} style={{
                     flex: 1, minWidth: 0, textAlign: 'left',
