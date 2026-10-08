@@ -17,23 +17,14 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-const chipBase = {
-  padding: '7px 14px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
-  border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
-  whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
-}
 const fieldBox = {
   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
   width: '100%', padding: '13px 14px', borderRadius: '10px',
   background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
   fontSize: '15px', color: 'var(--text-main)', cursor: 'pointer', boxSizing: 'border-box',
 }
-const qtyBtn = {
-  width: '30px', height: '30px', borderRadius: '8px', border: '1.5px solid rgba(0,0,0,0.08)',
-  background: '#fff', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', cursor: 'pointer', padding: 0,
-}
 
-// 新增出单（独立页，支持一次记多个产品，每行独立数量）。整单归属一个账号。
+// 新增出单：账号 Tab 切换，每个账号下独立选产品，保存时一次性存所有账号
 export function NewOrderPage() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -42,48 +33,50 @@ export function NewOrderPage() {
 
   const init = location.state || {}
   const initSample = init.sampleId || ''
-  const initAccount = init.account || ''
+  const initAccount = init.account || ACCOUNTS[0]
 
-  const [account, setAccount] = useState(initAccount)              // 整单归属账号（单选）
-  const [date, setDate] = useState(init.date || todayStr())         // 出单日期
-  // 多个产品 + 各自数量（行结构）：{ sampleId, qty }
-  const [entries, setEntries] = useState(
-    initSample ? [{ sampleId: initSample }] : [{ sampleId: '' }]
-  )
+  const [activeAccount, setActiveAccount] = useState(initAccount)
+  const [date, setDate] = useState(init.date || todayStr())
+  // 每个账号独立的产品条目：{ [account]: [{ sampleId }] }
+  const [entriesByAccount, setEntriesByAccount] = useState(() => {
+    const init = {}
+    for (const a of ACCOUNTS) init[a] = []
+    if (initSample && initAccount) init[initAccount] = [{ sampleId: initSample }]
+    return init
+  })
   const [showSamples, setShowSamples] = useState(false)
   const [activeEntryIdx, setActiveEntryIdx] = useState(0)
   const [sampleQuery, setSampleQuery] = useState('')
-  const [sampleCategory, setSampleCategory] = useState('')   // 选样品时的分类筛选（''=全部分类）
-  const [pickedIds, setPickedIds] = useState(() => new Set())  // 弹窗内多选样品 id 临时集合
+  const [sampleCategory, setSampleCategory] = useState('')
+  const [pickedIds, setPickedIds] = useState(() => new Set())
 
-  // 可选样品：所选账号下「已发布」的样品（规则与旧弹窗一致）
+  const currentEntries = entriesByAccount[activeAccount] || []
+
+  // 可选样品：当前账号下「已发布」的样品
   const candidateSamples = useMemo(() => {
-    if (!account) return []
-    return (samples || []).filter((sm) => isSelectableForOrder(sm.status) && hasAccount(sm, account))
-  }, [samples, account])
+    if (!activeAccount) return []
+    return (samples || []).filter((sm) => isSelectableForOrder(sm.status) && hasAccount(sm, activeAccount))
+  }, [samples, activeAccount])
 
-  // 按名称模糊匹配；已选样品置顶；过滤掉其它 entry 已选过的（一次出单避免同产品重复行）
   const filteredSamples = useMemo(() => {
     const q = sampleQuery.trim().toLowerCase()
-    const usedElsewhere = new Set(entries.map((e, i) => (i === activeEntryIdx ? null : e.sampleId)).filter(Boolean))
+    const usedElsewhere = new Set(currentEntries.map((e, i) => (i === activeEntryIdx ? null : e.sampleId)).filter(Boolean))
     const base = candidateSamples.filter((s) => !usedElsewhere.has(s.id))
     const byCat = sampleCategory ? base.filter((s) => (s.category || '') === sampleCategory) : base
     const list = q ? byCat.filter((s) => (s.name || '').toLowerCase().includes(q)) : byCat
     return [...list].sort((a, b) => {
-      const cur = entries[activeEntryIdx]?.sampleId
+      const cur = currentEntries[activeEntryIdx]?.sampleId
       if (a.id === cur) return -1
       if (b.id === cur) return 1
       return 0
     })
-  }, [candidateSamples, sampleQuery, sampleCategory, entries, activeEntryIdx])
+  }, [candidateSamples, sampleQuery, sampleCategory, currentEntries, activeEntryIdx])
 
   const closeSamplePicker = () => { setShowSamples(false); setSampleQuery(''); setSampleCategory(''); setPickedIds(new Set()) }
   const openSamplePicker = (idx) => {
-    if (!account) { show('请先选择账号', 'error'); return }
     setActiveEntryIdx(idx)
     setSampleQuery('')
-    // 打开时预勾当前行已选样品（让"已选 → 改选/加选"也能直接多选）
-    setPickedIds(new Set([entries[idx]?.sampleId].filter(Boolean)))
+    setPickedIds(new Set([currentEntries[idx]?.sampleId].filter(Boolean)))
     setShowSamples(true)
   }
   const togglePicked = (id) => {
@@ -95,29 +88,23 @@ export function NewOrderPage() {
     })
   }
 
-  // 切换账号：清掉可能不属于新账号的已选样品行
-  const onPickAccount = (a) => {
-    setAccount(a)
-    setEntries((prev) => prev.map((e) => {
-      if (!e.sampleId) return e
-      const sm = (samples || []).find((x) => x.id === e.sampleId)
-      if (sm && !hasAccount(sm, a)) return { ...e, sampleId: '' }
-      return e
+  // 更新当前账号的 entries
+  const updateCurrentEntries = (updater) => {
+    setEntriesByAccount((prev) => ({
+      ...prev,
+      [activeAccount]: updater(prev[activeAccount] || []),
     }))
   }
 
-  // 增删改 entry 行
-  const addEntry = () => setEntries((prev) => [...prev, { sampleId: '' }])
-  const removeEntry = (idx) => setEntries((prev) => prev.filter((_, i) => i !== idx))
-  const updateEntry = (idx, patch) => setEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)))
-  // 弹窗多选确认：按列表显示顺序写出多行；保留锚点之前的行；锚点之后的行剔除已被多选包含的样品
+  const addEntry = () => updateCurrentEntries((prev) => [...prev, { sampleId: '' }])
+  const removeEntry = (idx) => updateCurrentEntries((prev) => prev.filter((_, i) => i !== idx))
+  const updateEntry = (idx, patch) => updateCurrentEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)))
+
   const confirmMultiPick = () => {
     if (pickedIds.size === 0) { closeSamplePicker(); return }
-    // 注意：必须按「全部候选」取，不能按 filteredSamples —— 那样搜索/切分类后
-    // 之前选中的样品会掉出当前列表，导致只剩最后一个被写回表单
     const pickedArr = candidateSamples.filter((s) => pickedIds.has(s.id)).map((s) => s.id)
     if (pickedArr.length === 0) { closeSamplePicker(); return }
-    setEntries((prev) => {
+    updateCurrentEntries((prev) => {
       const idx = Math.min(activeEntryIdx, prev.length)
       const before = prev.slice(0, idx)
       const after = prev.slice(idx + 1).filter((e) => !pickedIds.has(e.sampleId))
@@ -130,31 +117,41 @@ export function NewOrderPage() {
     closeSamplePicker()
   }
 
-  const chosenSamples = entries.map((e) => (samples || []).find((s) => s.id === e.sampleId) || null)
+  const chosenSamples = currentEntries.map((e) => (samples || []).find((s) => s.id === e.sampleId) || null)
+
+  // 统计所有账号有多少条有效记录
+  const totalValid = useMemo(() => {
+    let n = 0
+    for (const a of ACCOUNTS) {
+      n += (entriesByAccount[a] || []).filter((e) => e.sampleId).length
+    }
+    return n
+  }, [entriesByAccount])
 
   const handleSave = () => {
-    if (!account) { show('请选择账号', 'error'); return }
-    const valid = entries.filter((e) => e.sampleId)
-    if (valid.length === 0) { show('请至少选择 1 个产品', 'error'); return }
-    for (const e of valid) {
-      const sm = (samples || []).find((s) => s.id === e.sampleId)
-      addOrder({
-        name: (sm?.name || '').trim(),
-        date,
-        account,
-        sampleId: e.sampleId,
-        productId: sm?.productId || '',
-        qty: 1,
-      })
+    if (totalValid === 0) { show('请至少选择 1 个产品', 'error'); return }
+    let count = 0
+    for (const a of ACCOUNTS) {
+      const valid = (entriesByAccount[a] || []).filter((e) => e.sampleId)
+      for (const e of valid) {
+        const sm = (samples || []).find((s) => s.id === e.sampleId)
+        addOrder({
+          name: (sm?.name || '').trim(),
+          date,
+          account: a,
+          sampleId: e.sampleId,
+          productId: sm?.productId || '',
+          qty: 1,
+        })
+        count++
+      }
     }
-    show(`已记 ${valid.length} 条出单`, 'success')
+    show(`已记 ${count} 条出单`, 'success')
     navigate(-1)
   }
 
   const sectionTitle = { fontSize: '13px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '8px' }
-  const col = ACCOUNT_COLOR[account] || { c: '#7c3aed', bg: 'rgba(255,255,255,0.6)' }
 
-  // 选择样品已改为「全屏跳页」视图（替代底部抽屉弹窗），切走再回来时表单已填内容不丢
   if (showSamples) {
     return (
       <SamplePickerPage
@@ -220,27 +217,6 @@ export function NewOrderPage() {
       </header>
 
       <div style={{ padding: '12px 16px' }}>
-        {/* 出单账号：整单单选 */}
-        <div style={{ marginBottom: '14px' }}>
-          <div style={sectionTitle}>出单账号</div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {ACCOUNTS.map((a) => {
-              const selected = account === a
-              const c = ACCOUNT_COLOR[a] || { c: '#7c3aed', bg: 'rgba(255,255,255,0.6)' }
-              return (
-                <button key={a} onClick={() => onPickAccount(a)} style={{
-                  ...chipBase,
-                  minWidth: '92px',
-                  borderColor: selected ? c.c : 'rgba(0,0,0,0.06)',
-                  background: selected ? c.bg : '#fff',
-                  color: selected ? c.c : 'var(--text-main)',
-                  boxShadow: selected ? `0 4px 14px ${c.c}26` : 'none',
-                }}>{a}{selected && <span style={{ color: c.c, fontSize: '12px', fontWeight: 700 }}>✓</span>}</button>
-              )
-            })}
-          </div>
-        </div>
-
         {/* 出单日期 */}
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>出单日期</div>
@@ -252,7 +228,37 @@ export function NewOrderPage() {
           />
         </div>
 
-        {/* 多产品行：每行一个样品 + 各自数量 */}
+        {/* 账号 Tab 切换 */}
+        <div style={{
+          display: 'flex', gap: '0', background: '#fff', borderRadius: '12px',
+          border: '1.5px solid rgba(0,0,0,0.08)', padding: '4px', marginBottom: '14px',
+        }}>
+          {ACCOUNTS.map((a) => {
+            const active = activeAccount === a
+            const col = ACCOUNT_COLOR[a] || { c: '#7c3aed', bg: 'rgba(124,58,237,0.12)' }
+            const cnt = (entriesByAccount[a] || []).filter((e) => e.sampleId).length
+            return (
+              <button key={a} onClick={() => setActiveAccount(a)} style={{
+                flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
+                background: active ? col.bg : 'transparent',
+                color: active ? col.c : 'var(--text-sub)',
+                fontSize: '13px', fontWeight: active ? 700 : 500, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                transition: 'all 0.15s',
+              }}>
+                {a}
+                {cnt > 0 && <span style={{
+                  fontSize: '10px', fontWeight: 700,
+                  background: active ? col.c : '#e5e7eb',
+                  color: active ? '#fff' : '#6b7280',
+                  borderRadius: '999px', padding: '1px 6px', minWidth: '16px', textAlign: 'center',
+                }}>{cnt}</span>}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* 当前账号的产品列表 */}
         <div style={{ marginBottom: '14px' }}>
           <div style={{ ...sectionTitle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>关联产品（可多选）</span>
@@ -261,18 +267,22 @@ export function NewOrderPage() {
               border: '1.5px solid rgba(244,114,182,0.35)', background: '#fff', color: 'var(--primary)', cursor: 'pointer',
             }}>＋ 添加</button>
           </div>
-          <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>只能选「{account || '所选账号'}」已发布的样品</div>
+          <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>只能选「{activeAccount}」已发布的样品</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {entries.map((e, idx) => {
+            {currentEntries.length === 0 && (
+              <div style={{ fontSize: '12px', color: '#9ca3af', padding: '16px', textAlign: 'center', background: '#fff', border: '1.5px dashed rgba(0,0,0,0.10)', borderRadius: '10px' }}>
+                点上方「＋ 添加」新增一条产品
+              </div>
+            )}
+            {currentEntries.map((e, idx) => {
               const sm = chosenSamples[idx]
-              const canDelete = entries.length > 1
+              const canDelete = currentEntries.length > 0
               return (
                 <div key={idx} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
                   borderRadius: '10px', padding: '10px 12px',
                 }}>
-                  {/* 样品名 */}
                   <button onClick={() => openSamplePicker(idx)} style={{
                     flex: 1, minWidth: 0, textAlign: 'left',
                     background: 'transparent', border: 'none', cursor: 'pointer',
@@ -281,21 +291,16 @@ export function NewOrderPage() {
                   }}>
                     {sm ? sm.name : '点击选择产品'}
                   </button>
-                  {/* 删除该行（仅 1 行时禁用）：细线 × 圆形图标 */}
                   <button
                     type="button"
-                    onClick={() => canDelete && removeEntry(idx)}
-                    disabled={!canDelete}
+                    onClick={() => removeEntry(idx)}
                     aria-label="删除该产品"
                     title="删除该产品"
                     style={{
                       width: '30px', height: '30px', borderRadius: '50%',
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       border: '1px solid rgba(0,0,0,0.06)',
-                      background: canDelete ? '#fff' : 'rgba(0,0,0,0.02)',
-                      color: canDelete ? '#9ca3af' : '#d1d5db',
-                      cursor: canDelete ? 'pointer' : 'not-allowed', flexShrink: 0, padding: 0,
-                      transition: 'background 0.15s, color 0.15s',
+                      background: '#fff', color: '#9ca3af', cursor: 'pointer', flexShrink: 0, padding: 0,
                     }}
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -322,7 +327,7 @@ export function NewOrderPage() {
           background: 'linear-gradient(135deg,#f472b6,#ec4899)',
           color: '#fff', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
           boxShadow: '0 4px 14px rgba(244,114,182,0.3)',
-        }}>保存出单记录</button>
+        }}>保存{totalValid > 0 ? `（${totalValid}条）` : ''}</button>
       </div>
 
     </div>
