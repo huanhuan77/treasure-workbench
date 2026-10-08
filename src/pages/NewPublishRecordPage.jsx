@@ -13,10 +13,10 @@ function getDateLabel(dateStr) {
 }
 
 const fieldBox = {
-  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-  width: '100%', padding: '13px 14px', borderRadius: '12px',
+  display: 'block', width: '100%', padding: '13px 14px', borderRadius: '12px',
   background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
   fontSize: '15px', color: 'var(--text-main)', cursor: 'pointer', boxSizing: 'border-box',
+  appearance: 'none', WebkitAppearance: 'none', outline: 'none', margin: 0, textAlign: 'center',
 }
 
 // 新增发布记录：账号 Tab 切换，每个账号下独立选样品+数量，保存时一次性存所有账号
