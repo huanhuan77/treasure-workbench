@@ -228,7 +228,7 @@ export function NewPublishRecordPage() {
         {/* 账号 Tab 切换 */}
         <div style={{
           display: 'flex', gap: '0', background: '#fff', borderRadius: '12px',
-          border: '1.5px solid rgba(0,0,0,0.08)', padding: '4px', marginBottom: '14px',
+          border: '1.5px solid rgba(0,0,0,0.08)', padding: '4px', marginBottom: '14px', boxSizing: 'border-box',
         }}>
           {ACCOUNTS.map((a) => {
             const active = activeAccount === a
