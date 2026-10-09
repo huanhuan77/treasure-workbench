@@ -416,10 +416,10 @@ export function InvestmentPage() {
     setShowAddInv(false)
   }
 
-  // 按代码+买卖类型分组
+  // 按代码分组（买入卖出归到同一只股票）
   const groups = {}
   investments.forEach((inv, idx) => {
-    const key = (inv.code || '').trim() + '_' + (inv.type || 'buy')
+    const key = (inv.code || '').trim()
     if (!groups[key]) groups[key] = []
     groups[key].push({ ...inv, _idx: idx })
   })
@@ -427,7 +427,7 @@ export function InvestmentPage() {
   // 按 Tab 过滤分组（股票/基金 + 买入/卖出）
   const filteredGroups = Object.entries(groups).filter(([_, items]) => {
     if (activeTab !== 'all' && getAssetType(items[0]) !== activeTab) return false
-    if (typeTab !== 'all' && (items[0].type || 'buy') !== typeTab) return false
+    if (typeTab !== 'all' && !items.some(i => (i.type || 'buy') === typeTab)) return false
     return true
   })
 
@@ -590,7 +590,9 @@ export function InvestmentPage() {
           const expanded = expandedInv === key
           const at = getAssetType(latest)
           const ts = TYPE_STYLE[at]
-          const isSell = latest.type === 'sell'
+          const hasBuy = items.some(i => (i.type || 'buy') === 'buy')
+          const hasSell = items.some(i => i.type === 'sell')
+          const netShares = items.reduce((sum, i) => sum + ((i.type === 'sell' ? -1 : 1) * (parseFloat(i.shares) || 0)), 0)
           const profitColor = (latest.change ?? 0) >= 0 ? '#ef4444' : '#22c55e'
           return (
             <div key={key} style={{
@@ -608,11 +610,16 @@ export function InvestmentPage() {
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
                   }}>{latest.name}</span>
                   <span style={{ fontSize:'11px', color:'#94a3b8', flexShrink:0, fontFamily:'monospace' }}>{latest.code}</span>
-                  <span style={{
-                    fontSize:'10px', fontWeight:700, padding:'3px 8px', borderRadius:'6px', flexShrink:0,
-                    background: isSell ? '#fef2f2' : '#f0fdf4',
-                    color: isSell ? '#dc2626' : '#16a34a',
-                  }}>{isSell ? '卖出' : '买入'}</span>
+                  {hasBuy && hasSell ? (
+                    <span style={{ display:'flex', gap:'3px', flexShrink:0 }}>
+                      <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 6px', borderRadius:'6px', background:'#f0fdf4', color:'#16a34a' }}>买</span>
+                      <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 6px', borderRadius:'6px', background:'#fef2f2', color:'#dc2626' }}>卖</span>
+                    </span>
+                  ) : hasSell ? (
+                    <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 8px', borderRadius:'6px', flexShrink:0, background:'#fef2f2', color:'#dc2626' }}>卖出</span>
+                  ) : (
+                    <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 8px', borderRadius:'6px', flexShrink:0, background:'#f0fdf4', color:'#16a34a' }}>买入</span>
+                  )}
                   <button onClick={(e) => { e.stopPropagation(); openAddFromExisting(latest) }} style={{
                     flexShrink:0, fontSize:'11px', fontWeight:700, color:'#6366f1',
                     background:'#eef2ff', border:'none', padding:'4px 10px', borderRadius:'8px', cursor:'pointer',
@@ -646,8 +653,8 @@ export function InvestmentPage() {
                   paddingTop:'12px', borderTop:'1px solid #f1f5f9',
                   fontSize:'12px', color:'#94a3b8',
                 }}>
-                  <span>{isSell ? '卖出价' : '买入价'} <b style={{ color:'#475569', fontWeight:600 }}>{latest.sellPrice}</b></span>
-                  {latest.shares > 0 && <span><b style={{ color:'#475569', fontWeight:600 }}>{latest.shares}</b>份</span>}
+                  <span>成本价 <b style={{ color:'#475569', fontWeight:600 }}>{latest.sellPrice}</b></span>
+                  {netShares !== 0 && <span>持仓 <b style={{ color:'#475569', fontWeight:600 }}>{netShares}</b>份</span>}
                   <span style={{ marginLeft:'auto', fontSize:'11px', fontWeight:600, color:'#94a3b8' }}>
                     {items.length}条 {expanded ? '▲' : '▼'}
                   </span>
