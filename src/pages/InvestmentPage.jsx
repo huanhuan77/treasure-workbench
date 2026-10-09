@@ -545,7 +545,7 @@ export function InvestmentPage() {
               onClick={() => setTypeTab(tab.key)}
               style={{
                 flex:1, padding:'7px 0', borderRadius:'8px',
-                border: active ?  : '1.5px solid #e2e8f0',
+                border: active ? '1.5px solid ' + color : '1.5px solid #e2e8f0',
                 background: active ? '#fff' : 'transparent',
                 color: active ? color : '#94a3b8',
                 fontSize:'12px', fontWeight: active ? 700 : 500, cursor:'pointer',
