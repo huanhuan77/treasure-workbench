@@ -121,14 +121,13 @@ export function PublishRecordsPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', color: '#1a1a1a', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ padding: 'calc(14px + var(--safe-top)) 16px 6px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
+      <header style={{ padding: 'calc(12px + var(--safe-top)) 16px 6px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
         <button onClick={() => navigate(-1)} style={{
-          width: '38px', height: '38px', borderRadius: '50%',
-          background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-          color: 'var(--text-main)', fontSize: '20px', cursor: 'pointer', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          width: '38px', height: '38px', borderRadius: '50%', border: 'none',
+          background: 'rgba(244,114,182,0.12)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>‹</button>
-        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#111', whiteSpace: 'nowrap', flexShrink: 0 }}>视频发布记录</h1>
+        <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', flexShrink: 0 }}>视频发布记录</h1>
         {/* 搜索框放标题旁边 */}
         <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
           <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#c084a0' }}>🔍</span>
@@ -137,8 +136,8 @@ export function PublishRecordsPage() {
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="搜索产品名"
             style={{
-              width: '100%', boxSizing: 'border-box', padding: '7px 28px 7px 28px', borderRadius: '999px',
-              border: '1px solid rgba(244,114,182,0.28)', background: '#fff', fontSize: '12px',
+              width: '100%', boxSizing: 'border-box', padding: '10px 28px 10px 28px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+              border: '1px solid rgba(244,114,182,0.28)', background: '#fff',
               color: 'var(--text-main)', outline: 'none',
             }}
           />
