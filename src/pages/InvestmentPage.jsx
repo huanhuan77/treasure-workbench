@@ -620,6 +620,10 @@ export function InvestmentPage() {
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
                   }}>{latest.name}</span>
                   <span style={{ fontSize:'11px', color:'#94a3b8', flexShrink:0, fontFamily:'monospace' }}>{latest.code}</span>
+                  <button onClick={(e) => { e.stopPropagation(); openAddFromExisting(latest) }} style={{
+                    flexShrink:0, fontSize:'10px', fontWeight:700, color:'#6366f1',
+                    background:'#eef2ff', border:'none', padding:'3px 8px', borderRadius:'6px', cursor:'pointer',
+                  }}>＋新增</button>
                 </div>
 
                 {/* 第二行：价格 */}
@@ -671,12 +675,8 @@ export function InvestmentPage() {
                   padding:'8px 14px 12px',
                   background:'#f8fafc',
                 }}>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'6px' }}>
-                    <span style={{ fontSize:'10px', fontWeight:700, color:'#64748b', letterSpacing:'0.3px' }}>📋 历史记录</span>
-                    <button onClick={(e) => { e.stopPropagation(); openAddFromExisting(latest) }} style={{
-                      fontSize:'11px', fontWeight:700, color:'#6366f1', background:'#eef2ff',
-                      border:'none', padding:'3px 10px', borderRadius:'6px', cursor:'pointer',
-                    }}>＋ 新增记录</button>
+                  <div style={{ fontSize:'10px', fontWeight:700, color:'#64748b', marginBottom:'6px', letterSpacing:'0.3px' }}>
+                    📋 历史记录
                   </div>
                   {items.map((inv, i) => {
                     const iat = getAssetType(inv)
