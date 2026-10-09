@@ -684,7 +684,7 @@ export function InvestmentPage() {
                         </div>
                         <div style={{ display:'flex', gap:'12px', fontSize:'11px', color:'#94a3b8', paddingLeft:'2px' }}>
                           {inv.shares > 0 && <span style={{ color:'#6366f1', fontWeight:600 }}>{inv.shares}份</span>}
-                          {inv.amount > 0 && <span style={{ color:'#059669', fontWeight:600 }}>¥{inv.amount.toFixed(2)}</span>}
+                          {inv.amount > 0 && <span style={{ fontWeight:700 }}>¥{inv.amount.toFixed(2)}</span>}
                           {inv.sellDate && <span>{inv.sellDate}</span>}
                         </div>
                       </div>
