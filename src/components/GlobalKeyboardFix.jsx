@@ -3,9 +3,8 @@ import { useEffect } from 'react'
 // 全局键盘遮挡修复：
 // iOS 软键盘弹起时，聚焦的 input/textarea/select 若落在键盘覆盖区内会被挡住，
 // 页面滚动容器不会自动把它滚到键盘上方。
-// 本组件在根部常驻，全局监听 focusin + visualViewport.resize，
-// 凡原生输入框聚焦即把它滚到"键盘上方可见区"内。
-// Modal 内部的输入已由 Modal 自身处理，这里通过 data-modal 标记跳过，避免双重滚动。
+// 键盘收起时，iOS 视口可能不复位，导致底部出现大段空白。
+// 本组件在根部常驻，全局监听 focusin + focusout + visualViewport.resize。
 
 function isEditable(el) {
   if (!el || !el.tagName) return false
@@ -50,25 +49,21 @@ function findScrollable(el) {
 function bringIntoView(el) {
   const pad = 16
   const kb = kbOccupied()
-  // 可用的底边高度（相对视觉视口顶部）
   const availH = kb > 0 && window.visualViewport
     ? window.visualViewport.height
     : window.innerHeight
   const rect = el.getBoundingClientRect()
 
-  // 顶部已足够靠下（不被键盘顶住的上缘遮挡）且底部在可用区内：不用动
   const topLimit = pad
   const bottomLimit = availH - pad
   if (rect.top >= topLimit && rect.bottom <= bottomLimit) return
 
   const scroller = findScrollable(el)
   if (scroller === window) {
-    // 整页(body)滚动：把输入框底边压到 bottomLimit
     const dy = rect.bottom > bottomLimit ? (rect.bottom - bottomLimit) : (rect.top - topLimit)
     if (Math.abs(dy) < 1) return
     window.scrollBy(0, dy)
   } else {
-    // 内部滚动容器：用容器坐标计算净位移
     const sTop = scroller.getBoundingClientRect().top
     const contentBottomLimit = bottomLimit - sTop
     const elInScrollerBottom = rect.bottom - sTop
@@ -78,6 +73,23 @@ function bringIntoView(el) {
     if (Math.abs(dy) < 1) return
     scroller.scrollTop += dy
   }
+}
+
+// 键盘收起后强制复位：重置所有滚动容器 + 触发重排消除底部空白
+function resetAfterKeyboardDismiss() {
+  // 1. 重置 window 滚动
+  window.scrollTo(0, 0)
+  // 2. 重置所有 .app-container 和内部滚动容器
+  document.querySelectorAll('.app-container, .scroll-lock-page, [style*="overflowY:auto"], [style*="overflow-y:auto"], [style*="overflowY:scroll"], [style*="overflow-y:scroll"]').forEach(el => {
+    if (el.scrollTop) el.scrollTop = 0
+  })
+  // 3. 强制重排：临时改 body height 触发 iOS 视口复位
+  const body = document.body
+  const prevHeight = body.style.height
+  body.style.height = '100vh'
+  // 强制 reflow
+  void body.offsetHeight
+  setTimeout(() => { body.style.height = prevHeight }, 50)
 }
 
 export function GlobalKeyboardFix() {
@@ -91,7 +103,6 @@ export function GlobalKeyboardFix() {
     const onFocusIn = (e) => {
       const t = e.target
       if (!isEditable(t) || insideModal(t)) return
-      // 聚焦即滚一次（先处理顶部/轻微偏移）；再等键盘弹出动画(约300ms)补滚到键盘上方
       bringIntoView(t)
       timers.forEach(clearTimeout)
       timers = []
@@ -99,6 +110,18 @@ export function GlobalKeyboardFix() {
       fire(320)
       fire(620)
     }
+
+    // 输入框失焦 = 键盘收起（比 visualViewport 更可靠）
+    const onFocusOut = (e) => {
+      const t = e.target
+      if (!isEditable(t) || insideModal(t)) return
+      // 延迟等键盘收起动画
+      timers.forEach(clearTimeout)
+      timers = []
+      timers.push(setTimeout(resetAfterKeyboardDismiss, 200))
+      timers.push(setTimeout(resetAfterKeyboardDismiss, 400))
+    }
+
     let prevKb = 0
     const onViewportChange = () => {
       const a = document.activeElement
@@ -107,8 +130,8 @@ export function GlobalKeyboardFix() {
       if (prevKb > 0 && kb === 0) {
         timers.forEach(clearTimeout)
         timers = []
-        timers.push(setTimeout(() => { window.scrollTo(0, 0); document.querySelectorAll('.app-container').forEach(el => { el.scrollTop = 0 }) }, 200))
-        timers.push(setTimeout(() => { window.scrollTo(0, 0); document.querySelectorAll('.app-container').forEach(el => { el.scrollTop = 0 }) }, 500))
+        timers.push(setTimeout(resetAfterKeyboardDismiss, 150))
+        timers.push(setTimeout(resetAfterKeyboardDismiss, 400))
       }
       prevKb = kb
       if (!isEditable(a) || insideModal(a)) return
@@ -118,7 +141,9 @@ export function GlobalKeyboardFix() {
         fire(60)
       }
     }
+
     document.addEventListener('focusin', onFocusIn)
+    document.addEventListener('focusout', onFocusOut)
     const vv = window.visualViewport
     if (vv) {
       vv.addEventListener('resize', onViewportChange)
@@ -126,6 +151,7 @@ export function GlobalKeyboardFix() {
     }
     return () => {
       document.removeEventListener('focusin', onFocusIn)
+      document.removeEventListener('focusout', onFocusOut)
       timers.forEach(clearTimeout)
       if (vv) {
         vv.removeEventListener('resize', onViewportChange)
