@@ -16,6 +16,11 @@ function todayStr() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
+function yesterdayStr() {
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 const fieldBox = {
   display: 'block', width: '100%', padding: '13px 14px', borderRadius: '12px',
@@ -36,7 +41,7 @@ export function NewOrderPage() {
   const initAccount = init.account || ACCOUNTS[0]
 
   const [activeAccount, setActiveAccount] = useState(initAccount)
-  const [date, setDate] = useState(init.date || todayStr())
+  const [date, setDate] = useState(init.date || yesterdayStr())
   // 每个账号独立的产品条目：{ [account]: [{ sampleId }] }
   const [entriesByAccount, setEntriesByAccount] = useState(() => {
     const init = {}

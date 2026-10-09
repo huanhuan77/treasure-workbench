@@ -51,7 +51,7 @@ export function OrdersPage() {
   const [editing, setEditing] = useState(null)   // null=新增
   const [formSeq, setFormSeq] = useState(0)      // 每次打开自增，作 key 强制重建表单以清空上次输入
   const [accountFilter, setAccountFilter] = useState('')  // ''=全部
-  const [dateRange, setDateRange] = useState('today')  // 默认今天 / today|yesterday|last7|thisWeek|thisMonth|lastMonth|halfYear|thisYear / day:YYYY-MM-DD
+  const [dateRange, setDateRange] = useState('yesterday')  // 默认今天 / today|yesterday|last7|thisWeek|thisMonth|lastMonth|halfYear|thisYear / day:YYYY-MM-DD
   const [sortKey, setSortKey] = useState('dateDesc')  // dateDesc | dateAsc | mostDesc(出单最多) | mostAsc(出单最少)
   const [productFilter, setProductFilter] = useState('')  // ''=全部产品
   const [dateDelTarget, setDateDelTarget] = useState(null)  // { name, date, entries } —— 按日期删该产品当天的出单
