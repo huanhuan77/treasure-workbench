@@ -33,7 +33,7 @@ export function PublishRecordsPage() {
   const { publishRecords, samples, deletePublishRecord } = useStore()
   const { show } = useToast()
   const [account, setAccount] = useState('')    // 账号单选筛选，''=全部账号
-  const [dateRange, setDateRange] = useState('') // 日期筛选：''=全部 / today|yesterday|last7|thisWeek|thisMonth|lastMonth|halfYear|thisYear / day:YYYY-MM-DD
+  const [dateRange, setDateRange] = useState('today') // 日期筛选：''=全部 / today|yesterday|last7|thisWeek|thisMonth|lastMonth|halfYear|thisYear / day:YYYY-MM-DD
   const [keyword, setKeyword] = useState('')     // 产品名搜索
   const [sortKey, setSortKey] = useState('dateDesc') // dateDesc | dateAsc | countDesc
   const [expanded, setExpanded] = useState('')   // 展开查看全部日期的分组 key
