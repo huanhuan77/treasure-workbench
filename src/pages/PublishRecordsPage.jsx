@@ -136,7 +136,7 @@ export function PublishRecordsPage() {
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="搜索产品名"
             style={{
-              width: '100%', boxSizing: 'border-box', padding: '10px 28px 10px 28px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
+              width: '100%', boxSizing: 'border-box', height: '36px', padding: '0 28px 0 28px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, lineHeight: '36px',
               border: '1px solid rgba(244,114,182,0.28)', background: '#fff',
               color: 'var(--text-main)', outline: 'none',
             }}
