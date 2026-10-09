@@ -168,6 +168,7 @@ export function InvestmentPage() {
   }
 
   const [activeTab, setActiveTab] = useState('stock') // stock / fund
+  const [typeTab, setTypeTab] = useState('all') // all / buy / sell
   const [showAddInv, setShowAddInv] = useState(false)
   const [expandedInv, setExpandedInv] = useState(null)
   // 表单状态
@@ -410,15 +411,18 @@ export function InvestmentPage() {
     groups[key].push({ ...inv, _idx: idx })
   })
 
-  // 按 Tab 过滤分组
+  // 按 Tab 过滤分组（股票/基金 + 买入/卖出）
   const filteredGroups = Object.entries(groups).filter(([_, items]) => {
-    if (activeTab === 'all') return true
-    return getAssetType(items[0]) === activeTab
+    if (activeTab !== 'all' && getAssetType(items[0]) !== activeTab) return false
+    if (typeTab !== 'all' && (items[0].type || 'buy') !== typeTab) return false
+    return true
   })
 
   // 各类型数量
   const stockCount = investments.filter(i => getAssetType(i) === 'stock').length
   const fundCount = investments.filter(i => getAssetType(i) === 'fund').length
+  const buyCount = investments.filter(i => (i.type || 'buy') === 'buy').length
+  const sellCount = investments.filter(i => i.type === 'sell').length
 
   const delItem = (delIdx) => {
     const item = investments[delIdx]
@@ -429,6 +433,11 @@ export function InvestmentPage() {
   const TABS = [
     { key: 'stock', label: '股票', count: stockCount },
     { key: 'fund', label: '基金', count: fundCount },
+  ]
+  const TYPE_TABS = [
+    { key: 'all', label: '全部' },
+    { key: 'buy', label: '买入', count: buyCount },
+    { key: 'sell', label: '卖出', count: sellCount },
   ]
 
   return (
@@ -525,14 +534,39 @@ export function InvestmentPage() {
         })}
       </div>
 
+      {/* 买入/卖出 Tab */}
+      <div style={{ display:'flex', gap:'6px', padding:'0 16px 10px' }}>
+        {TYPE_TABS.map((tab) => {
+          const active = typeTab === tab.key
+          const color = tab.key === 'buy' ? '#16a34a' : tab.key === 'sell' ? '#dc2626' : '#6366f1'
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setTypeTab(tab.key)}
+              style={{
+                flex:1, padding:'7px 0', borderRadius:'8px',
+                border: active ?  : '1.5px solid #e2e8f0',
+                background: active ? '#fff' : 'transparent',
+                color: active ? color : '#94a3b8',
+                fontSize:'12px', fontWeight: active ? 700 : 500, cursor:'pointer',
+                display:'flex', alignItems:'center', justifyContent:'center', gap:'4px',
+              }}
+            >
+              {tab.label}
+              {tab.count !== undefined && <span style={{ fontSize:'10px', opacity:0.7 }}>({tab.count})</span>}
+            </button>
+          )
+        })}
+      </div>
+
       </div>
       {/* 固定区域结束 */}
 
-      <div style={{ padding:'200px 16px 0' }}>
+      <div style={{ padding:'230px 16px 0' }}>
         {filteredGroups.length === 0 && (
           <div style={{ textAlign:'center', padding:'48px 20px', color:'#cbd5e1' }}>
             <div style={{ fontSize:'40px', marginBottom:'10px' }}>📊</div>
-            <p style={{ fontSize:'13px', margin:0 }}>暂无{activeTab === 'stock' ? '股票' : '基金'}投资记录</p>
+            <p style={{ fontSize:'13px', margin:0 }}>暂无{activeTab === 'stock' ? '股票' : '基金'}{typeTab === 'buy' ? '买入' : typeTab === 'sell' ? '卖出' : ''}记录</p>
           </div>
         )}
 
