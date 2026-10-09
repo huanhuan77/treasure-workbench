@@ -594,77 +594,63 @@ export function InvestmentPage() {
           const profitColor = (latest.change ?? 0) >= 0 ? '#ef4444' : '#22c55e'
           return (
             <div key={key} style={{
-              marginBottom:'10px', borderRadius:'14px',
+              marginBottom:'12px', borderRadius:'16px',
               background:'#fff',
-              boxShadow:`0 1px 4px ${profitColor}22`,
-              border:`1px solid ${profitColor}33`,
-              borderLeft:`3px solid ${profitColor}`,
+              boxShadow:'0 1px 3px rgba(0,0,0,0.06)',
               overflow:'hidden',
             }}>
               {/* 卡片头部 */}
-              <div onClick={() => setExpandedInv(expanded ? null : key)} style={{ padding:'12px 14px', cursor:'pointer' }}>
-                {/* 第一行：类型标签 + 买卖标签 + 名称 + 代码 */}
-                <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'8px' }}>
+              <div onClick={() => setExpandedInv(expanded ? null : key)} style={{ padding:'16px', cursor:'pointer' }}>
+                {/* 第一行：名称 + 代码 + 买卖标签 + 新增 */}
+                <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'14px' }}>
                   <span style={{
-                    fontSize:'10px', padding:'2px 8px', borderRadius:'5px',
-                    background: ts.bg, color: ts.color, fontWeight:700, flexShrink:0,
-                    border:`1px solid ${ts.border}`, letterSpacing:'0.3px',
-                  }}>{ts.label}</span>
-                  <span style={{
-                    fontSize:'12px', padding:'3px 10px', borderRadius:'6px', fontWeight:700, flexShrink:0,
-                    background: isSell ? '#fef2f2' : '#f0fdf4',
-                    color: isSell ? '#dc2626' : '#16a34a',
-                  }}>{isSell ? '卖出' : '买入'}</span>
-                  <span style={{
-                    fontSize:'14px', fontWeight:700, color:'#1e293b', flex:1, minWidth:0,
+                    fontSize:'15px', fontWeight:700, color:'#1e293b', flex:1, minWidth:0,
                     overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
                   }}>{latest.name}</span>
                   <span style={{ fontSize:'11px', color:'#94a3b8', flexShrink:0, fontFamily:'monospace' }}>{latest.code}</span>
+                  <span style={{
+                    fontSize:'10px', fontWeight:700, padding:'3px 8px', borderRadius:'6px', flexShrink:0,
+                    background: isSell ? '#fef2f2' : '#f0fdf4',
+                    color: isSell ? '#dc2626' : '#16a34a',
+                  }}>{isSell ? '卖出' : '买入'}</span>
                   <button onClick={(e) => { e.stopPropagation(); openAddFromExisting(latest) }} style={{
-                    flexShrink:0, fontSize:'10px', fontWeight:700, color:'#6366f1',
-                    background:'#eef2ff', border:'none', padding:'3px 8px', borderRadius:'6px', cursor:'pointer',
+                    flexShrink:0, fontSize:'11px', fontWeight:700, color:'#6366f1',
+                    background:'#eef2ff', border:'none', padding:'4px 10px', borderRadius:'8px', cursor:'pointer',
                   }}>＋新增</button>
                 </div>
 
-                {/* 第二行：价格 */}
-                <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:'8px' }}>
-                  <div>
-                    <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'1px' }}>{isSell ? '卖出价' : '买入价'}</div>
-                    <div style={{ fontSize:'20px', fontWeight:800, color:'#1e293b', letterSpacing:'-0.5px', lineHeight:1 }}>
-                      {latest.sellPrice}
-                    </div>
-                  </div>
-                  {latest.currentPrice != null && (
-                    <div style={{ textAlign:'right' }}>
-                      <div style={{ fontSize:'10px', color:'#94a3b8', marginBottom:'1px' }}>当前价 / 涨跌幅</div>
-                      <div style={{ display:'flex', alignItems:'baseline', gap:'5px' }}>
-                        <span style={{ fontSize:'15px', fontWeight:700, color:'#475569' }}>{latest.currentPrice}</span>
-                        <span style={{
-                          fontSize:'13px', fontWeight:800, color:'#fff',
-                          background: (latest.change ?? 0) >= 0 ? '#ef4444' : '#22c55e',
-                          padding:'3px 9px', borderRadius:'7px', flexShrink:0,
-                          letterSpacing:'0.3px',
-                        }}>
-                          {latest.change != null ? `${(latest.change >= 0 ? '↑ +' : '↓ ')}${latest.change.toFixed(2)}%` : '--'}
-                        </span>
-                      </div>
-                    </div>
+                {/* 第二行：现价 + 涨跌幅（视觉中心） */}
+                <div style={{ display:'flex', alignItems:'baseline', gap:'10px', marginBottom:'14px' }}>
+                  {latest.currentPrice != null ? (
+                    <>
+                      <span style={{
+                        fontSize:'20px', fontWeight:800, lineHeight:1,
+                        color: (latest.change ?? 0) >= 0 ? '#ef4444' : '#22c55e',
+                      }}>{latest.currentPrice}</span>
+                      <span style={{
+                        fontSize:'11px', fontWeight:700, color:'#fff',
+                        background: (latest.change ?? 0) >= 0 ? '#ef4444' : '#22c55e',
+                        padding:'3px 8px', borderRadius:'999px',
+                      }}>
+                        {latest.change != null ? `${latest.change >= 0 ? '+' : ''}${latest.change.toFixed(2)}%` : '--'}
+                      </span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize:'14px', color:'#94a3b8' }}>未获取行情</span>
                   )}
                 </div>
 
-                {/* 第三行：明细 */}
+                {/* 第三行：辅助信息 */}
                 <div style={{
-                  display:'flex', alignItems:'center', gap:'10px', flexWrap:'wrap',
-                  paddingTop:'8px', borderTop:'1px dashed #f1f5f9',
-                  fontSize:'11px', color:'#64748b',
+                  display:'flex', alignItems:'center', gap:'16px',
+                  paddingTop:'12px', borderTop:'1px solid #f1f5f9',
+                  fontSize:'12px', color:'#94a3b8',
                 }}>
-                  {latest.shares > 0 && <span>份额 <b style={{ color: ts.color, fontWeight:700 }}>{latest.shares}</b></span>}
-                  {latest.amount > 0 && <span>金额 <b style={{ color:'#059669', fontWeight:700 }}>¥{latest.amount.toFixed(2)}</b></span>}
-                  {latest.sellDate && <span style={{ color:'#94a3b8' }}>📅 {latest.sellDate}</span>}
-                  <span style={{
-                    marginLeft:'auto', fontSize:'10px', color:'#94a3b8', fontWeight:600,
-                    background:'#f8fafc', padding:'2px 8px', borderRadius:'6px',
-                  }}>{items.length} 条 {expanded ? '▲' : '▼'}</span>
+                  <span>{isSell ? '卖出价' : '买入价'} <b style={{ color:'#475569', fontWeight:600 }}>{latest.sellPrice}</b></span>
+                  {latest.shares > 0 && <span><b style={{ color:'#475569', fontWeight:600 }}>{latest.shares}</b>份</span>}
+                  <span style={{ marginLeft:'auto', fontSize:'11px', fontWeight:600, color:'#94a3b8' }}>
+                    {items.length}条 {expanded ? '▲' : '▼'}
+                  </span>
                 </div>
               </div>
 
@@ -672,7 +658,7 @@ export function InvestmentPage() {
               {expanded && (
                 <div style={{
                   borderTop:'1px solid #f1f5f9',
-                  padding:'8px 14px 12px',
+                  padding:'8px 16px 12px',
                   background:'#f8fafc',
                 }}>
                   <div style={{ fontSize:'10px', fontWeight:700, color:'#64748b', marginBottom:'6px', letterSpacing:'0.3px' }}>
