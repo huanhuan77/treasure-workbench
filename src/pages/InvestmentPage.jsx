@@ -612,13 +612,13 @@ export function InvestmentPage() {
                   <span style={{ fontSize:'11px', color:'#94a3b8', flexShrink:0, fontFamily:'monospace' }}>{latest.code}</span>
                   {hasBuy && hasSell ? (
                     <span style={{ display:'flex', gap:'3px', flexShrink:0 }}>
-                      <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 6px', borderRadius:'6px', background:'#f0fdf4', color:'#16a34a' }}>买</span>
-                      <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 6px', borderRadius:'6px', background:'#fef2f2', color:'#dc2626' }}>卖</span>
+                      <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 6px', borderRadius:'6px', background:'#fef2f2', color:'#dc2626' }}>买</span>
+                      <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 6px', borderRadius:'6px', background:'#eff6ff', color:'#2563eb' }}>卖</span>
                     </span>
                   ) : hasSell ? (
-                    <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 8px', borderRadius:'6px', flexShrink:0, background:'#fef2f2', color:'#dc2626' }}>卖出</span>
+                    <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 8px', borderRadius:'6px', flexShrink:0, background:'#eff6ff', color:'#2563eb' }}>卖出</span>
                   ) : (
-                    <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 8px', borderRadius:'6px', flexShrink:0, background:'#f0fdf4', color:'#16a34a' }}>买入</span>
+                    <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 8px', borderRadius:'6px', flexShrink:0, background:'#fef2f2', color:'#dc2626' }}>买入</span>
                   )}
                   <button onClick={(e) => { e.stopPropagation(); openAddFromExisting(latest) }} style={{
                     flexShrink:0, fontSize:'11px', fontWeight:700, color:'#6366f1',
@@ -684,14 +684,15 @@ export function InvestmentPage() {
                         <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'4px' }}>
                           <span style={{
                             fontSize:'10px', fontWeight:700, padding:'2px 7px', borderRadius:'5px', flexShrink:0,
-                            background: invIsSell ? '#fef2f2' : '#f0fdf4',
-                            color: invIsSell ? '#dc2626' : '#16a34a',
+                            background: invIsSell ? '#eff6ff' : '#fef2f2',
+                            color: invIsSell ? '#2563eb' : '#dc2626',
                           }}>{invIsSell ? '卖出' : '买入'}</span>
                           <span style={{ fontSize:'15px', fontWeight:800, color:'#1e293b' }}>{inv.sellPrice}</span>
                           {inv.change != null && (
                             <span style={{
-                              fontSize:'11px', fontWeight:700,
-                              color: inv.change >= 0 ? '#ef4444' : '#22c55e',
+                              fontSize:'11px', fontWeight:700, color:'#fff',
+                              background: inv.change >= 0 ? '#ef4444' : '#22c55e',
+                              padding:'2px 7px', borderRadius:'999px',
                             }}>
                               {inv.change >= 0 ? '+' : ''}{inv.change.toFixed(2)}%
                             </span>
