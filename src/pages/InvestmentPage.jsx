@@ -630,7 +630,7 @@ export function InvestmentPage() {
                   fontSize:'12px', color:'#94a3b8',
                 }}>
                   <span>成本价 <b style={{ color:'#475569', fontWeight:600 }}>{latest.sellPrice}</b></span>
-                  {netShares !== 0 && <span>持仓 <b style={{ color:'#475569', fontWeight:600 }}>{netShares}</b>份</span>}
+                  {netShares !== 0 && <span>持仓 <b style={{ color:'#6366f1', fontWeight:600 }}>{netShares}</b>份</span>}
                   <span style={{ marginLeft:'auto', fontSize:'11px', fontWeight:600, color:'#94a3b8' }}>
                     {items.length}条 {expanded ? '▲' : '▼'}
                   </span>
