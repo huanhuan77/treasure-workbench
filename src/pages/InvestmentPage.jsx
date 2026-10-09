@@ -427,7 +427,6 @@ export function InvestmentPage() {
   // 按 Tab 过滤分组（股票/基金 + 买入/卖出）
   const filteredGroups = Object.entries(groups).filter(([_, items]) => {
     if (activeTab !== 'all' && getAssetType(items[0]) !== activeTab) return false
-    if (typeTab !== 'all' && !items.some(i => (i.type || 'buy') === typeTab)) return false
     return true
   })
 
@@ -547,30 +546,7 @@ export function InvestmentPage() {
         })}
       </div>
 
-      {/* 买入/卖出 Tab */}
-      <div style={{ display:'flex', gap:'6px', padding:'0 16px 10px' }}>
-        {TYPE_TABS.map((tab) => {
-          const active = typeTab === tab.key
-          const color = tab.key === 'buy' ? '#16a34a' : tab.key === 'sell' ? '#dc2626' : '#6366f1'
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setTypeTab(tab.key)}
-              style={{
-                flex:1, padding:'7px 0', borderRadius:'8px',
-                border: active ? '1.5px solid ' + color : '1.5px solid #e2e8f0',
-                background: active ? '#fff' : 'transparent',
-                color: active ? color : '#94a3b8',
-                fontSize:'12px', fontWeight: active ? 700 : 500, cursor:'pointer',
-                display:'flex', alignItems:'center', justifyContent:'center', gap:'4px',
-              }}
-            >
-              {tab.label}
-              {tab.count !== undefined && <span style={{ fontSize:'10px', opacity:0.7 }}>({tab.count})</span>}
-            </button>
-          )
-        })}
-      </div>
+
 
       </div>
       {/* 固定区域结束 */}
@@ -579,7 +555,7 @@ export function InvestmentPage() {
         {filteredGroups.length === 0 && (
           <div style={{ textAlign:'center', padding:'48px 20px', color:'#cbd5e1' }}>
             <div style={{ fontSize:'40px', marginBottom:'10px' }}>📊</div>
-            <p style={{ fontSize:'13px', margin:0 }}>暂无{activeTab === 'stock' ? '股票' : '基金'}{typeTab === 'buy' ? '买入' : typeTab === 'sell' ? '卖出' : ''}记录</p>
+            <p style={{ fontSize:'13px', margin:0 }}>暂无{activeTab === 'stock' ? '股票' : '基金'}记录</p>
           </div>
         )}
 
