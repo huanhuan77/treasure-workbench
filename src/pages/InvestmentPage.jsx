@@ -384,6 +384,19 @@ export function InvestmentPage() {
     } catch(e) { alert('查询历史价失败: ' + e.message) }
   }
 
+  // 从已有记录快速新增：预填代码、名称、资产类型
+  const openAddFromExisting = (inv) => {
+    setInvCode(inv.code || '')
+    setInvName(inv.name || '')
+    setInvAssetType(getAssetType(inv))
+    setInvType('buy')
+    setInvSellPrice('')
+    setInvSellDate('')
+    setInvShares('')
+    setInvCurrentPrice(null)
+    setShowAddInv(true)
+  }
+
   const confirmAddInv = () => {
     if (!invName) { alert('请先填写代码并获取行情'); return }
     if (!invSellPrice) { alert('请填写' + (invType==='buy' ? '买入价' : '卖出价')); return }
@@ -658,8 +671,12 @@ export function InvestmentPage() {
                   padding:'8px 14px 12px',
                   background:'#f8fafc',
                 }}>
-                  <div style={{ fontSize:'10px', fontWeight:700, color:'#64748b', marginBottom:'6px', letterSpacing:'0.3px' }}>
-                    📋 历史记录
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'6px' }}>
+                    <span style={{ fontSize:'10px', fontWeight:700, color:'#64748b', letterSpacing:'0.3px' }}>📋 历史记录</span>
+                    <button onClick={(e) => { e.stopPropagation(); openAddFromExisting(latest) }} style={{
+                      fontSize:'11px', fontWeight:700, color:'#6366f1', background:'#eef2ff',
+                      border:'none', padding:'3px 10px', borderRadius:'6px', cursor:'pointer',
+                    }}>＋ 新增记录</button>
                   </div>
                   {items.map((inv, i) => {
                     const iat = getAssetType(inv)
