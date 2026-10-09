@@ -674,31 +674,42 @@ export function InvestmentPage() {
                   {items.map((inv, i) => {
                     const iat = getAssetType(inv)
                     const irs = TYPE_STYLE[iat]
+                    const invIsSell = inv.type === 'sell'
                     return (
                       <div key={i} style={{
-                        display:'flex', alignItems:'center', gap:'6px',
-                        padding:'7px 8px', borderRadius:'8px',
+                        padding:'10px 10px', borderRadius:'10px',
                         background: i % 2 === 0 ? '#fff' : 'transparent',
                         borderBottom: i < items.length - 1 ? '1px solid #f1f5f9' : 'none',
                       }}>
-                        <span style={{
-                            fontSize:'9px', padding:'1px 5px', borderRadius:'4px',
-                            background: irs.bg, color: irs.color, fontWeight:700,
-                            border:`1px solid ${irs.border}`, flexShrink:0,
-                          }}
-                        >{irs.label}</span>
-                        <span style={{ flex:1, fontSize:'13px', color:'#1e293b', fontWeight:700 }}>{inv.sellPrice}</span>
-                        {inv.shares > 0 && <span style={{ fontSize:'11px', color:'#64748b' }}>{inv.shares}份</span>}
-                        {inv.amount > 0 && <span style={{ fontSize:'11px', color:'#059669', fontWeight:600 }}>¥{inv.amount.toFixed(2)}</span>}
-                        {inv.sellDate && <span style={{ fontSize:'11px', color:'#94a3b8' }}>{inv.sellDate}</span>}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); delItem(inv._idx) }}
-                          style={{
-                            background:'#fef2f2', border:'none', color:'#ef4444',
-                            fontSize:'13px', cursor:'pointer', width:'22px', height:'22px',
-                            borderRadius:'5px', lineHeight:1, flexShrink:0,
-                          }}
-                        >×</button>
+                        <div style={{ display:'flex', alignItems:'center', gap:'8px', marginBottom:'4px' }}>
+                          <span style={{
+                            fontSize:'10px', fontWeight:700, padding:'2px 7px', borderRadius:'5px', flexShrink:0,
+                            background: invIsSell ? '#fef2f2' : '#f0fdf4',
+                            color: invIsSell ? '#dc2626' : '#16a34a',
+                          }}>{invIsSell ? '卖出' : '买入'}</span>
+                          <span style={{ fontSize:'15px', fontWeight:800, color:'#1e293b' }}>{inv.sellPrice}</span>
+                          {inv.change != null && (
+                            <span style={{
+                              fontSize:'11px', fontWeight:700,
+                              color: inv.change >= 0 ? '#ef4444' : '#22c55e',
+                            }}>
+                              {inv.change >= 0 ? '+' : ''}{inv.change.toFixed(2)}%
+                            </span>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); delItem(inv._idx) }}
+                            style={{
+                              marginLeft:'auto', background:'#fef2f2', border:'none', color:'#ef4444',
+                              fontSize:'13px', cursor:'pointer', width:'22px', height:'22px',
+                              borderRadius:'5px', lineHeight:1, flexShrink:0,
+                            }}
+                          >×</button>
+                        </div>
+                        <div style={{ display:'flex', gap:'12px', fontSize:'11px', color:'#94a3b8', paddingLeft:'2px' }}>
+                          {inv.shares > 0 && <span>{inv.shares}份</span>}
+                          {inv.amount > 0 && <span style={{ color:'#059669', fontWeight:600 }}>¥{inv.amount.toFixed(2)}</span>}
+                          {inv.sellDate && <span>{inv.sellDate}</span>}
+                        </div>
                       </div>
                     )
                   })}
