@@ -707,7 +707,6 @@ export function DashboardPage() {
       </div>
 
       {/* 追剧入口已移到「更多」侧边栏（/dramas），总览不再占位 */}
-    </div>
 
       {editingSample && (
         <SampleForm
@@ -720,5 +719,6 @@ export function DashboardPage() {
           }}
         />
       )}
+    </div>
   )
 }
