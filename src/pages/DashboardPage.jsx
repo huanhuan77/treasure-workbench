@@ -8,6 +8,7 @@ import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
+import { SampleForm } from '../components/SampleForm'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -59,6 +60,7 @@ export function DashboardPage() {
     document.head.appendChild(s)
   }, [])
   const [checking, setChecking] = useState(false)
+  const [editingSample, setEditingSample] = useState(null)
   // 提醒中心 Tab：reminders（发布提醒）| low（发布不足5条）| expiring（即将到期）
   // 用 lazy init 从 sessionStorage 恢复，刷新 / keep-alive 回场时保留上次选中
   const [remindTab, setRemindTab] = useState(() => {
@@ -579,10 +581,16 @@ export function DashboardPage() {
                             </div>
                           ) : null}
                         </div>
-                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
-                          flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
-                          fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                        }}>补记发布</button>
+                        <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
+                          <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
+                            padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
+                            fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
+                          }}>补记发布</button>
+                          <button onClick={() => setEditingSample(s)} style={{
+                            width:'32px', height:'32px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
+                            color:'#64748b', fontSize:'14px', cursor:'pointer',
+                          }}>✏️</button>
+                        </div>
                       </div>
                     )
                   })}
@@ -686,5 +694,17 @@ export function DashboardPage() {
 
       {/* 追剧入口已移到「更多」侧边栏（/dramas），总览不再占位 */}
     </div>
+
+      {editingSample && (
+        <SampleForm
+          sample={editingSample}
+          onClose={() => setEditingSample(null)}
+          onSave={(data) => {
+            updateSample(editingSample.id, data)
+            show('已更新', 'success')
+            setEditingSample(null)
+          }}
+        />
+      )}
   )
 }
