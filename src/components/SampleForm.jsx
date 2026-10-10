@@ -28,6 +28,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
 
   const toggleAccountSel = (a) => {
     setForm((f) => {
+      if (statusMode) return { ...f, accounts: f.accounts.includes(a) ? f.accounts.filter((x) => x !== a) : [...f.accounts, a] }
       if (sample) return { ...f, accounts: f.accounts[0] === a ? [] : [a] }
       return { ...f, accounts: f.accounts.includes(a) ? f.accounts.filter((x) => x !== a) : [...f.accounts, a] }
     })
