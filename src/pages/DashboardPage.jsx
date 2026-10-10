@@ -587,9 +587,9 @@ export function DashboardPage() {
                             fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
                           }}>补记发布</button>
                           <button onClick={() => setEditingSample(s)} style={{
-                            width:'32px', height:'32px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                            color:'#64748b', fontSize:'14px', cursor:'pointer',
-                          }}>✏️</button>
+                            padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
+                            color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
+                          }}>调整状态</button>
                         </div>
                       </div>
                     )
@@ -645,9 +645,9 @@ export function DashboardPage() {
                             fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
                           }}>补发布</button>
                           <button onClick={() => setEditingSample(s)} style={{
-                            width:'32px', height:'32px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                            color:'#64748b', fontSize:'14px', cursor:'pointer',
-                          }}>✏️</button>
+                            padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
+                            color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
+                          }}>调整状态</button>
                         </div>
                         {/* 预选这些账号：与卡片展示的分布一致，不用用户再手选 */}
                       </div>
@@ -689,9 +689,9 @@ export function DashboardPage() {
                           </div>
                         </div>
                         <button onClick={() => setEditingSample(s)} style={{
-                          flexShrink: 0, width:'32px', height:'32px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                          color:'#64748b', fontSize:'14px', cursor:'pointer',
-                        }}>✏️</button>
+                          flexShrink: 0, padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
+                          color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
+                        }}>调整状态</button>
                       </div>
                     )
                   })}
