@@ -591,10 +591,6 @@ export function DashboardPage() {
                             color:'#64748b', fontSize:'14px', cursor:'pointer',
                           }}>✏️</button>
                         </div>
-                        <button onClick={() => setEditingSample(s)} style={{
-                          flexShrink: 0, width:'32px', height:'32px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                          color:'#64748b', fontSize:'14px', cursor:'pointer',
-                        }}>✏️</button>
                       </div>
                     )
                   })}
