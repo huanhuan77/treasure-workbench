@@ -7,7 +7,7 @@ import { isShotSample } from '../utils/sampleStatus'
 import { CATEGORIES } from '../utils/categories'
 import { ACCOUNTS } from '../utils/accounts'
 
-export function SampleForm({ sample, onClose, onSave, onDelete, inline = true }) {
+export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, statusMode = false }) {
   const { products } = useStore()
   const { show } = useToast()
   const [form, setForm] = useState({
@@ -22,6 +22,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true })
     commission: sample?.commission || 5,
     productId: sample?.productId || '',
     category: sample?.category || '',
+    archived: sample?.archived || sample?.status === 'abandoned' || false,
   })
   const [deadlineTouched, setDeadlineTouched] = useState(!!sample?.deadline)
 
@@ -65,10 +66,11 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true })
         </div>
       }
     >
-      <Field label="产品名称" required>
-        <input style={inputStyle} placeholder="样品名称" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+      <Field label="产品名称">
+        <input style={{ ...inputStyle, color: '#9ca3af', background: '#f3f4f6' }} placeholder="样品名称" value={form.name} readOnly />
       </Field>
 
+      {!statusMode && (
       <Field label="分类" required={!sample}>
         <div className="hide-scrollbar" style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
           {CATEGORIES.map((c) => (
@@ -82,6 +84,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true })
           ))}
         </div>
       </Field>
+      )}
 
       <Field label={sample ? '归属账号（单条样品仅归属 1 个账号）' : '归属账号（可多选，选几个账号就生成几条样品）'}>
         <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
@@ -115,6 +118,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true })
         )}
       </Field>
 
+      {!statusMode && (
       <Field label="关联产品（选填）">
         <select value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })} style={{ ...inputStyle, appearance: 'none', backgroundImage: 'none' }}>
           <option value="">未关联</option>
@@ -123,6 +127,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true })
           ))}
         </select>
       </Field>
+      )}
 
       <Field label="佣金（%）">
         <input type="number" value={form.commission === 5 ? '' : form.commission} onChange={(e) => {
@@ -177,6 +182,23 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true })
         )}
       </Field>
 
+      {statusMode && (
+      <Field label="归档（放弃，不做了可随时恢复）">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <button onClick={() => setForm((f) => ({ ...f, archived: false }))} style={{
+            padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+            background: !form.archived ? '#6b7280' : 'rgba(255,255,255,0.5)',
+            color: !form.archived ? '#fff' : 'var(--text-sub)', border: 'none',
+          }}>使用中</button>
+          <button onClick={() => setForm((f) => ({ ...f, archived: true }))} style={{
+            padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+            background: form.archived ? '#ef4444' : 'rgba(255,255,255,0.5)',
+            color: form.archived ? '#fff' : 'var(--text-sub)', border: 'none',
+          }}>已归档</button>
+        </div>
+      </Field>
+      )}
+
       <Field label="收货时间">
         <input type="date" style={inputStyle} value={toDateInput(form.receiveDate)} onChange={(e) => onReceiveChange(e.target.value)} />
       </Field>
@@ -185,9 +207,11 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true })
         <input type="date" style={inputStyle} value={toDateInput(form.deadline)} onChange={(e) => { setDeadlineTouched(true); setForm({ ...form, deadline: e.target.value }) }} />
       </Field>
 
+      {!statusMode && (
       <Field label="备注">
         <textarea style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} placeholder="备注信息" value={form.remark} onChange={(e) => setForm({ ...form, remark: e.target.value })} />
       </Field>
+      )}
     </Modal>
   )
 }
