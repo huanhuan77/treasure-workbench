@@ -128,6 +128,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
       </Field>
       )}
 
+      {!statusMode && (
       <Field label="佣金（%）">
         <input type="number" value={form.commission === 5 ? '' : form.commission} onChange={(e) => {
           const v = e.target.value === '' ? 5 : parseInt(e.target.value)
@@ -135,6 +136,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
         }} placeholder="5（默认不显示）"
           style={{ ...inputStyle }} />
       </Field>
+      )}
 
       <Field label="物流">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
