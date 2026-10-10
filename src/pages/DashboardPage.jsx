@@ -706,6 +706,7 @@ export function DashboardPage() {
 
       {editingSample && (
         <SampleForm
+          inline={false}
           sample={editingSample}
           onClose={() => setEditingSample(null)}
           onSave={(data) => {

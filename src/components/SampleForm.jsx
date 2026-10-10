@@ -7,7 +7,7 @@ import { isShotSample } from '../utils/sampleStatus'
 import { CATEGORIES } from '../utils/categories'
 import { ACCOUNTS } from '../utils/accounts'
 
-export function SampleForm({ sample, onClose, onSave, onDelete }) {
+export function SampleForm({ sample, onClose, onSave, onDelete, inline = true }) {
   const { products } = useStore()
   const { show } = useToast()
   const [form, setForm] = useState({
@@ -54,7 +54,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete }) {
       open
       onClose={onClose}
       title={sample ? '编辑样品' : '添加样品'}
-      inline
+      inline={inline}
       footer={
         <div style={{ display: 'flex', gap: '10px' }}>
           {onDelete && (
