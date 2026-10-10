@@ -591,6 +591,10 @@ export function DashboardPage() {
                             color:'#64748b', fontSize:'14px', cursor:'pointer',
                           }}>✏️</button>
                         </div>
+                        <button onClick={() => setEditingSample(s)} style={{
+                          flexShrink: 0, width:'32px', height:'32px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
+                          color:'#64748b', fontSize:'14px', cursor:'pointer',
+                        }}>✏️</button>
                       </div>
                     )
                   })}
@@ -639,10 +643,16 @@ export function DashboardPage() {
                             })}
                           </div>
                         </div>
-                        <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } })} style={{
-                          flexShrink: 0, padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
-                          fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                        }}>补发布</button>
+                        <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
+                          <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } })} style={{
+                            padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
+                            fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
+                          }}>补发布</button>
+                          <button onClick={() => setEditingSample(s)} style={{
+                            width:'32px', height:'32px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
+                            color:'#64748b', fontSize:'14px', cursor:'pointer',
+                          }}>✏️</button>
+                        </div>
                         {/* 预选这些账号：与卡片展示的分布一致，不用用户再手选 */}
                       </div>
                     )
@@ -682,6 +692,10 @@ export function DashboardPage() {
                             {text}
                           </div>
                         </div>
+                        <button onClick={() => setEditingSample(s)} style={{
+                          flexShrink: 0, width:'32px', height:'32px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
+                          color:'#64748b', fontSize:'14px', cursor:'pointer',
+                        }}>✏️</button>
                       </div>
                     )
                   })}
