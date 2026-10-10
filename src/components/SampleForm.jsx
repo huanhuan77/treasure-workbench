@@ -28,8 +28,6 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
 
   const toggleAccountSel = (a) => {
     setForm((f) => {
-      if (statusMode) return { ...f, accounts: f.accounts.includes(a) ? f.accounts.filter((x) => x !== a) : [...f.accounts, a] }
-      if (sample) return { ...f, accounts: f.accounts[0] === a ? [] : [a] }
       return { ...f, accounts: f.accounts.includes(a) ? f.accounts.filter((x) => x !== a) : [...f.accounts, a] }
     })
   }
@@ -87,7 +85,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
       </Field>
       )}
 
-      <Field label={sample ? '归属账号（单条样品仅归属 1 个账号）' : '归属账号（可多选，选几个账号就生成几条样品）'}>
+      <Field label={sample ? '归属账号（可多选）' : '归属账号（可多选，选几个账号就生成几条样品）'}>
         <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
           {ACCOUNTS.map((a) => {
             const selected = form.accounts.includes(a)
