@@ -510,7 +510,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
   const logInfo = LOGISTICS_STATUS[logistics]
   const logColor = logInfo ? logInfo.color : '#94a3b8'
   const repStatus = getTopStatus(s)
-  const repInfo = SAMPLE_STATUS[repStatus]
+  const repInfo = SAMPLE_STATUS[repStatus === 'arrived' ? 'shot' : repStatus]
   const isSwiped = swipedId === s.id
   return (
     <div>
