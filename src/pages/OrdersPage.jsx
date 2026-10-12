@@ -256,9 +256,6 @@ export function OrdersPage() {
         <button onClick={toggleDateSort} style={sortChipStyle(isDateMode)}>
           日期 {dateAsc ? '↑' : '↓'}
         </button>
-        <button onClick={toggleCountSort} style={sortChipStyle(isCountMode)}>
-          出单 {mostAsc ? '↑' : '↓'}
-        </button>
       </div>
 
       {/* 列表：独立滚动 */}
