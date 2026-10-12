@@ -45,7 +45,7 @@ export function SamplesPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
-  const [filter, setFilter] = useState(() => sessionStorage.getItem('samples_filter') || 'all')
+  const [filter, setFilter] = useState(() => { const f = sessionStorage.getItem('samples_filter') || 'all'; return (f === 'un_arrived' || f === 'arrived') ? 'all' : f })
   // 账号选择弹窗
   const [accountModalOpen, setAccountModalOpen] = useState(false)
   const [accountDraft, setAccountDraft] = useState('all')
@@ -277,7 +277,7 @@ export function SamplesPage() {
             </button>
           )
         })()}
-        {SAMPLE_STATUS_LIST.map((f) => {
+        {SAMPLE_STATUS_LIST.filter((f) => f.key !== 'un_arrived' && f.key !== 'arrived').map((f) => {
           const cnt = statusStats[f.key] || 0
           const active = filter === f.key
           return (
@@ -525,7 +525,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
           onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
           onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
           style={{
-            ...glassStyle, padding: '12px 14px 10px', borderLeft: `3px solid ${logColor}`,
+            ...glassStyle, padding: '12px 14px 10px', borderLeft: `3px solid #e2e8f0`,
             transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
             position: 'relative', zIndex: 1, cursor: 'pointer',
           }}
@@ -543,9 +543,9 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
                 ? <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: 'rgba(148,163,184,0.16)', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>***</span>
                 : acList.map((a) => {
                     const c = getCounts(s, a.name)
-                    const stat = c.publishCount > 0 ? `发${c.publishCount}${c.orderCount > 0 ? ` · 出${c.orderCount}` : ''}` : (logistics === 'arrived' ? '未发' : '未到货')
-                    const statColor = c.publishCount > 0 ? '#16a34a' : (logistics === 'arrived' ? '#f97316' : '#94a3b8')
-                    const statBg = c.publishCount > 0 ? 'rgba(22,163,74,0.14)' : (logistics === 'arrived' ? 'rgba(249,115,22,0.14)' : 'rgba(148,163,184,0.16)')
+                    const stat = c.publishCount > 0 ? `发${c.publishCount}${c.orderCount > 0 ? ` · 出${c.orderCount}` : ''}` : ''
+                    const statColor = c.publishCount > 0 ? '#16a34a' : '#94a3b8'
+                    const statBg = c.publishCount > 0 ? 'rgba(22,163,74,0.14)' : 'rgba(148,163,184,0.16)'
                     return (
                       <span key={a.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {a.name}
