@@ -6,7 +6,7 @@ import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../c
 import { formatDate, todayStr, deadlineDesc, addDays, copyText, toDateInput } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
-import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getCounts, getTopStatus, isShotSample, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getCounts, getTopStatus, isShotSample, isArchivedSample, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
 import { CATEGORIES } from '../utils/categories'
 import { SampleForm } from '../components/SampleForm'
 
@@ -115,8 +115,9 @@ export function SamplesPage() {
   // 未分类样品数量（无 category 的样品）
   const uncatCount = useMemo(() => (samples || []).filter((s) => !(s.category || '').trim()).length, [samples])
   const filtered = useMemo(() => {
-    if (filter === 'all') return sorted
-    return sorted.filter((s) => sampleMatchesFilter(s, filter))
+    const active = sorted.filter((s) => !isArchivedSample(s))
+    if (filter === 'all') return active
+    return active.filter((s) => sampleMatchesFilter(s, filter))
   }, [sorted, filter])
   const accountFiltered = useMemo(() => {
     let r = filtered
@@ -146,7 +147,8 @@ export function SamplesPage() {
     })
   }, [accountFiltered, sortKey, sortDir])
 
-  const statusStats = useMemo(() => computeStatusStats(samples, accountFilter), [samples, accountFilter])
+  const activeSamples = useMemo(() => (samples || []).filter((s) => !isArchivedSample(s)), [samples])
+  const statusStats = useMemo(() => computeStatusStats(activeSamples, accountFilter), [activeSamples, accountFilter])
 
 
   // 悬浮+按钮可拖动
