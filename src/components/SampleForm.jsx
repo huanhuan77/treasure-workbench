@@ -138,47 +138,32 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
       </Field>
       )}
 
-      <Field label="拍摄（拍一次即可，与账号无关）">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+      <Field label="状态">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
           {[
-            { v: false, label: '🎬 未拍' },
-            { v: true, label: '✅ 已拍' },
-          ].map((it) => (
-            <button
-              key={String(it.v)}
-              onClick={() => setForm((f) => ({ ...f, isShot: it.v }))}
-              style={{
-                padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                background: !!form.isShot === it.v ? '#06b6d4' : 'rgba(255,255,255,0.5)',
-                color: !!form.isShot === it.v ? '#fff' : 'var(--text-sub)',
-                border: 'none',
-              }}
-            >{it.label}</button>
-          ))}
-        </div>
-        {sample && (
-          <div style={{ marginTop: '6px', fontSize: '11px', color: 'var(--text-sub)' }}>
-            归档（放弃）请在保存后用「放弃」入口操作；发布/出单按账号独立统计。
-          </div>
-        )}
-      </Field>
-
-      {statusMode && (
-      <Field label="归档（放弃，不做了可随时恢复）">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          <button onClick={() => setForm((f) => ({ ...f, archived: false }))} style={{
-            padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-            background: !form.archived ? '#6b7280' : 'rgba(255,255,255,0.5)',
-            color: !form.archived ? '#fff' : 'var(--text-sub)', border: 'none',
-          }}>使用中</button>
-          <button onClick={() => setForm((f) => ({ ...f, archived: true }))} style={{
-            padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-            background: form.archived ? '#ef4444' : 'rgba(255,255,255,0.5)',
-            color: form.archived ? '#fff' : 'var(--text-sub)', border: 'none',
-          }}>已归档</button>
+            { v: 'unshot', label: '📷 未拍' },
+            { v: 'shot', label: '✅ 已拍' },
+            { v: 'archived', label: '🚫 放弃' },
+          ].map((it) => {
+            const active = form.archived ? it.v === 'archived' : (it.v === 'shot' ? !!form.isShot : it.v === 'unshot' ? !form.isShot : false)
+            return (
+              <button
+                key={it.v}
+                onClick={() => {
+                  if (it.v === 'archived') setForm((f) => ({ ...f, archived: true, isShot: false }))
+                  else if (it.v === 'shot') setForm((f) => ({ ...f, archived: false, isShot: true }))
+                  else setForm((f) => ({ ...f, archived: false, isShot: false }))
+                }}
+                style={{
+                  padding: '11px 4px', borderRadius: '12px', fontSize: '13px', fontWeight: 600,
+                  background: active ? (it.v === 'archived' ? '#ef4444' : it.v === 'shot' ? '#06b6d4' : '#f97316') : 'rgba(255,255,255,0.5)',
+                  color: active ? '#fff' : 'var(--text-sub)', border: 'none',
+                }}
+              >{it.label}</button>
+            )
+          })}
         </div>
       </Field>
-      )}
 
       <Field label="收货时间">
         <input type="date" style={inputStyle} value={toDateInput(form.receiveDate)} onChange={(e) => onReceiveChange(e.target.value)} />

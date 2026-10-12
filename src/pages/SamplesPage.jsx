@@ -381,6 +381,11 @@ export function SamplesPage() {
                       setSwipedId(null)
                       if (confirm('删除该样品？')) { deleteSample(s.id); show('已删除', 'success') }
                     }}
+                    onQuickShot={() => {
+                      setSwipedId(null)
+                      updateSample(s.id, { isShot: true })
+                      show('已标记为已拍', 'success')
+                    }}
                   />
                 })}
               </div>
@@ -505,7 +510,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickPublish }) {
+function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickPublish, onQuickShot }) {
   const logistics = getLogistics(s)
   const logInfo = LOGISTICS_STATUS[logistics]
   const logColor = logInfo ? logInfo.color : '#94a3b8'
@@ -517,8 +522,9 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
       <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}>
         {/* 左滑操作按钮 */}
         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
-          <button onClick={onEdit} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
-          <button onClick={onDelete} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
+          <button onClick={onQuickShot} style={{ width: '60px', height: '80%', border: 'none', background: '#06b6d4', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>已拍</button>
+          <button onClick={onEdit} style={{ width: '60px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
+          <button onClick={onDelete} style={{ width: '60px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
         </div>
         {/* 可滑动内容 */}
         <div
@@ -528,7 +534,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
           onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
           style={{
             ...glassStyle, padding: '12px 14px 10px', borderLeft: `3px solid #e2e8f0`,
-            transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
+            transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-190px)' : 'translateX(0)',
             position: 'relative', zIndex: 1, cursor: 'pointer',
           }}
         >
