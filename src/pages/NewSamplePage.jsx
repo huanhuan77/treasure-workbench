@@ -29,7 +29,7 @@ export function NewSamplePage() {
   const _rawAcc = _mapAcc(location.state?.account || sessionStorage.getItem('samples_account'))
   const initialAccounts = _rawAcc && ACCOUNTS.includes(_rawAcc) ? [_rawAcc] : []
   const [accounts, setAccounts] = useState(initialAccounts)
-  const [arrived, setArrived] = useState(false)   // 物流：false=未到货 / true=已到货
+  const [arrived, setArrived] = useState(true)   // 物流：false=未到货 / true=已到货
   const [isShot, setIsShot] = useState(false)     // 拍摄（样品级共享）
   const [receiveDate, setReceiveDate] = useState(new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(() => addDays(new Date().toISOString().slice(0, 10), 15))
@@ -126,19 +126,6 @@ export function NewSamplePage() {
                 </button>
               )
             })}
-          </div>
-        </Field>
-        <Field label="物流状态">
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {[
-              { v: false, label: '🚚 未到货' },
-              { v: true, label: '📦 已到货' },
-            ].map((it) => (
-              <button key={String(it.v)} onClick={() => setArrived(it.v)} style={{
-                flex: 1, padding: '9px 0', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: arrived === it.v ? 'linear-gradient(135deg, #f472b6, #ec4899)' : 'rgba(255,255,255,0.5)',
-                color: arrived === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
-            ))}
           </div>
         </Field>
         <Field label="拍摄（拍一次即可，与账号无关）">

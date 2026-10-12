@@ -149,17 +149,6 @@ export function EditSamplePage() {
           </div>
         </Field>
 
-        <Field label="物流状态（共享，所有账号通用）">
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {LOGISTICS_LIST.map((s) => (
-              <button key={s.key} onClick={() => onLogistics(s.key)} style={{
-                flex: 1, minWidth: 0, padding: '10px 6px', borderRadius: '12px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: logistics === s.key ? s.color : 'rgba(255,255,255,0.5)',
-                color: logistics === s.key ? '#fff' : 'var(--text-sub)' }}>{s.icon} {s.label}</button>
-            ))}
-          </div>
-        </Field>
-
         <Field label="拍摄（拍一次即可，与账号无关）">
           <div style={{ display: 'flex', gap: '6px' }}>
             {[
