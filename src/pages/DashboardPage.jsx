@@ -153,7 +153,7 @@ export function DashboardPage() {
     if (abandonToastShown.current) return
     if (!autoAbandoned.length) return
     abandonToastShown.current = true
-    show(`${autoAbandoned.length} 个产品发布满 10 条仍未出单，已自动置为放弃`, 'error')
+    show(`${autoAbandoned.length} 个产品最后出单后又发了10条未出单，已自动置为放弃`, 'error')
   }, [autoAbandoned.length, show])
 
   // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
@@ -361,7 +361,7 @@ export function DashboardPage() {
                       <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                     </div>
                     <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '3px', fontWeight: 600 }}>
-                      发布满 {AUTO_ABANDON_PUBLISH_COUNT} 条视频 · 0 出单 → 已自动放弃
+                      最后出单后又发了10条未出单 → 已自动放弃
                     </div>
                   </div>
                   <button

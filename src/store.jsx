@@ -3625,10 +3625,22 @@ function aggregatePublish(samples, records) {
       }
       for (const a of Object.keys(perAcct)) {
         const c = perAcct[a]
+        const prev = countsByAccount[a] || {}
+        const lastOrderAt = prev.lastOrderAt || ''
+        // 统计最后出单日期之后发了多少条
+        const sortedDates = c.dates.filter(Boolean).sort()
+        let sinceOrder = 0
+        if (lastOrderAt) {
+          sinceOrder = sortedDates.filter((d) => d > lastOrderAt).length
+        } else {
+          sinceOrder = c.count  // 从未出过单，全部算
+        }
         countsByAccount[a] = {
           publishCount: c.count,
-          orderCount: Number(countsByAccount[a]?.orderCount) || 0,
-          lastPublishAt: c.dates.filter(Boolean).sort().slice(-1)[0] || '',
+          orderCount: Number(prev.orderCount) || 0,
+          lastPublishAt: sortedDates.slice(-1)[0] || '',
+          lastOrderAt: lastOrderAt,
+          publishesSinceLastOrder: sinceOrder,
         }
         changed = true
       }
@@ -3754,7 +3766,8 @@ export function StoreProvider({ children }) {
         const c = s.countsByAccount?.[a]
         const pub = Number(c?.publishCount) || 0
         const ord = Number(c?.orderCount) || 0
-        if (pub >= AUTO_ABANDON_PUBLISH_COUNT && ord <= 0) {
+        const sinceOrder = Number(c?.publishesSinceLastOrder) ?? pub
+        if (sinceOrder >= AUTO_ABANDON_PUBLISH_COUNT) {
           execByAccount[a] = 'abandoned'
           dismiss[a] = false
           sampleChanged = true
@@ -4111,6 +4124,8 @@ export function StoreProvider({ children }) {
             ? { ...countsByAccount[acc] }
             : { publishCount: Number(sm.publishCount) || 0, orderCount: 0, lastPublishAt: sm.lastPublishAt || '' }
           c.orderCount = (Number(c.orderCount) || 0) + 1
+          c.lastOrderAt = newOrder.date
+          c.publishesSinceLastOrder = 0
           countsByAccount[acc] = c
           const u = { ...sm, countsByAccount }
           u.orderCount = getAggregateCounts(u).orderCount
