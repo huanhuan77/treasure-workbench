@@ -3762,7 +3762,7 @@ export function StoreProvider({ children }) {
       const dismiss = { ...(s.abandonDismissedByAccount || {}) }
       let sampleChanged = false
       for (const a of accounts) {
-        if (execByAccount[a] === 'abandoned' || dismiss[a]) continue
+        if (execByAccount[a] === 'abandoned') continue
         const c = s.countsByAccount?.[a]
         const pub = Number(c?.publishCount) || 0
         const ord = Number(c?.orderCount) || 0
@@ -3774,10 +3774,25 @@ export function StoreProvider({ children }) {
           sampleChanged = true
         } else if (ord === 0 && pub >= AUTO_ABANDON_PUBLISH_COUNT) {
           // 从没出单发满N条 → 标记为建议放弃，由用户决定
-          if (!s.suggestAbandonedByAccount) s.suggestAbandonedByAccount = {}
-          if (!s.suggestAbandonedByAccount[a]) {
-            s.suggestAbandonedByAccount[a] = true
-            sampleChanged = true
+          // 用户之前点过保留的，记录当时发布数；再发5条后重新提醒
+          const dismissCount = s.suggestDismissCount?.[a]
+          if (dismissCount != null) {
+            if (pub - Number(dismissCount) >= AUTO_ABANDON_PUBLISH_COUNT) {
+              // 又发了5条，重新提醒，清除保留记录
+              delete s.suggestDismissCount[a]
+              if (!s.suggestAbandonedByAccount) s.suggestAbandonedByAccount = {}
+              if (!s.suggestAbandonedByAccount[a]) {
+                s.suggestAbandonedByAccount[a] = true
+                sampleChanged = true
+              }
+            }
+            // 否则还在保留期内，不提醒
+          } else {
+            if (!s.suggestAbandonedByAccount) s.suggestAbandonedByAccount = {}
+            if (!s.suggestAbandonedByAccount[a]) {
+              s.suggestAbandonedByAccount[a] = true
+              sampleChanged = true
+            }
           }
         }
       }
