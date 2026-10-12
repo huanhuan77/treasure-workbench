@@ -282,7 +282,10 @@ export function normalizeSample(s) {
 // 代表态判定：未到货 > (执行态: 已发布 > 已拍摄 > 放弃) > 到货未拍。
 export function sampleMatchesFilter(s, filterKey) {
   if (!filterKey || filterKey === 'all') return true
-  return getTopStatus(s) === filterKey
+  const top = getTopStatus(s)
+  // 待拍(arrived)合并到已拍未发(shot)
+  if (filterKey === 'shot') return top === 'shot' || top === 'arrived'
+  return top === filterKey
 }
 
 // 返回样品各账号中被「系统自动放弃」且用户未手动解除的账号列表（按账号粒度）
