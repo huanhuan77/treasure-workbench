@@ -3767,10 +3767,18 @@ export function StoreProvider({ children }) {
         const pub = Number(c?.publishCount) || 0
         const ord = Number(c?.orderCount) || 0
         const sinceOrder = Number(c?.publishesSinceLastOrder) ?? pub
-        if (sinceOrder >= AUTO_ABANDON_PUBLISH_COUNT) {
+        if (ord > 0 && sinceOrder >= AUTO_ABANDON_PUBLISH_COUNT) {
+          // 出过单后又发满N条没新单 → 自动放弃
           execByAccount[a] = 'abandoned'
           dismiss[a] = false
           sampleChanged = true
+        } else if (ord === 0 && pub >= AUTO_ABANDON_PUBLISH_COUNT) {
+          // 从没出单发满N条 → 标记为建议放弃，由用户决定
+          if (!s.suggestAbandonedByAccount) s.suggestAbandonedByAccount = {}
+          if (!s.suggestAbandonedByAccount[a]) {
+            s.suggestAbandonedByAccount[a] = true
+            sampleChanged = true
+          }
         }
       }
       if (!sampleChanged) return s

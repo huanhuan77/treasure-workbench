@@ -380,6 +380,56 @@ export function DashboardPage() {
         </div>
       )}
 
+      {/* 建议放弃：从没出单发满5条，问用户要不要放弃 */}
+      {(() => {
+        const suggested = (samples || []).filter((s) => s.suggestAbandonedByAccount && Object.keys(s.suggestAbandonedByAccount).length > 0)
+        if (!suggested.length) return null
+        return (
+          <div style={{ padding: '12px 16px 4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
+              <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#f59e0b' }} />
+              建议放弃
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 7px', borderRadius: '8px' }}>{suggested.length}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {suggested.map((s) => {
+                const accs = Object.keys(s.suggestAbandonedByAccount).filter((a) => s.suggestAbandonedByAccount[a])
+                return (
+                  <div key={s.id} style={{ background: '#fff', border: '1px solid #fde68a', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        {accs.map((a) => {
+                          const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+                          return <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600 }}>{a}</span>
+                        })}
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '3px', fontWeight: 600 }}>
+                        发了5条还没出单，要放弃吗？
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        updateSample(s.id, { archived: true, suggestAbandonedByAccount: {} })
+                        show('已标记为放弃', 'success')
+                      }}
+                      style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: 'none', background: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                    >放弃</button>
+                    <button
+                      onClick={() => {
+                        updateSample(s.id, { suggestAbandonedByAccount: {} })
+                        show('已保留，不再提醒', 'success')
+                      }}
+                      style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                    >保留</button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
       {/* ── 提醒中心：发布提醒 / 发布不足5条 / 即将到期 三合一（下划线标签式 Tab） ── */}
       {/* 外层只留上下留白，左右 16px 交给 Tab 栏自己，这样吸顶时 Tab 能撑满宽度 */}
       <div style={{ paddingTop: '12px' }}>
