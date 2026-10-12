@@ -138,26 +138,6 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
       </Field>
       )}
 
-      <Field label="物流">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-          {[
-            { v: 'un_arrived', label: '🚚 未到货' },
-            { v: 'arrived', label: '📦 已到货' },
-          ].map((it) => (
-            <button
-              key={it.v}
-              onClick={() => setForm((f) => ({ ...f, logistics: it.v, isShot: it.v === 'un_arrived' ? false : f.isShot }))}
-              style={{
-                padding: '11px 8px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
-                background: (form.logistics || (form.isShot ? 'arrived' : 'un_arrived')) === it.v ? '#ec4899' : 'rgba(255,255,255,0.5)',
-                color: (form.logistics || (form.isShot ? 'arrived' : 'un_arrived')) === it.v ? '#fff' : 'var(--text-sub)',
-                border: 'none',
-              }}
-            >{it.label}</button>
-          ))}
-        </div>
-      </Field>
-
       <Field label="拍摄（拍一次即可，与账号无关）">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
           {[
