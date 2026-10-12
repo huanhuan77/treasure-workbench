@@ -115,6 +115,7 @@ export function SamplesPage() {
   // 未分类样品数量（无 category 的样品）
   const uncatCount = useMemo(() => (samples || []).filter((s) => !(s.category || '').trim()).length, [samples])
   const filtered = useMemo(() => {
+    if (filter === 'abandoned') return sorted.filter((s) => isArchivedSample(s))
     const active = sorted.filter((s) => !isArchivedSample(s))
     if (filter === 'all') return active
     return active.filter((s) => sampleMatchesFilter(s, filter))
@@ -147,8 +148,7 @@ export function SamplesPage() {
     })
   }, [accountFiltered, sortKey, sortDir])
 
-  const activeSamples = useMemo(() => (samples || []).filter((s) => !isArchivedSample(s)), [samples])
-  const statusStats = useMemo(() => computeStatusStats(activeSamples, accountFilter), [activeSamples, accountFilter])
+  const statusStats = useMemo(() => computeStatusStats(samples, accountFilter), [samples, accountFilter])
 
 
   // 悬浮+按钮可拖动
