@@ -148,7 +148,7 @@ export function SamplesPage() {
     })
   }, [accountFiltered, sortKey, sortDir])
 
-  const statusStats = useMemo(() => computeStatusStats(samples, accountFilter), [samples, accountFilter])
+  const statusStats = useMemo(() => { const st = computeStatusStats(samples, accountFilter); st.shot = (st.shot || 0) + (st.arrived || 0); st.arrived = 0; return st }, [samples, accountFilter])
 
 
   // 悬浮+按钮可拖动
