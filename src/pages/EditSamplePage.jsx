@@ -149,31 +149,25 @@ export function EditSamplePage() {
           </div>
         </Field>
 
-        <Field label="拍摄（拍一次即可，与账号无关）">
+        <Field label="状态">
           <div style={{ display: 'flex', gap: '6px' }}>
             {[
-              { v: false, label: '🎬 未拍' },
-              { v: true, label: '✅ 已拍' },
-            ].map((it) => (
-              <button key={String(it.v)} onClick={() => setIsShot(it.v)} style={{
-                flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: isShot === it.v ? '#06b6d4' : 'rgba(255,255,255,0.5)',
-                color: isShot === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
-            ))}
-          </div>
-        </Field>
-
-        <Field label="归档（放弃，不做了可随时恢复）">
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {[
-              { v: false, label: '使用中' },
-              { v: true, label: '🚫 已归档' },
-            ].map((it) => (
-              <button key={String(it.v)} onClick={() => setArchived(it.v)} style={{
-                flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: archived === it.v ? '#9ca3af' : 'rgba(255,255,255,0.5)',
-                color: archived === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
-            ))}
+              { v: 'unshot', label: '📷 未拍' },
+              { v: 'shot', label: '✅ 已拍' },
+              { v: 'archived', label: '🚫 放弃' },
+            ].map((it) => {
+              const active = archived ? it.v === 'archived' : (it.v === 'shot' ? isShot : it.v === 'unshot' ? !isShot : false)
+              return (
+                <button key={it.v} onClick={() => {
+                  if (it.v === 'archived') { setArchived(true); setIsShot(false) }
+                  else if (it.v === 'shot') { setArchived(false); setIsShot(true) }
+                  else { setArchived(false); setIsShot(false) }
+                }} style={{
+                  flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '13px', fontWeight: 600, border: 'none',
+                  background: active ? (it.v === 'archived' ? '#ef4444' : it.v === 'shot' ? '#06b6d4' : '#f97316') : 'rgba(255,255,255,0.5)',
+                  color: active ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
+              )
+            })}
           </div>
         </Field>
 

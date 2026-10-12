@@ -31,6 +31,7 @@ export function NewSamplePage() {
   const [accounts, setAccounts] = useState(initialAccounts)
   const [arrived, setArrived] = useState(true)   // 物流：false=未到货 / true=已到货
   const [isShot, setIsShot] = useState(false)     // 拍摄（样品级共享）
+  const [archived, setArchived] = useState(false)  // 放弃/归档
   const [receiveDate, setReceiveDate] = useState(new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(() => addDays(new Date().toISOString().slice(0, 10), 15))
   const [remark, setRemark] = useState('')
@@ -57,7 +58,7 @@ export function NewSamplePage() {
     }
     addSample({
       name: name.trim(), account: accounts[0], accounts: [...accounts],
-      logistics: arrived ? 'arrived' : 'un_arrived', isShot,
+      logistics: 'arrived', isShot, archived,
       receiveDate, deadline, remark,
       category,
       commission: Number(commission),
@@ -128,17 +129,25 @@ export function NewSamplePage() {
             })}
           </div>
         </Field>
-        <Field label="拍摄（拍一次即可，与账号无关）">
+        <Field label="状态">
           <div style={{ display: 'flex', gap: '6px' }}>
             {[
-              { v: false, label: '🎬 未拍' },
-              { v: true, label: '✅ 已拍' },
-            ].map((it) => (
-              <button key={String(it.v)} onClick={() => setIsShot(it.v)} style={{
-                flex: 1, padding: '9px 0', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
-                background: isShot === it.v ? 'linear-gradient(135deg, #22d3ee, #06b6d4)' : 'rgba(255,255,255,0.5)',
-                color: isShot === it.v ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
-            ))}
+              { v: 'unshot', label: '📷 未拍' },
+              { v: 'shot', label: '✅ 已拍' },
+              { v: 'archived', label: '🚫 放弃' },
+            ].map((it) => {
+              const active = archived ? it.v === 'archived' : (it.v === 'shot' ? isShot : it.v === 'unshot' ? !isShot : false)
+              return (
+                <button key={it.v} onClick={() => {
+                  if (it.v === 'archived') { setArchived(true); setIsShot(false) }
+                  else if (it.v === 'shot') { setArchived(false); setIsShot(true) }
+                  else { setArchived(false); setIsShot(false) }
+                }} style={{
+                  flex: 1, padding: '9px 0', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
+                  background: active ? (it.v === 'archived' ? 'linear-gradient(135deg, #f87171, #ef4444)' : it.v === 'shot' ? 'linear-gradient(135deg, #22d3ee, #06b6d4)' : 'linear-gradient(135deg, #fb923c, #f97316)') : 'rgba(255,255,255,0.5)',
+                  color: active ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
+              )
+            })}
           </div>
         </Field>
         <div style={{ display: 'flex', gap: '10px' }}>
