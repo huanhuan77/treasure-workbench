@@ -410,14 +410,18 @@ export function DashboardPage() {
                     </div>
                     <button
                       onClick={() => {
-                        updateSample(s.id, { archived: true, suggestAbandonedByAccount: {} })
+                        const execByAccount = { ...(s.execByAccount || {}) }
+                        accs.forEach((a) => { execByAccount[a] = 'abandoned' })
+                        updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {} })
                         show('已标记为放弃', 'success')
                       }}
                       style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: 'none', background: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
                     >放弃</button>
                     <button
                       onClick={() => {
-                        updateSample(s.id, { suggestAbandonedByAccount: {} })
+                        const dismiss = { ...(s.abandonDismissedByAccount || {}) }
+                        accs.forEach((a) => { dismiss[a] = true })
+                        updateSample(s.id, { abandonDismissedByAccount: dismiss, suggestAbandonedByAccount: {} })
                         show('已保留，不再提醒', 'success')
                       }}
                       style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
