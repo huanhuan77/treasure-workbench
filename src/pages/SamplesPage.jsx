@@ -248,7 +248,7 @@ export function SamplesPage() {
           })}
         </div>
         <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>
-          共 {Object.values(statusStats).reduce((a,b) => a + b, 0)} 个样品
+          共 {Object.values(statusStats).reduce((a,b) => a + b, 0) - (statusStats['abandoned'] || 0)} 个样品
           {' · '}{SAMPLE_STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.icon}${statusStats[s.key]}`).join('  ')}
         </p>
       </header>
@@ -257,7 +257,7 @@ export function SamplesPage() {
       <div style={{ display: 'flex', gap: '6px', padding: '2px 16px 6px', overflowX: 'auto', flexShrink: 0 }}>
         {/* 全部 */}
         {(() => {
-          const allCnt = Object.values(statusStats).reduce((a, b) => a + b, 0)
+          const allCnt = Object.values(statusStats).reduce((a, b) => a + b, 0) - (statusStats['abandoned'] || 0)
           const active = filter === 'all'
           return (
             <button
@@ -447,7 +447,7 @@ export function SamplesPage() {
                       {o.key !== 'all' && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(124,58,237,0.12)', color: '#7c3aed', fontWeight: 700 }}>LV1</span>}
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '2px' }}>
-                      {o.key === 'all' ? `共 ${Object.values(statusStats).reduce((a, b) => a + b, 0)} 个样品` : `共 ${(samples || []).filter((s) => getAccounts(s).includes(o.key)).length} 个样品`}
+                      {o.key === 'all' ? `共 ${Object.values(statusStats).reduce((a, b) => a + b, 0) - (statusStats['abandoned'] || 0)} 个样品` : `共 ${(samples || []).filter((s) => getAccounts(s).includes(o.key)).length} 个样品`}
                     </div>
                   </div>
                   {/* 右侧圆圈单选 */}
