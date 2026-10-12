@@ -14,7 +14,7 @@
 // 物流状态（共享）
 export const LOGISTICS_STATUS = {
   un_arrived: { key: 'un_arrived', label: '未到货', icon: '🚚', color: '#94a3b8', bg: 'rgba(148,163,184,0.16)' },
-  arrived: { key: 'arrived', label: '待拍', icon: '📦', color: '#f97316', bg: 'rgba(249,115,22,0.16)' },
+  arrived: { key: 'arrived', label: '未拍', icon: '📷', color: '#f97316', bg: 'rgba(249,115,22,0.16)' },
 }
 
 // 执行状态（保留兼容：老数据迁移与自动放弃机制仍用 key，UI 不再按账号编辑）
@@ -282,10 +282,7 @@ export function normalizeSample(s) {
 // 代表态判定：未到货 > (执行态: 已发布 > 已拍摄 > 放弃) > 到货未拍。
 export function sampleMatchesFilter(s, filterKey) {
   if (!filterKey || filterKey === 'all') return true
-  const top = getTopStatus(s)
-  // 待拍(arrived)合并到已拍未发(shot)
-  if (filterKey === 'shot') return top === 'shot' || top === 'arrived'
-  return top === filterKey
+  return getTopStatus(s) === filterKey
 }
 
 // 返回样品各账号中被「系统自动放弃」且用户未手动解除的账号列表（按账号粒度）

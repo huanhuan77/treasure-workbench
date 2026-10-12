@@ -148,7 +148,7 @@ export function SamplesPage() {
     })
   }, [accountFiltered, sortKey, sortDir])
 
-  const statusStats = useMemo(() => { const st = computeStatusStats(samples, accountFilter); st.shot = (st.shot || 0) + (st.arrived || 0); st.arrived = 0; return st }, [samples, accountFilter])
+  const statusStats = useMemo(() => computeStatusStats(samples, accountFilter), [samples, accountFilter])
 
 
   // 悬浮+按钮可拖动
@@ -279,7 +279,7 @@ export function SamplesPage() {
             </button>
           )
         })()}
-        {SAMPLE_STATUS_LIST.filter((f) => f.key !== 'un_arrived' && f.key !== 'arrived').map((f) => {
+        {SAMPLE_STATUS_LIST.filter((f) => f.key !== 'un_arrived').map((f) => {
           const cnt = statusStats[f.key] || 0
           const active = filter === f.key
           return (
@@ -510,7 +510,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
   const logInfo = LOGISTICS_STATUS[logistics]
   const logColor = logInfo ? logInfo.color : '#94a3b8'
   const repStatus = getTopStatus(s)
-  const repInfo = SAMPLE_STATUS[repStatus === 'arrived' ? 'shot' : repStatus]
+  const repInfo = SAMPLE_STATUS[repStatus]
   const isSwiped = swipedId === s.id
   return (
     <div>
