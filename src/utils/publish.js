@@ -66,11 +66,24 @@ export function isOverdue(sample) {
 // 2) 逾期（截止时间已过）一律提醒；
 // 3) 已出单的样品（orderCount>0，即在出单记录列表中），在该账号下 7 天未发视频才提醒
 //    —— 未出单的样品（无论已拍摄/已发布）不再按「N 天未发」提醒，避免无关打扰。
+// 4) 即使样品整体已发布，某个账号从未发布且已过截止日期，也要提醒
 export function needPublishReminder(sample) {
   if (!sample) return false
   if (sample.archived || sample.status === 'abandoned') return false   // 归档(放弃)不提醒
   // 逾期：仅仍需处理的待发状态（未到货/已到货未拍摄/已拍摄未发布）才提醒，已发布的过去截止日不计
   if (isOverdue(sample) && OVERDUE_STATES.includes(sample.status)) return true
+  // 按账号检查：截止日期已过，某个账号从未发布过（publishCount=0）且未放弃 → 提醒
+  if (isOverdue(sample)) {
+    const execByAccount = sample.execByAccount || {}
+    const counts = sample.countsByAccount || {}
+    const accounts = getAccounts(sample)
+    const anyUnpublished = accounts.some((a) => {
+      if (execByAccount[a] === 'abandoned') return false
+      const pc = Number(counts[a]?.publishCount) || 0
+      return pc === 0
+    })
+    if (anyUnpublished) return true
+  }
   // 已出单的样品：7 天未发视频才提醒
   if ((Number(sample.orderCount) || 0) > 0) {
     const days = daysSincePublish(sample)
