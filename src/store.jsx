@@ -553,6 +553,16 @@ const shanguangSeed = [
   createdAt: Date.now(),
 }))
 
+// 维特健灵湿轻饮
+const shiqinSeed = [
+  {
+    "content": "你有你的冰美式\n我有维特健灵湿轻饮\n振一丝姐妹\n这个秋天之后\n我们将是陌生人😂",
+    "hasOrder": false,
+    "used": false,
+    "topics": ["#维特健灵", "#湿轻饮", "#亲测分享", "#好物分享"]
+  },
+]
+
 // 维特健灵祛湿轻：用户整理后内置文案（thumb-up=出单，check=用过；仅末尾标记生效，行内表情保留；末尾 # 行为指定话题
 const weiteSeed = [
   {
@@ -2549,6 +2559,7 @@ const defaultData = {
 
     { id: 'p_xihu', name: '洁比兔洗护液', brand: '洁比兔', category: '洗护', createdAt: Date.now(), copies: xihuSeed },
     { id: 'p_weite', name: '维特健灵祛湿清', brand: '维特健灵', category: '保健品', createdAt: Date.now(), copies: weiteSeed },
+    { id: 'p_shiqin', name: '维特健灵湿轻饮', brand: '维特健灵', category: '保健品', createdAt: Date.now(), copies: shiqinSeed },
     { id: 'p_coffee', name: 'PH地中海咖啡', brand: 'PH', category: '饮品', createdAt: Date.now(), copies: coffeeSeed },
     { id: 'p_jiemao', name: '植研加睫毛胶水', brand: '植研加', category: '美妆', createdAt: Date.now(), copies: jiemaoSeed },
     { id: 'p_mianmian', name: '绵绵的羊小莓好湿巾', brand: '绵绵的羊', category: '其他', createdAt: Date.now(), copies: mianmianSeed },
