@@ -5,9 +5,8 @@ import { useToast } from '../components/Toast'
 import { ConfirmModal, glassStyle } from '../components/Modal'
 import { DRAMA_STATUS } from '../utils/dramaLib'
 
-// 追剧：记录剧名 + 状态（想看/在看/看完/放弃）
+// 追剧：记录剧名 + 类型（电视剧/综艺）+ 状态（想看/在看/看完/放弃）
 
-// 追剧：极简版，只记录剧名（需要时再加回其他字段）
 export function DramaPage() {
   const navigate = useNavigate()
   const { dramas, addDrama, updateDrama, deleteDrama } = useStore()
@@ -15,19 +14,26 @@ export function DramaPage() {
 
   const [name, setName] = useState('')
   const [delId, setDelId] = useState(null)
+  const [typeTab, setTypeTab] = useState('tv') // tv | variety
+  const [addType, setAddType] = useState('tv') // 新增时选的类型
 
   const list = dramas || []
+  // 旧数据没有 type 字段，默认归为电视剧
+  const typedList = list.map((d) => ({ ...d, type: d.type || 'tv' }))
+  const filtered = typedList.filter((d) => d.type === typeTab)
+  const tvCount = typedList.filter((d) => (d.type || 'tv') === 'tv').length
+  const varietyCount = typedList.filter((d) => d.type === 'variety').length
 
   const handleAdd = () => {
     const n = name.trim()
-    if (!n) { show('请输入剧名', 'error'); return }
-    if (list.some((d) => (d.name || '').trim() === n)) {
-      show('这部剧已经在列表里了', 'error')
+    if (!n) { show('请输入名称', 'error'); return }
+    if (filtered.some((d) => (d.name || '').trim() === n)) {
+      show('这部已经在列表里了', 'error')
       return
     }
-    addDrama({ name: n })
+    addDrama({ name: n, type: addType })
     setName('')
-    show('已加入追剧', 'success')
+    show('已加入', 'success')
   }
 
   const handleDelete = () => {
@@ -35,6 +41,13 @@ export function DramaPage() {
     setDelId(null)
     show('已删除', 'success')
   }
+
+  const tabBtn = (active) => ({
+    flex: 1, border: 'none', padding: '10px 0', borderRadius: '12px',
+    fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+    color: active ? '#fff' : '#888',
+    background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(0,0,0,0.04)',
+  })
 
   return (
     <div className="app-container">
@@ -52,20 +65,44 @@ export function DramaPage() {
             追剧
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>
-            共 {list.length} 部 · 想追就记个剧名
+            共 {list.length} 部
           </p>
         </div>
       </header>
 
       <div style={{ padding: '8px 16px calc(96px + var(--safe-bottom, 0px))' }}>
-        {/* 新增区：只填剧名 */}
+        {/* 类型 Tab */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+          <button onClick={() => setTypeTab('tv')} style={tabBtn(typeTab === 'tv')}>
+            📺 电视剧 ({tvCount})
+          </button>
+          <button onClick={() => setTypeTab('variety')} style={tabBtn(typeTab === 'variety')}>
+            🎬 综艺 ({varietyCount})
+          </button>
+        </div>
+
+        {/* 新增区 */}
         <div style={{ ...glassStyle, padding: '14px', marginBottom: '16px' }}>
+          {/* 新增类型选择 */}
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+            {[
+              { key: 'tv', label: '电视剧' },
+              { key: 'variety', label: '综艺' },
+            ].map((t) => (
+              <button key={t.key} onClick={() => setAddType(t.key)} style={{
+                flex: 1, border: 'none', padding: '7px 0', borderRadius: '8px',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                color: addType === t.key ? '#fff' : '#888',
+                background: addType === t.key ? '#ec4899' : 'rgba(0,0,0,0.05)',
+              }}>{t.label}</button>
+            ))}
+          </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-              placeholder="输入剧名，如：狂飙"
+              placeholder={addType === 'tv' ? '输入剧名，如：狂飙' : '输入综艺名，如：奔跑吧'}
               style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box',
                 border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
@@ -82,14 +119,14 @@ export function DramaPage() {
         </div>
 
         {/* 列表 */}
-        {list.length === 0 ? (
+        {filtered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
-            <div style={{ fontSize: '40px', marginBottom: '10px' }}>📺</div>
-            <p style={{ fontSize: '14px', margin: 0 }}>还没有追剧记录，先加一部吧</p>
+            <div style={{ fontSize: '40px', marginBottom: '10px' }}>{typeTab === 'tv' ? '📺' : '🎬'}</div>
+            <p style={{ fontSize: '14px', margin: 0 }}>还没有{typeTab === 'tv' ? '电视剧' : '综艺'}，先加一个吧</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {list.map((d, i) => (
+            {filtered.map((d, i) => (
               <div key={d.id} style={{
                 background: '#fff', borderRadius: '12px', padding: '10px 12px',
                 border: '1px solid rgba(244,114,182,0.16)',
