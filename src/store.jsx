@@ -13,7 +13,7 @@ const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '25'
+const CURRENT_VERSION = '26'
 
 // 自动放弃阈值：同一账号 + 同一产品（一条样品）发布满 N 条视频仍 0 出单 → 自动置为「放弃」并提醒
 export const AUTO_ABANDON_PUBLISH_COUNT = 5
@@ -2389,137 +2389,7 @@ const mianmoSeed = [
   createdAt: Date.now(),
 }))
 
-const doboSeed = [
-  {
-    "content": "终于pu💩自由了\n🌳植物更安心\n再也不用带手机进 🚻了\n比德芙还丝滑~",
-    "hasOrder": true,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "时间：大餐后\n结果：巨💩\n总结：爽翻!!",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "西梅干?西梅软糖?\n算了吧，我选它\n三天的库存都给整🈳了\n太爽了",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "算了跟你们解释不清楚!\n就这个DOBO\n跟风买的我也没想到这么惊喜\n不好意思了朋友  \n这个夏天我先赢了",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "NB!!\n三天的库存清了\n爽歪歪~",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "本来DOBO已经够猛了\n再加上东方🍂\n谁懂啊\n我妈以为我天天吃草",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "抱一丝同学\n下个月就30度了\n我必须做最有种的女人",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "你一句是不是断粮了?!\n就知道我的努力没有白费\n全绿的成分\n你看看现在才啥价啊",
-    "hasOrder": false,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "距离夏天还有一个多月\n原本只是跟风吃的 \nCrush见面第一句\n\"你应该没有90吧\"\n我就知道这把稳了",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "DOBO你别太离谱\n我妈以为我没钱吃饭了\n真的夯爆了!!",
-    "hasOrder": false,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "第一批受害者出現了\n太太太筷了\n我妈都以为我\n在外吃不上🍚",
-    "hasOrder": true,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "夜宵不让我吃\n是不可能的\t\n还好我有清清片\n酷酷炫的快乐啊\n沒在怕的",
-    "hasOrder": false,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "求求商战千万別停\n一代人有一代人的鸡蛋要领\n被资本喂得不知天地\n为何物了",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "还好有饭搭子 \n不然都体会不到 \n放纵日的快乐\n根本没在怕的",
-    "hasOrder": false,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "真抱一丝啊\t\n马上就30度了\n我要争气\n做朋友圈最装的女人",
-    "hasOrder": false,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "没想到控制不住\n自己的嘴👄\n饭前随便吃两片\n还真有惊喜",
-    "hasOrder": false,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "可惜你\n\"夏天不穿👗👙\"\n不懂燃燃片的含金量\n我现在对谈恋爱没什么欲望\n只想在夏天\nSOU下来装一波大的!",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "夏日倒计时\n还得是👟休\n主打一个效率\n这回👗我穿定了",
-    "hasOrder": false,
-    "used": false,
-    "topics": []
-  },
-  {
-    "content": "拜见清清片大王\n马上就30度了\n小的📷，就靠您了",
-    "hasOrder": false,
-    "used": true,
-    "topics": []
-  },
-  {
-    "content": "我现在只有\n一个重要的主线任务\nsou下来装逼\nsou下来装逼\nsou下来装逼",
-    "hasOrder": false,
-    "used": true,
-    "topics": []
-  }
-].map((c, i) => ({
-  id: 'p_dobo_c' + (i + 1),
-  content: c.content,
-  topics: c.topics.length ? c.topics : generateTopics(c.content, 'DOBO噗噗片', 'DOBO', DEFAULT_SENSITIVE_WORDS),
-  style: '',
-  used: c.used,
-  usedDate: null,
-  hasOrder: c.hasOrder,
-  createdAt: Date.now(),
-}))
+const doboSeed = []
 
 const xiuhuaxiaoSeed = [
   {
@@ -3312,6 +3182,18 @@ function loadData() {
         }
       }
     } catch(e) { console.warn('[v25迁移] 补充种子文案失败:', e) }
+    // v26 迁移：清空 DOBO噗噗片 的所有文案
+    try {
+      if (savedVersion() === '25') {
+        for (const prod of productsFinal) {
+          if (prod.id === 'p_dobo') {
+            const n = (prod.copies || []).length
+            prod.copies = []
+            console.log('[v26迁移] 清空 DOBO噗噗片 文案', n, '条')
+          }
+        }
+      }
+    } catch(e) { console.warn('[v26迁移] 清空DOBO文案失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
