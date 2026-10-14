@@ -556,7 +556,7 @@ const shanguangSeed = [
 // 维特健灵湿轻饮
 const shiqinSeed = [
   {
-    "content": "你有你的冰美式\n我有维特健灵湿轻饮\n振一丝姐妹\n这个秋天之后\n我们将是陌生人😂",
+    "content": "你有你的冰美式\n我有维特健灵湿轻饮\n报一丝姐妹\n这个秋天之后\n我们将是陌生人😂",
     "hasOrder": false, "used": false,
     "topics": ["#维特健灵", "#湿轻饮", "#亲测分享", "#好物分享"]
   },
