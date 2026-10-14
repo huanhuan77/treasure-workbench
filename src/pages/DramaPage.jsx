@@ -15,7 +15,6 @@ export function DramaPage() {
   const [name, setName] = useState('')
   const [delId, setDelId] = useState(null)
   const [typeTab, setTypeTab] = useState('tv') // tv | variety
-  const [addType, setAddType] = useState('tv') // 新增时选的类型
 
   const list = dramas || []
   // 旧数据没有 type 字段，默认归为电视剧
@@ -31,7 +30,7 @@ export function DramaPage() {
       show('这部已经在列表里了', 'error')
       return
     }
-    addDrama({ name: n, type: addType })
+    addDrama({ name: n, type: typeTab })
     setName('')
     show('已加入', 'success')
   }
@@ -83,26 +82,12 @@ export function DramaPage() {
 
         {/* 新增区 */}
         <div style={{ ...glassStyle, padding: '14px', marginBottom: '16px' }}>
-          {/* 新增类型选择 */}
-          <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
-            {[
-              { key: 'tv', label: '电视剧' },
-              { key: 'variety', label: '综艺' },
-            ].map((t) => (
-              <button key={t.key} onClick={() => setAddType(t.key)} style={{
-                flex: 1, border: 'none', padding: '7px 0', borderRadius: '8px',
-                fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                color: addType === t.key ? '#fff' : '#888',
-                background: addType === t.key ? '#ec4899' : 'rgba(0,0,0,0.05)',
-              }}>{t.label}</button>
-            ))}
-          </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-              placeholder={addType === 'tv' ? '输入剧名，如：狂飙' : '输入综艺名，如：奔跑吧'}
+              placeholder={typeTab === 'tv' ? '输入剧名，如：狂飙' : '输入综艺名，如：奔跑吧'}
               style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box',
                 border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
