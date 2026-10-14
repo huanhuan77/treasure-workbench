@@ -693,7 +693,60 @@ const shiqinSeed = [
 ]
 
 // 维特健灵湿轻浴（泡脚包）
-const shiqinYuSeed = []
+const shiqinYuSeed = [
+  // 减肥变美向
+  { "content": "可惜你不懂...", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "红花+防己+干姜+艾草+豆蔻...", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "18味中式小草", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "简直夯爆了...", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "这个十一能好好装波大的", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "花十万❌小韩", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "不如坚持泡脚一个月", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "这不比帕姐还顶？？", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "十一原相机 我来了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "不是泡脚就有用", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "选对了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "状态手拿把掐", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "18味中式材料", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "好东西终于让我用上了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  // 情绪向
+  { "content": "忙完一天才懂", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "好好善待自己有多治愈", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "不用熬煮不用搭配", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "拆开直接泡", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "温热感浸上来", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "卸下整日疲惫", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "简单的睡前仪式感🌙", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "现在对复杂养生没执念", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "眼里只惦记睡前泡脚", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "每天雷打不动泡一会", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "比刷手机还准时", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "18味中式材料泡脚包", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "好东西就是要分享", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "过日子时代", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "好好睡觉", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "睡前泡脚", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "把自己养好", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "比什么都重要", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  // 养生科普向
+  { "content": "泡脚虽好", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "会泡更重要", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "18味中式小草", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "简直夯爆了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "至低成本的内养方式", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "就是泡脚", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "但是没人会告诉你", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "好的泡脚材料怎么选", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "发布标题：可惜你不懂，18味中式材料...", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "一个养生小知识", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "不是泡脚就有用", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "选对料才省心", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "别再只用清水泡啦", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "草本泡脚包", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "睡前10分钟，轻松放空", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "日常放松小习惯", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "在家就能安排", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+]
 
 // 维特健灵祛湿轻：用户整理后内置文案（thumb-up=出单，check=用过；仅末尾标记生效，行内表情保留；末尾 # 行为指定话题
 const weiteSeed = [
@@ -3223,15 +3276,17 @@ function loadData() {
         }
       }
     } catch(e) { console.warn('[v28] 替换湿轻浴失败:', e) }
-    // v29：清空湿轻浴所有文案
+    // v29：写入湿轻浴直播素材文案
     try {
       for (const prod of productsFinal) {
-        if (prod.id === 'p_shiqinyu' && Array.isArray(prod.copies) && prod.copies.length) {
-          console.log('[v29] 清空湿轻浴文案', prod.copies.length, '条')
-          prod.copies = []
+        if (prod.id !== 'p_shiqinyu') continue
+        const preset = defaultData.products.find((p) => p.id === 'p_shiqinyu')
+        if (preset && Array.isArray(preset.copies)) {
+          prod.copies = preset.copies.map((c) => ({ ...c }))
+          console.log('[v29] 写入湿轻浴文案', prod.copies.length, '条')
         }
       }
-    } catch(e) { console.warn('[v29] 清空湿轻浴失败:', e) }
+    } catch(e) { console.warn('[v29] 写入湿轻浴失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
