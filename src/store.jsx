@@ -3181,12 +3181,19 @@ function loadData() {
         }
       }
     } catch(e) { console.warn('[v25迁移] 补充种子文案失败:', e) }
-    // v26：始终从列表中移除 DOBO噗噗片（用户已删除该产品）
+    // v26：彻底删除 DOBO噗噗片（从内存和localStorage中物理移除）
     try {
       const before = productsFinal.length
       productsFinal = productsFinal.filter((p) => p.id !== 'p_dobo')
-      if (productsFinal.length !== before) console.log('[v26] 移除 DOBO噗噗片')
-    } catch(e) { console.warn('[v26] 移除DOBO失败:', e) }
+      if (productsFinal.length !== before) {
+        console.log('[v26] 彻底删除 DOBO噗噗片')
+        // 同时写回localStorage，确保下次加载也不存在
+        if (Array.isArray(old.products)) {
+          old.products = old.products.filter((p) => p && p.id !== 'p_dobo')
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(old))
+        }
+      }
+    } catch(e) { console.warn('[v26] 删除DOBO失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
