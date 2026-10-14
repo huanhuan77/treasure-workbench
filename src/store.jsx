@@ -2574,7 +2574,6 @@ const defaultData = {
     { id: 'p_shanguang', name: '珀芙研闪光棒', brand: '珀芙研', category: '护肤', createdAt: Date.now(), copies: shanguangSeed },
     { id: 'p_tuimel', name: '褪黑素', brand: '', category: '保健品', createdAt: Date.now(), copies: tuimelSeed },
     { id: 'p_qingqing', name: '百草园清清片', brand: '百草园', category: '保健品', createdAt: Date.now(), copies: qingqingSeed },
-    { id: 'p_dobo', name: 'DOBO噗噗片', brand: 'DOBO', category: '保健品', createdAt: Date.now(), copies: doboSeed },
     { id: 'p_youmin', name: '珀芙研油敏霜', brand: '珀芙研', category: '护肤', createdAt: Date.now(), copies: youminSeed },
     { id: 'p_runhou', name: '益美滋润喉糖', brand: '益美滋', category: '食品', createdAt: Date.now(), copies: runhouSeed },
     { id: 'p_olly', name: 'olly女维', brand: 'OLLY', category: '保健品', createdAt: Date.now(), copies: ollySeed }
@@ -3182,18 +3181,14 @@ function loadData() {
         }
       }
     } catch(e) { console.warn('[v25迁移] 补充种子文案失败:', e) }
-    // v26 迁移：清空 DOBO噗噗片 的所有文案
+    // v26 迁移：从列表中删除 DOBO噗噗片 整个产品
     try {
       if (savedVersion() === '25') {
-        for (const prod of productsFinal) {
-          if (prod.id === 'p_dobo') {
-            const n = (prod.copies || []).length
-            prod.copies = []
-            console.log('[v26迁移] 清空 DOBO噗噗片 文案', n, '条')
-          }
-        }
+        const before = productsFinal.length
+        productsFinal = productsFinal.filter((p) => p.id !== 'p_dobo')
+        console.log('[v26迁移] 删除 DOBO噗噗片，移除', before - productsFinal.length, '条')
       }
-    } catch(e) { console.warn('[v26迁移] 清空DOBO文案失败:', e) }
+    } catch(e) { console.warn('[v26迁移] 删除DOBO产品失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
