@@ -18,6 +18,7 @@ export function DramaPage() {
   const [statusTab, setStatusTab] = useState('all') // all | want | watching | done | dropped
   const [editId, setEditId] = useState(null)
   const [editName, setEditName] = useState('')
+  const [editType, setEditType] = useState('tv')
 
   const list = dramas || []
   // 旧数据没有 type 字段，默认归为电视剧
@@ -49,12 +50,13 @@ export function DramaPage() {
   const startEdit = (d) => {
     setEditId(d.id)
     setEditName(d.name)
+    setEditType(d.type || 'tv')
   }
 
   const saveEdit = () => {
     const n = editName.trim()
     if (!n) { show('名称不能为空', 'error'); return }
-    updateDrama(editId, { name: n })
+    updateDrama(editId, { name: n, type: editType })
     setEditId(null)
     show('已修改', 'success')
   }
@@ -192,6 +194,18 @@ export function DramaPage() {
                     </>
                   )}
                 </div>
+                {editId === d.id && (
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '8px', marginLeft: '30px' }}>
+                    {[{ key: 'tv', label: '📺 电视剧' }, { key: 'variety', label: '🎬 综艺' }].map((t) => (
+                      <button key={t.key} onClick={() => setEditType(t.key)} style={{
+                        border: 'none', padding: '4px 12px', borderRadius: '8px', fontSize: '12px',
+                        fontWeight: 600, cursor: 'pointer',
+                        color: editType === t.key ? '#fff' : '#888',
+                        background: editType === t.key ? '#ec4899' : 'rgba(0,0,0,0.05)',
+                      }}>{t.label}</button>
+                    ))}
+                  </div>
+                )}
                 <div style={{ display: 'flex', gap: '6px', marginTop: '8px', marginLeft: '30px' }}>
                   {DRAMA_STATUS.map((s) => {
                     const active = (d.status || 'want') === s.key
