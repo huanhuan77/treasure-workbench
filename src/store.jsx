@@ -13,7 +13,7 @@ const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '26'
+const CURRENT_VERSION = '27'
 
 // 自动放弃阈值：同一账号 + 同一产品（一条样品）发布满 N 条视频仍 0 出单 → 自动置为「放弃」并提醒
 export const AUTO_ABANDON_PUBLISH_COUNT = 5
@@ -3208,6 +3208,25 @@ function loadData() {
         }
       }
     } catch(e) { console.warn('[v26] 删除DOBO失败:', e) }
+    // v27：同步湿轻饮文案修改（十一改秋天、删除重复第19条）
+    try {
+      for (const prod of productsFinal) {
+        if (prod.id !== 'p_shiqin' || !Array.isArray(prod.copies)) continue
+        let changed = false
+        // 1) "十一原相机自由" 改成 "秋天原相机自由"
+        for (const c of prod.copies) {
+          if (c.content && c.content.includes('想到十一原相机自由')) {
+            c.content = c.content.replace('想到十一原相机自由', '想到秋天原相机自由')
+            changed = true
+          }
+        }
+        // 2) 删除重复的那条（含"想到十一👗自由"）
+        const before = prod.copies.length
+        prod.copies = prod.copies.filter((c) => !(c.content && c.content.includes('想到十一👗自由')))
+        if (prod.copies.length !== before) changed = true
+        if (changed) console.log('[v27] 同步湿轻饮文案修改')
+      }
+    } catch(e) { console.warn('[v27] 同步湿轻饮失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
