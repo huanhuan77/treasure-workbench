@@ -692,6 +692,24 @@ const shiqinSeed = [
   },
 ]
 
+// 维特健灵湿轻浴（泡脚包）
+const shiqinYuSeed = [
+  // 减肥变美向
+  { "content": "可惜你不懂...", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "红花+防己+干姜+艾草+豆蔻...\n18味中式小草\n简直夯爆了...", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "这个秋天能好好装波大的", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "花十万💅小韩\n不如坚持泡脚一个月\n这不比怕姐还还还？？\n秋天原相机 我来了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "不是泡脚就有用\n选对了\n状态手拿把掐\n18味中式材料\n好东西终于让我用上了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  // 情绪向
+  { "content": "忙完一天才懂\n好好善待自己有多治愈\n不用熬煮不用搭配\n拆开直接泡\n温热感漫上来\n卸下整日疲惫\n简单的睡前仪式感🌙", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "现在对复杂养生没执念\n眼里只惦记睡前泡脚\n每天雷打不动泡一会\n比刷手机还准时\n18味中式材料泡脚包\n好东西就是要分享", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "过日子时代\n好好睡觉\n睡前泡脚\n把自己养好\n比什么都重要", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  // 养生科普向
+  { "content": "泡脚虽好\n会泡更重要\n18味中式小草\n简直夯爆了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "至低成本的内养方式\n就是泡脚\n但是没人会告诉你\n好的泡脚材料怎么选", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "一个养生小知识\n不是泡脚就有用\n选对料才省心\n别再只用清水泡啦\n草本泡脚包\n睡前10分钟，轻松放空\n日常放松小习惯\n在家就能安排", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+]
+
 // 维特健灵祛湿轻：用户整理后内置文案（thumb-up=出单，check=用过；仅末尾标记生效，行内表情保留；末尾 # 行为指定话题
 const weiteSeed = [
   {
@@ -2559,6 +2577,7 @@ const defaultData = {
     { id: 'p_xihu', name: '洁比兔洗护液', brand: '洁比兔', category: '洗护', createdAt: Date.now(), copies: xihuSeed },
     { id: 'p_weite', name: '维特健灵祛湿清', brand: '维特健灵', category: '保健品', createdAt: Date.now(), copies: weiteSeed },
     { id: 'p_shiqin', name: '维特健灵湿轻饮', brand: '维特健灵', category: '保健品', createdAt: Date.now(), copies: shiqinSeed },
+    { id: 'p_shiqinyu', name: '维特健灵湿轻浴', brand: '维特健灵', category: '保健品', createdAt: Date.now(), copies: shiqinYuSeed },
     { id: 'p_coffee', name: 'PH地中海咖啡', brand: 'PH', category: '饮品', createdAt: Date.now(), copies: coffeeSeed },
     { id: 'p_jiemao', name: '植研加睫毛胶水', brand: '植研加', category: '美妆', createdAt: Date.now(), copies: jiemaoSeed },
     { id: 'p_mianmian', name: '绵绵的羊小莓好湿巾', brand: '绵绵的羊', category: '其他', createdAt: Date.now(), copies: mianmianSeed },
