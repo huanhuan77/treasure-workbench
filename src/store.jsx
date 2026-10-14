@@ -693,7 +693,17 @@ const shiqinSeed = [
 ]
 
 // 维特健灵湿轻浴（泡脚包）
-const shiqinYuSeed = []
+const shiqinYuSeed = [
+  { "content": "可惜你不懂…\n红花+防己+干姜+艾草+豆蔻...\n18味中式小草\n简直夯爆了…\n这个十一能好好装波大的", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "花十万✈小韩\n不如坚持泡脚一个月\n这不比帕姐还顶？?\n十一原相机 我来了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "不是泡脚就有用\n选对了\n状态手拿把掐\n18味中式材料\n好东西终于让我用上了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "忙完一天才懂\n好好善待自己有多治愈\n不用熬煮不用搭配\n拆开直接泡\n温热感漫上来\n卸下整日疲惫\n简单的睡前仪式感🌙", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "现在对复杂养生没执念\n眼里只惦记睡前泡脚\n每天雷打不动泡一会\n比刷手机还准时\n18味中式材料泡脚包\n好东西就是要分享", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "过日子时代\n好好睡觉\n睡前泡脚\n把自己养好\n比什么都重要", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#亲测分享"] },
+  { "content": "泡脚虽好\n会泡更重要\n18味中式小草\n简直夯爆了", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "至低成本的内养方式\n就是泡脚\n但是没人会告诉你\n好的泡脚材料怎么选", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+  { "content": "一个养生小知识\n不是泡脚就有用\n选对料才省心\n别再只用清水泡啦\n草本泡脚包\n睡前 10 分钟，轻松放空\n日常放松小习惯\n在家就能安排", "hasOrder": false, "used": false, "topics": ["#维特健灵", "#湿轻浴", "#泡脚", "#养生"] },
+]
 
 // 维特健灵祛湿轻：用户整理后内置文案（thumb-up=出单，check=用过；仅末尾标记生效，行内表情保留；末尾 # 行为指定话题
 const weiteSeed = [
@@ -3223,15 +3233,17 @@ function loadData() {
         }
       }
     } catch(e) { console.warn('[v28] 替换湿轻浴失败:', e) }
-    // v29：清空湿轻浴所有文案
+    // v29：写入湿轻浴直播素材文案
     try {
       for (const prod of productsFinal) {
-        if (prod.id === 'p_shiqinyu' && Array.isArray(prod.copies) && prod.copies.length) {
-          console.log('[v29] 清空湿轻浴文案', prod.copies.length, '条')
-          prod.copies = []
+        if (prod.id !== 'p_shiqinyu') continue
+        const preset = defaultData.products.find((p) => p.id === 'p_shiqinyu')
+        if (preset && Array.isArray(preset.copies)) {
+          prod.copies = preset.copies.map((c) => ({ ...c }))
+          console.log('[v29] 写入湿轻浴文案', prod.copies.length, '条')
         }
       }
-    } catch(e) { console.warn('[v29] 清空湿轻浴失败:', e) }
+    } catch(e) { console.warn('[v29] 写入湿轻浴失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
