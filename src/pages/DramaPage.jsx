@@ -15,13 +15,16 @@ export function DramaPage() {
   const [name, setName] = useState('')
   const [delId, setDelId] = useState(null)
   const [typeTab, setTypeTab] = useState('tv') // tv | variety
+  const [statusTab, setStatusTab] = useState('all') // all | want | watching | done | dropped
 
   const list = dramas || []
   // 旧数据没有 type 字段，默认归为电视剧
-  const typedList = list.map((d) => ({ ...d, type: d.type || 'tv' }))
-  const filtered = typedList.filter((d) => d.type === typeTab)
+  const typedList = list.map((d) => ({ ...d, type: d.type || 'tv', status: d.status || 'want' }))
+  const byType = typedList.filter((d) => d.type === typeTab)
+  const filtered = statusTab === 'all' ? byType : byType.filter((d) => d.status === statusTab)
   const tvCount = typedList.filter((d) => (d.type || 'tv') === 'tv').length
   const varietyCount = typedList.filter((d) => d.type === 'variety').length
+  const statusCount = (s) => byType.filter((d) => d.status === s).length
 
   const handleAdd = () => {
     const n = name.trim()
@@ -71,13 +74,29 @@ export function DramaPage() {
 
       <div style={{ padding: '8px 16px calc(96px + var(--safe-bottom, 0px))' }}>
         {/* 类型 Tab */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
           <button onClick={() => setTypeTab('tv')} style={tabBtn(typeTab === 'tv')}>
             📺 电视剧 ({tvCount})
           </button>
           <button onClick={() => setTypeTab('variety')} style={tabBtn(typeTab === 'variety')}>
             🎬 综艺 ({varietyCount})
           </button>
+        </div>
+
+        {/* 状态筛选 */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '14px', flexWrap: 'wrap' }}>
+          {[{ key: 'all', label: '全部', c: '#666' }, ...DRAMA_STATUS].map((s) => {
+            const active = statusTab === s.key
+            const cnt = s.key === 'all' ? byType.length : statusCount(s.key)
+            return (
+              <button key={s.key} onClick={() => setStatusTab(s.key)} style={{
+                border: 'none', padding: '5px 12px', borderRadius: '999px', fontSize: '12px',
+                fontWeight: 600, cursor: 'pointer',
+                color: active ? '#fff' : s.c || '#888',
+                background: active ? (s.c || '#666') : (s.bg || 'rgba(0,0,0,0.05)'),
+              }}>{s.label} {cnt > 0 && `(${cnt})`}</button>
+            )
+          })}
         </div>
 
         {/* 新增区 */}
