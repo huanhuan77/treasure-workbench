@@ -13,7 +13,7 @@ const StoreContext = createContext(null)
 
 const STORAGE_KEY = 'blogger_workbench_data_v1'
 const VERSION_KEY = 'blogger_workbench_version'
-const CURRENT_VERSION = '24'
+const CURRENT_VERSION = '25'
 
 // 自动放弃阈值：同一账号 + 同一产品（一条样品）发布满 N 条视频仍 0 出单 → 自动置为「放弃」并提醒
 export const AUTO_ABANDON_PUBLISH_COUNT = 5
@@ -3293,6 +3293,25 @@ function loadData() {
     try { productsFinal = dedupeProducts(productsFinal) } catch(e) { console.warn('[loadData] 文案去重失败:', e) }
     // 文案标题已废弃：清掉历史数据里的 title 字段（每次加载都过一遍，避免同步把旧 title 带回来）
     productsFinal = stripCopyTitles(productsFinal)
+    // v25 迁移：把种子文案中新增的、用户还没有的文案补进去（按内容去重）
+    try {
+      if (savedVersion() === '24') {
+        const presetMap = new Map(defaultData.products.map((p) => [p.id, p]))
+        for (const prod of productsFinal) {
+          const preset = presetMap.get(prod.id)
+          if (!preset || !Array.isArray(preset.copies)) continue
+          const existingContents = new Set((prod.copies || []).map((c) => (c.content || '').trim()))
+          const toAdd = preset.copies.filter((sc) => {
+            const t = (sc.content || '').trim()
+            return t && !existingContents.has(t)
+          })
+          if (toAdd.length) {
+            prod.copies = [...(prod.copies || []), ...toAdd]
+            console.log('[v25迁移] 为产品', prod.name, '补充了', toAdd.length, '条新文案')
+          }
+        }
+      }
+    } catch(e) { console.warn('[v25迁移] 补充种子文案失败:', e) }
     // 样品、攒钱等数据在下方通过合并逻辑保留用户数据，不再因版本升级写入种子默认值
     // savingsData 合并逻辑在下方统一处理：种子目标 + 用户实际数据叠加，不清除用户数据
     localStorage.setItem(VERSION_KEY, CURRENT_VERSION)
