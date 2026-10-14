@@ -16,6 +16,9 @@ export function DramaPage() {
   const [delId, setDelId] = useState(null)
   const [typeTab, setTypeTab] = useState('tv') // tv | variety
   const [statusTab, setStatusTab] = useState('all') // all | want | watching | done | dropped
+  const [addType, setAddType] = useState('tv') // 新增时选的类型
+  const [editId, setEditId] = useState(null)
+  const [editName, setEditName] = useState('')
 
   const list = dramas || []
   // 旧数据没有 type 字段，默认归为电视剧
@@ -29,11 +32,11 @@ export function DramaPage() {
   const handleAdd = () => {
     const n = name.trim()
     if (!n) { show('请输入名称', 'error'); return }
-    if (filtered.some((d) => (d.name || '').trim() === n)) {
+    if (typedList.some((d) => (d.name || '').trim() === n)) {
       show('这部已经在列表里了', 'error')
       return
     }
-    addDrama({ name: n, type: typeTab })
+    addDrama({ name: n, type: addType })
     setName('')
     show('已加入', 'success')
   }
@@ -42,6 +45,19 @@ export function DramaPage() {
     deleteDrama(delId)
     setDelId(null)
     show('已删除', 'success')
+  }
+
+  const startEdit = (d) => {
+    setEditId(d.id)
+    setEditName(d.name)
+  }
+
+  const saveEdit = () => {
+    const n = editName.trim()
+    if (!n) { show('名称不能为空', 'error'); return }
+    updateDrama(editId, { name: n })
+    setEditId(null)
+    show('已修改', 'success')
   }
 
   const tabBtn = (active) => ({
@@ -101,12 +117,25 @@ export function DramaPage() {
 
         {/* 新增区 */}
         <div style={{ ...glassStyle, padding: '14px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+            {[
+              { key: 'tv', label: '📺 电视剧' },
+              { key: 'variety', label: '🎬 综艺' },
+            ].map((t) => (
+              <button key={t.key} onClick={() => setAddType(t.key)} style={{
+                flex: 1, border: 'none', padding: '7px 0', borderRadius: '8px',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                color: addType === t.key ? '#fff' : '#888',
+                background: addType === t.key ? '#ec4899' : 'rgba(0,0,0,0.05)',
+              }}>{t.label}</button>
+            ))}
+          </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-              placeholder={typeTab === 'tv' ? '输入剧名，如：狂飙' : '输入综艺名，如：奔跑吧'}
+              placeholder={addType === 'tv' ? '输入剧名，如：狂飙' : '输入综艺名，如：奔跑吧'}
               style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box',
                 border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
@@ -137,11 +166,45 @@ export function DramaPage() {
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ flexShrink: 0, fontSize: '12px', color: '#c9a3ab', fontWeight: 600, width: '20px' }}>{i + 1}</span>
-                  <span style={{ flex: 1, minWidth: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
-                  <button onClick={() => setDelId(d.id)} style={{
-                    flexShrink: 0, border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',
-                    width: '26px', height: '26px', borderRadius: '50%', fontSize: '14px', lineHeight: 1, cursor: 'pointer',
-                  }}>×</button>
+                  {editId === d.id ? (
+                    <input
+                      autoFocus
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditId(null) }}
+                      style={{
+                        flex: 1, minWidth: 0, boxSizing: 'border-box',
+                        border: '1px solid #ec4899', borderRadius: '8px',
+                        padding: '4px 10px', fontSize: '15px', color: 'var(--text-main)',
+                        outline: 'none',
+                      }}
+                    />
+                  ) : (
+                    <span style={{ flex: 1, minWidth: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</span>
+                  )}
+                  {editId === d.id ? (
+                    <>
+                      <button onClick={saveEdit} style={{
+                        flexShrink: 0, border: 'none', background: '#ec4899', color: '#fff',
+                        width: '28px', height: '28px', borderRadius: '50%', fontSize: '13px', cursor: 'pointer',
+                      }}>✓</button>
+                      <button onClick={() => setEditId(null)} style={{
+                        flexShrink: 0, border: 'none', background: 'rgba(0,0,0,0.06)', color: '#888',
+                        width: '28px', height: '28px', borderRadius: '50%', fontSize: '13px', cursor: 'pointer',
+                      }}>✕</button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => startEdit(d)} style={{
+                        flexShrink: 0, border: 'none', background: 'rgba(99,102,241,0.10)', color: '#6366f1',
+                        width: '26px', height: '26px', borderRadius: '50%', fontSize: '12px', cursor: 'pointer',
+                      }}>✏️</button>
+                      <button onClick={() => setDelId(d.id)} style={{
+                        flexShrink: 0, border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',
+                        width: '26px', height: '26px', borderRadius: '50%', fontSize: '14px', lineHeight: 1, cursor: 'pointer',
+                      }}>×</button>
+                    </>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: '6px', marginTop: '8px', marginLeft: '30px' }}>
                   {DRAMA_STATUS.map((s) => {
