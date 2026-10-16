@@ -32,6 +32,7 @@ const sideTabs = [
   { to: '/savings', label: '攒钱计划', icon: '🐷' },
   { to: '/investment', label: '投资跟踪', icon: '📈' },
   { to: '/sensitive', label: '违禁词', icon: '🚫' },
+  { to: '/inspiration', label: '灵感搜索', icon: '🔍' },
 ]
 
 function TabItem({ to, label, Icon, end, onClick, badge }) {

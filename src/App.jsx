@@ -37,6 +37,7 @@ import { NewPublishRecordPage } from './pages/NewPublishRecordPage'
 import { PublishRecordsPage } from './pages/PublishRecordsPage'
 import { PublishRemindersPage } from './pages/PublishRemindersPage'
 import { NewOrderPage } from './pages/NewOrderPage'
+import { InspirationPage } from './pages/InspirationPage'
 import { KeepAliveRoutes } from './components/KeepAliveRoutes'
 
 // 路由表（data 形式，供 KeepAliveRoutes 内的 useRoutes 使用）
@@ -75,6 +76,7 @@ const routes = [
   { path: '/finance/new', element: <NewTransactionPage /> },
   { path: '/finance/edit/:id', element: <EditTransactionPage /> },
   { path: '/product/:id', element: <ProductDetailPage /> },
+  { path: '/inspiration', element: <InspirationPage /> },
 ]
 
 // 启动强制落地「总览」：忽略 URL 里的 hash（#/reading 等），每次进来都从 / 开始。
