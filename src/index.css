@@ -154,13 +154,15 @@ a {
   padding-bottom: calc(76px + var(--safe-bottom));
 }
 
-/* 桌面端：居中手机框 */
+/* 桌面端：居中手机框，带圆角阴影 */
 @media (min-width: 481px) {
   .app-container {
-    margin: 0 auto;
-    min-height: 100vh;
-    min-height: 100dvh;
-    max-width: 480px;
+    margin: 20px auto;
+    min-height: calc(100vh - 40px);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(244, 114, 182, 0.18);
+    border: 1px solid rgba(255,255,255,0.6);
   }
 }
 
@@ -203,7 +205,7 @@ a {
     border-radius: 0;
   }
   .app-container.dash-sticky-page .dash-sticky-bar {
-    top: var(--safe-top, 0px);
+    top: calc(20px + var(--safe-top, 0px));
   }
 }
 
