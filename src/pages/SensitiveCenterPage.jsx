@@ -169,7 +169,7 @@ const WORD_LIB = [
 // 排序：长词优先匹配，同级按字母
 const SORTED_LIB = [...WORD_LIB].sort((a, b) => b.w.length - a.w.length || a.w.localeCompare(b.w))
 
-function scanText(text, extraWords = []) {
+export function scanText(text, extraWords = []) {
   const allWords = [...SORTED_LIB, ...extraWords.map(w => ({ w, cat: '自定义', level: 1, hint: '' }))]
   const found = []
   const checked = new Set()

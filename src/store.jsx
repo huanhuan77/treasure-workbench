@@ -4045,10 +4045,22 @@ export function StoreProvider({ children }) {
     const gistId = localStorage.getItem('backup_gist_id')
     // 延迟执行：setData 后 useEffect 才异步写入 localStorage，
     // 立即同步会读到旧数据（含已删除文案），导致删除"复活"。
-    setTimeout(() => {
-      syncAll(token.trim(), gistId, { forcePush: true }).catch((e) => {
+    setTimeout(async () => {
+      // 两步走，避免「强制推送」把另一台设备这期间的新改动冲掉：
+      // ① 先做一次普通同步（拉云端 → 逐条合并 → 写回），把别的设备的改动并进来。
+      //    删除不会因此复活 —— deleteCopy 已经 recordDelete 写了墓碑，
+      //    合并规则是「修改晚于删除才保留」，墓碑会拦住被删的那条。
+      // ② 再强制推送：此时本地已是「云端 ∪ 本地」的并集，推回去不会丢任何人的改动。
+      try {
+        await syncAll(token.trim(), gistId)
+      } catch (e) {
+        console.warn('[forceSync] 删除后先合并失败（继续强制推送）:', e.message)
+      }
+      try {
+        await syncAll(token.trim(), gistId, { forcePush: true })
+      } catch (e) {
         console.warn('[forceSync] 删除后强制同步失败:', e.message)
-      })
+      }
     }, 150)
   }, [])
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ConfirmModal, glassStyle } from '../components/Modal'
+import { CATEGORY_STYLE, getIconInfo, displayTitle } from '../utils/productDisplay'
 import {
   DndContext, PointerSensor, TouchSensor, useSensor, useSensors, closestCenter,
 } from '@dnd-kit/core'
@@ -14,47 +15,8 @@ import { CSS } from '@dnd-kit/utilities'
 // 产品分类（供添加时选择）
 const CATEGORIES = ['保健品', '美妆', '护肤', '洗护', '日用', '饮品', '食品', '其他']
 
-// 每个分类一个固定颜色 + 第一字作为图标文字
-const CATEGORY_STYLE = {
-  '保健品': { bg: '#d1fae5', color: '#059669' },  // 绿
-  '护肤':   { bg: '#fce7f3', color: '#ec4899' },  // 粉
-  '美妆':   { bg: '#fee2e2', color: '#dc2626' },  // 红
-  '饮品':   { bg: '#ffedd5', color: '#c2410c' },  // 橙
-  '食品':   { bg: '#fef3c7', color: '#d97706' },  // 黄
-  '洗护':   { bg: '#dbeafe', color: '#3b82f6' },  // 蓝
-  '日用':   { bg: '#ede9fe', color: '#7c3aed' },  // 紫
-  '其他':   { bg: '#f3f4f6', color: '#6b7280' },  // 灰
-}
-
-// 根据产品分类返回图标（显示分类缩写 + 配色）
-const CAT_SHORT = {
-  '保健品': '保健',
-  '护肤':   '护肤',
-  '美妆':   '美妆',
-  '饮品':   '饮品',
-  '食品':   '食品',
-  '洗护':   '洗护',
-  '日用':   '日用',
-  '其他':   '其他',
-}
-function getIconInfo(name, category) {
-  const style = CATEGORY_STYLE[category] || CATEGORY_STYLE['其他']
-  return { text: CAT_SHORT[category] || (category || '?').slice(0, 2), ...style }
-}
-
-// 品牌名 + 产品名 拼接显示（避免品牌重复，如「珀芙研冷膜」）
-// 产品列表显示名：固定「品牌名 产品名」（前面品牌，后面产品）
-function displayTitle(p) {
-  const brand = (p.brand || '').trim()
-  const name = (p.name || '').trim()
-  if (!brand) return name
-  let core = name
-  if (name.toLowerCase().startsWith(brand.toLowerCase())) {
-    core = name.slice(brand.length).trim()
-  }
-  if (!core) core = name
-  return `${brand} ${core}`
-}
+// 分类配色 / 分类图标 / 产品显示名 的实现已抽到 utils/productDisplay.js，
+// 手机版与 PC 版共用同一份（这里保留本页自己的 CATEGORIES 顺序，不动筛选条排列）
 
 // 产品卡片视觉层：左滑编辑/删除
 function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, handle, swipedId, setSwipedId }) {

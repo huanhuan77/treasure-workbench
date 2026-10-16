@@ -27,6 +27,17 @@ class ErrorBoundary extends Component {
 
 const BUILD_ID_KEY = 'app_build_id'
 
+// 一次性清理：灵感搜索功能已下线，把它的本地数据一并删掉（用户确认「连本地数据一起清」）。
+// 必须用标记位保证只执行一次 —— 否则以后若重新上线该功能，每次启动都会把新数据抹掉。
+// 云端那份由 utils/sync.js 的 SYNC_KEYS 摘掉该键后，下次同步即随之覆盖。
+const INSPIRATION_CLEAN_FLAG = 'cleanup_inspiration_removed_v1'
+try {
+  if (!localStorage.getItem(INSPIRATION_CLEAN_FLAG)) {
+    localStorage.removeItem('blogger_inspiration_v1')
+    localStorage.setItem(INSPIRATION_CLEAN_FLAG, '1')
+  }
+} catch (e) { /* 隐私模式等场景忽略 */ }
+
 // 检测构建版本，若与本地不一致则强制硬刷新以加载最新资源
 // force=true 时即使版本一致也提示用户结果（供「检查更新」按钮调用）
 export async function checkForUpdate(force = false) {

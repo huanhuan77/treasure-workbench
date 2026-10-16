@@ -258,6 +258,12 @@ a {
     padding-left: var(--sidebar-w);
   }
 
+  /* 进 PC 版（/pc）时要把上面这条内边距取消，否则 PC 壳会被整体推右 232px。
+     PcShell 挂载时给 body 加 pcv-mode、卸载时移除，所以只影响 /pc 路由。 */
+  body.pcv-mode #root {
+    padding-left: 0;
+  }
+
   /* ② 容器：去掉手机壳（圆角 / 阴影 / 边框），放宽到 1280px 并在剩余区域内居中 */
   .app-container {
     max-width: 1280px;
@@ -383,6 +389,12 @@ a {
   display: none;
 }
 
+/* 提醒中心的紧凑表格：只有桌面端才渲染（手机端继续用原来的卡片列表），
+   所以这里默认整体隐藏，避免手机端多出一份 DOM。 */
+.pc-table {
+  display: none;
+}
+
 @media (min-width: 768px) {
   .pc-stats {
     display: grid;
@@ -414,5 +426,83 @@ a {
     font-weight: 800;
     line-height: 1.1;
     color: #1a1a1a;
+  }
+
+  /* ⑧ 提醒中心：按账号分组 + 紧凑表格。
+     行高 42px（原来卡片约 90px 且每条塞两颗按钮），
+     一屏能看到 15 条以上，紧急程度靠中列色标横向对齐比较。 */
+  .pc-table {
+    display: block;
+  }
+  .pc-tgroup {
+    margin-bottom: 18px;
+  }
+  .pc-tgroup-head {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 4px 8px;
+  }
+  .pc-tgroup-name {
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .pc-tgroup-count {
+    font-size: 12px;
+    color: #8a8f98;
+  }
+  .pc-tcard {
+    background: #fff;
+    border: 0.5px solid rgba(15, 23, 42, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .pc-thead,
+  .pc-trow {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) 112px minmax(0, 1.2fr) 176px;
+    gap: 12px;
+    align-items: center;
+    padding: 0 14px;
+  }
+  .pc-thead {
+    height: 34px;
+    font-size: 12px;
+    color: #8a8f98;
+    background: #fafbfc;
+    border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
+  }
+  .pc-trow {
+    min-height: 42px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    border-top: 0.5px solid rgba(15, 23, 42, 0.06);
+  }
+  /* 表头下第一行不再重复画分隔线（表头自己已有下边框） */
+  .pc-thead + .pc-trow {
+    border-top: none;
+  }
+  .pc-trow:hover {
+    background: #fafbfc;
+  }
+  .pc-tname {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .pc-tmid {
+    min-width: 0;
+  }
+  .pc-tacts {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .pc-tright {
+    text-align: right;
   }
 }

@@ -1,0 +1,740 @@
+/* ══════════════════════════════════════════════════════════════════
+   PC 版（/pc）专用样式
+   — 只服务 src/pc 下的页面，类名统一 pcv- 前缀，与 index.css 里
+     给手机版页面打补丁的 .pc-* 类完全隔离，互不影响。
+   — 这套是「桌面专用」：PcShell 会在 <768px 时把用户送回手机版，
+     所以这里不需要写媒体查询。
+   ══════════════════════════════════════════════════════════════════ */
+
+.pcv-root {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+  background: #f1f2f4;
+  color: #333a45;
+}
+
+/* ── 左侧导航 ─────────────────────────────────────────────── */
+.pcv-side {
+  flex: 0 0 232px;
+  width: 232px;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-right: 0.5px solid rgba(15, 23, 42, 0.08);
+}
+
+.pcv-brand {
+  padding: 18px 18px 12px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  /* 品牌区淡粉底（用户要的是背景粉，不是文字粉）。
+     比选中项那块 #fbeaf2 再深一档：两者同色会让「品牌头」和「当前选中」
+     糊成一片，分不出层次。 */
+  background: #f8dcea;
+  color: #b8517f;
+}
+
+.pcv-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 10px 12px;
+}
+
+.pcv-navitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* 行高：原来 8px 上下内边距（行高约 36px），太挤；去掉分隔线后靠留白区分，
+     所以把内边距加到 12px（行高约 44px）。 */
+  padding: 12px;
+  margin-bottom: 2px;
+  border-radius: 10px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.pcv-navitem:hover {
+  background: #f6f7f9;
+}
+.pcv-navitem.on {
+  background: #fbeaf2;
+  color: #b8517f;
+  font-weight: 700;
+}
+
+/* 导航项图标：主 5 项是线性 SVG（比 emoji 略小一号），其余是 emoji。
+   给两者同一个宽度，保证文字左边线对齐。 */
+.pcv-navicon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pcv-navicon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pcv-navemoji {
+  width: 22px;
+  /* 高度必须和 .pcv-navicon 一样，否则带 emoji 的行会比带 SVG 的行矮，整列参差 */
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+}
+
+/* 数量角标（样品未处理数）：用淡粉，与整页的浅色调一致 */
+.pcv-navcount {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fbeaf2;
+  color: #b8517f;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 导航项不分隔线：靠行高与 spacing 区分（用户要求去掉横线、把行高加高） */
+
+.pcv-sidefoot {
+  padding: 12px;
+  border-top: 0.5px solid rgba(15, 23, 42, 0.08);
+}
+
+/* ── 右侧主区 ─────────────────────────────────────────────── */
+.pcv-main {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pcv-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 28px;
+  background: #fff;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
+}
+
+.pcv-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.pcv-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.pcv-spacer {
+  flex: 1;
+}
+
+.pcv-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 28px 40px;
+}
+
+/* 需要「整屏不滚、内部各栏自己滚」的页面（文案库那种左右分栏）：
+   外壳已经是 100dvh + overflow:hidden，这里把 body 也让出滚动权，
+   交给下面各栏自己的 .pcv-scrollbody。 */
+.pcv-body--fill {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px 28px 28px;
+}
+.pcv-body--fill > * {
+  flex: 0 0 auto;
+}
+.pcv-body--fill > .pcv-split {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+/* ── 通用块 ───────────────────────────────────────────────── */
+.pcv-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.pcv-metric {
+  background: #fff;
+  border: 0.5px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.pcv-metric-label {
+  font-size: 12px;
+  color: #8a8f98;
+}
+.pcv-metric-value {
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #333a45;
+}
+
+/* 单列堆叠。
+   总览原本是 1fr / 1.7fr 双列，但「待办」空的时候左列会留一大片死空白，
+   而 62 条的提醒表反被挤在右列。主次反了，所以改成单列，让提醒表吃满宽度。 */
+.pcv-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 待办为空时的一行提示，不要撑成一个大空块 */
+.pcv-inline-empty {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* 待办条目在宽屏下自动分列，避免一条短待办拉满整行、后面全是空白 */
+.pcv-todogrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+.pcv-todogrid .pcv-copyitem {
+  border-top: none;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.05);
+}
+
+.pcv-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.pcv-card {
+  background: #fff;
+  border: 0.5px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* 卡片自己滚（卡内滚动），配合卡头 sticky：
+   --scroll 让卡片成为滚动容器，卡头吸在卡片顶部不跟着滚。 */
+.pcv-card--scroll {
+  overflow-y: auto;
+}
+.pcv-card--scroll > .pcv-card-h {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+}
+
+.pcv-card-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pcv-card-b {
+  padding: 12px 14px;
+}
+
+/* ── 表格 ─────────────────────────────────────────────────── */
+/* 字号规范（共 3 档，不要再加第 4 档；单元格里也不要写 inline fontSize）：
+     表头                             12px / #94a3b8
+     单元格正文（名字/日期/账号/数字）  13px ← 继承 .pcv-table td
+     次要说明（已过期 N 天、该账号已发） 12px
+     标签 chip / 角标                 11px ← .pcv-chip / .pcv-count / .pcv-flag
+   之前五张表混了 11/12/13 三档且日期列被单独写成 12，跟邻列对不齐。 */
+.pcv-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pcv-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 9px 14px;
+  background: #fafbfc;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.pcv-table td {
+  padding: 9px 14px;
+  border-top: 0.5px solid rgba(15, 23, 42, 0.05);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.pcv-table tbody tr:hover td {
+  background: #fafbfc;
+}
+
+.pcv-table tbody tr.on td {
+  background: #fdf2f8;
+}
+
+.pcv-name {
+  font-weight: 600;
+  color: #333a45;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 产品单元格：分类图标 + 名称。图标与手机版 ProductCard 同款
+   （浅底 + 分类色 + 两字缩写），只是按表格行高缩小了一号。
+   省略号放在内层文字上 —— 外层是 flex，直接给 td 写 ellipsis 不生效。 */
+.pcv-namecell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.pcv-nametext {
+  /* display:block 不能少：样品表里它是 <td> 的直接子元素（inline 元素上
+     overflow/text-overflow 不生效，省略号出不来）；在文案库的 flex 里
+     blockify 后本来也是 block，等于无影响。 */
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pcv-caticon {
+  width: 30px;
+  height: 26px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  flex-shrink: 0;
+}
+
+.pcv-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 表格单元格一律左对齐（用户要求「列表列文字内容都靠左显示」），
+   原来的 .pcv-right 右对齐已全部移除。 */
+
+/* 账号分组小标题（提醒中心按账号分段） */
+.pcv-grouphead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.pcv-grouphead span:last-child {
+  font-size: 11px;
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+/* ── 控件 ─────────────────────────────────────────────────── */
+.pcv-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: #ee8fb6;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pcv-btn:hover {
+  background: #e57fa9;
+}
+
+.pcv-btn-ghost {
+  background: #fff;
+  border: 0.5px solid rgba(15, 23, 42, 0.10);
+  color: #6b7280;
+}
+.pcv-btn-ghost:hover {
+  background: #f6f7f9;
+  border-color: rgba(15, 23, 42, 0.24);
+}
+
+.pcv-btn-text {
+  padding: 5px 2px;
+  border: none;
+  background: none;
+  color: #8a8f98;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pcv-btn-text:hover {
+  color: #6b7280;
+}
+
+/* 行内的小圆删除按钮（发布记录/出单明细里的 ×） */
+.pcv-x {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(185, 106, 102, 0.10);
+  color: #b96a66;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.pcv-x:hover {
+  background: rgba(185, 106, 102, 0.18);
+}
+
+.pcv-input {
+  padding: 7px 12px;
+  border: 0.5px solid rgba(15, 23, 42, 0.14);
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+}
+.pcv-input:focus {
+  border-color: #ee8fb6;
+  box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.14);
+}
+
+.pcv-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* 分段控件（Tab 切换）。
+   原来用下划线式 Tab，但 tab 的 border-bottom 贴在文字下面、跟卡片表头的
+   分隔线错开一截，看着像一条浮着的线没收口；数字又和标题同色紧挨着，读起来
+   是「发布提醒21」连成一句。改成灰底轨道 + 白色选中块 + 数量气泡。 */
+.pcv-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background: #f1f2f4;
+  border-radius: 10px;
+}
+
+.pcv-seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pcv-seg button:hover {
+  color: #334155;
+}
+.pcv-seg button.on {
+  background: #fff;
+  color: #b8517f;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.pcv-count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #eceef2;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.pcv-seg button.on .pcv-count {
+  background: #fbeaf2;
+  color: #b8517f;
+}
+
+.pcv-accountbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
+}
+.pcv-accountbar button {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pcv-accountbar button.on {
+  border-color: #f2cbdd;
+  background: #fdf1f6;
+  color: #b8517f;
+}
+
+.pcv-empty {
+  padding: 36px 14px;
+  text-align: center;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* ── 对话框（PC 版弹窗，如产品新增/编辑）────────────────────── */
+.pcv-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.28);
+}
+.pcv-dialog {
+  width: 100%;
+  max-width: 520px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+.pcv-dialog-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
+  font-size: 14px;
+  font-weight: 700;
+}
+.pcv-dialog-x {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9aa0a9;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.pcv-dialog-x:hover {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+.pcv-dialog-b {
+  padding: 18px;
+  overflow-y: auto;
+}
+.pcv-dialog-f {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 0.5px solid rgba(15, 23, 42, 0.06);
+  background: #fafbfc;
+}
+
+/* ── 表单（PC 版产品表单）────────────────────────────────── */
+.pcv-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+/* 「从样品库选名称」展开后的候选区 */
+.pcv-picker {
+  margin-top: 8px;
+  padding: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+  background: #fafbfc;
+  border: 0.5px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 分类单选：与账号筛选条同一套「白底描边 / 选中淡粉」 */
+.pcv-catpick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pcv-catpick button {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pcv-catpick button:hover {
+  border-color: rgba(15, 23, 42, 0.24);
+}
+.pcv-catpick button.on {
+  border-color: #f2cbdd;
+  background: #fdf1f6;
+  color: #b8517f;
+}
+
+.pcv-formfoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 0.5px solid rgba(15, 23, 42, 0.06);
+  background: #fafbfc;
+}
+
+/* ── 文案库：左表右详情 ───────────────────────────────────── */
+/* 左栏（产品表）固定上限 520px、右栏（文案）吃掉剩余宽度：
+   产品表本身只要 518px（210+88+90+130），给太宽只会留一片空白，
+   还把右边的文案栏推远。用户明确要求「左边区域小一点、文案往左移」。 */
+.pcv-split {
+  display: grid;
+  grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* 左右分栏之间的拖动条：默认只有一条几乎看不见的竖线，hover/拖动时才显形。
+   分栏改为三列（左固定px / 拖动条 / 右 1fr）后 gap 交给这条自己，见 PcProducts 的内联样式。 */
+.pcv-split-handle {
+  align-self: stretch;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+}
+.pcv-split-handle::before {
+  content: '';
+  width: 3px;
+  height: 100%;
+  border-radius: 3px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+.pcv-split-handle:hover::before,
+.pcv-split-handle.dragging::before {
+  background: rgba(15, 23, 42, 0.14);
+}
+
+/* 撑满剩余高度、两栏各自滚动。
+   grid-template-rows 用 minmax(0, 1fr)：否则隐式行高由内容决定，
+   内容一长就把容器顶开、滚动条又跑回整页去了。 */
+.pcv-split--fill {
+  align-items: stretch;
+  grid-template-rows: minmax(0, 1fr);
+}
+.pcv-split--fill > * {
+  min-height: 0;
+}
+
+.pcv-copyitem {
+  padding: 10px 14px;
+  border-top: 0.5px solid rgba(15, 23, 42, 0.05);
+}
+.pcv-copyitem:first-child {
+  border-top: none;
+}
+.pcv-copyitem:hover {
+  background: #fafbfc;
+}
+
+.pcv-copytext {
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  color: #334155;
+}
+
+.pcv-copyfoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* 文案的状态标记（出单 / 爆单 / 用过）：默认中性描边，选中时由内联样式换成浅底色 */
+.pcv-flag {
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 0.5px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #8a8f98;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pcv-flag:hover {
+  border-color: rgba(15, 23, 42, 0.24);
+  color: #6b7280;
+}

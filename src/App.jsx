@@ -37,11 +37,34 @@ import { NewPublishRecordPage } from './pages/NewPublishRecordPage'
 import { PublishRecordsPage } from './pages/PublishRecordsPage'
 import { PublishRemindersPage } from './pages/PublishRemindersPage'
 import { NewOrderPage } from './pages/NewOrderPage'
-import { InspirationPage } from './pages/InspirationPage'
 import { KeepAliveRoutes } from './components/KeepAliveRoutes'
+import { useIsDesktop } from './utils/useIsDesktop'
+import { PcShell } from './pc/PcShell'
+import { PcDashboard } from './pc/pages/PcDashboard'
+import { PcProducts } from './pc/pages/PcProducts'
+import { PcSamples } from './pc/pages/PcSamples'
+import { PcPublishRecords } from './pc/pages/PcPublishRecords'
+import { PcOrders } from './pc/pages/PcOrders'
+import { PcSensitive } from './pc/pages/PcSensitive'
+import { PcTodos } from './pc/pages/PcTodos'
 
 // 路由表（data 形式，供 KeepAliveRoutes 内的 useRoutes 使用）
 const routes = [
+  // PC 版（/pc）：与手机版同源、同 store、同 localStorage，只换一套展示层。
+  // 未迁移的分区先跳回手机版页面（见 PcShell 的 NAV 配置）。
+  {
+    path: '/pc',
+    element: <PcShell />,
+    children: [
+      { index: true, element: <PcDashboard /> },
+      { path: 'products', element: <PcProducts /> },
+      { path: 'samples', element: <PcSamples /> },
+      { path: 'publish-records', element: <PcPublishRecords /> },
+      { path: 'orders', element: <PcOrders /> },
+      { path: 'sensitive', element: <PcSensitive /> },
+      { path: 'todos', element: <PcTodos /> },
+    ],
+  },
   { path: '/', element: <DashboardPage /> },
   { path: '/products', element: <HomePage /> },
   { path: '/samples', element: <SamplesPage /> },
@@ -76,23 +99,41 @@ const routes = [
   { path: '/finance/new', element: <NewTransactionPage /> },
   { path: '/finance/edit/:id', element: <EditTransactionPage /> },
   { path: '/product/:id', element: <ProductDetailPage /> },
-  { path: '/inspiration', element: <InspirationPage /> },
 ]
 
-// 启动强制落地「总览」：忽略 URL 里的 hash（#/reading 等），每次进来都从 / 开始。
-// 仅首次挂载时执行一次，不干扰应用内正常导航。
+// 本次会话是否明确选择了手机版（点过 PC 版里的「切回手机版」）
+function mobileForced() {
+  try { return sessionStorage.getItem('pc_force_mobile') === '1' } catch (e) { return false }
+}
+
+// 启动落地：桌面宽度首次访问直接进 PC 版；手机版则强制落地「总览」，
+// 忽略 URL 里的 hash（#/reading 等）。仅首次挂载执行一次，不干扰应用内导航。
 function LaunchRedirect() {
   const location = useLocation()
   const navigate = useNavigate()
   const done = useRef(false)
+  const isDesktop = useIsDesktop()
   useEffect(() => {
     if (done.current) return
     done.current = true
+    // PC 版有自己的落地逻辑（窄屏会送回手机版），这里不插手
+    if (location.pathname.startsWith('/pc')) return
+    // 桌面宽度进 PC 版。本次会话点过「切回手机版」就不再跳，避免被反复弹回去
+    if (isDesktop && !mobileForced()) {
+      navigate('/pc', { replace: true })
+      return
+    }
     if (location.pathname !== '/') {
       navigate('/', { replace: true })
     }
   }, [])
   return null
+}
+
+// /pc 自带侧边栏，不要再叠一层手机版的底部导航 / 侧边栏
+function MobileOnly({ children }) {
+  const { pathname } = useLocation()
+  return pathname.startsWith('/pc') ? null : children
 }
 
 function App() {
@@ -103,7 +144,9 @@ function App() {
         <HashRouter>
           <LaunchRedirect />
           <KeepAliveRoutes routes={routes} />
-          <BottomNav />
+          <MobileOnly>
+            <BottomNav />
+          </MobileOnly>
         </HashRouter>
       </ToastProvider>
     </StoreProvider>

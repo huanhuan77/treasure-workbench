@@ -9,6 +9,7 @@ import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accou
 import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 import { SampleForm } from '../components/SampleForm'
+import { useIsDesktop } from '../utils/useIsDesktop'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -45,10 +46,96 @@ function thisWeekRange() {
   return [fmtD(new Date(y, m, d - offset)), fmtD(now)]
 }
 
+// ── 桌面端「提醒中心」：按账号分组的紧凑表格 ──────────────────────────
+// 手机端不走这里（继续用原来的卡片列表），由 useIsDesktop 在渲染时切换。
+// 分组口径：一个样品若有多个待处理账号，会在每个账号下各占一行 ——
+// 「补记发布」本来就是按账号逐个补的，这样分组才对应实际操作单位。
+
+const pcChip = {
+  fontSize: '11px', fontWeight: 700, color: '#fff',
+  padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap',
+}
+const pcPrimaryBtn = {
+  padding: '5px 12px', borderRadius: '8px', border: 'none',
+  background: '#ec4899', color: '#fff', fontSize: '12px', fontWeight: 600,
+  cursor: 'pointer', whiteSpace: 'nowrap',
+}
+const pcTextBtn = {
+  padding: '4px 2px', border: 'none', background: 'transparent',
+  color: '#64748b', fontSize: '12px', fontWeight: 600,
+  cursor: 'pointer', whiteSpace: 'nowrap',
+}
+
+function ReminderTable({ items, accountsOf, midHeader, renderMid, renderActions, onlyAccount }) {
+  const groups = []
+  const byAccount = new Map()
+  for (const it of items) {
+    for (const a of accountsOf(it)) {
+      // 上层已按账号筛过 items，这里还要再挡一道：选中某账号时只留该分组，
+      // 否则样品会按自己的全部账号重新散回各组，筛选看起来「没生效」。
+      if (onlyAccount && a !== onlyAccount) continue
+      if (!byAccount.has(a)) {
+        const list = []
+        byAccount.set(a, list)
+        groups.push([a, list])
+      }
+      byAccount.get(a).push(it)
+    }
+  }
+  // 分组顺序跟随全局账号表的顺序，未登记的账号排最后
+  groups.sort((a, b) => {
+    const ia = ACCOUNTS.indexOf(a[0])
+    const ib = ACCOUNTS.indexOf(b[0])
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+  })
+
+  return (
+    <div className="pc-table">
+      {groups.map(([account, list]) => (
+        <div key={account} className="pc-tgroup">
+          <div className="pc-tgroup-head">
+            <span className="pc-tgroup-name" style={{ color: (ACCOUNT_COLOR[account] || {}).c || '#334155' }}>{account}</span>
+            <span className="pc-tgroup-count">{list.length} 个待处理</span>
+          </div>
+          <div className="pc-tcard">
+            <div className="pc-thead">
+              <span>产品</span>
+              <span>状态</span>
+              <span>{midHeader}</span>
+              <span className="pc-tright">操作</span>
+            </div>
+            {list.map((it, i) => {
+              const s = it.sample || it
+              const st = SAMPLE_STATUS[s.status]
+              return (
+                <div key={`${account}-${s.id}-${i}`} className="pc-trow">
+                  <span className="pc-tname" title={s.name}>{s.name}</span>
+                  <span>
+                    {st && (
+                      <span style={{
+                        fontSize: '11px', padding: '1px 6px', borderRadius: '6px',
+                        color: st.color, background: st.bg, fontWeight: 600, whiteSpace: 'nowrap',
+                      }}>{st.icon} {st.label}</span>
+                    )}
+                  </span>
+                  <span className="pc-tmid">{renderMid(it, account)}</span>
+                  <span className="pc-tacts">{renderActions(it)}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function DashboardPage() {
   const navigate = useNavigate()
   const { samples, transactions, orders, publishRecords, todos, updateSample } = useStore()
   const { show } = useToast()
+  // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
+  const isDesktop = useIsDesktop()
 
   // 手动检查更新（主屏幕应用无刷新入口，检测到新版本时硬刷新加载）
   useEffect(() => {
@@ -617,6 +704,31 @@ export function DashboardPage() {
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   {remindAccount === 'all' ? '暂无需要发布提醒的样品' : `${remindAccount} 没有需要发布提醒的样品`}
                 </div>
+              ) : isDesktop ? (
+                <ReminderTable
+                  items={fReminders}
+                  onlyAccount={remindAccount === 'all' ? '' : remindAccount}
+                  accountsOf={(s) => { const p = pendingAccounts(s); return p.length ? p : getAccounts(s) }}
+                  midHeader="未发布天数"
+                  renderMid={(s, account) => {
+                    const days = daysSincePublishByAccount(s, account)
+                    const overdue = s.status !== 'published' && isOverdue(s)
+                    return (
+                      <span style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        {overdue && <span style={{ ...pcChip, background: '#ef4444' }}>⚠ 已逾期（截止 {s.deadline}）</span>}
+                        <span style={{ ...pcChip, background: '#f59e0b' }}>
+                          {days === Infinity ? '从未发布过视频' : `已 ${days} 天没发`}
+                        </span>
+                      </span>
+                    )
+                  }}
+                  renderActions={(s) => (
+                    <>
+                      <button style={pcPrimaryBtn} onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })}>补记发布</button>
+                      <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
+                    </>
+                  )}
+                />
               ) : (
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fReminders.map((s) => {
@@ -680,6 +792,30 @@ export function DashboardPage() {
                     ? `暂无发布不足 ${LOW_PUBLISH_LIMIT} 条的样品`
                     : `${remindAccount} 没有发布不足 ${LOW_PUBLISH_LIMIT} 条的样品`}
                 </div>
+              ) : isDesktop ? (
+                <ReminderTable
+                  items={fLowPublish}
+                  onlyAccount={remindAccount === 'all' ? '' : remindAccount}
+                  accountsOf={(it) => it.accounts.map((x) => x.account)}
+                  midHeader="还差条数"
+                  renderMid={(it, account) => {
+                    const row = it.accounts.find((x) => x.account === account)
+                    return (
+                      <span style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ ...pcChip, background: '#8b5cf6' }}>还差 {it.minLack} 条</span>
+                        <span style={{ fontSize: '11px', color: '#8a8f98', whiteSpace: 'nowrap' }}>
+                          该账号已发 {row ? row.publishCount : 0} 条
+                        </span>
+                      </span>
+                    )
+                  }}
+                  renderActions={(it) => (
+                    <>
+                      <button style={pcPrimaryBtn} onClick={() => navigate('/publish-record/new', { state: { sampleId: it.sample.id, accounts: it.accounts.map((x) => x.account) } })}>补发布</button>
+                      <button style={pcTextBtn} onClick={() => setEditingSample(it.sample)}>调整状态</button>
+                    </>
+                  )}
+                />
               ) : (
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {/* 条目粒度是**样品**，判定也是**按样品合计**：
@@ -737,6 +873,25 @@ export function DashboardPage() {
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
                   {remindAccount === 'all' ? `近 ${EXPIRING_DAYS} 天没有即将到期的样品` : `${remindAccount} 没有即将到期的样品`}
                 </div>
+              ) : isDesktop ? (
+                <ReminderTable
+                  items={fExpiring}
+                  onlyAccount={remindAccount === 'all' ? '' : remindAccount}
+                  accountsOf={(s) => getAccounts(s)}
+                  midHeader="截止时间"
+                  renderMid={(s) => {
+                    const du = daysUntil(s.deadline)
+                    const overdue = du !== null && du < 0
+                    const text = overdue
+                      ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
+                      : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
+                    const color = overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
+                    return <span style={{ fontSize: '12px', fontWeight: 600, color }}>{text}</span>
+                  }}
+                  renderActions={(s) => (
+                    <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
+                  )}
+                />
               ) : (
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {fExpiring.map((s) => {

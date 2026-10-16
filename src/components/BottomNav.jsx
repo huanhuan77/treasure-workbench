@@ -1,15 +1,9 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-
-// 简单线性图标（SVG，跟随文字颜色）
-const iconProps = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
-const HomeIcon = () => (<svg {...iconProps}><path d="M3 10.5 12 3l9 7.5" /><path d="M5.5 9.5V21h13V9.5" /><path d="M10 21v-5h4v5" /></svg>)
-const PenIcon = () => (<svg {...iconProps}><path d="M4 20l1-4L16.5 4.5a2.12 2.12 0 0 1 3 3L8 19l-4 1Z" /><path d="M14.5 6.5l3 3" /></svg>)
-const TagIcon = () => (<svg {...iconProps}><path d="M20.6 12.4 12.4 20.6a2 2 0 0 1-2.8 0l-6.2-6.2a2 2 0 0 1-.6-1.4V5.2a2 2 0 0 1 2-2h7.8a2 2 0 0 1 1.4.6l6.6 6.6a2 2 0 0 1 0 2Z" /><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none" /></svg>)
-const MoneyIcon = () => (<svg {...iconProps}><circle cx="12" cy="12" r="9" /><path d="M12 7v10" /><path d="M14.6 9.6c-.5-.8-1.5-1.2-2.6-1.2-1.4 0-2.5.9-2.5 2s1.1 2 2.5 2 2.5.9 2.5 2-1.1 2-2.5 2c-1.1 0-2.1-.4-2.6-1.2" /></svg>)
-const MoreIcon = () => (<svg {...iconProps}><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none" /></svg>)
-const VideoIcon = () => (<svg {...iconProps}><rect x="3" y="6" width="14" height="12" rx="2" /><path d="M17 10l4-2v8l-4-2" /></svg>)
+import { useIsDesktop } from '../utils/useIsDesktop'
+// 线性图标已抽到 components/navIcons（PC 版侧边栏共用同一批）
+import { HomeIcon, PenIcon, TagIcon, MoneyIcon, MoreIcon, VideoIcon } from './navIcons'
 
 // 底部主 tab（5 个核心功能 + 更多）：按用户要求把「视频发布记录」独立出来，不再藏在「更多」里
 const mainTabs = [
@@ -32,28 +26,9 @@ const sideTabs = [
   { to: '/savings', label: '攒钱计划', icon: '🐷' },
   { to: '/investment', label: '投资跟踪', icon: '📈' },
   { to: '/sensitive', label: '违禁词', icon: '🚫' },
-  { to: '/inspiration', label: '灵感搜索', icon: '🔍' },
 ]
 
-// 桌面端断点：≥768px 改成左侧边栏导航，<768px 保持底部导航 + 「更多」抽屉。
-// 必须与 index.css 里 @media (min-width: 768px) 的布局块保持一致，
-// 否则会出现「导航是侧边栏、内容还是手机宽度」的错位。
-const DESKTOP_QUERY = '(min-width: 768px)'
-
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(DESKTOP_QUERY).matches,
-  )
-  useEffect(() => {
-    const mq = window.matchMedia(DESKTOP_QUERY)
-    const onChange = (e) => setIsDesktop(e.matches)
-    setIsDesktop(mq.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
-  return isDesktop
-}
-
+// 桌面端断点判断已抽到 utils/useIsDesktop（总览页的提醒表格也要用同一份判断）
 function TabItem({ to, label, Icon, end, onClick, badge }) {
   return (
     <NavLink
@@ -173,6 +148,12 @@ function SideItem({ to, label, Icon, end, badge, emoji }) {
 // 低于抽屉（200+）、全屏弹窗（2000+）和 Toast（9999），
 // 这样储蓄抽屉等从左侧滑出的浮层仍能盖住它。
 function DesktopSidebar({ badgeFor }) {
+  const navigate = useNavigate()
+  // 用户进过 PC 版（PcShell 会打这个标记）：点到还没迁移的手机版页面时，
+  // 给一个回 PC 版的入口，否则只能用浏览器后退键，很容易「迷路在手机版里」。
+  let fromPc = false
+  try { fromPc = sessionStorage.getItem('pc_mode_visited') === '1' } catch (e) { /* 隐私模式忽略 */ }
+
   return (
     <aside
       style={{
@@ -194,6 +175,19 @@ function DesktopSidebar({ badgeFor }) {
           📝 宝藏工作台
         </div>
       </div>
+
+      {fromPc && (
+        <div style={{ padding: '0 12px 8px', flexShrink: 0 }}>
+          <button
+            onClick={() => navigate('/pc')}
+            className="pcv-navitem"
+            style={{ width: '100%', border: 'none', background: '#fbeaf2', color: '#b8517f', fontWeight: 700, cursor: 'pointer' }}
+          >
+            <span className="pcv-navemoji">←</span>
+            <span>返回 PC 版</span>
+          </button>
+        </div>
+      )}
 
       <nav style={{ flex: 1, overflowY: 'auto', padding: '6px 12px 20px' }}>
         {mainTabs.map(({ Icon, ...tab }) => (
