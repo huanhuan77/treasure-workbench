@@ -121,7 +121,7 @@ export function PublishRecordsPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', color: '#1a1a1a', display: 'flex', flexDirection: 'column' }}>
-      <header style={{ padding: 'calc(12px + var(--safe-top)) 16px 6px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
+      <header className="pc-header" style={{ padding: 'calc(12px + var(--safe-top)) 16px 6px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
         <button onClick={() => navigate(-1)} style={{
           width: '38px', height: '38px', borderRadius: '50%', border: 'none',
           background: 'rgba(244,114,182,0.12)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0,
@@ -195,14 +195,14 @@ export function PublishRecordsPage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', padding: '10px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div className="pc-list" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', padding: '10px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {groups.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🎬</div>
             <p style={{ fontSize: '14px', margin: 0 }}>{records.length === 0 ? '暂无发布记录' : '当前筛选下暂无记录'}</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {groups.map((g) => {
               const isOpen = expanded === g.key
               const n = g.records.length            // 该产品在该账号下发布了几次
@@ -228,6 +228,7 @@ export function PublishRecordsPage() {
                 <div
                   key={g.key}
                   onClick={() => { if (canExpand) setExpanded(isOpen ? '' : g.key) }}
+                  className="pc-card"
                   style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px', cursor: canExpand ? 'pointer' : 'default' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

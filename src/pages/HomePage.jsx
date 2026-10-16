@@ -75,6 +75,7 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
         onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
         onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === p.id ? null : p.id) } }}
         onClick={() => { if (!isSwiped) navigate(`/product/${p.id}`) }}
+        className="pc-card"
         style={{
           ...glassStyle, position: 'relative', padding: '11px 12px', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: '9px',
@@ -265,7 +266,7 @@ export function HomePage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
-      <header style={{
+      <header className="pc-header" style={{
         padding: 'calc(16px + var(--safe-top)) 16px 6px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px',
         flexShrink: 0,
@@ -324,14 +325,14 @@ export function HomePage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {!active ? (
           products.length === 0 ? (
             emptyGlass('📭', '还没有产品', '点击下方 + 添加你的第一个产品')
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={displayedList.map((p) => p.id)} strategy={verticalListSortingStrategy}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {displayedList.map((p) => (
                     <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
                   ))}
@@ -342,7 +343,7 @@ export function HomePage() {
         ) : displayedList.length === 0 ? (
           emptyGlass('🔍', keyword ? `没有找到「${search.trim()}」` : `「${categoryFilter}」分类下暂无产品`, '换个筛选条件试试')
         ) : (
-          <div className="product-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="product-grid pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {displayedList.map((p) => (
               <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
             ))}

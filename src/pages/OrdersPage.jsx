@@ -194,7 +194,7 @@ export function OrdersPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'transparent', color: 'var(--text-main)', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: 'calc(12px + var(--safe-top)) 16px 6px', borderBottom: '1px solid rgba(244,114,182,0.12)', flexShrink: 0 }}>
+      <div className="pc-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: 'calc(12px + var(--safe-top)) 16px 6px', borderBottom: '1px solid rgba(244,114,182,0.12)', flexShrink: 0 }}>
         <button onClick={() => navigate('/')} style={{
           width: '38px', height: '38px', borderRadius: '50%', border: 'none',
           background: 'rgba(244,114,182,0.12)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0,
@@ -259,7 +259,7 @@ export function OrdersPage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {filtered.length === 0 ? (
           orders.length === 0 ? (
             <button onClick={openAdd} style={{
@@ -281,10 +281,10 @@ export function OrdersPage() {
           )
         ) : (
           /* 按产品聚合的产品卡：大字累计出单量，点卡片展开每天明细 */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {groups.map((g) => {
               return (
-                <div key={g.name} style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(244,114,182,0.12)', background: '#fff' }}>
+                <div key={g.name} className="pc-card" style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(244,114,182,0.12)', background: '#fff' }}>
                   {/* 卡片头：品名 + 笔数（点击查看该产品的出单记录） */}
                   <button onClick={() => setActiveName(g.name)} style={{
                     width: '100%', display: 'flex', alignItems: 'center', gap: '10px',

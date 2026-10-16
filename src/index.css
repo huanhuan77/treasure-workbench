@@ -49,6 +49,10 @@
      且只在此处定义（不是 .app-container 的局部变量）。 */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
+
+  /* 桌面端左侧边栏宽度（≥768px 的布局用）。BottomNav 的侧边栏宽度、
+     以及浮层避让工具类都读这一个值，改这里即可整体缩放。 */
+  --sidebar-w: 232px;
 }
 
 * {
@@ -238,4 +242,177 @@ a {
 @media (width <= 340px) {
   .dashTabMid { display: none; }
   .dashTabShort { display: inline-block; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   桌面端布局（≥768px）：左侧边栏导航 + 宽内容区
+   768px 以下（含 481~767px 的「居中手机框」）完全不受影响。
+   做法只有三步，页面自身的 inline 样式一律不动：
+     ① #root 让出侧边栏宽度 → ② .app-container 在剩余区域内居中并放宽
+     → ③ 修正 scroll-lock 页高度 / 吸顶位置，再给 fixed 浮层加工具类避让。
+   ════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  /* ① 让出侧边栏：in-flow 内容整体右移。fixed 浮层不受祖先 padding 影响，
+        需要避让的由下面的工具类处理。 */
+  #root {
+    padding-left: var(--sidebar-w);
+  }
+
+  /* ② 容器：去掉手机壳（圆角 / 阴影 / 边框），放宽到 1280px 并在剩余区域内居中 */
+  .app-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    padding-left: 32px;
+    padding-right: 32px;
+    /* 桌面没有底部导航，去掉手机端那 76px 的留白 */
+    padding-bottom: 40px;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  /* ③ 顶部固定 + 列表独立滚动的页面：容器高度 = 视口高度。
+        桌面端容器没有 20px 上下外边距，不能再扣 40px，否则底部空一条。
+        注意这里必须同时把 padding-bottom 归零，否则会压过上面的 40px。 */
+  .scroll-lock-page {
+    height: 100dvh;
+    padding-bottom: 0;
+  }
+
+  /* ④ 吸顶栏：容器已无上外边距，直接贴视口顶（+ 安全区），不用再补 20px */
+  .app-container.dash-sticky-page .dash-sticky-bar {
+    top: var(--safe-top, 0px);
+  }
+
+  /* ⑤ fixed 浮层避让。这些元素原本以「整个视口」为参照居中/铺满，
+        加了侧边栏后会被压在导航下面或整屏拉宽，用工具类把它们对齐到内容区。 */
+
+  /* 与 .app-container 同宽同位：页面顶部固定条（如投资跟踪 Header） */
+  .app-fixed-content {
+    left: var(--sidebar-w) !important;
+    right: 0 !important;
+    max-width: 1280px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* 只在内容区内水平居中，保留元素自身的 max-width（底部确认栏 / 日历弹层） */
+  .app-fixed-narrow {
+    left: var(--sidebar-w) !important;
+    right: 0 !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* 底部弹层没有自己的 max-width，宽屏上会拉成一整条，这里限宽 */
+  .app-sheet-cap {
+    max-width: 720px !important;
+  }
+
+  /* Toast 用的是 left:50% + translateX(-50%)，保持该思路，
+     只把中心点右移半个侧边栏，使其对齐内容区中线。 */
+  .app-toast {
+    left: calc(50% + var(--sidebar-w) / 2) !important;
+  }
+
+  /* ⑥ PC 工作台版式：把原本「一列堆叠」的卡片列表改成自适应多列网格。
+         用 auto-fill + minmax(340px, 1fr)：容器越宽列数越多
+         （1280px 内容区约 3 列，1000px 左右 2 列），不用逐个写断点。
+         只覆盖 display，gap 仍用各页 inline 的 flex gap（grid 同样吃 gap），
+         所以每页原有的疏密程度不变。
+         该规则在 ≥768px 才生效，手机端 100% 不受影响。 */
+  .pc-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    align-items: start;
+  }
+  /* 网格项默认 min-width: auto，长标题/长账号标签会把列撑破，统一放开 */
+  .pc-grid > * {
+    min-width: 0;
+  }
+
+  /* 列表滚动容器底部那 88px 是给手机底部导航让位的，桌面端没有底部导航，
+     收到 32px 即可，否则每个列表滚到底都会多出一大截空白。 */
+  .pc-list {
+    padding-bottom: 32px !important;
+  }
+
+  /* ⑦ PC 工作台视觉基调 —— 中性浅灰底 + 白卡片 + 发丝描边，粉色退为强调色。
+        以下规则全部只在 ≥768px 生效，手机端的粉渐变观感一点没动。 */
+
+  /* 页面底色：把整屏蜜桃粉渐变换成中性浅灰 */
+  html, body {
+    background: #f1f2f4;
+    background-attachment: scroll;
+  }
+
+  /* 各页把粉渐变写在 .app-container 的 inline style 上，这里统一抹掉让灰色底透出来 */
+  .app-container {
+    background: transparent !important;
+  }
+
+  /* 顶部工具栏：白底 + 发丝线。用 border-bottom-color + !important 是为了
+     既能给没有描边的页面（文案库/样品）补上分隔线，又能把已有粉描边改成中性色。 */
+  .pc-header {
+    background: #fff !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    border-bottom-color: rgba(15, 23, 42, 0.08) !important;
+    padding: 14px 24px !important;
+  }
+
+  /* 卡片：去粉投影、加发丝描边。不动圆角 —— 左滑卡的内层卡片被外层
+     overflow:hidden 按 8px 裁切，改圆角会露出直角，等以后一起处理。
+     border-color 用 !important 是为了压掉各页 inline 的粉描边
+     （#fce7ec / #ece3e6 / rgba(244,114,182,0.12)），它们只是装饰色，没有语义。 */
+  .pc-card {
+    background: #fff !important;
+    box-shadow: none !important;
+    border: 0.5px solid rgba(15, 23, 42, 0.08);
+    border-color: rgba(15, 23, 42, 0.08) !important;
+    transition: border-color 0.15s ease;
+  }
+  .pc-card:hover {
+    border-color: rgba(15, 23, 42, 0.18);
+  }
+}
+
+/* 总览顶部指标条：手机端整体不显示，只在桌面端由下面的媒体查询打开 */
+.pc-stats {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .pc-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    padding: 16px 24px 0;
+  }
+  .pc-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+    background: #fff;
+    border: 0.5px solid rgba(15, 23, 42, 0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .pc-stat:hover {
+    border-color: rgba(15, 23, 42, 0.18);
+  }
+  .pc-stat-label {
+    font-size: 12px;
+    color: #8a8f98;
+  }
+  .pc-stat-value {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #1a1a1a;
+  }
 }

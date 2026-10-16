@@ -55,6 +55,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 70 }} />
       <div
+        className="app-fixed-narrow app-sheet-cap"
         style={{
           position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 71,
           background: '#fff', borderRadius: '20px 20px 0 0',

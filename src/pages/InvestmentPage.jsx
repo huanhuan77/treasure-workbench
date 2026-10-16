@@ -494,7 +494,7 @@ export function InvestmentPage() {
       )}
       {/* 顶部 Header */}
       {/* 顶部固定区域：Header + Tab，不随页面滚动 */}
-      <div style={{
+      <div className="app-fixed-content" style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
         background: '#f8fafc',
         maxWidth: '480px', margin: '0 auto',

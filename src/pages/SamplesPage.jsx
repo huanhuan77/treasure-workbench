@@ -195,7 +195,7 @@ export function SamplesPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 20px 10px', flexShrink: 0 }}>
+      <header className="pc-header" style={{ padding: 'calc(16px + var(--safe-top)) 20px 10px', flexShrink: 0 }}>
         {/* 第一行：标题 + 搜索框 + 隐藏账号（搜索框旁边） */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap' }}>样品记录</h1>
@@ -346,14 +346,14 @@ export function SamplesPage() {
       )}
 
       {/* 列表：独立滚动 */}
-      <div ref={listRef} style={{ flex: 1, overflowY: 'auto', padding: '4px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={listRef} className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {accountFiltered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏷️</div>
             <p style={{ fontSize: '14px', margin: 0 }}>暂无样品记录</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {displayed.map((s) => {
                   const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.un_arrived
                   const dl = deadlineDesc(s.deadline)
@@ -532,6 +532,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
           onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
           onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
           onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === s.id ? null : s.id) } }}
+          className="pc-card"
           style={{
             ...glassStyle, padding: '12px 14px 10px', borderLeft: `3px solid #e2e8f0`,
             transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-190px)' : 'translateX(0)',

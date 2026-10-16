@@ -250,7 +250,7 @@ export function DashboardPage() {
 
   return (
     <div className="app-container dash-sticky-page" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', minHeight: '100vh', color: '#1a1a1a' }}>
-      <header style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', background: 'transparent', borderBottom: '1px solid rgba(236,72,153,0.12)' }}>
+      <header className="pc-header" style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', background: 'transparent', borderBottom: '1px solid rgba(236,72,153,0.12)' }}>
         <p style={{ margin: 0, fontSize: '13px', color: '#b3888f' }}>{greeting()} · {todayLabel}</p>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px' }}>工作台总览</h1>
@@ -275,11 +275,27 @@ export function DashboardPage() {
         </div>
       </header>
 
+      {/* PC 工作台：顶部指标条。手机端整体隐藏（.pc-stats 默认 display:none），
+          只在 ≥768px 由 index.css 打开成四列网格，所以手机端布局完全不受影响。 */}
+      <div className="pc-stats">
+        {[
+          { label: '样品总数', value: samples.length, to: '/samples' },
+          { label: '待办未完成', value: todoUndone, to: '/todos' },
+          { label: '发布提醒', value: remindTotal, to: '/publish-reminders' },
+          { label: '出单记录', value: orders.length, to: '/orders' },
+        ].map((m) => (
+          <button key={m.label} className="pc-stat" onClick={() => go(m.to)}>
+            <span className="pc-stat-label">{m.label}</span>
+            <span className="pc-stat-value">{m.value}</span>
+          </button>
+        ))}
+      </div>
+
       {/* 收支卡片已移到「更多」侧边栏（/finance），总览不再占位 */}
 
       {/* 待办清单（独立事项池：截止日期可有可无；管理入口 /todos） */}
       <div style={{ padding: '12px 16px 4px' }}>
-        <div style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+        <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           {/* 标题行 */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -602,7 +618,7 @@ export function DashboardPage() {
                   {remindAccount === 'all' ? '暂无需要发布提醒的样品' : `${remindAccount} 没有需要发布提醒的样品`}
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
+                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fReminders.map((s) => {
                     // 只显示还需要发视频的账号（从未发过 / 超 7 天没发）；都发过则显示全部
                     const pending = pendingAccounts(s)
@@ -665,7 +681,7 @@ export function DashboardPage() {
                     : `${remindAccount} 没有发布不足 ${LOW_PUBLISH_LIMIT} 条的样品`}
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {/* 条目粒度是**样品**，判定也是**按样品合计**：
                       卡片里列出各账号的条数分布供参考，标题的「还差 N」按合计算。 */}
                   {fLowPublish.map((it) => {
@@ -722,7 +738,7 @@ export function DashboardPage() {
                   {remindAccount === 'all' ? `近 ${EXPIRING_DAYS} 天没有即将到期的样品` : `${remindAccount} 没有即将到期的样品`}
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {fExpiring.map((s) => {
                     const du = daysUntil(s.deadline)
                     const overdue = du !== null && du < 0

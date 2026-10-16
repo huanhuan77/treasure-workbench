@@ -119,7 +119,7 @@ export function SamplePickerPage({
       </div>
 
       {/* 底部固定确定栏 */}
-      <div style={{
+      <div className="app-fixed-narrow" style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 300,
         maxWidth: '480px', margin: '0 auto',
         padding: '12px 16px calc(14px + var(--safe-bottom))',

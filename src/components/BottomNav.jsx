@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 
@@ -34,6 +34,25 @@ const sideTabs = [
   { to: '/sensitive', label: '违禁词', icon: '🚫' },
   { to: '/inspiration', label: '灵感搜索', icon: '🔍' },
 ]
+
+// 桌面端断点：≥768px 改成左侧边栏导航，<768px 保持底部导航 + 「更多」抽屉。
+// 必须与 index.css 里 @media (min-width: 768px) 的布局块保持一致，
+// 否则会出现「导航是侧边栏、内容还是手机宽度」的错位。
+const DESKTOP_QUERY = '(min-width: 768px)'
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(DESKTOP_QUERY).matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_QUERY)
+    const onChange = (e) => setIsDesktop(e.matches)
+    setIsDesktop(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return isDesktop
+}
 
 function TabItem({ to, label, Icon, end, onClick, badge }) {
   return (
@@ -98,10 +117,106 @@ function TabItem({ to, label, Icon, end, onClick, badge }) {
   )
 }
 
+// 桌面侧边栏条目：整行可点，选中态为淡粉底 + 主色文字。
+// emoji 版用于「更多」里的分类（沿用原抽屉里的 emoji 图标），
+// Icon 版用于主 tab（沿用底部导航的线性图标）。
+function SideItem({ to, label, Icon, end, badge, emoji }) {
+  return (
+    <NavLink
+      to={to}
+      end={end}
+      style={({ isActive }) => ({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '9px 12px',
+        marginBottom: '2px',
+        borderRadius: '10px',
+        textDecoration: 'none',
+        fontSize: '14px',
+        fontWeight: isActive ? 600 : 500,
+        color: isActive ? 'var(--primary)' : 'var(--text-main)',
+        background: isActive ? 'rgba(244, 114, 182, 0.10)' : 'transparent',
+        transition: 'background 0.15s',
+      })}
+    >
+      {({ isActive }) => (
+        <>
+          {emoji ? (
+            <span style={{ width: '20px', textAlign: 'center', fontSize: '16px', flexShrink: 0 }}>{emoji}</span>
+          ) : (
+            <span style={{
+              width: '20px', height: '20px', display: 'block', flexShrink: 0,
+              transform: isActive ? 'scale(1.05)' : 'scale(1)', transition: 'transform 0.2s',
+            }}><Icon /></span>
+          )}
+          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+          {badge > 0 && (
+            <span style={{
+              marginLeft: 'auto',
+              minWidth: '18px', height: '18px', padding: '0 5px',
+              borderRadius: '9px',
+              background: '#ec4899', color: '#fff',
+              fontSize: '10px', fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              lineHeight: 1,
+            }}>{badge > 99 ? '99+' : badge}</span>
+          )}
+        </>
+      )}
+    </NavLink>
+  )
+}
+
+// 桌面端左侧边栏：把底部导航的 5 个主 tab 与「更多」抽屉里的分类合并成一列。
+// z-index 取 100：高于页面内容与页面内吸顶栏（多在 50 上下），
+// 低于抽屉（200+）、全屏弹窗（2000+）和 Toast（9999），
+// 这样储蓄抽屉等从左侧滑出的浮层仍能盖住它。
+function DesktopSidebar({ badgeFor }) {
+  return (
+    <aside
+      style={{
+        position: 'fixed',
+        left: 0, top: 0, bottom: 0,
+        width: 'var(--sidebar-w)',
+        display: 'flex',
+        flexDirection: 'column',
+        background: 'rgba(255, 255, 255, 0.72)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+        borderRight: '1px solid rgba(255, 255, 255, 0.7)',
+        boxShadow: '4px 0 20px rgba(244, 114, 182, 0.06)',
+        zIndex: 100,
+      }}
+    >
+      <div style={{ padding: 'calc(22px + var(--safe-top)) 18px 10px', flexShrink: 0 }}>
+        <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.3px' }}>
+          📝 宝藏工作台
+        </div>
+      </div>
+
+      <nav style={{ flex: 1, overflowY: 'auto', padding: '6px 12px 20px' }}>
+        {mainTabs.map(({ Icon, ...tab }) => (
+          <SideItem key={tab.to} {...tab} Icon={Icon} badge={badgeFor(tab.to)} />
+        ))}
+
+        <div style={{ height: '1px', margin: '10px 12px', background: 'rgba(236, 72, 153, 0.12)' }} />
+        <div style={{ padding: '0 12px 6px', fontSize: '11px', fontWeight: 600, color: 'var(--gray-400)', letterSpacing: '0.5px' }}>
+          更多
+        </div>
+        {sideTabs.map((tab) => (
+          <SideItem key={tab.to} to={tab.to} label={tab.label} emoji={tab.icon} />
+        ))}
+      </nav>
+    </aside>
+  )
+}
+
 export function BottomNav() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const navigate = useNavigate()
   const { samples } = useStore()
+  const isDesktop = useIsDesktop()
 
   // 样品 Tab 角标：未到货 + 已到货未拍摄 + 已拍摄未发布（=未发布的合计，不含已放弃）
   const samplesBadge = useMemo(
@@ -115,6 +230,9 @@ export function BottomNav() {
     navigate(to)
     setSidebarOpen(false)
   }
+
+  // 桌面端：所有分类都在侧边栏里，不需要底部导航和「更多」抽屉
+  if (isDesktop) return <DesktopSidebar badgeFor={getBadge} />
 
   return (
     <>

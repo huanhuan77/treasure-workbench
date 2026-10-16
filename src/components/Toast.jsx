@@ -22,6 +22,7 @@ export function ToastProvider({ children }) {
       {toast && (
         <div
           key={toast.id}
+          className="app-toast"
           style={{
             position: 'fixed',
             top: 'calc(20px + var(--safe-top))',

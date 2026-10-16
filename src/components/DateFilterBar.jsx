@@ -274,7 +274,7 @@ export function DateFilterBar({ value, onChange }) {
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 2147483000,
             background: 'rgba(0,0,0,0.35)',
           }} />
-          <div style={{
+          <div className="app-fixed-narrow" style={{
             position: 'fixed', left: 0, right: 0, bottom: 0, margin: '0 auto', maxWidth: '440px',
             zIndex: 2147483001, height: '82vh', maxHeight: '820px',
             display: 'flex', flexDirection: 'column',
