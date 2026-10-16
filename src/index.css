@@ -154,27 +154,13 @@ a {
   padding-bottom: calc(76px + var(--safe-bottom));
 }
 
-/* 桌面端：放宽容器，去掉手机壳样式 */
+/* 桌面端：居中手机框 */
 @media (min-width: 481px) {
   .app-container {
-    max-width: 1080px;
     margin: 0 auto;
     min-height: 100vh;
     min-height: 100dvh;
-    border-radius: 0;
-    overflow: visible;
-    box-shadow: none;
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-}
-
-/* 产品列表：桌面端两列网格 */
-@media (min-width: 768px) {
-  .product-grid {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    max-width: 480px;
   }
 }
 
