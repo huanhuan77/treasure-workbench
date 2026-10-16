@@ -154,14 +154,27 @@ a {
   padding-bottom: calc(76px + var(--safe-bottom));
 }
 
-/* 桌面端把容器作为"手机"展示 */
+/* 桌面端：放宽容器，去掉手机壳样式 */
 @media (min-width: 481px) {
   .app-container {
-    margin: 20px auto;
-    min-height: calc(100vh - 40px);
-    border-radius: 32px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(244, 114, 182, 0.18);
+    max-width: 1080px;
+    margin: 0 auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    border-radius: 0;
+    overflow: visible;
+    box-shadow: none;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+/* 产品列表：桌面端两列网格 */
+@media (min-width: 768px) {
+  .product-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 }
 
@@ -204,7 +217,7 @@ a {
     border-radius: 0;
   }
   .app-container.dash-sticky-page .dash-sticky-bar {
-    top: calc(20px + var(--safe-top, 0px));
+    top: var(--safe-top, 0px);
   }
 }
 

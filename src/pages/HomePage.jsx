@@ -342,7 +342,7 @@ export function HomePage() {
         ) : displayedList.length === 0 ? (
           emptyGlass('🔍', keyword ? `没有找到「${search.trim()}」` : `「${categoryFilter}」分类下暂无产品`, '换个筛选条件试试')
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="product-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {displayedList.map((p) => (
               <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
             ))}
