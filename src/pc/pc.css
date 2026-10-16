@@ -128,10 +128,20 @@
 .pcv-bar {
   display: flex;
   align-items: center;
+  /* 用户要求：标题组 + 右侧控件组当成一整块在顶栏里居中，左右留白相等。
+     原来是靠 .pcv-spacer 撑开、两组分贴左右两端。 */
+  justify-content: center;
   gap: 12px;
   padding: 14px 28px;
   background: #fff;
   border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
+}
+
+/* 顶栏里的占位符不再「吃掉剩余宽度」——吃掉就会把两组顶到两端，就不是整组居中了。
+   改成一个固定间隔，保证标题和控件之间仍有呼吸感（12 + 24 + 12 ≈ 48px）。
+   注意只覆盖 .pcv-bar 的直接子级：弹窗底栏、卡头里的 .pcv-spacer 仍要 flex:1 撑开。 */
+.pcv-bar > .pcv-spacer {
+  flex: 0 0 24px;
 }
 
 .pcv-title {
@@ -163,7 +173,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 20px 28px 28px;
+  /* 顶部只留 10px：这类页紧跟着就是筛选条（.pcv-accountbar 自己还有 padding），
+     原来 20px 会在顶栏和筛选条之间留出一条明显的空白带（用户反馈「距离小一点」）。
+     底部 28px 不动，那是表格滚动区到窗口底的呼吸感。 */
+  padding: 10px 28px 28px;
 }
 .pcv-body--fill > * {
   flex: 0 0 auto;
@@ -219,13 +232,12 @@
 }
 
 /* 待办条目在宽屏下自动分列，避免一条短待办拉满整行、后面全是空白 */
+/* 待办清单：竖排一列（用户要求）。
+   原来用 auto-fill 多列网格，条数少时右侧空一大片、扫读还要横着跳。
+   改成一列后边框回归 .pcv-copyitem 的默认规则（上边框分隔、首条无上边框），
+   所以这里不再覆写 border。 */
 .pcv-todogrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-}
-.pcv-todogrid .pcv-copyitem {
-  border-top: none;
-  border-bottom: 0.5px solid rgba(15, 23, 42, 0.05);
+  display: block;
 }
 
 .pcv-cols {
@@ -490,6 +502,21 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
+/* 带状态色的分段控件（样品页的状态筛选，配色在 PcSamples 的 SEG_TONE）。
+   每档默认就把颜色标在文字上（沿用用户对账号列的要求：颜色标到文字上、不要圆点），
+   选中时再补同色浅底 + 描边。
+   这里显式给一条 1px 边框：分段控件挂在 .pcv-accountbar 里，会继承那边的浅灰描边，
+   选中时只换描边**颜色**、不改宽度，所以点一下不会让整条轨道跳动（实测四档高度都是 26px）。 */
+.pcv-seg--tone button {
+  border: 1px solid transparent;
+}
+/* 说明：状态色是用行内 style 打在按钮上的，行内样式优先级高于
+   `.pcv-seg button:hover { color: #334155 }`，所以 hover 不会把状态色盖掉，这里不用再管。 */
+.pcv-seg--tone button.on .pcv-count {
+  background: rgba(255, 255, 255, 0.78);
+  color: inherit;
+}
+
 .pcv-count {
   min-width: 20px;
   padding: 0 6px;
@@ -528,6 +555,16 @@
   border-color: #f2cbdd;
   background: #fdf1f6;
   color: #b8517f;
+}
+
+/* 排序按钮组：紧跟在账号筛选右边（用户要求「往左边靠」）。
+   原来这组是拿 .pcv-spacer 顶到筛选条最右端的，中间空一大片还要横着找。
+   给一个左间距把两组拉开一点，免得读成一长串同类按钮。 */
+.pcv-sortgrp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 14px;
 }
 
 .pcv-empty {
@@ -652,6 +689,63 @@
   background: #fafbfc;
 }
 
+/* ── 话题（文案库右栏话题行 + 话题管理弹窗共用）───────────────
+   颜色沿用手机版的产品话题色（淡紫），不是随手挑的：
+   两端看到同一个话题应该是同一个观感。底色很浅，不违反「浅色系」。 */
+.pcv-topic {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #f5f2fd;
+  border: 0.5px solid rgba(124, 58, 237, 0.16);
+  color: #6d4bc4;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pcv-topic button {
+  border: none;
+  background: transparent;
+  color: #a99ccc;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0 1px;
+  cursor: pointer;
+}
+.pcv-topic button:hover {
+  color: #6d4bc4;
+}
+.pcv-topic button.ok {
+  color: #5f8a74;
+  font-weight: 700;
+}
+.pcv-topic button.danger:hover {
+  color: #b96a66;
+}
+/* 改名时嵌进 chip 里的输入框：去掉边框，看起来像原地编辑 */
+.pcv-topic-edit {
+  width: 96px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #6d4bc4;
+  padding: 0;
+}
+
+/* 右栏卡头下方的话题行（常驻，不 sticky） */
+.pcv-topicrow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 9px 14px;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
+}
+
 /* ── 文案库：左表右详情 ───────────────────────────────────── */
 /* 左栏（产品表）固定上限 520px、右栏（文案）吃掉剩余宽度：
    产品表本身只要 518px（210+88+90+130），给太宽只会留一片空白，
@@ -737,4 +831,10 @@
 .pcv-flag:hover {
   border-color: rgba(15, 23, 42, 0.24);
   color: #6b7280;
+}
+/* 样品库候选里「就是当前这个名称」的那条（产品新增弹窗） */
+.pcv-flag.on {
+  border-color: #f2cbdd;
+  background: #fdf1f6;
+  color: #b8517f;
 }

@@ -35,6 +35,20 @@ const SORT_OPTIONS = [
   { key: 'deadline', label: '截止日期', defaultDir: 'asc' },
 ]
 
+// 状态筛选分段控件的每档配色（用户要求「加点颜色区分」）。
+// 色相沿用手机版 SAMPLE_STATUS（同一个状态两端同一个观感），但**文字色统一压深一档** ——
+// 手机版那几个（#94a3b8 / #9ca3af）当白底文字对比度不够。
+// 表现方式：未选中就把颜色标在**文字**上，选中了再补一层同色浅底 + 描边。
+// 不另加色点 —— 用户对账号列讲过「不要圆点，颜色标记到账号上」，同一套偏好。
+const SEG_TONE = {
+  all: { c: '#b8517f', bg: '#fdf1f6', bd: '#f2cbdd' },        // 全部 = 品牌粉
+  un_arrived: { c: '#5d7a99', bg: '#eef2f6', bd: '#dae3ec' },  // 未到货 = 蓝灰
+  arrived: { c: '#b1702c', bg: '#faf1e3', bd: '#f0dfc2' },     // 未拍 = 琥珀
+  shot: { c: '#2f7f96', bg: '#e9f3f6', bd: '#d1e5ec' },        // 已拍未发 = 青
+  published: { c: '#4f8a68', bg: '#eef4ef', bd: '#d7e6dd' },   // 已发布 = 绿
+  abandoned: { c: '#8a8f98', bg: '#f4f5f7', bd: '#e4e6ea' },   // 已放弃 = 中性灰
+}
+
 // PC 版样品记录。
 // 数据口径全部复用 utils/sampleStatus 与 utils/helpers，与手机版同一套判定，
 // 这里只把「卡片 + 一堆彩色标签」重排成「筛选条 + 紧凑表格」。
@@ -142,17 +156,30 @@ export function PcSamples() {
       <div className="pcv-body pcv-body--fill">
         {/* 状态筛选：分段控件 + 数量气泡，口径与手机版的状态分组卡一致 */}
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
-          <div className="pcv-seg">
-            <button className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>
+          <div className="pcv-seg pcv-seg--tone">
+            <button
+              className={filter === 'all' ? 'on' : ''}
+              style={{ color: SEG_TONE.all.c, ...(filter === 'all' ? { background: SEG_TONE.all.bg, borderColor: SEG_TONE.all.bd } : {}) }}
+              onClick={() => setFilter('all')}
+            >
               <span>全部</span>
               <span className="pcv-count">{totalCount}</span>
             </button>
-            {SAMPLE_STATUS_LIST.map((s) => (
-              <button key={s.key} className={filter === s.key ? 'on' : ''} onClick={() => setFilter(s.key)}>
-                <span>{s.label}</span>
-                <span className="pcv-count">{statusStats[s.key] || 0}</span>
-              </button>
-            ))}
+            {SAMPLE_STATUS_LIST.map((s) => {
+              const t = SEG_TONE[s.key] || SEG_TONE.abandoned
+              const on = filter === s.key
+              return (
+                <button
+                  key={s.key}
+                  className={on ? 'on' : ''}
+                  style={{ color: t.c, ...(on ? { background: t.bg, borderColor: t.bd } : {}) }}
+                  onClick={() => setFilter(s.key)}
+                >
+                  <span>{s.label}</span>
+                  <span className="pcv-count">{statusStats[s.key] || 0}</span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -162,13 +189,15 @@ export function PcSamples() {
           {usedAccounts.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
           ))}
-          <div className="pcv-spacer" />
-          {SORT_OPTIONS.map((o) => (
-            <button key={o.key} className={sortKey === o.key ? 'on' : ''} onClick={() => pickSort(o)}>
-              {o.label}
-              {sortKey === o.key && o.key !== 'custom' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-            </button>
-          ))}
+          {/* 排序组紧靠账号筛选右边，不再用 spacer 顶到最右（用户要求「往左边靠」） */}
+          <div className="pcv-sortgrp">
+            {SORT_OPTIONS.map((o) => (
+              <button key={o.key} className={sortKey === o.key ? 'on' : ''} onClick={() => pickSort(o)}>
+                {o.label}
+                {sortKey === o.key && o.key !== 'custom' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
@@ -237,7 +266,11 @@ export function PcSamples() {
                     </td>
                     <td>
                       <span style={{ color: s.deadline ? '#4b5563' : '#c9cdd4' }}>{s.deadline || '未设置'}</span>
-                      {dl && (
+                      {/* 只有未发布才显示「过期 N 天 / 剩 N 天」：已发布的样品截止日已经没有提醒意义，
+                          一片红字反而盖住真正要跟进的那几条。日期本身保留（列名就叫「截止日期」）。
+                          口径与手机版 SamplesPage 完全一致：已发布 + 已放弃 都不显示
+                          （手机版那边的注释也是「截止日对这两类已无意义」）。 */}
+                      {dl && top !== 'published' && top !== 'abandoned' && (
                         <span style={{ marginLeft: 6, fontSize: 12, color: dl.includes('过期') ? '#b96a66' : '#9aa0a9' }}>{dl}</span>
                       )}
                     </td>
@@ -256,7 +289,7 @@ export function PcSamples() {
         </div>
       </div>
 
-      {/* 新增/编辑样品：弹窗（复用手机版 SampleForm），不跳页面 */}
+      {/* 新增/编辑样品：弹窗（PC 版外壳，见 components/SampleDialog），不跳页面 */}
       {sampleDialog !== undefined && (
         <SampleDialog sample={sampleDialog} onClose={() => setSampleDialog(undefined)} />
       )}

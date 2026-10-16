@@ -159,10 +159,12 @@ export function PcPublishRecords() {
           {accountOptions.map((a) => (
             <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{a}</button>
           ))}
-          <div className="pcv-spacer" />
-          {SORTS.map((s) => (
-            <button key={s.key} className={sortKey === s.key ? 'on' : ''} onClick={() => setSortKey(s.key)}>{s.label}</button>
-          ))}
+          {/* 排序组紧靠账号筛选右边，不再用 spacer 顶到最右（与样品页统一） */}
+          <div className="pcv-sortgrp">
+            {SORTS.map((s) => (
+              <button key={s.key} className={sortKey === s.key ? 'on' : ''} onClick={() => setSortKey(s.key)}>{s.label}</button>
+            ))}
+          </div>
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>

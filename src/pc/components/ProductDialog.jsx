@@ -22,7 +22,10 @@ export function ProductDialog({ editing, onClose }) {
   // 用 key 在打开时重建组件，避免残留上一个产品的输入
   const [name, setName] = useState(product?.name || '')
   const [category, setCategory] = useState(product?.category || '')
-  const [showPicker, setShowPicker] = useState(false)
+  // 样品库候选的关键字。原来这里是个「从样品库选名称」的折叠开关 ——
+  // 展开后三十多个名字平铺、只能靠眼睛扫，用户反馈「一点都不方便」。
+  // 改成候选常驻 + 一个独立搜索框：搜到就能点，不用先展开再肉眼找。
+  const [pickKw, setPickKw] = useState('')
   const [delOpen, setDelOpen] = useState(false)
 
   const sampleOptions = (() => {
@@ -32,6 +35,12 @@ export function ProductDialog({ editing, onClose }) {
     }
     return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
   })()
+
+  // 候选按关键字过滤（不分大小写，按中文名匹配）
+  const pickKwTrim = pickKw.trim().toLowerCase()
+  const pickedOptions = pickKwTrim
+    ? sampleOptions.filter((n) => n.toLowerCase().includes(pickKwTrim))
+    : sampleOptions
 
   if (!open) return null
 
@@ -78,19 +87,41 @@ export function ProductDialog({ editing, onClose }) {
 
             {isNew && (
               <>
-                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <button className="pcv-btn pcv-btn-ghost" onClick={() => setShowPicker((v) => !v)}>
-                    {showPicker ? '收起样品库' : '从样品库选名称'}
-                  </button>
-                  <span style={{ fontSize: 12, color: '#9aa0a9' }}>或直接手动输入</span>
+                <div className="pcv-field-label" style={{ marginTop: 16 }}>
+                  从样品库选名称
+                  <span style={{ fontWeight: 400, color: '#9aa0a9', marginLeft: 6 }}>
+                    （共 {sampleOptions.length} 个 · 也可以直接在上面手动输入）
+                  </span>
                 </div>
-                {showPicker && (
-                  <div className="pcv-picker">
-                    {sampleOptions.length === 0 ? (
-                      <span style={{ fontSize: 12, color: '#9aa0a9' }}>样品库暂无非放弃产品</span>
-                    ) : sampleOptions.map((n) => (
-                      <button key={n} className="pcv-flag" onClick={() => { setName(n); setShowPicker(false) }}>{n}</button>
-                    ))}
+                <input
+                  className="pcv-input"
+                  style={{ width: '100%' }}
+                  placeholder="输入几个字筛一下，例如「湿巾」"
+                  value={pickKw}
+                  onChange={(e) => setPickKw(e.target.value)}
+                />
+                <div className="pcv-picker">
+                  {sampleOptions.length === 0 ? (
+                    <span style={{ fontSize: 12, color: '#9aa0a9' }}>样品库暂无非放弃产品</span>
+                  ) : pickedOptions.length === 0 ? (
+                    <span style={{ fontSize: 12, color: '#9aa0a9' }}>
+                      没有匹配「{pickKw.trim()}」的样品 —— 上面直接手动输入这个名字即可
+                    </span>
+                  ) : (
+                    pickedOptions.map((n) => (
+                      <button
+                        key={n}
+                        // 选中当前名称时上色，省得点了哪条自己还要对一遍
+                        className={`pcv-flag${n === name.trim() ? ' on' : ''}`}
+                        // 不再关闭候选区：连选几次改名字时免得反复展开
+                        onClick={() => setName(n)}
+                      >{n}</button>
+                    ))
+                  )}
+                </div>
+                {pickKwTrim && pickedOptions.length > 0 && (
+                  <div style={{ fontSize: 11, color: '#9aa0a9', marginTop: 6 }}>
+                    匹配 {pickedOptions.length} / {sampleOptions.length} 个
                   </div>
                 )}
               </>

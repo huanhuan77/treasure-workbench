@@ -8,6 +8,8 @@ import { CATEGORY_STYLE, displayTitle, getIconInfo } from '../../utils/productDi
 import { copyText as writeClipboard } from '../../utils/clipboard'
 import { ProductDialog } from '../components/ProductDialog'
 import { CopyDialog } from '../components/CopyDialog'
+import { CopyImportDialog } from '../components/CopyImportDialog'
+import { TopicDialog, allTopicTags } from '../components/TopicDialog'
 import { todayStr } from '../../utils/helpers'
 
 // 每条文案的状态标记，与手机版 ProductDetailPage 的 CopyCard 一一对应：
@@ -33,6 +35,9 @@ export function PcProducts() {
   const [editing, setEditing] = useState(null)
   // 文案编辑弹窗：undefined=关闭、文案对象=打开
   const [copyDialog, setCopyDialog] = useState(undefined)
+  // 批量导入文案弹窗 / 话题管理弹窗（用户要求：PC 端都要有，且都不跳页面）
+  const [importOpen, setImportOpen] = useState(false)
+  const [topicOpen, setTopicOpen] = useState(false)
 
   // 左右分栏宽度可拖动（用户要求），并记住上次的宽度。
   // 上下限 320~900：再窄产品表四列会挤到出横向滚动条，再宽右栏就没意义了。
@@ -80,6 +85,17 @@ export function PcProducts() {
   const active = list.find((p) => p.id === activeId) || list[0] || null
 
   const totalCopies = (products || []).reduce((n, p) => n + (p.copies?.length || 0), 0)
+
+  // 话题（产品级 ∪ 所有文案自带，去重、按 # 拆分），与手机版 ProductDetailPage 同口径
+  const topics = active ? allTopicTags(active) : []
+
+  // 复制全部话题：单个 # 前缀 + 空格分隔，与手机版一致
+  const copyAllTopics = () => {
+    if (topics.length === 0) { show('这个产品还没有话题', 'error'); return }
+    writeClipboard(topics.map((t) => '#' + t).join(' ')).then((ok) => {
+      show(ok ? `已复制 ${topics.length} 个话题` : '复制失败', ok ? 'success' : 'error')
+    })
+  }
 
   // 复制：与手机版一致 —— 复制成功即视为「用过」，顺带写 usedDate
   const copyOne = (c) => {
@@ -250,9 +266,28 @@ export function PcProducts() {
                   <div className="pcv-spacer" />
                   <button className="pcv-btn-text" onClick={() => navigate(`/product/${active.id}`)}>打开详情</button>
                   <button className="pcv-btn-text" onClick={() => setEditing(active)}>编辑</button>
+                  {/* 与手机版产品详情页同一组入口：话题管理 + 批量导入文案 */}
+                  <button className="pcv-btn-text" onClick={() => setTopicOpen(true)}>
+                    # 话题{topics.length > 0 ? ` ${topics.length}` : ''}
+                  </button>
+                  <button className="pcv-btn pcv-btn-ghost" onClick={() => setImportOpen(true)}>＋ 新增文案</button>
                 </div>
+
+                {/* 话题行：常驻显示（产品级 ∪ 文案自带，去重），右侧给一个复制全部话题的快捷入口。
+                    不放进 .pcv-card-h 里 —— 那个是 sticky 的，话题多的时候会把列表挤下去。 */}
+                {topics.length > 0 && (
+                  <div className="pcv-topicrow">
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9aa0a9', flexShrink: 0 }}>话题</span>
+                    {topics.map((t, i) => (
+                      <span key={i} className="pcv-topic">{t}</span>
+                    ))}
+                    <button className="pcv-btn-text" style={{ marginLeft: 'auto', flexShrink: 0 }} onClick={copyAllTopics}>
+                      复制全部
+                    </button>
+                  </div>
+                )}
                 {(active.copies || []).length === 0 ? (
-                  <div className="pcv-empty">这个产品还没有文案</div>
+                  <div className="pcv-empty">这个产品还没有文案，点右上角「＋ 新增文案」粘贴一批</div>
                 ) : (
                   (active.copies || []).map((c) => {
                     const bar = c.hasOrder ? '#e3c07e' : c.hasHot ? '#dd9a95' : c.used ? '#9dbecb' : null
@@ -310,6 +345,12 @@ export function PcProducts() {
       {copyDialog !== undefined && (
         <CopyDialog product={active} copy={copyDialog} onClose={() => setCopyDialog(undefined)} />
       )}
+
+      {/* 批量导入文案：弹窗（手机版是 /batch-import 整页，PC 不跳页面） */}
+      {importOpen && active && <CopyImportDialog product={active} onClose={() => setImportOpen(false)} />}
+
+      {/* 话题管理：弹窗 */}
+      {topicOpen && active && <TopicDialog product={active} onClose={() => setTopicOpen(false)} />}
     </>
   )
 }
