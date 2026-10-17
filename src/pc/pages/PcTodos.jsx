@@ -68,10 +68,12 @@ export function PcTodos() {
       <div className="pcv-body">
         {/* 新增：内联一行，回车即添加 */}
         <div className="pcv-card" style={{ marginBottom: 14 }}>
+          {/* 输入行整体靠左：任务输入框不再 flex:1 铺满整行（用户反馈「输入框太长」），
+              固定 420px 上限，日期与按钮紧跟其后 */}
           <div className="pcv-card-b" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <input
               className="pcv-input"
-              style={{ flex: 1, minWidth: 240 }}
+              style={{ flex: '0 1 420px', minWidth: 220, maxWidth: 420 }}
               placeholder="如：联系品牌方寄样"
               value={title}
               onChange={(e) => setTitle(e.target.value)}

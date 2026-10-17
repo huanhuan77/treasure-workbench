@@ -31,6 +31,7 @@ export function PcSavings() {
   // 手机版把年份写死成 '2026'，跨年后就会空白。这里默认取当前年。
   const [year, setYear] = useState(String(new Date().getFullYear()))
   const [editKey, setEditKey] = useState(null)      // 正在编辑的月份 key
+  const [detailKey, setDetailKey] = useState(null)  // 正在查看详情的月份 key（点行打开）
   const [draft, setDraft] = useState({})            // { 账户: 金额字符串 }
   const [addAcct, setAddAcct] = useState('')
 
@@ -143,7 +144,13 @@ export function PcSavings() {
                 const p = t > 0 ? Math.min(100, Math.round((a / t) * 100)) : 0
                 const acctCount = Object.keys(r.details || {}).filter((k) => k !== '_合计').length
                 return (
-                  <tr key={key}>
+                  // 整行可点：打开该月详情（账户明细 + 目标/已存/差额）；「编辑」按钮单独 stopPropagation
+                  <tr
+                    key={key}
+                    onClick={() => setDetailKey(key)}
+                    style={{ cursor: 'pointer' }}
+                    title="点击查看该月详情"
+                  >
                     <td style={{ fontWeight: 600, color: '#78350f' }}>{monthLabel(key)}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -165,7 +172,10 @@ export function PcSavings() {
                     </td>
                     <td style={{ color: acctCount > 0 ? '#6b7280' : '#c9cdd4' }}>{acctCount > 0 ? `${acctCount} 个` : '—'}</td>
                     <td>
-                      <button className="pcv-btn-text" onClick={() => startEdit(key)}>✎ 编辑</button>
+                      <button
+                        className="pcv-btn-text"
+                        onClick={(e) => { e.stopPropagation(); startEdit(key) }}
+                      >✎ 编辑</button>
                     </td>
                   </tr>
                 )
@@ -174,6 +184,82 @@ export function PcSavings() {
           </table>
         </div>
       </div>
+
+      {/* 某月详情：点行打开。列出目标 / 已存 / 差额 + 各账户金额，底部可直接跳去编辑 */}
+      {detailKey && (() => {
+        const r = records[detailKey] || {}
+        const t = r.target || 0
+        const a = r.actual || 0
+        const d = a - t
+        const p = t > 0 ? Math.min(100, Math.round((a / t) * 100)) : 0
+        const details = Object.entries(r.details || {}).filter(([k, v]) => k !== '_合计' && Number(v) > 0)
+        return (
+          <div className="pcv-overlay" onClick={() => setDetailKey(null)}>
+            <div className="pcv-dialog" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+              <div className="pcv-dialog-h">
+                <span>{year} 年 {monthLabel(detailKey)} · 详情</span>
+                <div className="pcv-spacer" />
+                <button className="pcv-dialog-x" title="关闭" onClick={() => setDetailKey(null)}>×</button>
+              </div>
+
+              <div className="pcv-dialog-b">
+                {/* 三档数字：目标 / 已存 / 差额 */}
+                <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+                  {[
+                    { label: '目标', value: fmt(t) || 0, color: '#78350f' },
+                    { label: '已存', value: fmt(a) || 0, color: a > 0 ? '#333a45' : '#c9cdd4' },
+                    { label: '差额', value: a === 0 ? '—' : (d >= 0 ? `+${fmt(d)}` : fmt(d)), color: a === 0 ? '#c9cdd4' : (d >= 0 ? '#5f8a74' : '#b96a66') },
+                  ].map((m) => (
+                    <div key={m.label} style={{ flex: 1, minWidth: 0, background: '#fafbfc', borderRadius: 10, padding: '10px 12px' }}>
+                      <div style={{ fontSize: 11, color: '#8a8f98', marginBottom: 4 }}>{m.label}</div>
+                      <div style={{ fontSize: 17, fontWeight: 700, color: m.color, fontVariantNumeric: 'tabular-nums' }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 进度条 */}
+                <div style={{ height: 8, borderRadius: 4, background: 'rgba(251,191,36,0.16)', overflow: 'hidden', marginBottom: 6 }}>
+                  <div style={{
+                    height: '100%', width: `${p}%`,
+                    background: d >= 0 ? 'linear-gradient(90deg,#8fbfa3,#5f8a74)' : 'linear-gradient(90deg,#f0c88a,#b1702c)',
+                  }} />
+                </div>
+                <div style={{ fontSize: 12, color: '#92400e', marginBottom: 14 }}>完成 {p}%</div>
+
+                <div className="pcv-field-label">账户明细（{details.length}）</div>
+                {details.length === 0 ? (
+                  <div className="pcv-empty" style={{ padding: '18px 0' }}>这个月还没有存入记录</div>
+                ) : (
+                  <div style={{ borderTop: '0.5px solid rgba(15,23,42,0.06)' }}>
+                    {details.map(([acct, val]) => (
+                      <div
+                        key={acct}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '8px 2px', borderBottom: '0.5px solid rgba(15,23,42,0.06)', fontSize: 13,
+                        }}
+                      >
+                        <span style={{ color: '#333a45' }}>{acct}</span>
+                        <span style={{ fontWeight: 600, color: '#78350f', fontVariantNumeric: 'tabular-nums' }}>¥{Number(val).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="pcv-dialog-f">
+                <div className="pcv-spacer" />
+                <button className="pcv-btn pcv-btn-ghost" onClick={() => setDetailKey(null)}>关闭</button>
+                <button
+                  className="pcv-btn"
+                  style={{ marginLeft: 10 }}
+                  onClick={() => { const k = detailKey; setDetailKey(null); startEdit(k) }}
+                >编辑该月</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* 编辑某月：弹窗 */}
       {editKey && (

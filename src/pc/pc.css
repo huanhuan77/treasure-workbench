@@ -557,6 +557,20 @@
   box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.14);
 }
 
+/* 原生下拉（select.pcv-input）：去掉系统自带的方框箭头，
+   换成自绘的灰色小三角，并在右侧留出 30px（用户反馈箭头贴着边框、没有右边距）。 */
+select.pcv-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px 12px;
+}
+
 .pcv-chip {
   display: inline-block;
   padding: 2px 8px;
@@ -602,19 +616,10 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
-/* 大号分段控件（收支页的 全部/收入/支出/待收款 用）：
-   默认 .pcv-seg 是 13px / 6×12 内边距，作为页面主筛选显得偏小，这里整体放大一档。 */
-.pcv-seg--lg {
-  padding: 5px;
-  gap: 6px;
-  border-radius: 13px;
-}
-.pcv-seg--lg button {
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 600;
-}
+/* 大号分段控件（收支页的 全部/收入/支出/待收款 用）。
+   ⚠️ 这条写在 .pcv-accountbar button（后面第 749 行那条 12px 胶囊样式）之前，
+   同优先级下会被它盖掉 —— 所以真正生效的规则放在文件末尾
+   「收支页大号分段控件（高优先级）」那一段，这里只留注释说明去向。 */
 
 /* 下划线式 Tab（投资跟踪的「股票 / 基金」用）：
    去掉灰胶囊容器，改成贴着内容的下划线标题，和下方筛选条不再撞色。 */
@@ -1617,4 +1622,35 @@
   border-color: #f2cbdd;
   background: #fdf1f6;
   color: #b8517f;
+}
+
+/* ── 收支页大号分段控件（高优先级，放文件末尾）─────────────────────
+   踩过的坑：.pcv-seg--lg 原本写在 .pcv-seg 后面就以为能生效，但筛选行里的
+   按钮还会命中 .pcv-accountbar button（12px / 4×10 / 999px 胶囊）——同优先级、
+   在后面定义，于是把放大规则整条盖掉，界面上「改了没变化」。
+   这里用 .pcv-accountbar .pcv-seg--lg 提高优先级，并放在文件最后兜底。 */
+.pcv-accountbar .pcv-seg--lg {
+  padding: 5px;
+  gap: 6px;
+  border-radius: 13px;
+  background: #f1f2f4;
+}
+.pcv-accountbar .pcv-seg--lg button {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 0.5px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.pcv-accountbar .pcv-seg--lg button:hover {
+  color: #334155;
+}
+.pcv-accountbar .pcv-seg--lg button.on {
+  background: #fff;
+  border-color: #f2cbdd;
+  color: #b8517f;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
