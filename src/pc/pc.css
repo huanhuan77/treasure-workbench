@@ -130,15 +130,18 @@
   position: relative;
 }
 
-/* 全站云备份按钮：内容区顶部的一条工具行，**靠左**排列（用户要求「放左边」）。
-   不再绝对定位到右上角 —— 那样和页面顶栏的视觉重心分离，还容易和窄屏下的搜索框打架。
-   现在是正常文档流：按钮行在最上面，页面自己的顶栏（标题 + 搜索等）紧随其下。 */
+/* 全站云备份按钮：由 PcShell 用 portal 插进当前页顶栏（.pcv-bar）的标题组之后，
+   和标题、搜索框排在同一行 —— 不再单独占一条横条，也不会顶出空白带。
+   .pcv-cloudhost 是插进顶栏的挂载点，本身不占额外高度。 */
+.pcv-cloudhost {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
 .pcv-globalactions {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 28px 0;
-  flex-shrink: 0;
 }
 
 .pcv-bar {

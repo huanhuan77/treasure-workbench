@@ -26,11 +26,11 @@ const COPY_FLAGS = [
 
 // 标记按钮里的小图标（11px，走 currentColor）
 function FlagIcon({ kind }) {
-  // 出单：购物袋（表示「卖出去一单」），比 ¥ 更像动作、也不会和金额列混淆
+  // 出单：**实心**购物袋。11px 下线性图标会被压成一团糊，实心剪影才认得出来。
   if (kind === 'bag') {
     return (
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h12v12z" />
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2z" />
       </svg>
     )
   }
