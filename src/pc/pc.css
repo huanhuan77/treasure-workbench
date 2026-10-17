@@ -853,6 +853,23 @@
   flex-wrap: wrap;
   min-width: 0;
 }
+/* 出单表产品名前的展开箭头：默认中灰，hover 转粉；展开时由 JSX 旋转 180° */
+.pcv-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0 2px;
+  color: #8a8f98;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+.pcv-caret:hover {
+  color: #b8517f;
+}
+
 .pcv-detailentry {
   display: inline-flex;
   align-items: center;
@@ -864,11 +881,18 @@
   color: #333a45;
   min-width: 78px;
 }
+/* 每一笔的「N 单」：做成小胶囊（用户要求加颜色），
+   用品牌粉的浅底 + 中粉字，和右侧「编辑 / 删除」的灰色文字拉开层次。 */
 .pcv-detailqty {
   font-size: 12px;
-  color: #6b7280;
+  font-weight: 700;
+  color: #b8517f;
+  background: #fdf1f6;
+  border: 0.5px solid #f2cbdd;
+  border-radius: 6px;
+  padding: 1px 7px;
   font-variant-numeric: tabular-nums;
-  min-width: 40px;
+  white-space: nowrap;
 }
 
 .pcv-empty {

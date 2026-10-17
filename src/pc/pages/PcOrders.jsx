@@ -250,7 +250,27 @@ export function PcOrders() {
                 return (
                   <Fragment key={g.name}>
                     <tr>
-                      <td className="pcv-name" title={g.name}>{g.name}</td>
+                      <td className="pcv-name" title={g.name}>
+                        {/* 产品名前的小箭头：点它展开/收起明细（用户要求加箭头）。
+                            用 SVG 不用 ▸ 字符 —— 字符在部分字体下会缺字形。
+                            右列「查看明细」按钮保留，两个入口都能用。 */}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                          <button
+                            className="pcv-caret"
+                            title={open ? '收起明细' : '展开明细'}
+                            onClick={() => setExpanded(open ? '' : g.name)}
+                          >
+                            <svg
+                              width="12" height="12" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"
+                              style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s ease' }}
+                            >
+                              <path d="M6 9l6 6 6-6" />
+                            </svg>
+                          </button>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
+                        </span>
+                      </td>
                       <td>
                         {g.accounts.length === 0 ? (
                           <span style={{ color: '#9aa0a9' }}>—</span>
