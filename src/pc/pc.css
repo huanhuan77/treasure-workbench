@@ -128,17 +128,21 @@
 .pcv-bar {
   display: flex;
   align-items: center;
-  /* 标题组靠左、右侧控件靠右（用户先试过整组居中，看过实际效果后改回靠左）。
-     靠左由 .pcv-spacer 的 flex:1 把两组顶到两端实现，这里不能再写 justify-content: center。 */
+  /* 标题 + 右侧控件**整组贴左**，右边留空（用户要求「按钮也靠左」）。
+     不再用 justify-content: center（试过，已回退），也不让 spacer 撑开（那样会把按钮顶到最右端）。 */
   gap: 12px;
   padding: 14px 28px;
   background: #fff;
   border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
 }
 
-/* 顶栏里的占位符恢复吃剩余宽度：这样标题组贴左、控件组贴右。
-   （曾为了让「整条顶栏内容居中」改成固定 24px，用户看过效果后要求改回靠左。）
-   不再覆盖 .pcv-bar > .pcv-spacer，直接用全局的 flex:1。 */
+/* 顶栏里的占位符**不吃剩余宽度**，只当一个固定间隔 ——
+   这样标题组和控件组连在一起靠左。
+   注意只能用 `.pcv-bar >` 限定直接子级：弹窗底栏（.pcv-dialog-f）、卡头（.pcv-card-h）
+   里的 .pcv-spacer 仍要 flex:1 把按钮推到两端，改成全局会把那些地方全弄坏。 */
+.pcv-bar > .pcv-spacer {
+  flex: 0 0 24px;
+}
 
 .pcv-title {
   font-size: 17px;
