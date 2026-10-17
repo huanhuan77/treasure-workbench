@@ -4,7 +4,6 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { ConfirmModal } from '../../components/Modal'
-import { checkForUpdate } from '../../main'
 import { getStoredToken, uploadBackup, restoreBackup } from '../../utils/cloudBackup'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 import { daysSincePublishByAccount, pendingAccounts, isOverdue, compareUrgent } from '../../utils/publish'
@@ -54,7 +53,6 @@ export function PcDashboard() {
   const { samples, todos, orders } = useStore()
   const [tab, setTab] = useState('reminders')
   const [account, setAccount] = useState('')
-  const [checking, setChecking] = useState(false)
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
   const [publishDialog, setPublishDialog] = useState(undefined)
@@ -183,13 +181,6 @@ export function PcDashboard() {
   const now = new Date()
   const todayLabel = `${now.getMonth() + 1}月${now.getDate()}日`
 
-  const handleCheckUpdate = async () => {
-    setChecking(true)
-    const r = await checkForUpdate(true)
-    setChecking(false)
-    show(r === 'latest' ? '已是最新版本' : r === 'error' ? '检查失败（网络或未部署）' : '已触发更新', r === 'error' ? 'error' : 'success')
-  }
-
   // Token 存在备份页（localStorage），这里不重复弹输入框：没配就引导过去
   const requireToken = () => {
     const tk = getStoredToken()
@@ -252,9 +243,6 @@ export function PcDashboard() {
         </button>
         <button className="pcv-btn pcv-btn-ghost" disabled={restoring} onClick={() => setConfirmRestore(true)}>
           {restoring ? '恢复中…' : '从云端恢复'}
-        </button>
-        <button className="pcv-btn pcv-btn-ghost" disabled={checking} onClick={handleCheckUpdate}>
-          {checking ? '检查中…' : '检查更新'}
         </button>
         <button className="pcv-btn" onClick={() => setOrderOpen(true)}>记出单</button>
       </div>
