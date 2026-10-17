@@ -326,6 +326,8 @@ export function BackupPage() {
             需要 <b>gist</b> 权限的 token（不是 repo），数据存储在私密 Gist 中。在 GitHub → Settings → Developer settings → Personal access tokens 勾选 gist 生成。
           </p>
 
+          {/* 主操作单独一行；「上传 / 恢复」两个覆盖型操作放下一行各占一半，
+              不再和「立即同步」挤在同一排（用户反馈那俩被挤住、看不出来） */}
           <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
             <button onClick={syncToCloud} disabled={syncing || !token} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: 'none',
@@ -335,6 +337,9 @@ export function BackupPage() {
             }}>
               {syncing ? '同步中...' : '🔄 立即同步（双向合并）'}
             </button>
+          </div>
+
+          <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
             <button onClick={uploadToGist} disabled={syncing || !token} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: '1.5px solid #d1d5db',
               background: 'transparent', color: '#4b5563', fontSize: '14px', fontWeight: 700,
