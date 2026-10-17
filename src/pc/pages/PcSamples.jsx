@@ -30,11 +30,9 @@ const STATUS_TONE = {
   abandoned: TONE.muted,
 }
 
-const SORT_OPTIONS = [
-  { key: 'custom', label: '默认' },
-  { key: 'receiveDate', label: '收货日期', defaultDir: 'desc' },
-  { key: 'deadline', label: '截止日期', defaultDir: 'asc' },
-]
+// 排序：去掉原来那排「默认 / 收货日期 / 截止日期」按钮，改成点表头（与出单页一致）。
+// 首次点某列用该列的默认方向：收货日期看最新 → 降序；截止日期看最急 → 升序；再点同一列翻转。
+const SORT_DEFAULT_DIR = { receiveDate: 'desc', deadline: 'asc' }
 
 // 状态筛选已按用户要求改成「与手机版同步」的统计卡片（见下方 .pcv-statbar）。
 // 原来那套「彩色文字胶囊」的配色表（SEG_TONE）连同 .pcv-seg--tone 一起删掉了 —— 已无引用。
@@ -121,12 +119,14 @@ export function PcSamples() {
     show('已标记为已拍', 'success')
   }
 
-  const pickSort = (o) => {
-    if (sortKey === o.key && o.key !== 'custom') {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(o.key)
-      setSortDir(o.defaultDir || 'desc')
+  // 表头排序：sortKey 为 'custom' 表示未排序（默认顺序，即 store 里的排列）。
+  // 箭头只在当前排序列上显示，避免每列表头都挂一个箭头。
+  const sortDirOf = (field) => (sortKey === field ? sortDir : null)
+  const toggleSort = (field) => {
+    if (sortKey === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else {
+      setSortKey(field)
+      setSortDir(SORT_DEFAULT_DIR[field] || 'desc')
     }
   }
 
@@ -159,7 +159,7 @@ export function PcSamples() {
       <div className="pcv-body pcv-body--fill">
         {/* 状态筛选：与手机版 SamplesPage 同款**统计卡片** ——
             白底小卡，上行「状态色点 + 图标/名称」，下行大数字；
-            选中用该状态色描边 + 轻阴影。原来 PC 是「彩色文字胶囊」，用户要求跟手机同步。
+            选中用该状态色描边 + 轻阴影。原来 PC 是「彩色文字胶囊」，ssName机同步。
             颜色取 `SAMPLE_STATUS[key].color`（手机同一套），用量只有 6px 点和 1.5px 边框，不会花。 */}
         <div className="pcv-statbar">
           <button
@@ -194,21 +194,12 @@ export function PcSamples() {
           })}
         </div>
 
-        {/* 账号筛选 + 排序 */}
+        {/* 账号筛选（排序入口已移到表头：点「收货日期」/「截止日期」列名） */}
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
           <button className={accountFilter === 'all' ? 'on' : ''} onClick={() => setAccountFilter('all')}>全部账号</button>
           {usedAccounts.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
           ))}
-          {/* 排序组紧靠账号筛选右边，不再用 spacer 顶到最右（用户要求「往左边靠」） */}
-          <div className="pcv-sortgrp">
-            {SORT_OPTIONS.map((o) => (
-              <button key={o.key} className={sortKey === o.key ? 'on' : ''} onClick={() => pickSort(o)}>
-                {o.label}
-                {sortKey === o.key && o.key !== 'custom' ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
@@ -221,23 +212,31 @@ export function PcSamples() {
                     本次把原来「账号 · 发布/出单」一列拆成两列（账号 / 发布），
                     并把「出单」改名为「是否出单」（口径不变，仍看出单记录表）：
                     原来一个格子里塞「账号名 + 发N · 出N」，多账号样品会溢出格子、压到截止日期列上。
+                    排序入口去掉了右上那排按钮，改为点「收货日期」「截止日期」表头
+                    （收货日期本来没有列，为保住这个排序维度才补的这一列）。
                     ⚠️ 加列必须给操作列留够：三个按钮「标记已拍/补记发布/编辑」实测要约 216px，
                     第一版剩下 210px 时「编辑」被挤到第二行（按钮 top 不一致）。
-                    160+80+90+200+100+90+150 = 870，1440 视口下操作列约 280px。 */}
-                <th style={{ width: 160 }}>产品</th>
-                <th style={{ width: 80 }}>分类</th>
-                <th style={{ width: 90 }}>状态</th>
-                <th style={{ width: 200 }}>账号</th>
-                <th style={{ width: 100 }}>发布</th>
-                <th style={{ width: 90 }}>是否出单</th>
-                <th style={{ width: 150 }}>截止日期</th>
+                    145+70+75+260+65+70+90+95 = 870，总宽不变，操作列宽度不受影响。
+                    账号列 260px 是为了让「3 个账号」也能一行排完（3×(6+4+65) + 2×8 ≈ 240 < 260-28）。 */}
+                <th style={{ width: 145 }}>产品</th>
+                <th style={{ width: 70 }}>分类</th>
+                <th style={{ width: 75 }}>状态</th>
+                <th style={{ width: 260 }}>账号</th>
+                <th style={{ width: 65 }}>发布</th>
+                <th style={{ width: 70 }}>是否出单</th>
+                <th style={{ width: 90 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
+                  收货日期{sortDirOf('receiveDate') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                </th>
+                <th style={{ width: 95 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
+                  截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                </th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {displayed.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="pcv-empty">当前筛选下没有样品</td>
+                  <td colSpan={9} className="pcv-empty">当前筛选下没有样品</td>
                 </tr>
               ) : displayed.map((s) => {
                 const top = getTopStatus(s)
@@ -280,15 +279,23 @@ export function PcSamples() {
                       ) : accounts.length === 0 ? (
                         <span style={{ color: '#9aa0a9' }}>—</span>
                       ) : (
-                        accounts.map((a) => (
-                          <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginRight: 10, whiteSpace: 'nowrap' }}>
-                            <span style={{
-                              width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                              background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4',
-                            }} />
-                            <span style={{ color: '#333a45', fontWeight: 600 }}>{a}</span>
-                          </span>
-                        ))
+                        /* 一行内排完、不换行（用户要求）：多账号样品原来会折成 2~3 行把行高撑高。
+                           nowrap + overflow:hidden，放不下的账号被裁掉，完整名单在 title 里悬停可看。 */
+                        <span
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', whiteSpace: 'nowrap' }}
+                          title={accounts.join(' / ')}
+                        >
+                          {accounts.map((a) => (
+                            <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                              <span style={{
+                                width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                                background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4',
+                              }} />
+                              {/* 账号名不加粗（用户要求）：原来 600 字重在一片正文里太跳，靠圆点区分归属即可 */}
+                              <span style={{ color: '#333a45' }}>{a}</span>
+                            </span>
+                          ))}
+                        </span>
                       )}
                     </td>
                     <td>
@@ -316,6 +323,11 @@ export function PcSamples() {
                       ) : (
                         <span style={{ color: '#c9cdd4' }}>—</span>
                       )}
+                    </td>
+                    <td>
+                      {/* 收货日期：仅作为排序维度展示（点表头可排），无则不显示「未设置」占位，
+                          避免和截止日期的「未设置」混成一片 */}
+                      <span style={{ color: s.receiveDate ? '#4b5563' : '#c9cdd4' }}>{s.receiveDate || '—'}</span>
                     </td>
                     <td>
                       <span style={{ color: s.deadline ? '#4b5563' : '#c9cdd4' }}>{s.deadline || '未设置'}</span>

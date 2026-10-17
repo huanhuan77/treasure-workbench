@@ -292,19 +292,20 @@
   border-collapse: collapse;
 }
 
-/* 表头着色（用户要求「表头加颜色」）：粉色实底 + 深粉字，让表头一眼能看出是一条“带”。
+/* 表头着色（用户要求「所有表头改成浅色」）：浅粉底 + 中粉字。
+   全站 13 个 PC 表格共用这一条规则，改这里即全部生效。
    底色必须是实色 —— th 是 sticky 的，半透明会在行滚过时透出来。
-   色阶：比最初那版 #fdf2f7 深约三档（那版太浅，远看仍像白色，用户反馈「没颜色」）。 */
+   色阶取舍：第一版 #fdf2f7 太淡（像白色），第二版 #fad4e5 偏重，这里取中间值。 */
 .pcv-table th {
   position: sticky;
   top: 0;
   z-index: 1;
   padding: 9px 14px;
-  background: #fad4e5;
-  border-bottom: 0.5px solid rgba(143, 47, 88, 0.2);
+  background: #fce9f2;
+  border-bottom: 0.5px solid rgba(184, 81, 127, 0.12);
   font-size: 12px;
   font-weight: 600;
-  color: #8f2f58;
+  color: #b8517f;
   text-align: left;
   white-space: nowrap;
 }
@@ -619,8 +620,8 @@
   transition: color 0.12s ease, background 0.12s ease;
 }
 .pcv-table th.pcv-th-sort:hover {
-  color: #7c2348;
-  background: #f7c0d9;
+  color: #a13a68;
+  background: #f9d8e7;
 }
 
 /* ── 出单记录的「展开明细」────────────────────────────────────
