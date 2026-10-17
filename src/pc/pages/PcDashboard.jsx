@@ -5,12 +5,12 @@ import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { checkForUpdate } from '../../main'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
-import { daysSincePublishByAccount, pendingAccounts, isOverdue } from '../../utils/publish'
+import { daysSincePublishByAccount, pendingAccounts, isOverdue, compareUrgent } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
 import { PublishDialog } from '../components/PublishDialog'
-import { OrderFormModal } from '../../components/OrderFormModal'
+import { OrderDialog } from '../components/OrderDialog'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -48,16 +48,15 @@ function statusTone(status) {
 export function PcDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { samples, todos, orders, addOrder } = useStore()
+  const { samples, todos, orders } = useStore()
   const [tab, setTab] = useState('reminders')
   const [account, setAccount] = useState('')
   const [checking, setChecking] = useState(false)
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
   const [publishDialog, setPublishDialog] = useState(undefined)
-  // 记出单：复用手机版的 OrderFormModal（PC 端不跳页面）
+  // 记出单：PC 版 OrderDialog（账号 Tab 切换，一次可记多个账号；不跳页面）
   const [orderOpen, setOrderOpen] = useState(false)
-  const [orderSeq, setOrderSeq] = useState(0)
 
   const all = useMemo(() => selectAllReminders(samples), [samples])
 
@@ -153,8 +152,16 @@ export function PcDashboard() {
         map.get(a).push(it)
       }
     }
+    // 「发布提醒」组内排序：**已逾期排最前面**，其次「多久没发视频」由久到近。
+    // 比较逻辑提到 utils/publish 的 compareUrgent，和手机版总览/发布提醒页共用一份。
+    // 只作用于发布提醒 tab：
+    //   · 即将到期 tab 本身已按截止日升序，逾期天然在最前，再排会打乱它；
+    //   · 发布不足5条 tab 保持原顺序即可。
+    if (tab === 'reminders') {
+      for (const arr of map.values()) arr.sort((x, y) => compareUrgent(x.sample || x, y.sample || y))
+    }
     return [...map.entries()].sort((x, y) => accRank(x[0]) - accRank(y[0]))
-  }, [items, cur, account])
+  }, [items, cur, account, tab])
 
   const todoList = useMemo(
     () => [...(todos || [])].filter((t) => !t.done).slice(0, 8),
@@ -184,7 +191,7 @@ export function PcDashboard() {
         <button className="pcv-btn pcv-btn-ghost" disabled={checking} onClick={handleCheckUpdate}>
           {checking ? '检查中…' : '检查更新'}
         </button>
-        <button className="pcv-btn" onClick={() => { setOrderSeq((s) => s + 1); setOrderOpen(true) }}>记出单</button>
+        <button className="pcv-btn" onClick={() => setOrderOpen(true)}>记出单</button>
       </div>
 
       <div className="pcv-body">
@@ -281,12 +288,16 @@ export function PcDashboard() {
                         {/* 列宽按「内容宽度 + 适度留白」定死，且总和接近表格可用宽度（约 1100px）：
                             表格是 width:100%，指定宽度后余量按比例摊到各列；
                             若某列定得过宽（早先用 auto / 26%），余量会全堆在那一列，
-                            短内容行就会空出一大片（实测中期列 377px、内容只占 107px）。 */}
+                            短内容行就会空出一大片（实测中期列 377px、内容只占 107px）。
+                            「操作」按用户要求挪到「产品」旁边（原来在最右端，一行要横跨整个屏幕才够得到）。
+                            同时把它从 240 收到 160：240 是它待在最右端时留的宽度，
+                            内容最多只有「补记发布 + 打开样品」≈130px，放第 2 列会空出一块。
+                            右侧空出来的宽度匀给「还差条数/截止时间」那列。 */}
                         <th style={{ width: 250 }}>产品</th>
+                        <th style={{ width: 160 }}>操作</th>
                         <th style={{ width: 120 }}>状态</th>
-                        <th style={{ width: 240 }}>{cur.header}</th>
+                        <th style={{ width: 260 }}>{cur.header}</th>
                         <th style={{ width: 150 }}>截止日期</th>
-                        <th style={{ width: 240 }}>操作</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -304,6 +315,8 @@ export function PcDashboard() {
                               title={s.name}
                               style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
                             >{s.name}</td>
+                            {/* 操作紧跟在产品后面（表头顺序已同步） */}
+                            <td>{cur.actions(it)}</td>
                             <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>
                             <td>{cur.mid(it, acc)}</td>
                             <td
@@ -313,8 +326,6 @@ export function PcDashboard() {
                                 fontWeight: overdue ? 600 : 400,
                               }}
                             >{s.deadline || '—'}</td>
-                            {/* 操作按钮靠左（表头「操作」同步改成左对齐），与左侧内容贴齐 */}
-                            <td>{cur.actions(it)}</td>
                           </tr>
                         )
                       })}
@@ -341,19 +352,10 @@ export function PcDashboard() {
         />
       )}
 
-      {/* 记出单：弹窗（复用 OrderFormModal），不跳页面 */}
-      <OrderFormModal
-        key={orderSeq}
-        open={orderOpen}
-        onClose={() => setOrderOpen(false)}
-        editing={null}
-        onSave={(payload) => {
-          if (!payload.name) { show('请填写品名', 'error'); return }
-          addOrder(payload)
-          show('已记一笔出单', 'success')
-          setOrderOpen(false)
-        }}
-      />
+      {/* 记出单：账号 Tab 切换，一次可记多个账号（PC 端不跳页面） */}
+      {orderOpen && (
+        <OrderDialog onClose={() => setOrderOpen(false)} />
+      )}
     </>
   )
 }

@@ -9,22 +9,22 @@ import './pc.css'
 // 手机版是因为屏高放不下才把后 9 项收进「更多」抽屉的；
 // PC 侧边栏本身可滚动、竖向空间充足，所以不要「更多」这个分组标题。
 // 图标与手机版底部导航共用同一批（主 5 项是线性 SVG，其余是 emoji），避免两边画风不一致。
-// 注意：`to` 指向 `/pc/...` 的是已迁移的页面，指向 `/samples` 这类的是还没迁移的，
-// 点进去走手机版页面，后续搬完再把 `to` 改过来。
+// 注意：**14 项已全部迁到 `/pc/...`**，点任何一项都留在 PC 壳里，不会再掉到手机版页面。
+// 新增页面时记得同时在 App.jsx 的 `/pc` children 里注册，否则会 404。
 const NAV = [
   { to: '/pc', label: '总览', end: true, Icon: HomeIcon },
   { to: '/pc/products', label: '文案库', Icon: PenIcon },
   { to: '/pc/samples', label: '样品', Icon: TagIcon, badgeKey: 'samples' },
   { to: '/pc/publish-records', label: '发布', Icon: VideoIcon },
   { to: '/pc/orders', label: '出单', Icon: MoneyIcon },
-  { to: '/finance', label: '收支', emoji: '💰' },
-  { to: '/dramas', label: '追剧', emoji: '📺' },
-  { to: '/calendar', label: '日历', emoji: '📅' },
-  { to: '/daily', label: '每日计划', emoji: '📋' },
-  { to: '/reading', label: '读书成长', emoji: '📚' },
-  { to: '/brands', label: '品牌方', emoji: '🤝' },
-  { to: '/savings', label: '攒钱计划', emoji: '🐷' },
-  { to: '/investment', label: '投资跟踪', emoji: '📈' },
+  { to: '/pc/finance', label: '收支', emoji: '💰' },
+  { to: '/pc/dramas', label: '追剧', emoji: '📺' },
+  { to: '/pc/calendar', label: '日历', emoji: '📅' },
+  { to: '/pc/daily', label: '每日计划', emoji: '📋' },
+  { to: '/pc/reading', label: '读书成长', emoji: '📚' },
+  { to: '/pc/brands', label: '品牌方', emoji: '🤝' },
+  { to: '/pc/savings', label: '攒钱计划', emoji: '🐷' },
+  { to: '/pc/investment', label: '投资跟踪', emoji: '📈' },
   { to: '/pc/sensitive', label: '违禁词', emoji: '🚫' },
 ]
 

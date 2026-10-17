@@ -19,6 +19,7 @@ import { todayStr, addDays, toDateInput } from '../../utils/helpers'
 // NewSamplePage 的规则 —— 见下面「与手机版的有意差异」。
 //   - 名称：编辑时只读；新增时可填
 //   - 分类：新增必填；归属账号：新增必填
+//   - 关联产品：**已按用户要求去掉**（手机版 SampleForm / NewSamplePage 里都有这一项）
 //   - 佣金默认 5 = 「不显示」，界面上要把 5 显示成空
 //   - 截止日期 = 收货日期 +15 天；用户一旦手改过截止日期就不再联动（deadlineTouched）
 //   - 状态三选一映射到 archived / isShot 两个布尔
@@ -34,6 +35,9 @@ import { todayStr, addDays, toDateInput } from '../../utils/helpers'
 //      SampleForm 原文是「将拆分为 N 条样品」，但 store 的 addSample 实际是
 //      **合并成一条实体**（源码注释：归属账号多选 → 合并为一条实体），
 //      NewSamplePage 的文案才是对的那个
+//   5. 去掉「关联产品」字段（用户要求）。
+//      ⚠️ 只是不给编辑入口：form.productId 仍在 state 里、保存时原样带出，
+//      已有样品存过的关联不会被清掉，也不会丢数据。
 const STATUS_OPTS = [
   { v: 'unshot', label: '未拍' },
   { v: 'shot', label: '已拍' },
@@ -41,7 +45,7 @@ const STATUS_OPTS = [
 ]
 
 export function SampleDialog({ sample, onClose }) {
-  const { products, addSample, updateSample, deleteSample } = useStore()
+  const { addSample, updateSample, deleteSample } = useStore()
   const { show } = useToast()
 
   const isNew = !sample
@@ -85,8 +89,6 @@ export function SampleDialog({ sample, onClose }) {
       return next
     })
   }
-
-  const productOptions = (products || []).slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', 'zh'))
 
   const save = () => {
     if (!form.name.trim()) { show('请输入样品名称', 'error'); return }
@@ -177,22 +179,17 @@ export function SampleDialog({ sample, onClose }) {
               </div>
             )}
 
-            <div className="pcv-field-label" style={{ marginTop: 18 }}>关联产品（选填）</div>
-            <select
-              className="pcv-input"
-              style={{ width: '100%' }}
-              value={form.productId}
-              onChange={(e) => setForm((f) => ({ ...f, productId: e.target.value }))}
-            >
-              <option value="">未关联</option>
-              {productOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
+            {/* 「关联产品」字段按用户要求去掉（截图圈的就是这一项）。
+                注意 form.productId 仍然在 state 里、保存时原样带出去 ——
+                只是不给编辑入口，这样已有样品里存过的关联不会被清掉。 */}
 
             <div className="pcv-field-label" style={{ marginTop: 18 }}>佣金（%）</div>
             <input
               className="pcv-input"
               type="number"
-              style={{ width: 120 }}
+              // 180 = 弹窗里其他单行输入（日期等）的统一宽度。
+              // 原来 120px 太窄，placeholder「5（默认不显示）」会被数字上下箭头挤掉尾巴。
+              style={{ width: 180 }}
               // 5 是「不显示」的默认值，界面上要显示成空，否则用户以为填了 5
               value={form.commission === 5 ? '' : form.commission}
               placeholder="5（默认不显示）"

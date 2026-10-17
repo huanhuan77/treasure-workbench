@@ -1,0 +1,457 @@
+import { useMemo, useRef, useState } from 'react'
+import { useToast } from '../../components/Toast'
+import { ConfirmModal } from '../../components/Modal'
+import { recordDelete } from '../../utils/sync'
+import {
+  INVEST_STORAGE_KEY as KEY,
+  loadInvestments as load,
+  getAssetType,
+  parseOcrText,
+  runOcr,
+  INVEST_TYPE_STYLE as TYPE_STYLE,
+  investUid as uid,
+} from '../../pages/InvestmentPage'
+
+// PC 版「投资跟踪」。
+// 数据与语义照手机版 InvestmentPage：**直接读写 localStorage 的 `blogger_investments_v1`**（数组），
+// 记录形状 { id, code, name, sellPrice, currentPrice, sellDate, type: buy|sell, change, shares, amount, assetType }；
+// 删除要 recordDelete 记墓碑。OCR 文本解析 / 资产类型判定 / 类型样式**直接复用页面的实现**（见那边的 export）。
+//
+// ⚠️ 与手机版的两处差异（都是环境依赖，不是偷懒）：
+//   1. **不做自动轮询行情**（手机版每 60s 拉一次 stock-sdk）。PC 改成顶栏「刷新行情」手动触发，
+//      拉取失败就在 toast 里说明 —— 离线/内网环境下这个接口本来也调不通，静默失败更糟。
+//   2. 手机版的「下拉刷新」是触摸手势，PC 用上面的按钮替代。
+// 盈亏口径**不自创新**：沿用手机版每笔的 `change`（现价 vs 成交价 %），没有「总盈亏」这种手机版没有的指标。
+const fmtNum = (n, d = 2) => (Number(n) || 0).toFixed(d)
+const pctText = (v) => (v === null || v === undefined || Number.isNaN(Number(v))) ? '—' : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}%`
+
+const TABS = [
+  { key: 'stock', label: '股票' },
+  { key: 'fund', label: '基金' },
+]
+const DIRS = [
+  { key: 'all', label: '全部' },
+  { key: 'buy', label: '买入' },
+  { key: 'sell', label: '卖出' },
+]
+
+export function PcInvestment() {
+  const { show } = useToast()
+  const [investments, setInvestments] = useState(load)
+  const [activeTab, setActiveTab] = useState('stock')
+  const [dirTab, setDirTab] = useState('all')
+  const [keyword, setKeyword] = useState('')
+  const [expanded, setExpanded] = useState('')       // 展开的代码
+  const [editing, setEditing] = useState(null)       // null / 对象（编辑） / 'new'
+  const [form, setForm] = useState(null)
+  const [ocrBusy, setOcrBusy] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const [delTarget, setDelTarget] = useState(null)
+  const fileRef = useRef(null)
+
+  const save = (list) => {
+    try { localStorage.setItem(KEY, JSON.stringify(list)) } catch (e) { /* 配额满等情况忽略 */ }
+    setInvestments(list)
+  }
+
+  // 按代码分组（买入卖出归到同一只）
+  const groups = useMemo(() => {
+    const map = new Map()
+    for (const inv of investments) {
+      const key = (inv.code || '').trim() || '（无代码）'
+      if (!map.has(key)) map.set(key, [])
+      map.get(key).push(inv)
+    }
+    return [...map.entries()].map(([code, items]) => {
+      const sorted = [...items].sort((a, b) => String(b.sellDate || '').localeCompare(String(a.sellDate || '')))
+      const latest = sorted[0] || {}
+      const buyShares = items.filter((i) => (i.type || 'buy') === 'buy').reduce((s, i) => s + (Number(i.shares) || 0), 0)
+      const sellShares = items.filter((i) => i.type === 'sell').reduce((s, i) => s + (Number(i.shares) || 0), 0)
+      const buyAmount = items.filter((i) => (i.type || 'buy') === 'buy').reduce((s, i) => s + (Number(i.amount) || 0), 0)
+      const sellAmount = items.filter((i) => i.type === 'sell').reduce((s, i) => s + (Number(i.amount) || 0), 0)
+      return {
+        code,
+        name: latest.name || items.find((i) => i.name)?.name || '',
+        assetType: getAssetType(latest),
+        items: items.map((i) => ({ ...i, _dir: i.type || 'buy' })),
+        latest,
+        buyShares,
+        sellShares,
+        netShares: buyShares - sellShares,
+        buyAmount,
+        sellAmount,
+        change: latest.change,
+      }
+    }).sort((a, b) => String(b.latest.sellDate || '').localeCompare(String(a.latest.sellDate || '')))
+  }, [investments])
+
+  const stockCount = investments.filter((i) => getAssetType(i) === 'stock').length
+  const fundCount = investments.filter((i) => getAssetType(i) === 'fund').length
+  const buyCount = investments.filter((i) => (i.type || 'buy') === 'buy').length
+  const sellCount = investments.filter((i) => i.type === 'sell').length
+
+  const shown = useMemo(() => {
+    const kw = keyword.trim().toLowerCase()
+    return groups
+      .filter((g) => g.assetType === activeTab)
+      .filter((g) => !kw || `${g.code} ${g.name}`.toLowerCase().includes(kw))
+      .map((g) => ({
+        ...g,
+        items: dirTab === 'all' ? g.items : g.items.filter((i) => i._dir === dirTab),
+      }))
+      .filter((g) => g.items.length > 0)
+  }, [groups, activeTab, dirTab, keyword])
+
+  const openNew = () => {
+    setForm({ code: '', name: '', direction: 'buy', shares: '', price: '', date: '', assetType: activeTab })
+    setEditing('new')
+  }
+  const openEdit = (inv) => {
+    setForm({
+      code: inv.code || '',
+      name: inv.name || '',
+      direction: inv.type || 'buy',
+      shares: String(inv.shares ?? ''),
+      price: String(inv.sellPrice ?? ''),
+      date: inv.sellDate || '',
+      assetType: getAssetType(inv),
+    })
+    setEditing(inv)
+  }
+
+  const saveForm = () => {
+    const code = form.code.trim()
+    const name = form.name.trim()
+    const price = parseFloat(form.price)
+    const shares = parseFloat(form.shares) || 0
+    if (!code) { show('请填写代码', 'error'); return }
+    if (!name) { show('请填写名称', 'error'); return }
+    if (!(price > 0)) { show('请填写有效的成交价', 'error'); return }
+    const currentPrice = (editing && editing !== 'new') ? editing.currentPrice : null
+    const change = currentPrice && price ? ((currentPrice - price) / price * 100) : null
+    const item = {
+      id: (editing && editing !== 'new') ? editing.id : uid(),
+      code, name, sellPrice: price, currentPrice, sellDate: form.date, type: form.direction,
+      change, shares, amount: shares * price, assetType: form.assetType, updatedAt: Date.now(),
+    }
+    if (editing && editing !== 'new') {
+      save(investments.map((i) => (i.id === editing.id ? item : i)))
+      show('已更新', 'success')
+    } else {
+      save([...investments, item])
+      show('已添加', 'success')
+    }
+    setEditing(null)
+  }
+
+  const doDelete = () => {
+    if (!delTarget) return
+    try { recordDelete(KEY, delTarget.id) } catch (e) { /* 同步异常不影响本地删除 */ }
+    save(investments.filter((i) => i.id !== delTarget.id))
+    setDelTarget(null)
+    show('已删除', 'success')
+  }
+
+  // 刷新行情：照手机版 autoRefreshPrices 的取价方式，但改成手动触发 + 失败明确提示
+  const refreshPrices = async () => {
+    if (investments.length === 0) { show('还没有记录', 'error'); return }
+    setRefreshing(true)
+    try {
+      const { StockSDK } = await import('stock-sdk')
+      const sdk = new StockSDK()
+      const next = await Promise.all(investments.map(async (inv) => {
+        const code = String(inv.code || '').replace(/\D/g, '')
+        if (!code) return inv
+        try {
+          const at = getAssetType(inv)
+          const q = at === 'fund' ? await sdk.quotes.fund([code]) : await sdk.quotes.cn([code])
+          const p = q?.[0] ? (at === 'fund' ? q[0].nav : q[0].price) : null
+          if (!p) return inv
+          const sp = inv.sellPrice
+          return { ...inv, currentPrice: p, change: sp ? ((p - sp) / sp * 100) : null, updatedAt: Date.now() }
+        } catch (e) { return inv }
+      }))
+      save(next)
+      const got = next.filter((n, i) => n.currentPrice !== investments[i]?.currentPrice).length
+      show(got > 0 ? `已更新 ${got} 条行情` : '行情暂无变化（或接口不可达）', got > 0 ? 'success' : 'error')
+    } catch (e) {
+      show('行情接口不可用（可能需要联网）', 'error')
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  // OCR 识别买入/卖出截图 → 预填表单（复用手机版 runOcr + parseOcrText）
+  const onOcrFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !form) return
+    setOcrBusy(true)
+    try {
+      const text = await runOcr(file)
+      const p = parseOcrText(text)
+      setForm((f) => ({
+        ...f,
+        code: p.code || f.code,
+        name: p.name || f.name,
+        direction: p.type || f.direction,
+        shares: p.shares != null ? String(p.shares) : f.shares,
+        price: p.price != null ? String(p.price) : f.price,
+        date: p.date || f.date,
+        assetType: p.assetType || f.assetType,
+      }))
+      const missing = !p.price || !p.shares || !p.date
+      show(missing ? '部分字段没识别出来，请手动补一下' : '已识别并填入', missing ? 'error' : 'success')
+    } catch (err) {
+      show('识别失败（需要联网加载 OCR 引擎）', 'error')
+    } finally {
+      setOcrBusy(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="pcv-bar">
+        <div>
+          <div className="pcv-title">投资跟踪</div>
+          <div className="pcv-sub">
+            股票 {stockCount} · 基金 {fundCount} · 买入 {buyCount} · 卖出 {sellCount}
+          </div>
+        </div>
+        <div className="pcv-spacer" />
+        <input
+          className="pcv-input"
+          style={{ width: 200 }}
+          placeholder="搜索代码 / 名称"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+        />
+        <button className="pcv-btn pcv-btn-ghost" onClick={refreshPrices} disabled={refreshing}>
+          {refreshing ? '刷新中…' : '刷新行情'}
+        </button>
+        <button className="pcv-btn" onClick={openNew}>＋ 新增记录</button>
+      </div>
+
+      <div className="pcv-body pcv-body--fill">
+        <div className="pcv-accountbar" style={{ padding: '0 0 8px', borderBottom: 'none' }}>
+          <div className="pcv-seg">
+            {TABS.map((t) => (
+              <button key={t.key} className={activeTab === t.key ? 'on' : ''} onClick={() => { setActiveTab(t.key); setExpanded('') }}>
+                <span>{t.label}</span>
+                <span className="pcv-count">{t.key === 'stock' ? stockCount : fundCount}</span>
+              </button>
+            ))}
+          </div>
+          <div className="pcv-spacer" />
+          <div className="pcv-sortgrp">
+            {DIRS.map((d) => (
+              <button key={d.key} className={dirTab === d.key ? 'on' : ''} onClick={() => setDirTab(d.key)}>
+                {d.label}{d.key !== 'all' ? ` ${d.key === 'buy' ? buyCount : sellCount}` : ''}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
+          <table className="pcv-table">
+            <thead>
+              <tr>
+                {/* 代码列要放下「▸ + 6 位数字」且不折行；成交额要放下「¥150000.00 / ¥63200.00」 */}
+                <th style={{ width: 110 }}>代码</th>
+                <th style={{ width: 200 }}>名称</th>
+                <th style={{ width: 70 }}>类型</th>
+                <th style={{ width: 150 }}>持仓（买/卖/净）</th>
+                <th style={{ width: 195 }}>成交额（买/卖）</th>
+                <th style={{ width: 90 }}>现价</th>
+                <th style={{ width: 90 }}>最新涨跌</th>
+                <th style={{ width: 110 }}>最新日期</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="pcv-empty">当前筛选下没有记录</td>
+                </tr>
+              ) : shown.map((g) => {
+                const st = TYPE_STYLE[g.assetType] || TYPE_STYLE.stock
+                const open = expanded === g.code
+                return (
+                  <>
+                    <tr key={g.code} style={{ cursor: 'pointer' }} onClick={() => setExpanded(open ? '' : g.code)}>
+                      <td style={{ fontVariantNumeric: 'tabular-nums', color: '#475569', whiteSpace: 'nowrap' }}>{open ? '▾' : '▸'} {g.code}</td>
+                      <td><span className="pcv-nametext" title={g.name}>{g.name || '—'}</span></td>
+                      <td>
+                        <span className="pcv-chip" style={{ background: st.bg, color: st.color }}>{st.label}</span>
+                      </td>
+                      <td style={{ fontVariantNumeric: 'tabular-nums', fontSize: 12, color: '#475569' }}>
+                        {fmtNum(g.buyShares, 0)} / {fmtNum(g.sellShares, 0)} / <b style={{ color: g.netShares >= 0 ? '#333a45' : '#b96a66' }}>{fmtNum(g.netShares, 0)}</b>
+                      </td>
+                      <td style={{ fontVariantNumeric: 'tabular-nums', fontSize: 12, color: '#475569', whiteSpace: 'nowrap' }}>
+                        ¥{fmtNum(g.buyAmount)} / ¥{fmtNum(g.sellAmount)}
+                      </td>
+                      <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                        {g.latest.currentPrice != null ? `¥${fmtNum(g.latest.currentPrice, 3)}` : <span style={{ color: '#c9cdd4' }}>—</span>}
+                      </td>
+                      <td style={{
+                        fontVariantNumeric: 'tabular-nums', fontWeight: 600,
+                        color: g.change == null ? '#c9cdd4' : (Number(g.change) >= 0 ? '#c05a6e' : '#5f8a74'),
+                      }}>{pctText(g.change)}</td>
+                      <td style={{ fontSize: 12, color: '#6b7280', fontVariantNumeric: 'tabular-nums' }}>{g.latest.sellDate || '—'}</td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <button className="pcv-btn-text" onClick={() => openEdit(g.latest)}>编辑最新</button>
+                      </td>
+                    </tr>
+
+                    {/* 展开：该代码下的每笔买卖 */}
+                    {open && g.items.map((inv) => (
+                      <tr key={inv.id} style={{ background: '#fafbfc' }}>
+                        <td />
+                        <td colSpan={2} style={{ paddingLeft: 18 }}>
+                          {inv.code} · {inv.name}
+                        </td>
+                        <td>
+                          <span className="pcv-chip" style={inv._dir === 'sell' ? { background: '#eef4ef', color: '#5f8a74' } : { background: '#fdf1f6', color: '#b8517f' }}>
+                            {inv._dir === 'sell' ? '卖出' : '买入'}
+                          </span>
+                        </td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>
+                          {fmtNum(inv.shares, 0)} 份 × ¥{fmtNum(inv.sellPrice, 3)} = ¥{fmtNum(inv.amount)}
+                        </td>
+                        <td style={{ fontSize: 12, color: '#9aa0a9' }} colSpan={2}>现价 {inv.currentPrice != null ? `¥${fmtNum(inv.currentPrice, 3)}` : '—'}</td>
+                        <td style={{ fontSize: 12, color: '#6b7280', fontVariantNumeric: 'tabular-nums' }}>{inv.sellDate || '—'}</td>
+                        <td>
+                          <button className="pcv-btn-text" onClick={() => openEdit(inv)}>编辑</button>
+                          <button className="pcv-btn-text" style={{ marginLeft: 10, color: '#b96a66' }} onClick={() => setDelTarget(inv)}>删除</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 新增 / 编辑记录 */}
+      {editing && form && (
+        <div className="pcv-overlay" onClick={() => setEditing(null)}>
+          <div className="pcv-dialog" style={{ maxWidth: 560 }} onClick={(e) => e.stopPropagation()}>
+            <div className="pcv-dialog-h">
+              <span>{editing === 'new' ? '新增投资记录' : '编辑记录'}</span>
+              <div className="pcv-spacer" />
+              <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={onOcrFile} />
+              <button className="pcv-btn pcv-btn-ghost" onClick={() => fileRef.current?.click()} disabled={ocrBusy}>
+                {ocrBusy ? '识别中…' : '📷 识别截图'}
+              </button>
+              <button className="pcv-dialog-x" title="关闭" onClick={() => setEditing(null)}>×</button>
+            </div>
+
+            <div className="pcv-dialog-b">
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <div className="pcv-field-label">代码 <span style={{ color: '#b96a66' }}>*</span></div>
+                  <input
+                    className="pcv-input"
+                    style={{ width: '100%' }}
+                    placeholder="如 600519 / 110022"
+                    value={form.code}
+                    onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
+                    autoFocus
+                  />
+                </div>
+                <div style={{ width: 130 }}>
+                  <div className="pcv-field-label">资产类型</div>
+                  <select
+                    className="pcv-input"
+                    style={{ width: '100%' }}
+                    value={form.assetType}
+                    onChange={(e) => setForm((f) => ({ ...f, assetType: e.target.value }))}
+                  >
+                    <option value="stock">股票</option>
+                    <option value="fund">基金</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="pcv-field-label" style={{ marginTop: 16 }}>名称 <span style={{ color: '#b96a66' }}>*</span></div>
+              <input
+                className="pcv-input"
+                style={{ width: '100%' }}
+                placeholder="如 贵州茅台 / 易方达蓝筹"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              />
+
+              <div className="pcv-field-label" style={{ marginTop: 16 }}>方向</div>
+              <div className="pcv-catpick">
+                <button className={form.direction === 'buy' ? 'on' : ''} onClick={() => setForm((f) => ({ ...f, direction: 'buy' }))}>买入</button>
+                <button className={form.direction === 'sell' ? 'on' : ''} onClick={() => setForm((f) => ({ ...f, direction: 'sell' }))}>卖出</button>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <div className="pcv-field-label">份额</div>
+                  <input
+                    className="pcv-input"
+                    style={{ width: '100%', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0"
+                    value={form.shares}
+                    onChange={(e) => setForm((f) => ({ ...f, shares: e.target.value }))}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div className="pcv-field-label">成交价 <span style={{ color: '#b96a66' }}>*</span></div>
+                  <input
+                    className="pcv-input"
+                    style={{ width: '100%', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="0.000"
+                    value={form.price}
+                    onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                  />
+                </div>
+                <div style={{ width: 170 }}>
+                  <div className="pcv-field-label">{form.direction === 'sell' ? '卖出日' : '买入日'}</div>
+                  <input
+                    className="pcv-input"
+                    style={{ width: '100%' }}
+                    type="date"
+                    value={form.date}
+                    onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div style={{ fontSize: 11, color: '#9aa0a9', marginTop: 10, lineHeight: 1.6 }}>
+                成交额按「份额 × 成交价」自动算。现价和涨跌需要点顶栏「刷新行情」拉到（离线环境下会提示不可用）。
+              </div>
+            </div>
+
+            <div className="pcv-dialog-f">
+              <div className="pcv-spacer" />
+              <button className="pcv-btn pcv-btn-ghost" onClick={() => setEditing(null)}>取消</button>
+              <button className="pcv-btn" onClick={saveForm}>{editing === 'new' ? '添加' : '保存'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={!!delTarget}
+        onClose={() => setDelTarget(null)}
+        onConfirm={doDelete}
+        title="删除记录"
+        message={delTarget ? `确定删除 ${delTarget.code} 这条${(delTarget.type || 'buy') === 'sell' ? '卖出' : '买入'}记录吗？` : ''}
+        confirmText="删除"
+        danger
+      />
+    </>
+  )
+}

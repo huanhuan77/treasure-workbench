@@ -478,3 +478,21 @@ function ReadingCard({ item, st, color, onToggleStatus, onNotes, onEdit, onDelet
     </div>
   )
 }
+
+// ── 供 PC 版（src/pc/pages/PcReading.jsx）复用 ─────────────────────────
+// 加载/迁移里带着 33 条内置推荐 + 按标题合并 + type 由分类推导，这些逻辑两边必须一模一样，
+// 所以直接导出共用，不要在 PC 侧再抄一份。
+export {
+  STORAGE_KEY as READING_STORAGE_KEY,
+  loadData as loadReadingData,
+  defaultSeed as readingDefaultSeed,
+  deriveType as deriveReadingType,
+  catsFor as readingCatsFor,
+  makeLink as makeReadingLink,
+  BOOK_CATEGORIES as READING_BOOK_CATEGORIES,
+  SHOW_CATEGORIES as READING_SHOW_CATEGORIES,
+  CATEGORY_COLOR as READING_CATEGORY_COLOR,
+  STATUS as READING_STATUS,
+  STATUS_ORDER as READING_STATUS_ORDER,
+  LINK_PLATFORMS as READING_LINK_PLATFORMS,
+}

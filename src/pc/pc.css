@@ -128,21 +128,17 @@
 .pcv-bar {
   display: flex;
   align-items: center;
-  /* 用户要求：标题组 + 右侧控件组当成一整块在顶栏里居中，左右留白相等。
-     原来是靠 .pcv-spacer 撑开、两组分贴左右两端。 */
-  justify-content: center;
+  /* 标题组靠左、右侧控件靠右（用户先试过整组居中，看过实际效果后改回靠左）。
+     靠左由 .pcv-spacer 的 flex:1 把两组顶到两端实现，这里不能再写 justify-content: center。 */
   gap: 12px;
   padding: 14px 28px;
   background: #fff;
   border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
 }
 
-/* 顶栏里的占位符不再「吃掉剩余宽度」——吃掉就会把两组顶到两端，就不是整组居中了。
-   改成一个固定间隔，保证标题和控件之间仍有呼吸感（12 + 24 + 12 ≈ 48px）。
-   注意只覆盖 .pcv-bar 的直接子级：弹窗底栏、卡头里的 .pcv-spacer 仍要 flex:1 撑开。 */
-.pcv-bar > .pcv-spacer {
-  flex: 0 0 24px;
-}
+/* 顶栏里的占位符恢复吃剩余宽度：这样标题组贴左、控件组贴右。
+   （曾为了让「整条顶栏内容居中」改成固定 24px，用户看过效果后要求改回靠左。）
+   不再覆盖 .pcv-bar > .pcv-spacer，直接用全局的 flex:1。 */
 
 .pcv-title {
   font-size: 17px;
@@ -744,6 +740,239 @@
   gap: 6px;
   padding: 9px 14px;
   border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
+}
+
+/* ── 账号 Tab（「记出单」「记录发布」两个弹窗共用，见 AccountTabs）──────
+   照手机版 NewOrderPage / NewPublishRecordPage 那套：白底容器内三等分，
+   选中态用**账号自己的主题色**（浅底 + 同色文字，行内 style 打上去的，见 ACCOUNT_COLOR），
+   右侧计数气泡表示「这个账号已填几条」—— 切 tab 时一眼看出哪些账号填过了。 */
+.pcv-acctabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #fff;
+  border: 0.5px solid rgba(15, 23, 42, 0.10);
+  border-radius: 10px;
+}
+.pcv-acctabs button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #8a8f98;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pcv-acctabs button:hover {
+  color: #334155;
+}
+.pcv-acctabs button.on {
+  font-weight: 700;
+}
+.pcv-acctabs-cnt {
+  min-width: 16px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #eceef2;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ── 「每个账号独立条目」列表（同上两个弹窗）───────────────── */
+.pcv-entrylist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pcv-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: #fff;
+  border: 0.5px solid rgba(15, 23, 42, 0.10);
+  border-radius: 9px;
+}
+.pcv-entry-pick {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: #333a45;
+  font-size: 13px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pcv-entry-pick.empty {
+  color: #9aa0a9;
+}
+/* 空态：虚线框，和手机版那句「点上方『＋ 添加』新增一条」同一个意思 */
+.pcv-entry-empty {
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #9aa0a9;
+  background: #fafbfc;
+  border: 1px dashed rgba(15, 23, 42, 0.14);
+  border-radius: 9px;
+}
+
+/* 发布数量：− 数字 ＋ */
+.pcv-qty {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.pcv-qty button {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0.5px solid rgba(15, 23, 42, 0.12);
+  border-radius: 7px;
+  background: #fff;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.pcv-qty button:hover {
+  background: #f6f7f9;
+}
+.pcv-qty input {
+  width: 44px;
+  height: 26px;
+  text-align: center;
+  border: 0.5px solid rgba(15, 23, 42, 0.12);
+  border-radius: 7px;
+  background: #fff;
+  color: #333a45;
+  font-size: 13px;
+  font-weight: 700;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 条目下方内联展开的样品选择面板 */
+.pcv-drop {
+  margin-top: 6px;
+  padding: 8px;
+  background: #fafbfc;
+  border: 0.5px solid rgba(15, 23, 42, 0.10);
+  border-radius: 9px;
+}
+.pcv-drop-list {
+  max-height: 190px;
+  overflow-y: auto;
+  margin-top: 8px;
+}
+.pcv-drop-row {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #333a45;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pcv-drop-row:hover {
+  background: #eef1f4;
+}
+.pcv-drop-row.on {
+  background: #fdf1f6;
+  color: #b8517f;
+  font-weight: 600;
+}
+.pcv-drop-hint {
+  padding: 14px 10px;
+  text-align: center;
+  font-size: 12px;
+  color: #9aa0a9;
+}
+
+/* ── 日历（PC 版）：月历格子 ─────────────────────────────── */
+.pcv-cal {
+  padding: 10px 12px 14px;
+}
+.pcv-cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.pcv-cal-week > div {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9aa0a9;
+  padding: 4px 0 6px;
+}
+.pcv-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.pcv-cal-cell {
+  min-height: 64px;
+  padding: 5px 6px;
+  border-radius: 9px;
+  background: #fff;
+  border: 0.5px solid rgba(15, 23, 42, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.pcv-cal-cell:hover {
+  border-color: #f2cbdd;
+  background: #fdfafc;
+}
+/* 月初之前的空格：不要 hover、不要边框 */
+.pcv-cal-cell.empty,
+.pcv-cal-cell.empty:hover {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+.pcv-cal-cell.today {
+  border-color: #ee8fb6;
+  box-shadow: inset 0 0 0 1px rgba(238, 143, 182, 0.55);
+}
+.pcv-cal-day {
+  font-size: 12px;
+  font-weight: 700;
+  color: #333a45;
+  line-height: 1.2;
+}
+.pcv-cal-mark {
+  font-size: 12px;
+  line-height: 1.2;
+}
+.pcv-cal-note {
+  font-size: 10px;
+  color: #9aa0a9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── 文案库：左表右详情 ───────────────────────────────────── */

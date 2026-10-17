@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, compareUrgent } from '../utils/publish'
 import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 import { selectPublishReminders } from '../utils/reminders'
@@ -19,20 +19,8 @@ export function PublishRemindersPage() {
 
   const SORTS = useMemo(() => [
     // 最该处理的排前面：逾期优先，其次「多久没发视频」由久到近
-    {
-      key: 'urgent',
-      label: '最紧急优先',
-      compare: (a, b) => {
-        const oa = isOverdue(a) ? 1 : 0
-        const ob = isOverdue(b) ? 1 : 0
-        if (oa !== ob) return ob - oa
-        const da = daysSincePublish(a)
-        const db = daysSincePublish(b)
-        const na = da === Infinity ? Number.MAX_SAFE_INTEGER : da
-        const nb = db === Infinity ? Number.MAX_SAFE_INTEGER : db
-        return nb - na
-      },
-    },
+    // 比较函数与手机版总览、PC 总览共用 utils/publish 的 compareUrgent
+    { key: 'urgent', label: '最紧急优先', compare: compareUrgent },
     { key: 'name', label: '名称', compare: (a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN') },
   ], [])
 

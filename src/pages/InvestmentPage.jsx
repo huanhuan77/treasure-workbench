@@ -810,3 +810,17 @@ export function InvestmentPage() {
     </div>
   )
 }
+
+// ── 供 PC 版（src/pc/pages/PcInvestment.jsx）复用 ─────────────────────
+// OCR 解析（130 行正则）、资产类型判定、类型样式这些两边必须一模一样，
+// 直接共用，不要在 PC 侧抄一份。
+export {
+  STORAGE_KEY as INVEST_STORAGE_KEY,
+  loadInvestments,
+  autoDetectType,
+  getAssetType,
+  TYPE_STYLE as INVEST_TYPE_STYLE,
+  parseOcrText,
+  runOcr,
+  uid as investUid,
+}

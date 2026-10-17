@@ -47,6 +47,14 @@ import { PcPublishRecords } from './pc/pages/PcPublishRecords'
 import { PcOrders } from './pc/pages/PcOrders'
 import { PcSensitive } from './pc/pages/PcSensitive'
 import { PcTodos } from './pc/pages/PcTodos'
+import { PcSavings } from './pc/pages/PcSavings'
+import { PcCalendar } from './pc/pages/PcCalendar'
+import { PcBrands } from './pc/pages/PcBrands'
+import { PcDramas } from './pc/pages/PcDramas'
+import { PcReading } from './pc/pages/PcReading'
+import { PcFinance } from './pc/pages/PcFinance'
+import { PcDaily } from './pc/pages/PcDaily'
+import { PcInvestment } from './pc/pages/PcInvestment'
 
 // 路由表（data 形式，供 KeepAliveRoutes 内的 useRoutes 使用）
 const routes = [
@@ -63,6 +71,14 @@ const routes = [
       { path: 'orders', element: <PcOrders /> },
       { path: 'sensitive', element: <PcSensitive /> },
       { path: 'todos', element: <PcTodos /> },
+      { path: 'savings', element: <PcSavings /> },
+      { path: 'calendar', element: <PcCalendar /> },
+      { path: 'brands', element: <PcBrands /> },
+      { path: 'dramas', element: <PcDramas /> },
+      { path: 'reading', element: <PcReading /> },
+      { path: 'finance', element: <PcFinance /> },
+      { path: 'daily', element: <PcDaily /> },
+      { path: 'investment', element: <PcInvestment /> },
     ],
   },
   { path: '/', element: <DashboardPage /> },

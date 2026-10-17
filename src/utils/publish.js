@@ -46,6 +46,20 @@ export function daysSincePublishByAccount(sample, account) {
   return Math.floor((now - last) / 86400000)
 }
 
+// 「最紧急优先」排序：**已逾期排最前面**，其次「多久没发视频」由久到近
+// （没发过视频的 daysSincePublish = Infinity，也排最前）。
+// 手机版总览 / 发布提醒页、PC 总览的提醒表统一走这一个比较，别各写一份，免得两端口径漂移。
+export function compareUrgent(a, b) {
+  const oa = isOverdue(a) ? 1 : 0
+  const ob = isOverdue(b) ? 1 : 0
+  if (oa !== ob) return ob - oa
+  const da = daysSincePublish(a)
+  const db = daysSincePublish(b)
+  const na = da === Infinity ? Number.MAX_SAFE_INTEGER : da
+  const nb = db === Infinity ? Number.MAX_SAFE_INTEGER : db
+  return nb - na
+}
+
 // 样品下「还需要发视频」的账号：从未发过 或 超过 N_PUBLISH_DAYS 天没发。
 // 都发过（且未超期）时返回空数组
 export function pendingAccounts(sample) {

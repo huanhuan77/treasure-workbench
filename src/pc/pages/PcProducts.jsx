@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
@@ -24,7 +23,6 @@ const COPY_FLAGS = [
 // PC 版文案库：左表右详情。
 // 数据全部来自同一个 store（与手机版完全一致），这里只重排展示。
 export function PcProducts() {
-  const navigate = useNavigate()
   const { show } = useToast()
   const { products, updateCopy, deleteCopy, deleteProduct } = useStore()
   const [keyword, setKeyword] = useState('')
@@ -264,8 +262,9 @@ export function PcProducts() {
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>{active.copies?.length || 0} 条</span>
                   <div className="pcv-spacer" />
-                  <button className="pcv-btn-text" onClick={() => navigate(`/product/${active.id}`)}>打开详情</button>
-                  <button className="pcv-btn-text" onClick={() => setEditing(active)}>编辑</button>
+                  {/* 「打开详情」「编辑」按用户要求去掉了。
+                      产品改名/改分类在左表的行内「编辑」里还有入口，功能没丢；
+                      手机版产品详情页在 PC 上不再有入口（它的功能这边都有了）。 */}
                   {/* 与手机版产品详情页同一组入口：话题管理 + 批量导入文案 */}
                   <button className="pcv-btn-text" onClick={() => setTopicOpen(true)}>
                     # 话题{topics.length > 0 ? ` ${topics.length}` : ''}

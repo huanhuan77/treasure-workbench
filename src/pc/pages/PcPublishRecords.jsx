@@ -18,9 +18,9 @@ const RANGES = [
   { key: 'lastMonth', label: '上月' },
 ]
 
+// 排序：日期一个按钮（点一下切升降序）、发布最多一个按钮。
+// 原来是「日期↓、日期↑、发布最多」三个，用户要求把日期那对合并成一个（与出单页一致）。
 const SORTS = [
-  { key: 'dateDesc', label: '日期 ↓' },
-  { key: 'dateAsc', label: '日期 ↑' },
   { key: 'countDesc', label: '发布最多' },
 ]
 
@@ -161,6 +161,10 @@ export function PcPublishRecords() {
           ))}
           {/* 排序组紧靠账号筛选右边，不再用 spacer 顶到最右（与样品页统一） */}
           <div className="pcv-sortgrp">
+            <button
+              className={sortKey === 'dateDesc' || sortKey === 'dateAsc' ? 'on' : ''}
+              onClick={() => setSortKey((k) => (k === 'dateDesc' ? 'dateAsc' : 'dateDesc'))}
+            >日期 {sortKey === 'dateAsc' ? '↑' : '↓'}</button>
             {SORTS.map((s) => (
               <button key={s.key} className={sortKey === s.key ? 'on' : ''} onClick={() => setSortKey(s.key)}>{s.label}</button>
             ))}

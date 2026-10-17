@@ -2,6 +2,7 @@ import { Fragment, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { OrderFormModal } from '../../components/OrderFormModal'
+import { OrderDialog } from '../components/OrderDialog'
 import { ACCOUNT_COLOR } from '../../utils/accounts'
 import { dateBounds } from '../../components/DateFilterBar'
 
@@ -15,12 +16,8 @@ const RANGES = [
   { key: 'lastMonth', label: '上月' },
 ]
 
-const SORTS = [
-  { key: 'dateDesc', label: '日期 ↓' },
-  { key: 'dateAsc', label: '日期 ↑' },
-  { key: 'mostDesc', label: '出单最多' },
-  { key: 'mostAsc', label: '出单最少' },
-]
+// 排序：日期、出单各**一个**按钮，点一下切升降序（见下方 toggleDateSort / toggleMostSort）。
+// 原来是「日期↓、日期↑、出单最多、出单最少」四个按钮，用户要求全部合并成一个按钮切方向。
 
 function parseTs(v) {
   if (!v) return null
@@ -43,9 +40,18 @@ export function PcOrders() {
   const [productFilter, setProductFilter] = useState('')
   const [expanded, setExpanded] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  // 「记出单」（新增）走 OrderDialog：账号 Tab 切换、一次可记多个账号。
+  // modalOpen 只留给「编辑单笔」——一条出单只属于一个账号，没有多账号这回事。
+  const [orderOpen, setOrderOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [prefill, setPrefill] = useState(null)
   const [formSeq, setFormSeq] = useState(0)
+
+  // 「日期」「出单」各一个按钮：点一下切升降序
+  const dateOn = sortKey === 'dateDesc' || sortKey === 'dateAsc'
+  const toggleDateSort = () => setSortKey((k) => (k === 'dateDesc' ? 'dateAsc' : 'dateDesc'))
+  const mostOn = sortKey === 'mostDesc' || sortKey === 'mostAsc'
+  const toggleMostSort = () => setSortKey((k) => (k === 'mostDesc' ? 'mostAsc' : 'mostDesc'))
 
   const list = useMemo(() => {
     return [...(orders || [])].sort((a, b) => {
@@ -165,7 +171,7 @@ export function PcOrders() {
           <option value="">全部产品</option>
           {productOptions.map((n) => <option key={n} value={n}>{n}</option>)}
         </select>
-        <button className="pcv-btn" onClick={() => { setEditing(null); setPrefill(null); setFormSeq((s) => s + 1); setModalOpen(true) }}>记出单</button>
+        <button className="pcv-btn" onClick={() => { setPrefill(null); setOrderOpen(true) }}>记出单</button>
       </div>
 
       <div className="pcv-body pcv-body--fill">
@@ -188,9 +194,12 @@ export function PcOrders() {
           ))}
           {/* 排序组紧靠账号筛选右边，不再用 spacer 顶到最右（与样品页统一） */}
           <div className="pcv-sortgrp">
-            {SORTS.map((s) => (
-              <button key={s.key} className={sortKey === s.key ? 'on' : ''} onClick={() => setSortKey(s.key)}>{s.label}</button>
-            ))}
+            <button className={dateOn ? 'on' : ''} onClick={toggleDateSort}>
+              日期 {sortKey === 'dateAsc' ? '↑' : '↓'}
+            </button>
+            <button className={mostOn ? 'on' : ''} onClick={toggleMostSort}>
+              出单 {sortKey === 'mostAsc' ? '↑' : '↓'}
+            </button>
           </div>
         </div>
 
@@ -259,10 +268,8 @@ export function PcOrders() {
                             onClick={() => {
                               const acc = g.entries.find((e) => e.account)?.account || ''
                               const sid = g.entries.find((e) => e.sampleId)?.sampleId || ''
-                              setEditing(null)
                               setPrefill({ account: acc, sampleId: sid })
-                              setFormSeq((s) => s + 1)
-                              setModalOpen(true)
+                              setOrderOpen(true)
                             }}
                           >继续新增一单</button>
                         </td>
@@ -276,7 +283,7 @@ export function PcOrders() {
         </div>
       </div>
 
-      {/* 编辑/新增单笔出单：复用手机版的表单弹窗（PC 上不再跳页面） */}
+      {/* 编辑单笔出单：复用手机版的表单弹窗（PC 上不再跳页面） */}
       <OrderFormModal
         key={formSeq}
         open={modalOpen}
@@ -285,6 +292,11 @@ export function PcOrders() {
         onSave={handleSave}
         prefill={prefill}
       />
+
+      {/* 记出单（新增）：账号 Tab 切换，一次可记多个账号 */}
+      {orderOpen && (
+        <OrderDialog prefill={prefill} onClose={() => { setOrderOpen(false); setPrefill(null) }} />
+      )}
     </>
   )
 }

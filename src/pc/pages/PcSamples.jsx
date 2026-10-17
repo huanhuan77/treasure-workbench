@@ -8,6 +8,7 @@ import {
   getAccounts, getCounts, getTopStatus, isShotSample, isArchivedSample,
 } from '../../utils/sampleStatus'
 import { deadlineDesc } from '../../utils/helpers'
+import { CATEGORY_STYLE } from '../../utils/productDisplay'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
 import { SampleDialog } from '../components/SampleDialog'
 import { PublishDialog } from '../components/PublishDialog'
@@ -40,13 +41,14 @@ const SORT_OPTIONS = [
 // 手机版那几个（#94a3b8 / #9ca3af）当白底文字对比度不够。
 // 表现方式：未选中就把颜色标在**文字**上，选中了再补一层同色浅底 + 描边。
 // 不另加色点 —— 用户对账号列讲过「不要圆点，颜色标记到账号上」，同一套偏好。
+// 「已放弃」原来是中性灰，和「未到货」的蓝灰几乎分不出来，按用户要求换成**淡紫色系**。
 const SEG_TONE = {
   all: { c: '#b8517f', bg: '#fdf1f6', bd: '#f2cbdd' },        // 全部 = 品牌粉
   un_arrived: { c: '#5d7a99', bg: '#eef2f6', bd: '#dae3ec' },  // 未到货 = 蓝灰
   arrived: { c: '#b1702c', bg: '#faf1e3', bd: '#f0dfc2' },     // 未拍 = 琥珀
   shot: { c: '#2f7f96', bg: '#e9f3f6', bd: '#d1e5ec' },        // 已拍未发 = 青
   published: { c: '#4f8a68', bg: '#eef4ef', bd: '#d7e6dd' },   // 已发布 = 绿
-  abandoned: { c: '#8a8f98', bg: '#f4f5f7', bd: '#e4e6ea' },   // 已放弃 = 中性灰
+  abandoned: { c: '#7d6ba8', bg: '#f4f1fa', bd: '#e2daf0' },   // 已放弃 = 淡紫
 }
 
 // PC 版样品记录。
@@ -235,8 +237,15 @@ export function PcSamples() {
                       <span className="pcv-nametext" title={s.name}>{s.name}</span>
                     </td>
                     <td>
+                      {/* 分类：与文案库那列统一 —— 浅灰底 chip + 6px 分类色圆点（原来只有灰 chip，两页不一致） */}
                       {s.category ? (
-                        <span className="pcv-chip" style={{ background: '#f3f4f6', color: '#6b7280' }}>{s.category}</span>
+                        <span className="pcv-chip" style={{ background: '#f3f4f6', color: '#6b7280', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          <span style={{
+                            width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.7,
+                            background: (CATEGORY_STYLE[s.category] || CATEGORY_STYLE['其他']).color,
+                          }} />
+                          {s.category}
+                        </span>
                       ) : (
                         <span style={{ color: '#c9cdd4' }}>—</span>
                       )}

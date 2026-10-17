@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES, compareUrgent } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
@@ -270,7 +270,9 @@ export function DashboardPage() {
   // 「发布不足5条」曾短暂改成「样品×账号」条目、按条目 account 精确匹配，
   // 但那会让多账号样品被拆成多条（详见 utils/reminders 里 selectLowPublish 的注释）。
   const fReminders = useMemo(
-    () => reminders.filter((s) => matchAcct(s, remindAccount)),
+    // 已逾期排最前面（其次「多久没发视频」由久到近），与 PC 总览、发布提醒列表页同一套比较。
+    // 总览里这是最需要人动手的一屏，未逾期的混在前面会把真正过期的挤下去。
+    () => reminders.filter((s) => matchAcct(s, remindAccount)).sort(compareUrgent),
     [reminders, remindAccount],
   )
   const fLowPublish = useMemo(
