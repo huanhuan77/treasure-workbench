@@ -845,13 +845,42 @@ select.pcv-input {
   display: flex;
   flex-direction: column;
 }
+/* 明细行：日期 | 条目（账号 + 数量 + 单笔操作）| 行尾（删除该天）三段对齐，
+   比原来「所有东西挤在一条 flex 流里」清爽得多。 */
 .pcv-detailrow {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-columns: 92px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 7px 0;
+  padding: 8px 0;
   border-top: 0.5px solid rgba(15, 23, 42, 0.06);
+}
+.pcv-detailrowend {
+  justify-self: end;
+}
+/* 明细里的小操作（编辑 / 删除 / 删除该天 / 继续新增）：文字型，hover 才显底色 */
+.pcv-detailact {
+  padding: 2px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pcv-detailact:hover {
+  background: #eef1f4;
+  color: #334155;
+}
+.pcv-detailact--danger {
+  color: #b96a66;
+}
+.pcv-detailact--danger:hover {
+  background: #fdf3f3;
+  color: #a34a46;
 }
 .pcv-detailrow:first-child {
   border-top: none;

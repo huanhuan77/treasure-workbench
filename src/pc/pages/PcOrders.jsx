@@ -6,6 +6,7 @@ import { OrderFormModal } from '../../components/OrderFormModal'
 import { OrderDialog } from '../components/OrderDialog'
 import { ResetButton } from '../components/ResetButton'
 import { dateBounds } from '../../components/DateFilterBar'
+import { ACCOUNT_COLOR } from '../../utils/accounts'
 
 const RANGES = [
   { key: '', label: '全部' },
@@ -275,20 +276,24 @@ export function PcOrders() {
                           <span style={{ color: '#9aa0a9' }}>—</span>
                         ) : (
                           g.accounts.map((a, i) => (
-                            <span key={a} style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-                              {/* 多个账号之间用**实心圆点分隔**（用户要求）。
-                                  不再用「·」字符 —— 小字号下它几乎是一条缝，看不清；
-                                  改用 4px 的圆形 span，任何字体/缩放下都是明确的点。 */}
-                              {i > 0 && (
-                                <span
-                                  aria-hidden="true"
-                                  style={{
-                                    width: 4, height: 4, borderRadius: '50%', background: '#c1c7cf',
-                                    margin: '0 8px', display: 'inline-block', flexShrink: 0,
-                                  }}
-                                />
-                              )}
-                              {/* 账号名不标账号主题色 —— 与样品页/发布记录页同一偏好 */}
+                            <span
+                              key={a}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
+                                marginRight: i < g.accounts.length - 1 ? 12 : 0,
+                              }}
+                            >
+                              {/* 账号名前一个**专属颜色**的圆点（广东刘亦菲琥珀 / 晚梨青绿 /
+                                  努力成为富婆玫红，取 ACCOUNT_COLOR.c），多账号时一眼分得清 */}
+                              <span
+                                aria-hidden="true"
+                                style={{
+                                  width: 6, height: 6, borderRadius: '50%',
+                                  background: (ACCOUNT_COLOR[a] || {}).c || '#c1c7cf',
+                                  marginRight: 6, flexShrink: 0,
+                                }}
+                              />
+                              {/* 圆点带色，账号名本身仍保持中性色（与样品页/发布记录页一致） */}
                               <span style={{ color: '#333a45' }}>{a}</span>
                             </span>
                           ))
@@ -327,23 +332,31 @@ export function PcOrders() {
                                 <span className="pcv-detailentries">
                                   {entries.map((e) => (
                                     <span key={e.id} className="pcv-detailentry">
+                                      {/* 账号前的彩色圆点，与上方汇总行一致 */}
+                                      <span
+                                        aria-hidden="true"
+                                        style={{
+                                          width: 5, height: 5, borderRadius: '50%',
+                                          background: (ACCOUNT_COLOR[e.account] || {}).c || '#c1c7cf',
+                                          flexShrink: 0,
+                                        }}
+                                      />
                                       <span className="pcv-detailacct">{e.account || '未指定'}</span>
                                       {/* fmtQty 已经带「单」后缀，别再加 */}
                                       <span className="pcv-detailqty">{fmtQty(e.qty)}</span>
-                                      {/* 操作统一成文字按钮：编辑 / 删除（原来一个「改」+ 一个「×」，
-                                          含义不直白，也不好点） */}
-                                      <button className="pcv-btn-text" style={{ marginLeft: 6 }} onClick={() => openEdit(e)}>编辑</button>
+                                      <button className="pcv-detailact" onClick={() => openEdit(e)}>编辑</button>
                                       <button
-                                        className="pcv-btn-text"
-                                        style={{ marginLeft: 8, color: '#b96a66' }}
+                                        className="pcv-detailact pcv-detailact--danger"
                                         title="删除这一笔"
                                         onClick={() => delEntry(e)}
                                       >删除</button>
                                     </span>
                                   ))}
+                                </span>
+                                {/* 「删除该天」放行尾右对齐，和单笔的编辑/删除分开，不会读成一串 */}
+                                <span className="pcv-detailrowend">
                                   <button
-                                    className="pcv-btn-text"
-                                    style={{ color: '#b96a66', marginLeft: 4 }}
+                                    className="pcv-detailact pcv-detailact--danger"
                                     title="删除这一天的全部记录"
                                     onClick={() => delDay(g.name, date, entries)}
                                   >删除该天</button>
@@ -351,16 +364,18 @@ export function PcOrders() {
                               </div>
                             ))}
                           </div>
-                          <button
-                            className="pcv-btn pcv-btn-ghost"
-                            style={{ marginTop: 8 }}
-                            onClick={() => {
-                              const acc = g.entries.find((e) => e.account)?.account || ''
-                              const sid = g.entries.find((e) => e.sampleId)?.sampleId || ''
-                              setPrefill({ account: acc, sampleId: sid })
-                              setOrderOpen(true)
-                            }}
-                          >继续新增一单</button>
+                          {/* 「继续新增一单」放在明细右下角，用文字按钮，不占一整行 */}
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
+                            <button
+                              className="pcv-detailact"
+                              onClick={() => {
+                                const acc = g.entries.find((e) => e.account)?.account || ''
+                                const sid = g.entries.find((e) => e.sampleId)?.sampleId || ''
+                                setPrefill({ account: acc, sampleId: sid })
+                                setOrderOpen(true)
+                              }}
+                            >＋ 继续新增一单</button>
+                          </div>
                         </td>
                       </tr>
                     )}

@@ -236,6 +236,13 @@ export function PcDashboard() {
             <div className="pcv-card-h">
               <span>待办清单</span>
               <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>{todoUndone} 未完成</span>
+              {/* 卡头就地放一个「新增」：跳到待办页并自动聚焦输入框（用户要求加在这儿） */}
+              <button
+                className="pcv-metric-add"
+                style={{ marginLeft: 8 }}
+                title="新增待办"
+                onClick={() => navigate('/pc/todos?add=1')}
+              >新增</button>
               <div className="pcv-spacer" />
               <button className="pcv-btn-text" onClick={() => navigate('/pc/todos')}>去管理</button>
             </div>

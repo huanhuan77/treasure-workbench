@@ -400,8 +400,10 @@ export function PcSamples() {
                           （手机版那边的注释也是「截止日对这两类已无意义」）。 */}
                       {/* 「剩 N 天」用橙色（用户要求）：正常倒计时也要能一眼扫到；
                           已过期仍是红调，颜色本身区分了「还来得及 / 已逾期」。 */}
+                      {/* 已过期用大红色 #e02020（与总览「已逾期」标签同色），比原来的暗红显眼得多；
+                          未过期仍是橙色，颜色本身区分「还来得及 / 已逾期」 */}
                       {dl && top !== 'published' && top !== 'abandoned' && (
-                        <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 600, color: dl.includes('过期') ? '#b96a66' : '#d97706' }}>{dl}</span>
+                        <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 700, color: dl.includes('过期') ? '#e02020' : '#d97706' }}>{dl}</span>
                       )}
                     </td>
                     <td>

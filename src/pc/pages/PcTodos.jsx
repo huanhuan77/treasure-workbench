@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
@@ -16,6 +17,19 @@ export function PcTodos() {
   const [due, setDue] = useState('')
   const [filter, setFilter] = useState('undone')
   const [delId, setDelId] = useState(null)
+  const titleRef = useRef(null)
+
+  // 从总览待办卡的「新增」跳过来（/pc/todos?add=1）：自动聚焦顶部输入框，直接开打；
+  // 用完清掉参数，刷新不会再抢焦点。
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('add') !== '1') return
+    setFilter('undone')
+    titleRef.current?.focus()
+    const next = new URLSearchParams(searchParams)
+    next.delete('add')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   const undone = (todos || []).filter((t) => t && !t.done).length
   const done = (todos || []).filter((t) => t && t.done).length
@@ -72,6 +86,7 @@ export function PcTodos() {
               固定 420px 上限，日期与按钮紧跟其后 */}
           <div className="pcv-card-b" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <input
+              ref={titleRef}
               className="pcv-input"
               style={{ flex: '0 1 420px', minWidth: 220, maxWidth: 420 }}
               placeholder="如：联系品牌方寄样"
