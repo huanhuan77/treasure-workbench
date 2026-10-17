@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import {
   SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter,
   getAccounts, getCounts, getTopStatus, isShotSample, isArchivedSample,
@@ -173,7 +173,9 @@ export function PcSamples() {
             </span>
             <span className="pcv-statcard-num">{totalCount}</span>
           </button>
-          {SAMPLE_STATUS_LIST.map((s) => {
+          {/* 与手机版对齐：排除「未到货」（该状态已不再使用，卡上永远是 0）。
+              手机版 SamplesPage 同样有 .filter((f) => f.key !== 'un_arrived')。 */}
+          {SAMPLE_STATUS_LIST.filter((s) => s.key !== 'un_arrived').map((s) => {
             const on = filter === s.key
             return (
               <button
@@ -216,24 +218,26 @@ export function PcSamples() {
                 {/* 每列都定宽，余量交给最后一列（操作）吸收：
                     账号列原来是唯一的 auto 列，整张表的余量全落到它头上，就空出一大片。
                     空白留在表尾（操作列右侧）看起来才是「表格留白」，夹在中间就是空洞。
-                    加「分类」列后从产品/账号/截止日期各匀了一点出来，保证操作列不被挤到换行。
-                    再按用户要求加「出单」列（回填是否在出单记录表里出现）。
+                    本次把原来「账号 · 发布/出单」一列拆成两列（账号 / 发布），
+                    并把「出单」改名为「是否出单」（口径不变，仍看出单记录表）：
+                    原来一个格子里塞「账号名 + 发N · 出N」，多账号样品会溢出格子、压到截止日期列上。
                     ⚠️ 加列必须给操作列留够：三个按钮「标记已拍/补记发布/编辑」实测要约 216px，
                     第一版剩下 210px 时「编辑」被挤到第二行（按钮 top 不一致）。
-                    所以从产品和出单各匀 10px：175+90+100+90+300+165 = 920，1440 视口下操作列约 230px。 */}
-                <th style={{ width: 175 }}>产品</th>
-                <th style={{ width: 90 }}>分类</th>
-                <th style={{ width: 100 }}>状态</th>
-                <th style={{ width: 90 }}>出单</th>
-                <th style={{ width: 300 }}>账号 · 发布/出单</th>
-                <th style={{ width: 165 }}>截止日期</th>
+                    160+80+90+200+100+90+150 = 870，1440 视口下操作列约 280px。 */}
+                <th style={{ width: 160 }}>产品</th>
+                <th style={{ width: 80 }}>分类</th>
+                <th style={{ width: 90 }}>状态</th>
+                <th style={{ width: 200 }}>账号</th>
+                <th style={{ width: 100 }}>发布</th>
+                <th style={{ width: 90 }}>是否出单</th>
+                <th style={{ width: 150 }}>截止日期</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {displayed.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="pcv-empty">当前筛选下没有样品</td>
+                  <td colSpan={8} className="pcv-empty">当前筛选下没有样品</td>
                 </tr>
               ) : displayed.map((s) => {
                 const top = getTopStatus(s)
@@ -242,6 +246,9 @@ export function PcSamples() {
                 const dl = deadlineDesc(s.deadline)
                 const shot = isShotSample(s)
                 const archived = isArchivedSample(s)
+                // 「发布」列取样品合计（各账号 publishCount 相加），与「发布不足 5 条」提醒同一口径；
+                // 各账号的明细留在 title 里，不占版面（多账号样品原来挤在一格里会溢出到隔壁列）。
+                const publishTotal = accounts.reduce((n, a) => n + (getCounts(s, a).publishCount || 0), 0)
                 return (
                   <tr key={s.id}>
                     <td>
@@ -266,9 +273,40 @@ export function PcSamples() {
                       <span className="pcv-chip" style={STATUS_TONE[top] || TONE.neutral}>{st.label || top}</span>
                     </td>
                     <td>
+                      {/* 账号：6px 账号主题色圆点 + 名字（圆点只做归属区分，不给文字着色，
+                          与总览「提醒中心」的账号分组头一个用法）。发布/出单数字已拆到右侧两列。 */}
+                      {hideAccount ? (
+                        <span className="pcv-chip" style={TONE.neutral}>{accounts.length} 个账号</span>
+                      ) : accounts.length === 0 ? (
+                        <span style={{ color: '#9aa0a9' }}>—</span>
+                      ) : (
+                        accounts.map((a) => (
+                          <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginRight: 10, whiteSpace: 'nowrap' }}>
+                            <span style={{
+                              width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                              background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4',
+                            }} />
+                            <span style={{ color: '#333a45', fontWeight: 600 }}>{a}</span>
+                          </span>
+                        ))
+                      )}
+                    </td>
+                    <td>
+                      {/* 发布：样品合计条数（与「发布不足 5 条」提醒同口径）。
+                          各账号明细放 title，鼠标悬停可看「账号 发N」。 */}
+                      <span
+                        style={{
+                          fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+                          color: publishTotal > 0 ? '#5f8a74' : '#9aa0a9',
+                        }}
+                        title={accounts.map((a) => `${a} 发${getCounts(s, a).publishCount}`).join(' / ') || '无账号'}
+                      >
+                        {publishTotal}
+                      </span>
+                    </td>
+                    <td>
                       {/* 是否出单：以出单记录表（orders）里有没有这个 sampleId 为准。
-                          注意它和右边「账号·发布/出单」里的「出N」不是同一个来源 ——
-                          那个是样品内部的 countsByAccount 影子计数，历史数据可能没维护。 */}
+                          不用 countsByAccount.orderCount —— 那是样品内部的影子计数，历史数据可能没维护。 */}
                       {orderCountBySample.has(s.id) ? (
                         <span
                           className="pcv-chip"
@@ -277,27 +315,6 @@ export function PcSamples() {
                         >已出单</span>
                       ) : (
                         <span style={{ color: '#c9cdd4' }}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      {hideAccount ? (
-                        <span className="pcv-chip" style={TONE.neutral}>{accounts.length} 个账号</span>
-                      ) : accounts.length === 0 ? (
-                        <span style={{ color: '#9aa0a9' }}>—</span>
-                      ) : (
-                        accounts.map((a) => {
-                          const c = getCounts(s, a)
-                          return (
-                            <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginRight: 12, whiteSpace: 'nowrap' }}>
-                              {/* 账号名不再带账号主题色（用户要求「账号不要标记颜色」）——
-                                  之前是 6px 圆点 → 改成文字着色 → 现在统一用正文色，只靠字重区分 */}
-                              <span style={{ color: '#333a45', fontWeight: 600 }}>{a}</span>
-                              <span style={{ fontSize: 12, color: c.publishCount > 0 ? '#5f8a74' : '#9aa0a9' }}>
-                                发{c.publishCount}{c.orderCount > 0 ? ` · 出${c.orderCount}` : ''}
-                              </span>
-                            </span>
-                          )
-                        })
                       )}
                     </td>
                     <td>
@@ -315,7 +332,9 @@ export function PcSamples() {
                         <button className="pcv-btn pcv-btn-ghost" onClick={() => markShot(s)}>标记已拍</button>
                       )}
                       <button className="pcv-btn" style={{ marginLeft: 8 }} onClick={() => setPublishDialog({ sampleId: s.id, accounts })}>补记发布</button>
-                      <button className="pcv-btn-text" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>编辑</button>
+                      {/* 「编辑」原来是文字链接（pcv-btn-text），按用户要求统一成按钮，
+                          样式取 ghost（白底 + 细描边），与「标记已拍」同款。 */}
+                      <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>编辑</button>
                     </td>
                   </tr>
                 )
