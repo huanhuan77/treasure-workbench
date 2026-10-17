@@ -87,24 +87,27 @@ export async function findLatestGist(token) {
 export async function uploadBackup(token) {
   const tk = (token || '').trim()
   if (!tk) throw new Error('缺少 GitHub Token')
-  const data = getAllData()
-  const gistId = localStorage.getItem(GIST_ID_KEY)
-  const url = gistId ? `${API}/gists/${gistId}` : `${API}/gists`
-  const body = gistId
-    ? { files: { [FILE_NAME]: { content: JSON.stringify(data, null, 2) } } }
-    : {
-      description: '博主工作台数据备份',
-      public: false,
-      files: { [FILE_NAME]: { content: JSON.stringify(data, null, 2) } },
-    }
-  const res = await fetch(url, {
-    method: gistId ? 'PATCH' : 'POST',
+  const content = JSON.stringify(getAllData(), null, 2)
+  let gistId = localStorage.getItem(GIST_ID_KEY)
+
+  const send = (id) => fetch(id ? `${API}/gists/${id}` : `${API}/gists`, {
+    method: id ? 'PATCH' : 'POST',
     headers: {
       Authorization: `Bearer ${tk}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(id
+      ? { files: { [FILE_NAME]: { content } } }
+      : { description: '博主工作台数据备份', public: false, files: { [FILE_NAME]: { content } } }),
   })
+
+  let res = await send(gistId)
+  // 缓存的 Gist 已不存在（被删 / 换了账号）→ 丢掉缓存，重新建一个，别直接报 404
+  if (res.status === 404 && gistId) {
+    localStorage.removeItem(GIST_ID_KEY)
+    gistId = null
+    res = await send(null)
+  }
   if (res.status === 401) throw new Error('Token 无效或已过期')
   if (res.status === 403) throw new Error('GitHub API 限流，或 Token 缺少 gist 权限')
   if (res.status === 404) throw new Error('Gist 不存在，或 Token 缺少 gist 权限（请改用带 gist scope 的 token，不是 repo）')

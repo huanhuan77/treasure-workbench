@@ -402,7 +402,20 @@ export async function syncAll(token, gistId, { forcePush = false } = {}) {
     }
   }
   if (!forcePush && resolvedGistId) {
-    const gist = await fetchGist(token, resolvedGistId)
+    let gist = await fetchGist(token, resolvedGistId)
+    // 缓存的 gistId 已失效（Gist 被删 / 换了 Token / 换了账号 → GET 返回 404）。
+    // 不清掉它的话，后面 saveGist 会拿旧 id PATCH、同样 404，界面表现就是「同步失败: HTTP 404」。
+    // 这里改成：丢掉旧 id → 按 Token 重新查找一遍 → 还是找不到就 null（saveGist 会新建）。
+    if (!gist) {
+      localStorage.removeItem(GIST_ID_KEY)
+      resolvedGistId = null
+      const existing = await findBackupGist(token)
+      if (existing) {
+        resolvedGistId = existing.id
+        localStorage.setItem(GIST_ID_KEY, existing.id)
+        gist = await fetchGist(token, resolvedGistId)
+      }
+    }
     if (gist?.files?.[GIST_FILENAME]?.content) {
       try {
         const parsed = JSON.parse(gist.files[GIST_FILENAME].content)
