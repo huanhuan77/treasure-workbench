@@ -249,22 +249,21 @@ export function PcInvestment() {
           <table className="pcv-table pcv-table--lg">
             <thead>
               <tr>
-                {/* 明细行原来把「3500 份 × ¥0.639 = ¥2236.50」全塞进成交额一格，
-                    195px 装不下、被右边列压掉（用户反馈截断）。
-                    现拆成 份额 / 成交额 / 成交价 三列：父行显示买/卖汇总，
-                    明细行显示该笔的份额、成交额、成交价，两边对齐不挤。
-                    定宽合计 1060，1440 视口下操作列约 105px（「编辑最新」刚好放得下）。 */}
-                <th style={{ width: 90 }}>代码</th>
-                <th style={{ width: 128 }}>名称</th>
-                <th style={{ width: 52 }}>类型</th>
-                <th style={{ width: 158 }}>持仓（买/卖/净）</th>
-                <th style={{ width: 58 }}>份额</th>
-                <th style={{ width: 104 }}>成交额</th>
-                <th style={{ width: 72 }}>成交价</th>
-                <th style={{ width: 72 }}>现价</th>
-                <th style={{ width: 80 }}>最新涨跌</th>
-                <th style={{ width: 108 }}>最新日期</th>
-                <th>操作</th>
+                {/* 定宽（px）改成百分比：窗口一宽，定宽表会在右边空出一大片，
+                    而「名称」仍然被截断（用户反馈「列宽调宽」）。
+                    现在各列按比例吃掉整行宽度，窗口越宽每列越宽；
+                    百分比合计 100，操作列留 11%（约 112px，够放「编辑最新」不换行）。 */}
+                <th style={{ width: '8%' }}>代码</th>
+                <th style={{ width: '17%' }}>名称</th>
+                <th style={{ width: '4.5%' }}>类型</th>
+                <th style={{ width: '15%' }}>持仓（买/卖/净）</th>
+                <th style={{ width: '5.5%' }}>份额</th>
+                <th style={{ width: '9.5%' }}>成交额</th>
+                <th style={{ width: '7%' }}>成交价</th>
+                <th style={{ width: '6.5%' }}>现价</th>
+                <th style={{ width: '7%' }}>最新涨跌</th>
+                <th style={{ width: '9%' }}>最新日期</th>
+                <th style={{ width: '11%' }}>操作</th>
               </tr>
             </thead>
             <tbody>
