@@ -170,27 +170,26 @@ export function PcProducts() {
             <table className="pcv-table">
               <thead>
                 <tr>
-                  {/* 这张表四列全部按百分比分配，**故意不留「吃余量」的列**。
-                      原因：本页左栏可拖动改宽，如果三列定死 px、只让「操作」列吃余量，
-                      拖动时就只有「操作」列在涨（用户反馈的原话：「拖动的时候整体都要
-                      改变，不是只改操作」）。四列都给百分比，余量才会按比例摊到每一列。
-                      其他 PC 表格没有拖动条、不会出现这个现象，仍是「最后一列吃余量」。 */}
-                  <th style={{ width: '42%' }}>产品</th>
-                  <th style={{ width: '18%' }}>分类</th>
-                  <th style={{ width: '17%' }}>出单</th>
+                  {/* 这张表**每一列都按百分比分配**，故意不留「吃余量」的列。
+                      原因：本页左栏可拖动改宽，如果几列定死 px、只让最后一列吃余量，
+                      拖动时就只有那一列在涨（用户反馈的原话：「拖动的时候整体都要
+                      改变，不是只改操作」）。全给百分比，余量才会按比例摊到每一列。
+                      其他 PC 表格没有拖动条、不会出现这个现象，仍是「最后一列吃余量」。
+                      「出单」列按用户要求去掉，腾出的份额主要给了产品列。 */}
+                  <th style={{ width: '55%' }}>产品</th>
+                  <th style={{ width: '22%' }}>分类</th>
                   <th style={{ width: '23%' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
                 {list.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="pcv-empty">没有匹配的产品</td>
+                    <td colSpan={3} className="pcv-empty">没有匹配的产品</td>
                   </tr>
                 ) : list.map((p) => {
                   const st = CATEGORY_STYLE[p.category] || CATEGORY_STYLE['其他']
                   // 与手机版 ProductCard 同一个图标来源（浅底 + 分类色 + 两字缩写）
                   const icon = getIconInfo(p.name, p.category)
-                  const ordered = (p.copies || []).filter((c) => c.hasOrder).length
                   return (
                     <tr
                       key={p.id}
@@ -215,16 +214,9 @@ export function PcProducts() {
                           </span>
                         )}
                       </td>
+                      {/* 「出单」列已按用户要求去掉 */}
                       <td>
-                        {/* 用户要求：不显示出单“数量”，只标“是否出单” */}
-                        {ordered > 0 ? (
-                          <span className="pcv-chip" style={{ background: '#fbeaea', color: '#b96a66' }}>已出单</span>
-                        ) : (
-                          <span style={{ color: '#c9cdd4' }}>—</span>
-                        )}
-                      </td>
-                      <td>
-                        {/* 与手机版一致：编辑跳 /product/:id/edit，删除走二次确认。
+                        {/* 编辑开 ProductDialog、删除走二次确认（PC 端不跳页面）。
                             stopPropagation 是为了不触发整行的「选中该产品」。 */}
                         <button
                           className="pcv-btn-text"

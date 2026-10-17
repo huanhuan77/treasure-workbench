@@ -3,7 +3,6 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { OrderFormModal } from '../../components/OrderFormModal'
 import { OrderDialog } from '../components/OrderDialog'
-import { ACCOUNT_COLOR } from '../../utils/accounts'
 import { dateBounds } from '../../components/DateFilterBar'
 
 const RANGES = [
@@ -47,11 +46,18 @@ export function PcOrders() {
   const [prefill, setPrefill] = useState(null)
   const [formSeq, setFormSeq] = useState(0)
 
-  // 「日期」「出单」各一个按钮：点一下切升降序
-  const dateOn = sortKey === 'dateDesc' || sortKey === 'dateAsc'
-  const toggleDateSort = () => setSortKey((k) => (k === 'dateDesc' ? 'dateAsc' : 'dateDesc'))
-  const mostOn = sortKey === 'mostDesc' || sortKey === 'mostAsc'
-  const toggleMostSort = () => setSortKey((k) => (k === 'mostDesc' ? 'mostAsc' : 'mostDesc'))
+  // 排序改成**点表头**（用户要求，把原来那排「日期 ↓ / 出单 ↓」按钮去掉）。
+  // 只有「出单量」和「最近出单」两列可排 —— 正好对应原有的两个排序维度，没有新增口径。
+  // 首次点某列 → 默认降序；再点同一列 → 切升序。
+  const sortDirOf = (field) => {
+    if (field === 'date') return sortKey === 'dateDesc' ? 'desc' : sortKey === 'dateAsc' ? 'asc' : null
+    return sortKey === 'mostDesc' ? 'desc' : sortKey === 'mostAsc' ? 'asc' : null
+  }
+  const toggleSort = (field) => {
+    const cur = sortDirOf(field)
+    if (field === 'date') setSortKey(cur === 'desc' ? 'dateAsc' : 'dateDesc')
+    else setSortKey(cur === 'desc' ? 'mostAsc' : 'mostDesc')
+  }
 
   const list = useMemo(() => {
     return [...(orders || [])].sort((a, b) => {
@@ -192,15 +198,6 @@ export function PcOrders() {
           {accountOptions.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
           ))}
-          {/* 排序组紧靠账号筛选右边，不再用 spacer 顶到最右（与样品页统一） */}
-          <div className="pcv-sortgrp">
-            <button className={dateOn ? 'on' : ''} onClick={toggleDateSort}>
-              日期 {sortKey === 'dateAsc' ? '↑' : '↓'}
-            </button>
-            <button className={mostOn ? 'on' : ''} onClick={toggleMostSort}>
-              出单 {sortKey === 'mostAsc' ? '↑' : '↓'}
-            </button>
-          </div>
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
@@ -210,8 +207,12 @@ export function PcOrders() {
                 <th style={{ width: 260 }}>产品</th>
                 <th style={{ width: 200 }}>账号</th>
                 <th style={{ width: 90 }}>笔数</th>
-                <th style={{ width: 90 }}>出单量</th>
-                <th style={{ width: 150 }}>最近出单</th>
+                <th style={{ width: 90 }} className="pcv-th-sort" onClick={() => toggleSort('most')}>
+                  出单量{sortDirOf('most') ? (sortDirOf('most') === 'desc' ? ' ↓' : ' ↑') : ''}
+                </th>
+                <th style={{ width: 150 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
+                  最近出单{sortDirOf('date') ? (sortDirOf('date') === 'desc' ? ' ↓' : ' ↑') : ''}
+                </th>
                 <th style={{ width: 110 }}>操作</th>
               </tr>
             </thead>
@@ -232,8 +233,8 @@ export function PcOrders() {
                         ) : (
                           g.accounts.map((a) => (
                             <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginRight: 10, whiteSpace: 'nowrap' }}>
-                              {/* 账号名本身带账号主题色（去掉原来的小圆点） */}
-                              <span style={{ color: (ACCOUNT_COLOR[a] || {}).c || '#4b5563', fontWeight: 600 }}>{a}</span>
+                              {/* 账号名不标账号主题色 —— 与样品页/发布记录页同一偏好 */}
+                              <span style={{ color: '#333a45', fontWeight: 600 }}>{a}</span>
                             </span>
                           ))
                         )}
@@ -247,21 +248,35 @@ export function PcOrders() {
                     </tr>
                     {open && (
                       <tr>
-                        <td colSpan={6} style={{ background: '#fafbfc', padding: '10px 14px' }}>
-                          {byDay(g.entries).map(([date, entries]) => (
-                            <div key={date} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', padding: '5px 0' }}>
-                              <span className="pcv-chip" style={{ background: '#f0f1f4', color: '#6b7280' }}>{dispDate(date)}</span>
-                              {entries.map((e) => (
-                                <span key={e.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                                  <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.55, background: (ACCOUNT_COLOR[e.account] || {}).c || '#c9cdd4' }} />
-                                  <span style={{ fontSize: 12, color: '#4b5563' }}>{e.account || '未指定'} · {fmtQty(e.qty)}</span>
-                                  <button className="pcv-btn-text" onClick={() => openEdit(e)}>改</button>
-                                  <button className="pcv-x" title="删除这一笔" onClick={() => delEntry(e)}>×</button>
+                        <td colSpan={6} style={{ background: '#fafbfc', padding: '6px 14px 10px' }}>
+                          {/* 明细用 grid 对齐：日期 / 条目（+ 当天操作）。
+                              原来是 flex-wrap 拼在一起，「日期 chip + 账号·数量 + 改 + × + 删除该天」
+                              全在一个流里，行与行之间还对不齐，用户反馈「不好看」。
+                              「删除该天」放在条目后面而不是推到表格最右 —— 表格很宽时它会孤零零浮在右边。 */}
+                          <div className="pcv-detaillist">
+                            {byDay(g.entries).map(([date, entries]) => (
+                              <div key={date} className="pcv-detailrow">
+                                <span className="pcv-detaildate">{dispDate(date)}</span>
+                                <span className="pcv-detailentries">
+                                  {entries.map((e) => (
+                                    <span key={e.id} className="pcv-detailentry">
+                                      <span className="pcv-detailacct">{e.account || '未指定'}</span>
+                                      {/* fmtQty 已经带「单」后缀，别再加 */}
+                                      <span className="pcv-detailqty">{fmtQty(e.qty)}</span>
+                                      <button className="pcv-btn-text" onClick={() => openEdit(e)}>改</button>
+                                      <button className="pcv-x" title="删除这一笔" onClick={() => delEntry(e)}>×</button>
+                                    </span>
+                                  ))}
+                                  <button
+                                    className="pcv-btn-text"
+                                    style={{ color: '#b96a66', marginLeft: 4 }}
+                                    title="删除这一天的全部记录"
+                                    onClick={() => delDay(g.name, date, entries)}
+                                  >删除该天</button>
                                 </span>
-                              ))}
-                              <button className="pcv-btn-text" style={{ color: '#b96a66' }} onClick={() => delDay(g.name, date, entries)}>删除该天</button>
-                            </div>
-                          ))}
+                              </div>
+                            ))}
+                          </div>
                           <button
                             className="pcv-btn pcv-btn-ghost"
                             style={{ marginTop: 8 }}

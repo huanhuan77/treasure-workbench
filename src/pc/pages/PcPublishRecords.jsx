@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
-import { ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
+import { getAccounts } from '../../utils/accounts'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
 
@@ -200,8 +200,8 @@ export function PcPublishRecords() {
                     <td>
                       {g.account ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                          {/* 账号名本身带账号主题色（去掉原来的小圆点） */}
-                          <span style={{ color: (ACCOUNT_COLOR[g.account] || {}).c || '#4b5563', fontWeight: 600 }}>{g.account}</span>
+                          {/* 账号名不标账号主题色 —— 与样品页同样的偏好（用户要求「账号不要标记颜色」） */}
+                          <span style={{ color: '#333a45', fontWeight: 600 }}>{g.account}</span>
                         </span>
                       ) : (
                         <span style={{ color: '#9aa0a9' }}>—</span>
@@ -220,8 +220,23 @@ export function PcPublishRecords() {
                           </span>
                         ))}
                         {g.dates.length > 1 && (
-                          <button className="pcv-btn-text" onClick={() => setExpanded(open ? '' : g.key)}>
-                            {open ? '收起' : `还有 ${g.dates.length - 1} 个日期`}
+                          // 折叠时只显示第一个日期，后面用一个**箭头**展开其余日期
+                          // （用户要求「点击箭头查看更多」；原来是一段「还有 N 个日期」的文字按钮）
+                          // ⚠️ 箭头用 SVG 不用 ▾/▴ 字符：字符在不同字体环境下可能缺字形（无头环境实测渲染成小点）
+                          <button
+                            className="pcv-btn-text"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontWeight: 700 }}
+                            title={open ? '收起' : `展开另外 ${g.dates.length - 1} 个日期`}
+                            onClick={() => setExpanded(open ? '' : g.key)}
+                          >
+                            <svg
+                              width="12" height="12" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"
+                              style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s ease' }}
+                            >
+                              <path d="M6 9l6 6 6-6" />
+                            </svg>
+                            <span style={{ fontSize: 11 }}>{g.dates.length - 1}</span>
                           </button>
                         )}
                       </span>

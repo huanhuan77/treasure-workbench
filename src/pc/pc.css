@@ -502,19 +502,59 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
-/* 带状态色的分段控件（样品页的状态筛选，配色在 PcSamples 的 SEG_TONE）。
-   每档默认就把颜色标在文字上（沿用用户对账号列的要求：颜色标到文字上、不要圆点），
-   选中时再补同色浅底 + 描边。
-   这里显式给一条 1px 边框：分段控件挂在 .pcv-accountbar 里，会继承那边的浅灰描边，
-   选中时只换描边**颜色**、不改宽度，所以点一下不会让整条轨道跳动（实测四档高度都是 26px）。 */
-.pcv-seg--tone button {
-  border: 1px solid transparent;
+/* ── 状态统计卡片（样品页顶部筛选）─────────────────────────────
+   与手机版 SamplesPage 的状态分组卡同款：白底小卡，
+   上行「状态色圆点 + 图标/名称」（11px 灰字），下行「大数字」（18px 800）。
+   选中态用该状态色描边 + 同色轻阴影（行内 style 打，因为颜色随状态变）。
+   —— 原来 PC 这里是「彩色文字胶囊」，用户要求跟手机同步，故替换。 */
+.pcv-statbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 0 10px;
 }
-/* 说明：状态色是用行内 style 打在按钮上的，行内样式优先级高于
-   `.pcv-seg button:hover { color: #334155 }`，所以 hover 不会把状态色盖掉，这里不用再管。 */
-.pcv-seg--tone button.on .pcv-count {
-  background: rgba(255, 255, 255, 0.78);
-  color: inherit;
+.pcv-statcard {
+  flex: 0 0 auto;
+  min-width: 96px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.pcv-statcard:hover {
+  border-color: rgba(15, 23, 42, 0.18);
+}
+.pcv-statcard-top {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+.pcv-statcard-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pcv-statcard-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9aa0a9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcv-statcard-num {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  color: #333a45;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .pcv-count {
@@ -565,6 +605,67 @@
   align-items: center;
   gap: 6px;
   margin-left: 14px;
+}
+
+/* 可点表头排序（出单记录页）：把排序入口从「一排按钮」挪到表头本身，
+   hover 变主色 + 淡粉底提示可点；升/降箭头用单元格里的 ↑/↓ 表示。 */
+.pcv-table th.pcv-th-sort {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.12s ease, background 0.12s ease;
+}
+.pcv-table th.pcv-th-sort:hover {
+  color: #b8517f;
+  background: #fdf7fa;
+}
+
+/* ── 出单记录的「展开明细」────────────────────────────────────
+   三列 grid：日期 / 条目（账号 + 数量 + 改/×）/ 当天操作。
+   原来是一串 flex-wrap，「日期 chip + 账号·数量 + 改 + × + 删除该天」挤在同一流里、
+   行与行对不齐（用户反馈「不好看」）。 */
+.pcv-detaillist {
+  display: flex;
+  flex-direction: column;
+}
+.pcv-detailrow {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  border-top: 0.5px solid rgba(15, 23, 42, 0.06);
+}
+.pcv-detailrow:first-child {
+  border-top: none;
+}
+.pcv-detaildate {
+  font-size: 12px;
+  color: #6b7280;
+  font-variant-numeric: tabular-nums;
+}
+.pcv-detailentries {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.pcv-detailentry {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.pcv-detailacct {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333a45;
+  min-width: 78px;
+}
+.pcv-detailqty {
+  font-size: 12px;
+  color: #6b7280;
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
 }
 
 .pcv-empty {
