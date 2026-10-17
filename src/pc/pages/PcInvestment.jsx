@@ -253,17 +253,18 @@ export function PcInvestment() {
                     而「名称」仍然被截断（用户反馈「列宽调宽」）。
                     现在各列按比例吃掉整行宽度，窗口越宽每列越宽；
                     百分比合计 100，操作列留 11%（约 112px，够放「编辑最新」不换行）。 */}
-                <th style={{ width: '8%' }}>代码</th>
-                <th style={{ width: '17%' }}>名称</th>
-                <th style={{ width: '4.5%' }}>类型</th>
-                <th style={{ width: '15%' }}>持仓（买/卖/净）</th>
-                <th style={{ width: '5.5%' }}>份额</th>
-                <th style={{ width: '9.5%' }}>成交额</th>
-                <th style={{ width: '7%' }}>成交价</th>
-                <th style={{ width: '6.5%' }}>现价</th>
-                <th style={{ width: '7%' }}>最新涨跌</th>
-                <th style={{ width: '9%' }}>最新日期</th>
-                <th style={{ width: '11%' }}>操作</th>
+                <th style={{ width: '7.5%' }}>代码</th>
+                <th style={{ width: '16%' }}>名称</th>
+                <th style={{ width: '4%' }}>类型</th>
+                <th style={{ width: '14.5%' }}>持仓（买/卖/净）</th>
+                <th style={{ width: '5%' }}>份额</th>
+                <th style={{ width: '9%' }}>成交额</th>
+                <th style={{ width: '6.5%' }}>成交价</th>
+                <th style={{ width: '6%' }}>现价</th>
+                <th style={{ width: '6.5%' }}>最新涨跌</th>
+                <th style={{ width: '8.5%' }}>最新日期</th>
+                {/* 操作列 11% → 16.5%：改成按钮后「编辑 + 删除」约需 150px */}
+                <th style={{ width: '16.5%' }}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -302,7 +303,7 @@ export function PcInvestment() {
                       </td>
                       <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{g.latest.sellDate || '—'}</td>
                       <td onClick={(e) => e.stopPropagation()} style={{ whiteSpace: 'nowrap' }}>
-                        <button className="pcv-btn-text" onClick={() => openEdit(g.latest)}>编辑最新</button>
+                        <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => openEdit(g.latest)}>编辑最新</button>
                       </td>
                     </tr>
 
@@ -338,8 +339,12 @@ export function PcInvestment() {
                         </td>
                         <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{inv.sellDate || '—'}</td>
                         <td style={{ whiteSpace: 'nowrap' }}>
-                          <button className="pcv-btn-text" onClick={() => openEdit(inv)}>编辑</button>
-                          <button className="pcv-btn-text" style={{ marginLeft: 10, color: '#b96a66' }} onClick={() => setDelTarget(inv)}>删除</button>
+                          <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => openEdit(inv)}>编辑</button>
+                          <button
+                            className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
+                            style={{ padding: '5px 10px', marginLeft: 6 }}
+                            onClick={() => setDelTarget(inv)}
+                          >删除</button>
                         </td>
                       </tr>
                     ))}
