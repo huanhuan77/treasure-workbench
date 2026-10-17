@@ -187,80 +187,48 @@
 }
 
 /* ── 通用块 ───────────────────────────────────────────────── */
-/* 指标行：4 张数字卡等宽 + 末尾「＋ 新增」入口（自适应宽度，用户要求放这一行） */
+/* 指标行：4 张数字卡等宽 */
 .pcv-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.pcv-addwrap {
-  position: relative;
-  display: flex;
-}
-.pcv-addcard {
-  display: flex;
+/* 每张指标卡右侧的「＋」：就地新增（新增样品 / 新增待办 / 记发布 / 记出单） */
+.pcv-metric-add {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 12px 16px;
-  border-radius: 12px;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px dashed rgba(184, 81, 127, 0.4);
   background: #fff;
-  border: 1px dashed rgba(184, 81, 127, 0.35);
   color: #b8517f;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
+  font-size: 15px;
+  line-height: 1;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
-.pcv-addcard:hover {
+.pcv-metric-add:hover {
   background: #fdf1f6;
-  border-color: rgba(184, 81, 127, 0.6);
-}
-/* 点开的浮层菜单 */
-.pcv-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 132px;
-  padding: 6px;
-  background: #fff;
-  border-radius: 10px;
-  border: 0.5px solid rgba(15, 23, 42, 0.10);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
-}
-.pcv-menu button {
-  padding: 8px 10px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  color: #334155;
-  font-size: 13px;
-  text-align: left;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.pcv-menu button:hover {
-  background: #fdf1f6;
-  color: #b8517f;
-}
-/* 点空白处关闭菜单 */
-.pcv-menu-mask {
-  position: fixed;
-  inset: 0;
-  z-index: 29;
+  border-color: rgba(184, 81, 127, 0.75);
 }
 
 .pcv-metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   background: #fff;
   border: 0.5px solid rgba(15, 23, 42, 0.08);
   border-radius: 12px;
   padding: 12px 14px;
+}
+.pcv-metric-body {
+  min-width: 0;
 }
 .pcv-metric-label {
   font-size: 12px;

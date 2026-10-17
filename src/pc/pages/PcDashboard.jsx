@@ -56,8 +56,7 @@ export function PcDashboard() {
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
   const [publishDialog, setPublishDialog] = useState(undefined)
-  // 「＋ 新增」下拉：新增样品 / 记出单 / 新增待办 / 记收支
-  const [addMenu, setAddMenu] = useState(false)
+  // 指标卡右侧「＋」里的「记出单」用
   const [orderOpen, setOrderOpen] = useState(false)
   // 云备份：上传（本机覆盖云端）/ 恢复（云端覆盖本机，需二次确认）
   const [backingUp, setBackingUp] = useState(false)
@@ -251,12 +250,13 @@ export function PcDashboard() {
         <div className="pcv-metrics">
           {/* 每张卡一个语义色：左侧 3px 色条 + 数字同色。
               值为 0 时整卡转灰（「有数才亮」）——否则四个 0 会跟真数据抢注意力。
-              颜色仍只用现有那三档语义色 + 品牌粉，不新增色板。 */}
+              颜色仍只用现有那三档语义色 + 品牌粉，不新增色板。
+              每张卡右侧一个「＋」：就地新增对应的东西（用户要求加在卡片里）。 */}
           {[
-            { label: '样品总数', value: samples.length, accent: '#b8517f' },
-            { label: '待办未完成', value: todoUndone, accent: '#a97c46' },
-            { label: '发布提醒', value: all.reminders.length, accent: '#b96a66' },
-            { label: '出单记录', value: orders.length, accent: '#5f8a74' },
+            { label: '样品总数', value: samples.length, accent: '#b8517f', addLabel: '新增样品', onAdd: () => setSampleDialog(null) },
+            { label: '待办未完成', value: todoUndone, accent: '#a97c46', addLabel: '新增待办', onAdd: () => navigate('/pc/todos') },
+            { label: '发布提醒', value: all.reminders.length, accent: '#b96a66', addLabel: '记一条发布', onAdd: () => navigate('/pc/publish-records') },
+            { label: '出单记录', value: orders.length, accent: '#5f8a74', addLabel: '记出单', onAdd: () => setOrderOpen(true) },
           ].map((m) => {
             const on = m.value > 0
             return (
@@ -265,27 +265,14 @@ export function PcDashboard() {
                 className="pcv-metric"
                 style={{ borderLeft: `3px solid ${on ? m.accent : '#e5e7eb'}` }}
               >
-                <div className="pcv-metric-label">{m.label}</div>
-                <div className="pcv-metric-value" style={{ color: on ? m.accent : '#c9cdd4' }}>{m.value}</div>
+                <div className="pcv-metric-body">
+                  <div className="pcv-metric-label">{m.label}</div>
+                  <div className="pcv-metric-value" style={{ color: on ? m.accent : '#c9cdd4' }}>{m.value}</div>
+                </div>
+                <button className="pcv-metric-add" title={m.addLabel} onClick={m.onAdd}>＋</button>
               </div>
             )
           })}
-
-          {/* ＋ 新增：放指标行末尾，点开下拉选择要新增什么 */}
-          <div className="pcv-addwrap">
-            <button className="pcv-addcard" onClick={() => setAddMenu((v) => !v)}>＋ 新增</button>
-            {addMenu && (
-              <>
-                <div className="pcv-menu-mask" onClick={() => setAddMenu(false)} />
-                <div className="pcv-menu">
-                  <button onClick={() => { setAddMenu(false); setSampleDialog(null) }}>新增样品</button>
-                  <button onClick={() => { setAddMenu(false); setOrderOpen(true) }}>记出单</button>
-                  <button onClick={() => { setAddMenu(false); navigate('/pc/todos') }}>新增待办</button>
-                  <button onClick={() => { setAddMenu(false); navigate('/pc/finance') }}>记收支</button>
-                </div>
-              </>
-            )}
-          </div>
         </div>
 
         <div className="pcv-stack">
