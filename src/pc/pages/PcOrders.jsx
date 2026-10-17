@@ -220,7 +220,8 @@ export function PcOrders() {
           {accountOptions.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
           ))}
-          <ResetButton active={hasFilter} onClick={resetFilters} />
+          {/* inline：紧跟账号胶囊，不再被 spacer 顶到窗口最右端（与收支/追剧页一致） */}
+          <ResetButton active={hasFilter} onClick={resetFilters} inline />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
@@ -257,13 +258,15 @@ export function PcOrders() {
                           g.accounts.map((a) => (
                             <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginRight: 10, whiteSpace: 'nowrap' }}>
                               {/* 账号名不标账号主题色 —— 与样品页/发布记录页同一偏好 */}
-                              <span style={{ color: '#333a45', fontWeight: 600 }}>{a}</span>
+                              <span style={{ color: '#333a45' }}>{a}</span>
                             </span>
                           ))
                         )}
                       </td>
-                      <td className="pcv-num">{g.count}</td>
-                      <td className="pcv-num" style={{ color: '#b96a66' }}>{g.qty}</td>
+                      {/* 笔数 / 出单量去掉加粗（用户要求）：只保留常规字重，
+                          出单量仍用暗红标一下，但不靠粗体强调 */}
+                      <td className="pcv-num" style={{ fontWeight: 400 }}>{g.count}</td>
+                      <td className="pcv-num" style={{ fontWeight: 400, color: '#b96a66' }}>{g.qty}</td>
                       <td style={{ color: g.latest ? '#4b5563' : '#c9cdd4' }}>{g.latest ? dispDate(g.latest) : '未填日期'}</td>
                       <td>
                         <button className="pcv-btn-text" onClick={() => setExpanded(open ? '' : g.name)}>{open ? '收起明细' : '查看明细'}</button>
@@ -286,8 +289,15 @@ export function PcOrders() {
                                       <span className="pcv-detailacct">{e.account || '未指定'}</span>
                                       {/* fmtQty 已经带「单」后缀，别再加 */}
                                       <span className="pcv-detailqty">{fmtQty(e.qty)}</span>
-                                      <button className="pcv-btn-text" onClick={() => openEdit(e)}>改</button>
-                                      <button className="pcv-x" title="删除这一笔" onClick={() => delEntry(e)}>×</button>
+                                      {/* 操作统一成文字按钮：编辑 / 删除（原来一个「改」+ 一个「×」，
+                                          含义不直白，也不好点） */}
+                                      <button className="pcv-btn-text" style={{ marginLeft: 6 }} onClick={() => openEdit(e)}>编辑</button>
+                                      <button
+                                        className="pcv-btn-text"
+                                        style={{ marginLeft: 8, color: '#b96a66' }}
+                                        title="删除这一笔"
+                                        onClick={() => delEntry(e)}
+                                      >删除</button>
                                     </span>
                                   ))}
                                   <button
