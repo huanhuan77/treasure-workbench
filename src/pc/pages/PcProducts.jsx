@@ -19,14 +19,21 @@ import { todayStr } from '../../utils/helpers'
 // icon 用 ¥ / SVG 火焰 / ✓ 这类「跟随 currentColor」的符号：
 // 未选中时它们是灰的，选中后跟着标签一起变深色，不会像 emoji 那样永远彩色。
 const COPY_FLAGS = [
-  { key: 'hasOrder', label: '出单', icon: '¥', bg: '#d8ecdf', fg: '#2f6b4a', border: 'rgba(47,107,74,.28)', bar: '#8fbf9f' },
+  { key: 'hasOrder', label: '出单', icon: 'bag', bg: '#d8ecdf', fg: '#2f6b4a', border: 'rgba(47,107,74,.28)', bar: '#8fbf9f' },
   { key: 'hasHot', label: '爆单', icon: 'flame', bg: '#fadada', fg: '#b3261e', border: 'rgba(179,38,30,.24)', bar: '#e08a86' },
   { key: 'used', label: '用过', icon: 'check', bg: '#fbeccd', fg: '#96620a', border: 'rgba(150,98,10,.26)', bar: '#e8c07a' },
 ]
 
 // 标记按钮里的小图标（11px，走 currentColor）
 function FlagIcon({ kind }) {
-  if (kind === '¥') return <span style={{ fontSize: 11, fontWeight: 800, lineHeight: 1 }}>¥</span>
+  // 出单：购物袋（表示「卖出去一单」），比 ¥ 更像动作、也不会和金额列混淆
+  if (kind === 'bag') {
+    return (
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h12v12z" />
+      </svg>
+    )
+  }
   if (kind === 'flame') {
     return (
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
