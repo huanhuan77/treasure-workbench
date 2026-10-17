@@ -170,9 +170,10 @@ export function PcDashboard() {
     return [...map.entries()].sort((x, y) => accRank(x[0]) - accRank(y[0]))
   }, [items, cur, account, tab])
 
-  // 卡片里固定只列 5 条（用户要求）；剩余条数看卡头「N 未完成」和「去管理」
+  // 全部未完成待办都渲染，卡片高度锁 5 行（见 pc.css 的 .pcv-todogrid），
+  // 第 6 条起在卡内滚动 —— 只切 slice(0,5) 的话后面的条目根本看不到，也滚不动。
   const todoList = useMemo(
-    () => [...(todos || [])].filter((t) => !t.done).slice(0, 5),
+    () => [...(todos || [])].filter((t) => !t.done),
     [todos],
   )
   const todoUndone = (todos || []).filter((t) => !t.done).length

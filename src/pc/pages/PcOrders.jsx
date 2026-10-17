@@ -3,6 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { OrderFormModal } from '../../components/OrderFormModal'
 import { OrderDialog } from '../components/OrderDialog'
+import { ResetButton } from '../components/ResetButton'
 import { dateBounds } from '../../components/DateFilterBar'
 
 const RANGES = [
@@ -45,6 +46,15 @@ export function PcOrders() {
   const [editing, setEditing] = useState(null)
   const [prefill, setPrefill] = useState(null)
   const [formSeq, setFormSeq] = useState(0)
+
+  // 重置：产品 / 账号 / 时间范围 / 排序，回到进页面时的默认（时间范围默认「昨天」）
+  const hasFilter = productFilter !== '' || accountFilter !== '' || dateRange !== 'yesterday' || sortKey !== 'dateDesc'
+  const resetFilters = () => {
+    setProductFilter('')
+    setAccountFilter('')
+    setDateRange('yesterday')
+    setSortKey('dateDesc')
+  }
 
   // 排序改成**点表头**（用户要求，把原来那排「日期 ↓ / 出单 ↓」按钮去掉）。
   // 只有「出单量」和「最近出单」两列可排 —— 正好对应原有的两个排序维度，没有新增口径。
@@ -198,6 +208,7 @@ export function PcOrders() {
           {accountOptions.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
           ))}
+          <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>

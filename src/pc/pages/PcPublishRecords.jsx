@@ -6,6 +6,7 @@ import { ConfirmModal } from '../../components/Modal'
 import { getAccounts } from '../../utils/accounts'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
+import { ResetButton } from '../components/ResetButton'
 
 // 日期区间快捷项（与手机版 DateFilterBar 同一套 key，交给 dateBounds 解析区间）
 const RANGES = [
@@ -18,11 +19,6 @@ const RANGES = [
   { key: 'lastMonth', label: '上月' },
 ]
 
-// 排序：日期一个按钮（点一下切升降序）、发布最多一个按钮。
-// 原来是「日期↓、日期↑、发布最多」三个，用户要求把日期那对合并成一个（与出单页一致）。
-const SORTS = [
-  { key: 'countDesc', label: '发布最多' },
-]
 
 // 解析 YYYY/MM/DD 或 YYYY-MM-DD
 function parseTs(v) {
@@ -46,6 +42,28 @@ export function PcPublishRecords() {
   const [delTarget, setDelTarget] = useState(null)
   // 记录发布弹窗：undefined=关闭、对象=打开（可带预填）
   const [publishDialog, setPublishDialog] = useState(undefined)
+
+  // 表头排序（与其它 PC 表格同一套交互）：
+  // field='date' → dateDesc/dateAsc，field='count' → countDesc/countAsc；
+  // 首次点某列按降序，再点同一列翻转。
+  const sortDirOf = (field) => {
+    if (field === 'date') return sortKey === 'dateAsc' ? 'asc' : sortKey === 'dateDesc' ? 'desc' : null
+    return sortKey === 'countAsc' ? 'asc' : sortKey === 'countDesc' ? 'desc' : null
+  }
+  const toggleSort = (field) => {
+    const dir = sortDirOf(field)
+    if (field === 'date') setSortKey(dir === 'desc' ? 'dateAsc' : 'dateDesc')
+    else setSortKey(dir === 'desc' ? 'countAsc' : 'countDesc')
+  }
+
+  // 重置：搜索 + 账号 + 时间范围 + 排序，回到进页面时的默认（时间范围默认「今天」）
+  const hasFilter = account !== '' || keyword !== '' || dateRange !== 'today' || sortKey !== 'dateDesc'
+  const resetFilters = () => {
+    setAccount('')
+    setKeyword('')
+    setDateRange('today')
+    setSortKey('dateDesc')
+  }
 
   const sampleMap = useMemo(() => Object.fromEntries((samples || []).map((s) => [s.id, s])), [samples])
   const records = useMemo(
@@ -98,6 +116,7 @@ export function PcPublishRecords() {
       .sort((a, b) => {
         if (sortKey === 'dateAsc') return byDate(a, b, 'asc') || (b.records.length - a.records.length)
         if (sortKey === 'countDesc') return (b.records.length - a.records.length) || byDate(a, b, 'desc')
+        if (sortKey === 'countAsc') return (a.records.length - b.records.length) || byDate(a, b, 'desc')
         return byDate(a, b, 'desc') || (b.records.length - a.records.length)
       })
   }, [records, sampleMap, account, bounds, keyword, sortKey])
@@ -159,26 +178,23 @@ export function PcPublishRecords() {
           {accountOptions.map((a) => (
             <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{a}</button>
           ))}
-          {/* 排序组紧靠账号筛选右边，不再用 spacer 顶到最右（与样品页统一） */}
-          <div className="pcv-sortgrp">
-            <button
-              className={sortKey === 'dateDesc' || sortKey === 'dateAsc' ? 'on' : ''}
-              onClick={() => setSortKey((k) => (k === 'dateDesc' ? 'dateAsc' : 'dateDesc'))}
-            >日期 {sortKey === 'dateAsc' ? '↑' : '↓'}</button>
-            {SORTS.map((s) => (
-              <button key={s.key} className={sortKey === s.key ? 'on' : ''} onClick={() => setSortKey(s.key)}>{s.label}</button>
-            ))}
-          </div>
+          <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
           <table className="pcv-table">
             <thead>
               <tr>
+                {/* 排序入口统一为「点表头」（与样品页、出单页、收支页一致）：
+                    「发布日期」点一下切升/降序，「发布次数」点一下按次数排。 */}
                 <th style={{ width: 260 }}>产品</th>
                 <th style={{ width: 150 }}>账号</th>
-                <th style={{ width: 420 }}>发布日期</th>
-                <th>发布次数</th>
+                <th style={{ width: 420 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
+                  发布日期{sortDirOf('date') ? (sortDirOf('date') === 'asc' ? ' ↑' : ' ↓') : ''}
+                </th>
+                <th className="pcv-th-sort" onClick={() => toggleSort('count')}>
+                  发布次数{sortDirOf('count') ? (sortDirOf('count') === 'asc' ? ' ↑' : ' ↓') : ''}
+                </th>
               </tr>
             </thead>
             <tbody>

@@ -4,6 +4,7 @@ import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 // 检测逻辑直接复用手机版的实现（已 export），不复制一份，避免两套判定漂移
 import { scanText } from '../../pages/SensitiveCenterPage'
+import { ResetButton } from '../components/ResetButton'
 
 // 严重度配色：与手机版同口径（1 必改 / 2 建议改 / 3 注意）
 const LEVEL = {
@@ -96,6 +97,7 @@ export function PcSensitive() {
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
               />
+              <ResetButton active={keyword !== ''} onClick={() => setKeyword('')} inline />
             </div>
 
             {sensitiveWords.length === 0 ? (

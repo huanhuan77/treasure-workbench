@@ -23,8 +23,15 @@ const MOODS = [
 const WEATHERS = ['☀️', '🌤', '☁️', '🌧', '⛈', '🌨', '🌫']
 const WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
+// 解析后必须保证是「普通对象」：备份恢复 / 历史脏数据可能把 null、数组、字符串写进这个 key，
+// 后面 Object.entries(data) 遇到 null 会抛 "Cannot convert undefined or null to object"，整页白屏。
 const load = () => {
-  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : {} } catch { return {} }
+  try {
+    const r = localStorage.getItem(STORAGE_KEY)
+    if (!r) return {}
+    const parsed = JSON.parse(r)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch { return {} }
 }
 const persist = (d) => localStorage.setItem(STORAGE_KEY, JSON.stringify(d))
 const pad = (n) => String(n).padStart(2, '0')

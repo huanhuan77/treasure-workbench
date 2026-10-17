@@ -3,6 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { DRAMA_STATUS } from '../../utils/dramaLib'
+import { ResetButton } from '../components/ResetButton'
 
 // PC 版「追剧」。数据与语义照手机版 DramaPage：
 //   store 的 dramas / addDrama / updateDrama / deleteDrama；
@@ -117,6 +118,8 @@ export function PcDramas() {
               </button>
             ))}
           </div>
+          {/* 重置只清状态筛选（电视剧/综艺是 Tab，不动） */}
+          <ResetButton active={statusTab !== 'all'} onClick={() => setStatusTab('all')} />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>

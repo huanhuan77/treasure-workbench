@@ -3,6 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
+import { ResetButton } from '../components/ResetButton'
 
 // PC 版「收支明细」。
 // 数据与语义照手机版 FinancePage / NewTransactionPage / EditTransactionPage：
@@ -49,6 +50,16 @@ export function PcFinance() {
   const sortDirOf = (field) => (sortBy.startsWith(field) ? (sortBy.endsWith('asc') ? 'asc' : 'desc') : null)
   const toggleSort = (field) => {
     setSortBy((p) => (p === `${field}_desc` ? `${field}_asc` : `${field}_desc`))
+  }
+
+  // 重置：分类 / 账号 / 月份 / 排序回到默认（月份默认当前月）
+  const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const hasFilter = filterCategory !== 'all' || filterAccount !== 'all' || filterMonth !== defaultMonth || sortBy !== 'date_desc'
+  const resetFilters = () => {
+    setFilterCategory('all')
+    setFilterAccount('all')
+    setFilterMonth(defaultMonth)
+    setSortBy('date_desc')
   }
 
   const toggleHideAccount = () => {
@@ -238,6 +249,8 @@ export function PcFinance() {
               {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
           )}
+          {/* 重置：分类 / 账号 / 月份 / 排序回到默认（收入·支出那个 seg 是 Tab，不动） */}
+          <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>

@@ -11,6 +11,7 @@ import {
   INVEST_TYPE_STYLE as TYPE_STYLE,
   investUid as uid,
 } from '../../pages/InvestmentPage'
+import { ResetButton } from '../components/ResetButton'
 
 // PC 版「投资跟踪」。
 // 数据与语义照手机版 InvestmentPage：**直接读写 localStorage 的 `blogger_investments_v1`**（数组），
@@ -215,6 +216,7 @@ export function PcInvestment() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
+        <ResetButton active={keyword !== ''} onClick={() => setKeyword('')} inline />
         <button className="pcv-btn pcv-btn-ghost" onClick={refreshPrices} disabled={refreshing}>
           {refreshing ? '刷新中…' : '刷新行情'}
         </button>

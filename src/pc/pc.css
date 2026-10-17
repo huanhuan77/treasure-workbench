@@ -236,13 +236,13 @@
    原来用 auto-fill 多列网格，条数少时右侧空一大片、扫读还要横着跳。
    改成一列后边框回归 .pcv-copyitem 的默认规则（上边框分隔、首条无上边框），
    所以这里不再覆写 border。 */
-/* 待办清单：卡内滚动（用户要求「可以滚动」）。
-   固定 300px ≈ 6 条可见，再多在卡内滚，卡片高度不再无限长高、
-   不会把下面的「提醒中心」顶出首屏。卡头在滚动区之外，天然固定。
-   滚动条收细，PC 默认那条宽滚动条会把卡片撑得很脏。 */
+/* 待办清单：卡内滚动，只露 5 行（用户要求「只显示 5 条 + 能滚动」）。
+   行高 = .pcv-copyitem 的 10px 上下内边距 + 约 20px 内容 + 0.5px 分隔线 ≈ 40.5px，
+   5 行取 203px；不 slice 数据，其余条目在卡内滚（只切 5 条会滚不动、看不到后面的）。
+   卡头在滚动区之外，天然固定。滚动条收细，PC 默认宽滚动条会把卡片撑得很脏。 */
 .pcv-todogrid {
   display: block;
-  max-height: 300px;
+  max-height: 203px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -556,16 +556,21 @@
 .pcv-statbar::-webkit-scrollbar-track {
   background: transparent;
 }
+/* 状态卡改成单行：「圆点 + 状态名 + 数字」同一行，数字不再折到第二行（用户要求）。
+   原来是上下两行（标签在上、18px 大数字在下），卡高约 62px；改成单行后约 34px，整排更紧凑。 */
 .pcv-statcard {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex: 0 0 auto;
-  min-width: 96px;
-  padding: 8px 10px;
+  padding: 8px 12px;
   border-radius: 10px;
   background: #fff;
   border: 1px solid rgba(15, 23, 42, 0.07);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   cursor: pointer;
   text-align: left;
+  white-space: nowrap;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .pcv-statcard:hover {
@@ -575,7 +580,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 4px;
+  margin-bottom: 0;
   white-space: nowrap;
 }
 .pcv-statcard-dot {
@@ -592,12 +597,13 @@
   text-overflow: ellipsis;
 }
 .pcv-statcard-num {
-  display: block;
-  font-size: 18px;
+  display: inline-block;
+  font-size: 15px;
   font-weight: 800;
   color: #333a45;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .pcv-count {

@@ -12,6 +12,7 @@ import { CATEGORY_STYLE } from '../../utils/productDisplay'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
 import { SampleDialog } from '../components/SampleDialog'
 import { PublishDialog } from '../components/PublishDialog'
+import { ResetButton } from '../components/ResetButton'
 
 // 状态色调只用三档 + 一档淡出：
 //   中性（未到货）/ 待办（未拍、已拍未发）/ 完成（已发布）/ 淡出（已放弃）
@@ -130,6 +131,17 @@ export function PcSamples() {
     }
   }
 
+  // 重置筛选：状态卡 / 账号 / 搜索关键词 / 排序 一次清回默认。
+  // hasFilter 只用来控制按钮的可用态与深浅，不影响筛选逻辑。
+  const hasFilter = filter !== 'all' || accountFilter !== 'all' || keyword !== '' || sortKey !== 'custom'
+  const resetFilters = () => {
+    setFilter('all')
+    setAccountFilter('all')
+    setKeyword('')
+    setSortKey('custom')
+    setSortDir('desc')
+  }
+
   return (
     <>
       <div className="pcv-bar">
@@ -200,6 +212,8 @@ export function PcSamples() {
           {usedAccounts.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
           ))}
+          {/* 重置放最右：无筛选时置灰不可点，有筛选时可一键清空 */}
+          <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
@@ -319,7 +333,7 @@ export function PcSamples() {
                       {orderCountBySample.has(s.id) ? (
                         <span
                           className="pcv-chip"
-                          style={{ background: '#fbeaea', color: '#b96a66' }}
+                          style={TONE.good}
                           title={`出单记录 ${orderCountBySample.get(s.id)} 条`}
                         >已出单</span>
                       ) : (
@@ -337,8 +351,10 @@ export function PcSamples() {
                           一片红字反而盖住真正要跟进的那几条。日期本身保留（列名就叫「截止日期」）。
                           口径与手机版 SamplesPage 完全一致：已发布 + 已放弃 都不显示
                           （手机版那边的注释也是「截止日对这两类已无意义」）。 */}
+                      {/* 「剩 N 天」用橙色（用户要求）：正常倒计时也要能一眼扫到；
+                          已过期仍是红调，颜色本身区分了「还来得及 / 已逾期」。 */}
                       {dl && top !== 'published' && top !== 'abandoned' && (
-                        <span style={{ marginLeft: 6, fontSize: 12, color: dl.includes('过期') ? '#b96a66' : '#9aa0a9' }}>{dl}</span>
+                        <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 600, color: dl.includes('过期') ? '#b96a66' : '#d97706' }}>{dl}</span>
                       )}
                     </td>
                     <td>

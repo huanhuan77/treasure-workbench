@@ -3,6 +3,7 @@ import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { copyText } from '../../utils/clipboard'
 import { recordDelete } from '../../utils/sync'
+import { ResetButton } from '../components/ResetButton'
 
 // PC 版「品牌方联系」。
 // 数据与语义照手机版 BrandContactsPage：**直接读写 localStorage 的 `brand_contacts_v1`**（数组，不走 store），
@@ -99,6 +100,7 @@ export function PcBrands() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
+        <ResetButton active={keyword !== ''} onClick={() => setKeyword('')} inline />
         <button className="pcv-btn" onClick={openNew}>新增品牌方</button>
       </div>
 

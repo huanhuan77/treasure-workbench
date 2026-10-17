@@ -17,8 +17,15 @@ import { recordDelete } from '../../utils/sync'
 const DAY_KEY = 'daily_plan_v1'
 const MAX_LEN = 100
 
+// 解析后必须保证是「普通对象」：备份恢复 / 历史脏数据可能把 null、数组、字符串写进这个 key，
+// 后面 Object.keys(data) 遇到 null 会抛 "Cannot convert undefined or null to object"，整页白屏。
 const load = () => {
-  try { const r = localStorage.getItem(DAY_KEY); return r ? JSON.parse(r) : {} } catch { return {} }
+  try {
+    const r = localStorage.getItem(DAY_KEY)
+    if (!r) return {}
+    const parsed = JSON.parse(r)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}
+  } catch { return {} }
 }
 const persist = (d) => localStorage.setItem(DAY_KEY, JSON.stringify(d))
 const pad = (n) => String(n).padStart(2, '0')

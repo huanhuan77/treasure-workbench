@@ -9,6 +9,7 @@ import { ProductDialog } from '../components/ProductDialog'
 import { CopyDialog } from '../components/CopyDialog'
 import { CopyImportDialog } from '../components/CopyImportDialog'
 import { TopicDialog, allTopicTags } from '../components/TopicDialog'
+import { ResetButton } from '../components/ResetButton'
 import { todayStr } from '../../utils/helpers'
 
 // 每条文案的状态标记，与手机版 ProductDetailPage 的 CopyCard 一一对应：
@@ -133,6 +134,13 @@ export function PcProducts() {
     show('文案已删除', 'success')
   }
 
+  // 重置：只清「搜索 + 分类筛选」，不动当前选中的产品（那是浏览位置，不是筛选）
+  const hasFilter = keyword !== '' || category !== ''
+  const resetFilters = () => {
+    setKeyword('')
+    setCategory('')
+  }
+
   return (
     <>
       <div className="pcv-bar">
@@ -158,6 +166,7 @@ export function PcProducts() {
           {CATEGORIES.map((c) => (
             <button key={c} className={category === c ? 'on' : ''} onClick={() => setCategory(c)}>{c}</button>
           ))}
+          <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
         <div

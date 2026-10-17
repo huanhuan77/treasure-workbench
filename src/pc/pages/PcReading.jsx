@@ -13,6 +13,7 @@ import {
   READING_STATUS_ORDER as STATUS_ORDER,
   READING_LINK_PLATFORMS as LINK_PLATFORMS,
 } from '../../pages/ReadingPage'
+import { ResetButton } from '../components/ResetButton'
 
 // PC 版「读书成长」。
 // 数据与语义照手机版 ReadingPage：**直接读写 localStorage 的 `reading_growth_v1`**；
@@ -205,6 +206,11 @@ export function PcReading() {
               {s === '全部' ? '全部状态' : `${STATUS[s].emoji} ${STATUS[s].label}`}
             </button>
           ))}
+          {/* 重置只清分类 + 状态（书籍/影视是 Tab，不动） */}
+          <ResetButton
+            active={catFilter !== '全部' || statusFilter !== '全部'}
+            onClick={() => { setCatFilter('全部'); setStatusFilter('全部') }}
+          />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
