@@ -98,8 +98,20 @@ export function PcSamples() {
     return list
   }, [samples, accountFilter, filter, orderFilter, orderCountBySample, keyword])
 
+  // 已过期（未发布/未放弃 + 截止日已过，与「剩 N 天」红字同一口径）的样品排最前面。
+  // 默认视图（sortKey=custom）下生效；用户点了表头排序时就按他自己的排序来，不插队。
+  const isExpired = (s) => {
+    const top = getTopStatus(s)
+    if (top === 'published' || top === 'abandoned') return false
+    const d = deadlineDesc(s.deadline)
+    return !!d && d.includes('过期')
+  }
+
   const displayed = useMemo(() => {
-    if (sortKey === 'custom') return accountFiltered
+    if (sortKey === 'custom') {
+      // 稳定排序：过期的一组在前，组内仍是原来的顺序（收货日期 / 录入顺序）
+      return [...accountFiltered].sort((a, b) => (isExpired(a) ? 0 : 1) - (isExpired(b) ? 0 : 1))
+    }
     const dir = sortDir === 'asc' ? 1 : -1
     return [...accountFiltered].sort((a, b) => {
       const va = a[sortKey] || ''

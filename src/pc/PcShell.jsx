@@ -9,6 +9,7 @@ import {
   CardIcon, PiggyIcon, ChartIcon, BanIcon,
 } from '../components/navIcons'
 import { CloudActions } from './components/CloudActions'
+import { useDialogDrag } from './utils/dialogDrag'
 import './pc.css'
 
 // PC 版导航：一列到底，不分组。
@@ -55,6 +56,8 @@ export function PcShell() {
   const location = useLocation()
   const isDesktop = useIsDesktop()
   const { samples } = useStore()
+  // 全站弹窗可拖动：文档级委托，挂一次对所有 .pcv-dialog 生效
+  useDialogDrag()
 
   // 云备份按钮的挂载点：每页渲染完成后，把 host 插到该页顶栏（.pcv-bar）里
   // 第一个 .pcv-spacer 之后 —— 也就是「标题组」与「搜索框/新增按钮」之间的空位。

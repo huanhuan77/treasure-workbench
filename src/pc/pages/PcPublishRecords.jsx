@@ -256,17 +256,11 @@ export function PcPublishRecords() {
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         {dates.map((d) => (
                           <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            {/* 日期胶囊可点：点开「修改发布日期」（用户要求能改发布时间）；
-                                字号 13，和正文一致后不再显得像附注 */}
+                            {/* 日期可点：点开「修改发布日期」。透明底 + 细描边（.pcv-datechip），
+                                hover 才浮出浅底作为「可点」提示；字号 13、不加粗 */}
                             <button
-                              className="pcv-chip"
+                              className="pcv-datechip"
                               title="点击修改发布日期"
-                              style={{
-                                // 数字不加粗 + 浅灰底（原来 .pcv-chip 自带 600 粗体、底色又几乎与白底同色）
-                                background: '#eef1f5', color: '#4b5563', fontSize: 13,
-                                fontWeight: 400, border: '0.5px solid rgba(15,23,42,0.08)',
-                                cursor: 'pointer',
-                              }}
                               onClick={() => openDateEdit(g, d)}
                             >{d}</button>
                             <button

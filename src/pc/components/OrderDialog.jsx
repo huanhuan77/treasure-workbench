@@ -38,6 +38,8 @@ export function OrderDialog({ prefill, onClose }) {
   const [pickIdx, setPickIdx] = useState(-1)   // 正在为第几行选样品；-1 = 面板收起
   const [query, setQuery] = useState('')
   const [catFilter, setCatFilter] = useState('')   // 选样面板里的分类筛选，'' = 全部
+  // 面板里临时勾选的样品 id（数组，保留点击顺序：第一个填当前行，其余各起一行）
+  const [picked, setPicked] = useState([])
 
   const entries = byAcc[account] || []
 
@@ -84,8 +86,21 @@ export function OrderDialog({ prefill, onClose }) {
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
-  const pickSample = (sid) => {
-    setEntries((p) => p.map((e, k) => (k === pickIdx ? { ...e, sampleId: sid } : e)))
+  // 面板里点一行 = 勾/取消勾（多选）；按「确定」后一次性落进条目列表
+  const togglePick = (sid) => setPicked((p) => (p.includes(sid) ? p.filter((x) => x !== sid) : [...p, sid]))
+
+  const applyPicks = () => {
+    const ids = picked.filter(Boolean)
+    if (ids.length > 0) {
+      setEntries((p) => {
+        const next = [...p]
+        // 第一个填进当前行，其余每个再起一行（qty 由 save 时统一按 1 记）
+        next[pickIdx] = { ...(next[pickIdx] || {}), sampleId: ids[0] }
+        for (const id of ids.slice(1)) next.push({ sampleId: id })
+        return next
+      })
+    }
+    setPicked([])
     setPickIdx(-1)
     setQuery('')
     setCatFilter('')
@@ -122,7 +137,7 @@ export function OrderDialog({ prefill, onClose }) {
 
   return (
     <div className="pcv-overlay" onClick={onClose}>
-      <div className="pcv-dialog" style={{ maxWidth: 620 }} onClick={(e) => e.stopPropagation()}>
+      <div className="pcv-dialog pcv-dialog--tall" style={{ maxWidth: 620 }} onClick={(e) => e.stopPropagation()}>
         <div className="pcv-dialog-h">
           <span>记出单</span>
           <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>
@@ -164,7 +179,7 @@ export function OrderDialog({ prefill, onClose }) {
                 <div className="pcv-entry">
                   <button
                     className={`pcv-entry-pick${e.sampleId ? '' : ' empty'}`}
-                    onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery('') }}
+                    onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery(''); setPicked([]) }}
                   >
                     {e.sampleId ? nameOf(e.sampleId) : '点击选择产品'}
                   </button>
@@ -196,15 +211,31 @@ export function OrderDialog({ prefill, onClose }) {
                         <div className="pcv-drop-hint">该账号下暂无可出单的样品（需已发布）</div>
                       ) : filtered.length === 0 ? (
                         <div className="pcv-drop-hint">没有匹配的样品</div>
-                      ) : filtered.map((s) => (
-                        <button
-                          key={s.id}
-                          className={`pcv-drop-row${e.sampleId === s.id ? ' on' : ''}`}
-                          onClick={() => pickSample(s.id)}
-                        >
-                          {s.name}
-                        </button>
-                      ))}
+                      ) : filtered.map((s) => {
+                        const on = picked.includes(s.id)
+                        return (
+                          <button
+                            key={s.id}
+                            className={`pcv-drop-row${on ? ' on' : ''}`}
+                            onClick={() => togglePick(s.id)}
+                          >
+                            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                            {on && <span className="pcv-drop-check">✓</span>}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {/* 多选确认条：勾完一次性落地（第一个填当前行，其余各起一行） */}
+                    <div className="pcv-drop-f">
+                      <span>已选 <b>{picked.length}</b> 个，可多选</span>
+                      <div className="pcv-spacer" />
+                      <button
+                        className="pcv-btn pcv-btn-ghost"
+                        onClick={() => { setPicked([]); setPickIdx(-1); setQuery(''); setCatFilter('') }}
+                      >取消</button>
+                      <button className="pcv-btn" disabled={picked.length === 0} onClick={applyPicks}>
+                        确定{picked.length > 1 ? `（${picked.length}）` : ''}
+                      </button>
                     </div>
                   </div>
                 )}

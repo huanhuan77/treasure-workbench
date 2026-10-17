@@ -605,14 +605,15 @@
 /* 大号分段控件（收支页的 全部/收入/支出/待收款 用）：
    默认 .pcv-seg 是 13px / 6×12 内边距，作为页面主筛选显得偏小，这里整体放大一档。 */
 .pcv-seg--lg {
-  padding: 4px;
-  gap: 5px;
-  border-radius: 12px;
+  padding: 5px;
+  gap: 6px;
+  border-radius: 13px;
 }
 .pcv-seg--lg button {
-  padding: 8px 15px;
-  border-radius: 9px;
-  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 /* 下划线式 Tab（投资跟踪的「股票 / 基金」用）：
@@ -957,6 +958,8 @@
   opacity: 1;
 }
 
+/* 标题栏就是拖动把手（拖动逻辑见 pc/utils/dialogDrag.js）：
+   cursor: move 提示可拖，user-select: none 避免拖动时选中标题文字。 */
 .pcv-dialog-h {
   display: flex;
   align-items: center;
@@ -965,6 +968,8 @@
   border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
   font-size: 14px;
   font-weight: 700;
+  cursor: move;
+  user-select: none;
 }
 .pcv-dialog-x {
   width: 24px;
@@ -984,6 +989,21 @@
 .pcv-dialog-b {
   padding: 18px;
   overflow-y: auto;
+}
+
+/* 高弹窗（记出单 / 记录发布）：给定高度、内容区吃掉剩余空间。
+   原来是「内容撑多高就多高」——选样面板一展开弹窗就突然变高、列表还只能露 7 条；
+   现在固定 min(760px, 88vh)，面板展开只占内容区，弹窗本身不跳动。 */
+.pcv-dialog--tall {
+  height: min(760px, 88vh);
+}
+.pcv-dialog--tall .pcv-dialog-h,
+.pcv-dialog--tall .pcv-dialog-f {
+  flex-shrink: 0;
+}
+.pcv-dialog--tall .pcv-dialog-b {
+  flex: 1;
+  min-height: 0;
 }
 /* 弹窗里「选样品」面板顶部的分类筛选（记出单 / 记录发布） */
 .pcv-catfilter {
@@ -1046,6 +1066,29 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 发布记录里的发布日期（可点改日期）：透明底、细描边、不加粗，
+   hover / focus 才浮出浅灰底提示可点（之前是灰底胶囊，用户要求去掉背景色） */
+.pcv-datechip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 0.5px solid rgba(15, 23, 42, 0.10);
+  background: transparent;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.pcv-datechip:hover {
+  background: #f3f4f6;
+  border-color: rgba(15, 23, 42, 0.20);
 }
 
 /* 文案列表的筛选行（全部 / 已出单 / 已爆单 / 已用过） */
@@ -1359,8 +1402,12 @@
   overflow-y: auto;
   margin-top: 8px;
 }
+/* 样品行：可多选，左侧名称、右侧勾；选中浅粉底 */
 .pcv-drop-row {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
   padding: 7px 10px;
   border: none;
@@ -1370,8 +1417,6 @@
   font-size: 13px;
   text-align: left;
   cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .pcv-drop-row:hover {
@@ -1381,6 +1426,22 @@
   background: #fdf1f6;
   color: #b8517f;
   font-weight: 600;
+}
+.pcv-drop-check {
+  flex-shrink: 0;
+  color: #b8517f;
+  font-weight: 700;
+}
+/* 多选确认条：已选 N 个 + 取消 / 确定 */
+.pcv-drop-f {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 0.5px solid rgba(15, 23, 42, 0.08);
+  font-size: 12px;
+  color: #8a8f98;
 }
 .pcv-drop-hint {
   padding: 14px 10px;

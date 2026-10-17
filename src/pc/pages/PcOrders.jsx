@@ -230,10 +230,9 @@ export function PcOrders() {
               <tr>
                 <th style={{ width: 260 }}>产品</th>
                 <th style={{ width: 200 }}>账号</th>
+                {/* 「出单量」列去掉（用户要求）：本页每笔出单数量固定按 1 条记，
+                    它和「笔数」永远是同一个数，纯冗余 */}
                 <th style={{ width: 90 }}>笔数</th>
-                <th style={{ width: 90 }} className="pcv-th-sort" onClick={() => toggleSort('most')}>
-                  出单量{sortDirOf('most') ? (sortDirOf('most') === 'desc' ? ' ↓' : ' ↑') : ''}
-                </th>
                 <th style={{ width: 150 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
                   最近出单{sortDirOf('date') ? (sortDirOf('date') === 'desc' ? ' ↓' : ' ↑') : ''}
                 </th>
@@ -243,7 +242,7 @@ export function PcOrders() {
             <tbody>
               {groups.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="pcv-empty">当前筛选下暂无出单</td>
+                  <td colSpan={5} className="pcv-empty">当前筛选下暂无出单</td>
                 </tr>
               ) : groups.map((g) => {
                 const open = expanded === g.name
@@ -275,18 +274,18 @@ export function PcOrders() {
                         {g.accounts.length === 0 ? (
                           <span style={{ color: '#9aa0a9' }}>—</span>
                         ) : (
-                          g.accounts.map((a) => (
-                            <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginRight: 10, whiteSpace: 'nowrap' }}>
+                          g.accounts.map((a, i) => (
+                            <span key={a} style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                              {/* 多个账号之间用「·」分隔（用户要求加圆点），比空格更能看出是两个账号 */}
+                              {i > 0 && <span style={{ color: '#c9cdd4', margin: '0 6px' }}>·</span>}
                               {/* 账号名不标账号主题色 —— 与样品页/发布记录页同一偏好 */}
                               <span style={{ color: '#333a45' }}>{a}</span>
                             </span>
                           ))
                         )}
                       </td>
-                      {/* 笔数 / 出单量去掉加粗（用户要求）：只保留常规字重，
-                          出单量仍用暗红标一下，但不靠粗体强调 */}
+                      {/* 笔数：常规字重、不加粗 */}
                       <td className="pcv-num" style={{ fontWeight: 400 }}>{g.count}</td>
-                      <td className="pcv-num" style={{ fontWeight: 400, color: '#b96a66' }}>{g.qty}</td>
                       <td style={{ color: g.latest ? '#4b5563' : '#c9cdd4' }}>{g.latest ? dispDate(g.latest) : '未填日期'}</td>
                       <td>
                         {/* 「查看明细 / 收起明细」去掉（产品名前的三角箭头已经承担这个功能）。
@@ -306,7 +305,7 @@ export function PcOrders() {
                     </tr>
                     {open && (
                       <tr>
-                        <td colSpan={6} style={{ background: '#fafbfc', padding: '6px 14px 10px' }}>
+                        <td colSpan={5} style={{ background: '#fafbfc', padding: '6px 14px 10px' }}>
                           {/* 明细用 grid 对齐：日期 / 条目（+ 当天操作）。
                               原来是 flex-wrap 拼在一起，「日期 chip + 账号·数量 + 改 + × + 删除该天」
                               全在一个流里，行与行之间还对不齐，用户反馈「不好看」。
