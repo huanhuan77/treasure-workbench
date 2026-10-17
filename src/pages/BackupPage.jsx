@@ -3,18 +3,11 @@ import { useToast } from '../components/Toast'
 import { glassStyle, inputStyle } from '../components/Modal'
 import { useStore } from '../store'
 import { syncAll } from '../utils/sync'
-
-const KEYS = [
-  'blogger_workbench_data_v1',
-  'blogger_investments_v1',
-  'blogger_calendar_v1',
-  'daily_plan_v1',
-  'brand_contacts_v1',
-  'reading_growth_v1',
-]
-
-const GIST_ID_KEY = 'backup_gist_id'
-const LAST_SYNC_KEY = 'backup_last_sync_at'
+// Gist 上传/恢复的实现抽到 utils/cloudBackup，与 PC 总览页顶栏的两个按钮共用一份逻辑
+import {
+  KEYS, GIST_ID_KEY, LAST_SYNC_KEY, uploadBackup, restoreBackup,
+  markSynced, formatSyncTime,
+} from '../utils/cloudBackup'
 
 export function BackupPage() {
   const { show } = useToast()
@@ -33,74 +26,14 @@ export function BackupPage() {
     return () => clearInterval(handle)
   }, [])
 
-  // 获取所有数据
-  const getAllData = () => {
-    const backup = {}
-    for (const key of KEYS) {
-      try {
-        const raw = localStorage.getItem(key)
-        if (raw) backup[key] = JSON.parse(raw)
-      } catch (e){}
-    }
-    return backup
-  }
-
-  // 保存同步时间
-  const markSynced = () => {
-    const now = new Date().toISOString()
-    localStorage.setItem(LAST_SYNC_KEY, now)
-    setLastSync(now)
-  }
-
-  const formatSyncTime = (iso) => {
-    if (!iso) return '从未同步'
-    const d = new Date(iso)
-    const now = new Date()
-    const diffMs = now - d
-    const diffMin = Math.floor(diffMs / 60000)
-    if (diffMin < 1) return '刚刚'
-    if (diffMin < 60) return `${diffMin} 分钟前`
-    const diffHour = Math.floor(diffMin / 60)
-    if (diffHour < 24) return `${diffHour} 小时前`
-    return d.toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-  }
-
-  // 上传到 GitHub Gist
+  // 上传到 GitHub Gist（本机覆盖云端）
   const uploadToGist = async () => {
     if (!token.trim()) { show('请先填写 GitHub Token', 'error'); return }
     setSyncing(true)
     try {
-      const data = getAllData()
-      const gistId = localStorage.getItem(GIST_ID_KEY)
-      const url = gistId
-        ? `https://api.github.com/gists/${gistId}`
-        : 'https://api.github.com/gists'
-      const method = gistId ? 'PATCH' : 'POST'
-      const body = gistId ? {
-        files: { 'treasure-workbench-backup.json': { content: JSON.stringify(data, null, 2) } },
-      } : {
-        description: '博主工作台数据备份',
-        public: false,
-        files: { 'treasure-workbench-backup.json': { content: JSON.stringify(data, null, 2) } },
-      }
-      const res = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token.trim()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      })
-      if (res.status === 401) throw new Error('Token 无效或已过期')
-      if (res.status === 403) throw new Error('GitHub API 限流，或 Token 缺少 gist 权限')
-      if (res.status === 404) throw new Error('Gist 不存在，或 Token 缺少 gist 权限（请改用带 gist scope 的 token，不是 repo）')
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const result = await res.json()
-      if (!gistId) {
-        localStorage.setItem(GIST_ID_KEY, result.id)
-        setGistId(result.id)
-      }
-      markSynced()
+      const { gistId: id } = await uploadBackup(token)
+      if (id) setGistId(id)
+      setLastSync(localStorage.getItem(LAST_SYNC_KEY) || '')
       show('☁️ 已上传到 GitHub Gist', 'success')
     } catch (e) {
       show('上传失败: ' + e.message, 'error')
@@ -121,9 +54,7 @@ export function BackupPage() {
         setGistId(result.gistId)
       }
       applySyncResult(result.merged['blogger_workbench_data_v1'])
-      const now = new Date().toISOString()
-      localStorage.setItem(LAST_SYNC_KEY, now)
-      setLastSync(now)
+      setLastSync(markSynced())
       show(result.hasChanges ? '✅ 同步完成：本机与云端已智能合并' : '✅ 已是最新，无需同步', 'success')
     } catch (e) {
       show('同步失败: ' + e.message, 'error')
@@ -132,78 +63,16 @@ export function BackupPage() {
     }
   }
 
-  // 查找云端备份 gist
-  const findLatestGist = async (token) => {
-    let page = 1
-    let found = null
-    while (!found && page <= 5) {
-      const listRes = await fetch(`https://api.github.com/gists?per_page=100&page=${page}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      })
-      if (listRes.status === 401) throw new Error('Token 无效或已过期')
-      if (listRes.status === 403) throw new Error('GitHub API 请求次数超限，请稍后再试')
-      if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`)
-      const gists = await listRes.json()
-      if (!Array.isArray(gists) || gists.length === 0) break
-      // API返回按更新时间倒序，找到的第一个就是最新的
-      found = gists.find(g => g.files?.['treasure-workbench-backup.json'])
-      page++
-    }
-    if (found) {
-      // 更新本地缓存的 gistId
-      localStorage.setItem(GIST_ID_KEY, found.id)
-      setGistId(found.id)
-    }
-    return found
-  }
-
-  // 从 GitHub Gist 下载
+  // 从 GitHub Gist 恢复（云端覆盖本机）
   const downloadFromGist = async () => {
     if (!token.trim()) { show('请先填写 GitHub Token', 'error'); return }
     setSyncing(true)
     try {
-      // 优先使用本地缓存的 gistId
-      let fetchedGist = null
-      let usedId = localStorage.getItem(GIST_ID_KEY)
-
-      if (usedId) {
-        const res = await fetch(`https://api.github.com/gists/${usedId}`, {
-          headers: { 'Authorization': `Bearer ${token.trim()}` },
-        })
-        if (res.ok) fetchedGist = await res.json()
-      }
-
-      // 无本地缓存则查 Gist 列表
-      if (!fetchedGist) {
-        show('正在查找最新备份...', 'success')
-        const latest = await findLatestGist(token.trim())
-        if (latest) {
-          usedId = latest.id
-          const res = await fetch(`https://api.github.com/gists/${usedId}`, {
-            headers: { 'Authorization': `Bearer ${token.trim()}` },
-          })
-          if (res.ok) fetchedGist = await res.json()
-        }
-      }
-
-      if (!fetchedGist?.files?.['treasure-workbench-backup.json']?.content) {
-        throw new Error('未找到云端备份：Token 的 Gist 列表里没有 treasure-workbench-backup.json。请在上方输入 Gist ID 后重试，或先在任意设备点"上传到云端"')
-      }
-
-      if (usedId) {
-        localStorage.setItem(GIST_ID_KEY, usedId)
-        setGistId(usedId)
-      }
-
-      const content = fetchedGist.files['treasure-workbench-backup.json'].content
-      const updatedAt = fetchedGist.updated_at
-      const backup = JSON.parse(content)
-      let count = 0
-      for (const [key, value] of Object.entries(backup)) {
-        localStorage.setItem(key, JSON.stringify(value))
-        count++
-      }
-      if (updatedAt) markSynced()
+      // 没有缓存的 gistId 时会去翻 Gist 列表，给个提示免得以为卡住了
+      if (!localStorage.getItem(GIST_ID_KEY)) show('正在查找最新备份...', 'success')
+      const { count, updatedAt, gistId: id } = await restoreBackup(token)
+      if (id) setGistId(id)
+      setLastSync(localStorage.getItem(LAST_SYNC_KEY) || '')
       show(`已恢复 ${count} 个模块（备份日期 ${updatedAt?.slice(0,10)}），刷新后生效`, 'success')
     } catch (e) {
       show('下载失败: ' + e.message, 'error')

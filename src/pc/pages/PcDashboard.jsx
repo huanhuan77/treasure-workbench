@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
+import { ConfirmModal } from '../../components/Modal'
 import { checkForUpdate } from '../../main'
+import { getStoredToken, uploadBackup, restoreBackup } from '../../utils/cloudBackup'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 import { daysSincePublishByAccount, pendingAccounts, isOverdue, compareUrgent } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
@@ -29,11 +31,12 @@ const accRank = (a) => {
 
 // PC 版统一「浅底 + 中调文字」的小标签，整页只在三档语义上着色，
 // 不再到处铺实底彩色块（用户要求：整体浅色系、少颜色、不要太深）。
+// 例外：danger（已逾期）按用户要求改成大红色实底 —— 逾期是唯一需要「一眼alert」的状态。
 const TONE = {
   neutral: { background: '#f3f4f6', color: '#6b7280' },
   good: { background: '#eef4ef', color: '#5f8a74' },
   warn: { background: '#faf1e3', color: '#a97c46' },
-  danger: { background: '#f7dcdb', color: '#a9504b' },
+  danger: { background: '#e02020', color: '#fff' },
 }
 
 // 样品状态 → 色调：只有「已发布」算好状态用淡绿，其余统一中性灰。
@@ -57,6 +60,10 @@ export function PcDashboard() {
   const [publishDialog, setPublishDialog] = useState(undefined)
   // 记出单：PC 版 OrderDialog（账号 Tab 切换，一次可记多个账号；不跳页面）
   const [orderOpen, setOrderOpen] = useState(false)
+  // 云备份：上传（本机覆盖云端）/ 恢复（云端覆盖本机，需二次确认）
+  const [backingUp, setBackingUp] = useState(false)
+  const [restoring, setRestoring] = useState(false)
+  const [confirmRestore, setConfirmRestore] = useState(false)
 
   const all = useMemo(() => selectAllReminders(samples), [samples])
 
@@ -163,8 +170,9 @@ export function PcDashboard() {
     return [...map.entries()].sort((x, y) => accRank(x[0]) - accRank(y[0]))
   }, [items, cur, account, tab])
 
+  // 卡片里固定只列 5 条（用户要求）；剩余条数看卡头「N 未完成」和「去管理」
   const todoList = useMemo(
-    () => [...(todos || [])].filter((t) => !t.done).slice(0, 8),
+    () => [...(todos || [])].filter((t) => !t.done).slice(0, 5),
     [todos],
   )
   const todoUndone = (todos || []).filter((t) => !t.done).length
@@ -179,6 +187,53 @@ export function PcDashboard() {
     show(r === 'latest' ? '已是最新版本' : r === 'error' ? '检查失败（网络或未部署）' : '已触发更新', r === 'error' ? 'error' : 'success')
   }
 
+  // Token 存在备份页（localStorage），这里不重复弹输入框：没配就引导过去
+  const requireToken = () => {
+    const tk = getStoredToken()
+    if (!tk) {
+      show('请先在「数据备份」页填写 GitHub Token', 'error')
+      navigate('/backup')
+      return ''
+    }
+    return tk
+  }
+
+  // 上传：本机数据覆盖云端（不弹确认，与备份页行为一致）
+  const handleUploadCloud = async () => {
+    const tk = requireToken()
+    if (!tk || backingUp) return
+    setBackingUp(true)
+    try {
+      await uploadBackup(tk)
+      show('☁️ 已上传到云端', 'success')
+    } catch (e) {
+      show('上传失败：' + e.message, 'error')
+    } finally {
+      setBackingUp(false)
+    }
+  }
+
+  // 恢复：云端数据覆盖本机 → 必须重载页面，数据才会整体生效
+  const handleRestoreCloud = async () => {
+    const tk = getStoredToken()
+    setConfirmRestore(false)
+    if (!tk) {
+      show('请先在「数据备份」页填写 GitHub Token', 'error')
+      navigate('/backup')
+      return
+    }
+    setRestoring(true)
+    try {
+      const { count } = await restoreBackup(tk)
+      show(`已恢复 ${count} 个模块，正在刷新…`, 'success')
+      setTimeout(() => window.location.reload(), 800)
+    } catch (e) {
+      show('恢复失败：' + e.message, 'error')
+    } finally {
+      setRestoring(false)
+    }
+  }
+
   return (
     <>
       <div className="pcv-bar">
@@ -188,6 +243,13 @@ export function PcDashboard() {
         </div>
         <div className="pcv-spacer" />
         <button className="pcv-btn pcv-btn-ghost" onClick={() => navigate('/backup')}>数据备份</button>
+        {/* 云备份两个动作放首屏顶栏（原来只在备份页里）：上传=本机覆盖云端，恢复=云端覆盖本机 */}
+        <button className="pcv-btn pcv-btn-ghost" disabled={backingUp} onClick={handleUploadCloud}>
+          {backingUp ? '上传中…' : '☁️ 上传到云端'}
+        </button>
+        <button className="pcv-btn pcv-btn-ghost" disabled={restoring} onClick={() => setConfirmRestore(true)}>
+          {restoring ? '恢复中…' : '从云端恢复'}
+        </button>
         <button className="pcv-btn pcv-btn-ghost" disabled={checking} onClick={handleCheckUpdate}>
           {checking ? '检查中…' : '检查更新'}
         </button>
@@ -356,6 +418,17 @@ export function PcDashboard() {
       {orderOpen && (
         <OrderDialog onClose={() => setOrderOpen(false)} />
       )}
+
+      {/* 从云端恢复是覆盖式操作（云端盖本机），必须二次确认 */}
+      <ConfirmModal
+        open={confirmRestore}
+        onClose={() => setConfirmRestore(false)}
+        onConfirm={handleRestoreCloud}
+        title="从云端恢复"
+        message="会用云端备份覆盖本机全部数据（产品、样品、收支、投资、日历等），本机未上传的内容会丢失。恢复后页面会自动刷新，确定继续？"
+        confirmText="覆盖并恢复"
+        danger
+      />
     </>
   )
 }

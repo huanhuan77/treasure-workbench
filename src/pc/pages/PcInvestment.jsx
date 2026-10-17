@@ -29,17 +29,10 @@ const TABS = [
   { key: 'stock', label: '股票' },
   { key: 'fund', label: '基金' },
 ]
-const DIRS = [
-  { key: 'all', label: '全部' },
-  { key: 'buy', label: '买入' },
-  { key: 'sell', label: '卖出' },
-]
-
 export function PcInvestment() {
   const { show } = useToast()
   const [investments, setInvestments] = useState(load)
   const [activeTab, setActiveTab] = useState('stock')
-  const [dirTab, setDirTab] = useState('all')
   const [keyword, setKeyword] = useState('')
   const [expanded, setExpanded] = useState('')       // 展开的代码
   const [editing, setEditing] = useState(null)       // null / 对象（编辑） / 'new'
@@ -90,17 +83,13 @@ export function PcInvestment() {
   const buyCount = investments.filter((i) => (i.type || 'buy') === 'buy').length
   const sellCount = investments.filter((i) => i.type === 'sell').length
 
+  // 买卖方向筛选已去掉（用户要求），「股票 / 基金」Tab 之外只保留关键词搜索。
   const shown = useMemo(() => {
     const kw = keyword.trim().toLowerCase()
     return groups
       .filter((g) => g.assetType === activeTab)
       .filter((g) => !kw || `${g.code} ${g.name}`.toLowerCase().includes(kw))
-      .map((g) => ({
-        ...g,
-        items: dirTab === 'all' ? g.items : g.items.filter((i) => i._dir === dirTab),
-      }))
-      .filter((g) => g.items.length > 0)
-  }, [groups, activeTab, dirTab, keyword])
+  }, [groups, activeTab, keyword])
 
   const openNew = () => {
     setForm({ code: '', name: '', direction: 'buy', shares: '', price: '', date: '', assetType: activeTab })
@@ -242,14 +231,6 @@ export function PcInvestment() {
               </button>
             ))}
           </div>
-          <div className="pcv-spacer" />
-          <div className="pcv-sortgrp">
-            {DIRS.map((d) => (
-              <button key={d.key} className={dirTab === d.key ? 'on' : ''} onClick={() => setDirTab(d.key)}>
-                {d.label}{d.key !== 'all' ? ` ${d.key === 'buy' ? buyCount : sellCount}` : ''}
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
@@ -318,7 +299,16 @@ export function PcInvestment() {
                         <td style={{ fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>
                           {fmtNum(inv.shares, 0)} 份 × ¥{fmtNum(inv.sellPrice, 3)} = ¥{fmtNum(inv.amount)}
                         </td>
-                        <td style={{ fontSize: 12, color: '#9aa0a9' }} colSpan={2}>现价 {inv.currentPrice != null ? `¥${fmtNum(inv.currentPrice, 3)}` : '—'}</td>
+                        {/* 现价 / 涨跌各占一列：原来现价用 colSpan=2 把「最新涨跌」列吞了，
+                            明细行的涨跌幅是空白。这里用每条记录自己的 change
+                            （= (现价 - 本笔成交价) / 本笔成交价），所以同一代码下每笔的数字不同。 */}
+                        <td style={{ fontSize: 12, color: '#9aa0a9', fontVariantNumeric: 'tabular-nums' }}>
+                          {inv.currentPrice != null ? `¥${fmtNum(inv.currentPrice, 3)}` : '—'}
+                        </td>
+                        <td style={{
+                          fontSize: 12, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+                          color: inv.change == null ? '#c9cdd4' : (Number(inv.change) >= 0 ? '#c05a6e' : '#5f8a74'),
+                        }}>{pctText(inv.change)}</td>
                         <td style={{ fontSize: 12, color: '#6b7280', fontVariantNumeric: 'tabular-nums' }}>{inv.sellDate || '—'}</td>
                         <td>
                           <button className="pcv-btn-text" onClick={() => openEdit(inv)}>编辑</button>

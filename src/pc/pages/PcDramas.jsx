@@ -104,7 +104,7 @@ export function PcDramas() {
               </button>
             ))}
           </div>
-          <div className="pcv-spacer" />
+          {/* 状态筛选紧跟类型 Tab 靠左（原来用 spacer 顶到最右，用户要求「放左边」） */}
           <div className="pcv-sortgrp">
             {[{ key: 'all', label: '全部' }, ...DRAMA_STATUS].map((s) => (
               <button
