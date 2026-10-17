@@ -170,14 +170,8 @@ export function SampleDialog({ sample, onClose }) {
                 )
               })}
             </div>
-            {isNew && form.accounts.length > 0 && (
-              <div style={{
-                marginTop: 8, padding: '8px 10px', borderRadius: 8, fontSize: 12, lineHeight: 1.5,
-                background: '#fdf1f6', border: '0.5px solid #f2cbdd', color: '#b8517f',
-              }}>
-                归属 <b>{form.accounts.length}</b> 个账号（{form.accounts.join(' / ')}）：物流与拍摄共享，发布/出单按账号独立统计。
-              </div>
-            )}
+            {/* 多账号提示文案已去掉（用户要求）：账号按钮上本来就有 ✓ 选中态，
+                那段粉色说明反而把表单撑高、和下面的字段抢视线。 */}
 
             {/* 「关联产品」字段按用户要求去掉（截图圈的就是这一项）。
                 注意 form.productId 仍然在 state 里、保存时原样带出去 ——

@@ -148,17 +148,21 @@ export function PcDashboard() {
         map.get(a).push(it)
       }
     }
-    // 「发布提醒」组内排序：默认按**截止日期升序**（用户要求）——
-    // 最急的排最前，已逾期的日期最小、自然浮到最上面，符合「先处理快到期/已超期的」。
-    // 截止日相同（或都没有）时再用 compareUrgent 兜底（已逾期优先 → 多久没发），
-    // 那份逻辑与手机版总览/发布提醒页共用。
+    // 「发布提醒」组内排序（用户要求「逾期的排前面」）：
+    //   ① 已逾期的一律排最前（不看截止日填没填，只看 isOverdue 判定）；
+    //   ② 其余按截止日期升序（最早到期的最急）；
+    //   ③ 截止日相同/缺失时用 compareUrgent 兜底（多久没发视频）。
     if (tab === 'reminders') {
+      const overdueOf = (it) => (isOverdue(it.sample || it) ? 0 : 1)
       for (const arr of map.values()) {
         arr.sort((x, y) => {
+          const oa = overdueOf(x)
+          const ob = overdueOf(y)
+          if (oa !== ob) return oa - ob
           const a = (x.sample || x).deadline || ''
           const b = (y.sample || y).deadline || ''
           if (!a && !b) return compareUrgent(x.sample || x, y.sample || y)
-          if (!a) return 1     // 没填截止日的排最后
+          if (!a) return 1     // 没填截止日的排在同组最后
           if (!b) return -1
           return a.localeCompare(b) || compareUrgent(x.sample || x, y.sample || y)
         })
@@ -263,9 +267,9 @@ export function PcDashboard() {
             )}
           </div>
 
-          {/* 提醒中心 */}
+          {/* 提醒中心：Tab 与账号筛选合并到卡头同一行（原来分两行，白占一层高度） */}
           <div className="pcv-card">
-            <div className="pcv-card-h">
+            <div className="pcv-card-h" style={{ flexWrap: 'nowrap', overflow: 'hidden' }}>
               <div className="pcv-seg">
                 {REMINDER_TABS.map((t) => (
                   <button
@@ -278,13 +282,13 @@ export function PcDashboard() {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="pcv-accountbar">
-              <button className={account === '' ? 'on' : ''} onClick={() => setAccount('')}>全部账号</button>
-              {accountOptions.map((a) => (
-                <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{a}</button>
-              ))}
+              <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', flexShrink: 0, margin: '0 4px' }} />
+              <div className="pcv-accountbar" style={{ borderBottom: 'none', padding: 0, flexWrap: 'nowrap' }}>
+                <button className={account === '' ? 'on' : ''} onClick={() => setAccount('')}>全部账号</button>
+                {accountOptions.map((a) => (
+                  <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{a}</button>
+                ))}
+              </div>
             </div>
 
             {groups.length === 0 ? (

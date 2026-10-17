@@ -86,6 +86,9 @@ export function PcSamples() {
     let list = samples
     if (accountFilter !== 'all') list = list.filter((s) => getAccounts(s).includes(accountFilter))
     if (filter !== 'all') list = list.filter((s) => sampleMatchesFilter(s, filter))
+    // 「全部」默认**不含已放弃**（用户要求）：放弃的样品平时不占列表，
+    // 只有点「已放弃」那张状态卡才列出来。这也让「N / 64 个样品」两个数字对得上。
+    else list = list.filter((s) => !sampleMatchesFilter(s, 'abandoned'))
     // 是否出单：与「是否出单」列同口径（出单记录表 orderCountBySample 里命中即为已出单）
     if (orderFilter !== 'all') {
       list = list.filter((s) => orderCountBySample.has(s.id) === (orderFilter === 'yes'))

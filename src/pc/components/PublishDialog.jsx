@@ -126,7 +126,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
 
   return (
     <div className="pcv-overlay" onClick={onClose}>
-      <div className="pcv-dialog" style={{ maxWidth: 650 }} onClick={(e) => e.stopPropagation()}>
+      <div className="pcv-dialog pcv-dialog--lg" onClick={(e) => e.stopPropagation()}>
         <div className="pcv-dialog-h">
           <span>记录发布</span>
           <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>
@@ -157,8 +157,12 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
           <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>只能选「{account}」已拍的样品</div>
 
           <div className="pcv-entrylist">
+            {/* 空态本身可点：直接新增一行并展开选样面板（用户要求「点击能新增」），
+                不用再去找右上角那个「＋ 添加」 */}
             {entries.length === 0 && (
-              <div className="pcv-entry-empty">点上方「＋ 添加」新增一条「样品 + 数量」行</div>
+              <button className="pcv-entry-empty" onClick={addEntry}>
+                ＋ 点这里新增一条「样品 + 数量」
+              </button>
             )}
             {entries.map((e, idx) => (
               <div key={idx}>

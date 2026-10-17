@@ -4411,6 +4411,19 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
+  // 修改发布记录（目前用于改发布日期）。改完同样重算样品的发布统计，
+  // 因为「最近发布日期」是样品上冗余出来的字段。
+  const updatePublishRecord = useCallback((id, patch) => {
+    setData((d) => {
+      const next = {
+        ...d,
+        publishRecords: (d.publishRecords || []).map((r) => (r.id === id ? { ...r, ...patch } : r)),
+      }
+      next.samples = recomputeSamplePublish(next.samples, next.publishRecords)
+      return next
+    })
+  }, [])
+
   const addTransaction = useCallback((tx) => {
     const now = Date.now()
     const newTx = {
@@ -4555,7 +4568,7 @@ export function StoreProvider({ children }) {
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics,
     addOrder, updateOrder, deleteOrder,
-    addPublishRecord, deletePublishRecord,
+    addPublishRecord, deletePublishRecord, updatePublishRecord,
     addTransaction, deleteTransaction, updateTransaction,
     addSensitiveWord, deleteSensitiveWord,
     addDrama, updateDrama, deleteDrama,

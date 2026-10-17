@@ -79,7 +79,8 @@ export function PcSensitive() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+            {/* 添加框、搜索框排在一起（原来用 spacer 把搜索框顶到最右，和添加区一左一右割裂） */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
               <input
                 className="pcv-input"
                 style={{ width: 280 }}
@@ -89,7 +90,7 @@ export function PcSensitive() {
                 onKeyDown={(e) => { if (e.key === 'Enter') addWord() }}
               />
               <button className="pcv-btn" onClick={addWord}>添加</button>
-              <div className="pcv-spacer" />
+              <span style={{ width: 1, height: 18, background: 'rgba(15,23,42,0.10)', margin: '0 6px' }} />
               <input
                 className="pcv-input"
                 style={{ width: 200 }}

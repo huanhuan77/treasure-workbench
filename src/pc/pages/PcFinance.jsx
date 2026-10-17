@@ -170,10 +170,10 @@ export function PcFinance() {
           </div>
         </div>
         <div className="pcv-spacer" />
-        {/* 「记一笔」是主操作、「隐藏账号」是视图开关：后者放到整行最右端（用户要求「放右边」），
-            marginLeft:auto 让这一组贴到右边缘，不再和中间那排云备份按钮挤在一起 */}
-        <button className="pcv-btn" style={{ marginLeft: 'auto' }} onClick={openNew}>＋ 记一笔</button>
-        <button className="pcv-btn pcv-btn-ghost" onClick={toggleHideAccount}>
+        {/* 「记一笔」是主操作，跟标题/云备份按钮一起靠左；
+            「隐藏账号」只是视图开关，用 marginLeft:auto 顶到整行最右端（用户要求）。 */}
+        <button className="pcv-btn" onClick={openNew}>＋ 记一笔</button>
+        <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 'auto' }} onClick={toggleHideAccount}>
           {hideAccount ? '🙈 显示账号' : '👁 隐藏账号'}
         </button>
       </div>
@@ -201,7 +201,7 @@ export function PcFinance() {
             原来拆成三行（类型 / 分类胶囊 / 月份+账号）：分类有 9 个胶囊，一窄就折成两行，
             整块占掉近 120px、把表格压得很低，所以分类也收进下拉。 */}
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
-          <div className="pcv-seg">
+          <div className="pcv-seg pcv-seg--lg">
             {[
               { k: 'all', l: '全部' },
               { k: 'income', l: '收入' },
@@ -254,8 +254,9 @@ export function PcFinance() {
             </select>
           )}
 
-          {/* 重置：分类 / 账号 / 月份 / 排序回到默认（收入·支出那个 seg 是 Tab，不动） */}
-          <ResetButton active={hasFilter} onClick={resetFilters} />
+          {/* 重置：分类 / 账号 / 月份 / 排序回到默认（收入·支出那个 seg 是 Tab，不动）。
+              用 inline：紧跟在「全部账号」下拉后面，不再被 spacer 顶到窗口最右端（与追剧页一致） */}
+          <ResetButton active={hasFilter} onClick={resetFilters} inline />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>

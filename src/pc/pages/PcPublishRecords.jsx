@@ -33,7 +33,22 @@ function parseTs(v) {
 export function PcPublishRecords() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { publishRecords, samples, deletePublishRecord } = useStore()
+  const { publishRecords, samples, deletePublishRecord, updatePublishRecord } = useStore()
+  // 修改发布日期：{ group, date } —— 点日期胶囊打开，保存时改这一组里同一天的全部记录
+  const [dateEdit, setDateEdit] = useState(null)
+  const [dateDraft, setDateDraft] = useState('')
+
+  const openDateEdit = (group, date) => { setDateDraft(date || ''); setDateEdit({ group, date }) }
+  const saveDateEdit = () => {
+    if (!dateEdit || !dateDraft) return
+    const { group, date } = dateEdit
+    // 同一天可能挂着多条记录（多账号 / 多次录入），一起改
+    const ids = [...new Set(group.records.filter((r) => r.publishDate === date).map((r) => r.id))]
+    if (ids.length === 0 || dateDraft === date) { setDateEdit(null); return }
+    ids.forEach((id) => updatePublishRecord(id, { publishDate: dateDraft }))
+    show(ids.length > 1 ? `已把 ${ids.length} 条记录改到 ${dateDraft}` : `发布日期已改为 ${dateDraft}`, 'success')
+    setDateEdit(null)
+  }
   const [account, setAccount] = useState('')
   const [dateRange, setDateRange] = useState('today') // 与手机版同默认值
   const [keyword, setKeyword] = useState('')
@@ -124,10 +139,11 @@ export function PcPublishRecords() {
         return { ...g, dates, qty, legacy: g.records.some((r) => r.legacy) }
       })
       .sort((a, b) => {
-        if (sortKey === 'dateAsc') return byDate(a, b, 'asc') || (b.records.length - a.records.length)
-        if (sortKey === 'countDesc') return (b.records.length - a.records.length) || byDate(a, b, 'desc')
-        if (sortKey === 'countAsc') return (a.records.length - b.records.length) || byDate(a, b, 'desc')
-        return byDate(a, b, 'desc') || (b.records.length - a.records.length)
+        // 次数排序与「发布次数」列同口径：用 qty（视频条数），不是记录条数
+        if (sortKey === 'dateAsc') return byDate(a, b, 'asc') || (b.qty - a.qty)
+        if (sortKey === 'countDesc') return (b.qty - a.qty) || byDate(a, b, 'desc')
+        if (sortKey === 'countAsc') return (a.qty - b.qty) || byDate(a, b, 'desc')
+        return byDate(a, b, 'desc') || (b.qty - a.qty)
       })
   }, [records, sampleMap, account, bounds, keyword, sortKey])
 
@@ -167,7 +183,9 @@ export function PcPublishRecords() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
-        <button className="pcv-btn" onClick={() => setPublishDialog({})}>记录发布</button>
+        {/* 主操作贴最右（用户要求）：搜索框留在云备份按钮旁边，
+            用 marginLeft:auto 把「记录发布」推到整行右端 */}
+        <button className="pcv-btn" style={{ marginLeft: 'auto' }} onClick={() => setPublishDialog({})}>记录发布</button>
       </div>
 
       <div className="pcv-body pcv-body--fill">
@@ -219,15 +237,16 @@ export function PcPublishRecords() {
                   <tr key={g.key}>
                     <td>
                       <span className="pcv-namecell">
+                        {/* 产品名后不再挂「×N」徽标：右侧「发布次数」列已经显示同一条数，
+                            两个数字并排反而让人以为口径不同（用户反馈「为什么不一样」） */}
                         <span className="pcv-nametext" title={g.name}>{g.name}</span>
-                        {g.qty > 1 && <span className="pcv-chip" style={{ background: '#f3f4f6', color: '#6b7280' }}>×{g.qty}</span>}
                       </span>
                     </td>
                     <td>
                       {g.account ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                           {/* 账号名不标账号主题色 —— 与样品页同样的偏好（用户要求「账号不要标记颜色」） */}
-                          <span style={{ color: '#333a45', fontWeight: 600 }}>{g.account}</span>
+                          <span style={{ color: '#333a45' }}>{g.account}</span>
                         </span>
                       ) : (
                         <span style={{ color: '#9aa0a9' }}>—</span>
@@ -237,7 +256,17 @@ export function PcPublishRecords() {
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         {dates.map((d) => (
                           <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            <span className="pcv-chip" style={{ background: '#f5f6f8', color: '#6b7280' }}>{d}</span>
+                            {/* 日期胶囊可点：点开「修改发布日期」（用户要求能改发布时间）；
+                                字号 13，和正文一致后不再显得像附注 */}
+                            <button
+                              className="pcv-chip"
+                              title="点击修改发布日期"
+                              style={{
+                                background: '#f5f6f8', color: '#4b5563', fontSize: 13,
+                                border: 'none', cursor: 'pointer',
+                              }}
+                              onClick={() => openDateEdit(g, d)}
+                            >{d}</button>
                             <button
                               className="pcv-x"
                               title={`删除 ${d} 的发布记录`}
@@ -267,7 +296,10 @@ export function PcPublishRecords() {
                         )}
                       </span>
                     </td>
-                    <td className="pcv-num">{g.records.length}</td>
+                    {/* 发布次数 = 该「产品 × 账号」下**视频条数总和**（qty 累加），
+                        不是记录条数 —— 一条记录可以记 2 条发布（qty=2），
+                        之前这里显示 records.length，才会出现「×2 但发布次数 1」的矛盾。 */}
+                    <td className="pcv-num">{g.qty}</td>
                   </tr>
                 )
               })}
@@ -283,6 +315,43 @@ export function PcPublishRecords() {
         title="删除发布记录"
         message={delTarget ? `确定删除 ${delTarget.date} 的发布记录吗？此操作不可撤销。` : ''}
       />
+
+      {/* 修改发布日期：点日期胶囊打开 */}
+      {dateEdit && (
+        <div className="pcv-overlay" onClick={() => setDateEdit(null)}>
+          <div className="pcv-dialog" style={{ maxWidth: 380 }} onClick={(e) => e.stopPropagation()}>
+            <div className="pcv-dialog-h">
+              <span>修改发布日期</span>
+              <div className="pcv-spacer" />
+              <button className="pcv-dialog-x" title="关闭" onClick={() => setDateEdit(null)}>×</button>
+            </div>
+            <div className="pcv-dialog-b">
+              <div className="pcv-field-label">产品 / 账号</div>
+              <div style={{ fontSize: 13, color: '#333a45', marginBottom: 14 }}>
+                {dateEdit.group.name}{dateEdit.group.account ? ` · ${dateEdit.group.account}` : ''}
+              </div>
+              <div className="pcv-field-label">发布日期</div>
+              <input
+                className="pcv-input"
+                style={{ width: '100%' }}
+                type="date"
+                value={dateDraft}
+                onChange={(e) => setDateDraft(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') saveDateEdit() }}
+              />
+              <div style={{ fontSize: 11, color: '#9aa0a9', marginTop: 8, lineHeight: 1.6 }}>
+                只改发布日期，发布数量与账号不变；同一天的多条记录会一起改。
+              </div>
+            </div>
+            <div className="pcv-dialog-f">
+              <div className="pcv-spacer" />
+              <button className="pcv-btn pcv-btn-ghost" onClick={() => setDateEdit(null)}>取消</button>
+              <button className="pcv-btn" onClick={saveDateEdit} disabled={!dateDraft}>保存</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 记录发布：弹窗，不跳页面 */}
       {publishDialog !== undefined && (

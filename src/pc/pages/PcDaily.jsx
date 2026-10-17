@@ -119,7 +119,7 @@ export function PcDaily() {
         <div>
           <div className="pcv-title">每日计划</div>
           <div className="pcv-sub">
-            {dateLabel(viewDate, today)} · {viewDate} · {done}/{total} 项完成（{progress}%）
+            {dateLabel(viewDate, today)} · {viewDate}
           </div>
         </div>
         <div className="pcv-spacer" />
@@ -147,11 +147,19 @@ export function PcDaily() {
       </div>
 
       <div className="pcv-body pcv-body--fill">
-        {/* 进度 */}
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ height: 8, borderRadius: 4, background: 'rgba(15,23,42,0.07)', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: progress === 100 ? 'linear-gradient(90deg,#8fbfa3,#5f8a74)' : 'linear-gradient(90deg,#ee8fb6,#d9648f)' }} />
+        {/* 进度条 + 说明：0% 时只剩一条空槽，单看像一块没内容的空白（用户问「这是什么」），
+            所以右侧常驻「已完成 x/y · z%」，让它自己说明这是什么 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ flex: 1, height: 8, borderRadius: 999, background: 'rgba(15,23,42,0.07)', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%', width: `${progress}%`, borderRadius: 999,
+              background: progress === 100 ? 'linear-gradient(90deg,#8fbfa3,#5f8a74)' : 'linear-gradient(90deg,#ee8fb6,#d9648f)',
+              transition: 'width .3s ease',
+            }} />
           </div>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#8a8f98', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+            已完成 {done}/{total} · {progress}%
+          </span>
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>

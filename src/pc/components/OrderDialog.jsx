@@ -153,8 +153,11 @@ export function OrderDialog({ prefill, onClose }) {
           <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>只能选「{account}」已发布的样品</div>
 
           <div className="pcv-entrylist">
+            {/* 空态整块可点：新增一行并直接展开选样面板（与记录发布弹窗一致） */}
             {entries.length === 0 && (
-              <div className="pcv-entry-empty">点上方「＋ 添加」新增一条产品</div>
+              <button className="pcv-entry-empty" onClick={addEntry}>
+                ＋ 点这里新增一条产品
+              </button>
             )}
             {entries.map((e, idx) => (
               <div key={idx}>

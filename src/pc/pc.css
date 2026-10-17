@@ -601,6 +601,19 @@
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
+/* 大号分段控件（收支页的 全部/收入/支出/待收款 用）：
+   默认 .pcv-seg 是 13px / 6×12 内边距，作为页面主筛选显得偏小，这里整体放大一档。 */
+.pcv-seg--lg {
+  padding: 4px;
+  gap: 5px;
+  border-radius: 12px;
+}
+.pcv-seg--lg button {
+  padding: 8px 15px;
+  border-radius: 9px;
+  font-size: 14px;
+}
+
 /* 下划线式 Tab（投资跟踪的「股票 / 基金」用）：
    去掉灰胶囊容器，改成贴着内容的下划线标题，和下方筛选条不再撞色。 */
 .pcv-seg--tabs {
@@ -887,6 +900,16 @@
   box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
   overflow: hidden;
 }
+/* 大号弹窗（记录发布用）：表单字段多、还要内嵌选样面板，
+   650px 太窄、列表也短（只露 6 条）。放宽到 880，并把下拉列表高度提到 300。 */
+.pcv-dialog--lg {
+  max-width: 880px;
+  max-height: 90vh;
+}
+.pcv-dialog--lg .pcv-drop-list {
+  max-height: 300px;
+}
+
 .pcv-dialog-h {
   display: flex;
   align-items: center;
@@ -1218,14 +1241,25 @@
   color: #9aa0a9;
 }
 /* 空态：虚线框，和手机版那句「点上方『＋ 添加』新增一条」同一个意思 */
+/* 空态：整块可点，点一下直接新增一行并展开选样（不再只是提示文字） */
 .pcv-entry-empty {
+  display: block;
+  width: 100%;
   padding: 16px;
   text-align: center;
   font-size: 12px;
+  font-weight: 600;
   color: #9aa0a9;
   background: #fafbfc;
   border: 1px dashed rgba(15, 23, 42, 0.14);
   border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.pcv-entry-empty:hover {
+  background: #fdf1f6;
+  border-color: rgba(184, 81, 127, 0.45);
+  color: #b8517f;
 }
 
 /* 发布数量：− 数字 ＋ */

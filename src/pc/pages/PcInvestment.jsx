@@ -255,15 +255,15 @@ export function PcInvestment() {
                     明细行显示该笔的份额、成交额、成交价，两边对齐不挤。
                     定宽合计 1060，1440 视口下操作列约 105px（「编辑最新」刚好放得下）。 */}
                 <th style={{ width: 90 }}>代码</th>
-                <th style={{ width: 145 }}>名称</th>
-                <th style={{ width: 56 }}>类型</th>
+                <th style={{ width: 128 }}>名称</th>
+                <th style={{ width: 52 }}>类型</th>
                 <th style={{ width: 158 }}>持仓（买/卖/净）</th>
-                <th style={{ width: 60 }}>份额</th>
-                <th style={{ width: 110 }}>成交额</th>
-                <th style={{ width: 74 }}>成交价</th>
-                <th style={{ width: 74 }}>现价</th>
-                <th style={{ width: 82 }}>最新涨跌</th>
-                <th style={{ width: 90 }}>最新日期</th>
+                <th style={{ width: 58 }}>份额</th>
+                <th style={{ width: 104 }}>成交额</th>
+                <th style={{ width: 72 }}>成交价</th>
+                <th style={{ width: 72 }}>现价</th>
+                <th style={{ width: 80 }}>最新涨跌</th>
+                <th style={{ width: 108 }}>最新日期</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -301,8 +301,8 @@ export function PcInvestment() {
                       <td style={{ fontVariantNumeric: 'tabular-nums' }}>
                         <span className="pcv-chip" style={pctStyle(g.change)}>{pctText(g.change)}</span>
                       </td>
-                      <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>{g.latest.sellDate || '—'}</td>
-                      <td onClick={(e) => e.stopPropagation()}>
+                      <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{g.latest.sellDate || '—'}</td>
+                      <td onClick={(e) => e.stopPropagation()} style={{ whiteSpace: 'nowrap' }}>
                         <button className="pcv-btn-text" onClick={() => openEdit(g.latest)}>编辑最新</button>
                       </td>
                     </tr>
@@ -337,8 +337,8 @@ export function PcInvestment() {
                         <td style={{ fontVariantNumeric: 'tabular-nums' }}>
                           <span className="pcv-chip" style={pctStyle(inv.change)}>{pctText(inv.change)}</span>
                         </td>
-                        <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>{inv.sellDate || '—'}</td>
-                        <td>
+                        <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{inv.sellDate || '—'}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
                           <button className="pcv-btn-text" onClick={() => openEdit(inv)}>编辑</button>
                           <button className="pcv-btn-text" style={{ marginLeft: 10, color: '#b96a66' }} onClick={() => setDelTarget(inv)}>删除</button>
                         </td>
