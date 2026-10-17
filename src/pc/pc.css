@@ -236,30 +236,10 @@
    原来用 auto-fill 多列网格，条数少时右侧空一大片、扫读还要横着跳。
    改成一列后边框回归 .pcv-copyitem 的默认规则（上边框分隔、首条无上边框），
    所以这里不再覆写 border。 */
-/* 待办清单：卡内滚动，只露 5 行（用户要求「只显示 5 条 + 能滚动」）。
-   行高 = .pcv-copyitem 的 10px 上下内边距 + 约 20px 内容 + 0.5px 分隔线 ≈ 40.5px，
-   5 行取 203px；不 slice 数据，其余条目在卡内滚（只切 5 条会滚不动、看不到后面的）。
-   卡头在滚动区之外，天然固定。滚动条收细，PC 默认宽滚动条会把卡片撑得很脏。 */
+/* 待办清单：默认只列 5 条，卡片底部「查看全部 N 条」展开剩余（用户要求），
+   所以这里不再限高、不做卡内滚动 —— 条数由 JS 的 slice 控制，展开后随卡片自然增高。 */
 .pcv-todogrid {
   display: block;
-  max-height: 203px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(15, 23, 42, 0.18) transparent;
-}
-.pcv-todogrid::-webkit-scrollbar {
-  width: 6px;
-}
-.pcv-todogrid::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.15);
-  border-radius: 3px;
-}
-.pcv-todogrid::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.28);
-}
-.pcv-todogrid::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 .pcv-cols {

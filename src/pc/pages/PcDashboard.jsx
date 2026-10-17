@@ -170,13 +170,15 @@ export function PcDashboard() {
     return [...map.entries()].sort((x, y) => accRank(x[0]) - accRank(y[0]))
   }, [items, cur, account, tab])
 
-  // 全部未完成待办都渲染，卡片高度锁 5 行（见 pc.css 的 .pcv-todogrid），
-  // 第 6 条起在卡内滚动 —— 只切 slice(0,5) 的话后面的条目根本看不到，也滚不动。
-  const todoList = useMemo(
+  // 待办清单默认只列 5 条，卡片底部「查看全部 N 条」再展开剩余（用户要求）。
+  // 不再用卡内滚动：滚动条在小卡片里不好点，展开/收起更直观。
+  const [todoExpanded, setTodoExpanded] = useState(false)
+  const todoAll = useMemo(
     () => [...(todos || [])].filter((t) => !t.done),
     [todos],
   )
-  const todoUndone = (todos || []).filter((t) => !t.done).length
+  const todoList = todoExpanded ? todoAll : todoAll.slice(0, 5)
+  const todoUndone = todoAll.length
 
   const now = new Date()
   const todayLabel = `${now.getMonth() + 1}月${now.getDate()}日`
@@ -297,15 +299,30 @@ export function PcDashboard() {
                 <button className="pcv-btn-text" onClick={() => navigate('/pc/todos')}>去添加一条</button>
               </div>
             ) : (
-              <div className="pcv-todogrid">
-                {todoList.map((t) => (
-                  <div key={t.id} className="pcv-copyitem" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #c4b5fd', flexShrink: 0 }} />
-                    <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
-                    <DueTag due={t.due} />
-                  </div>
-                ))}
-              </div>
+              <>
+                <div className="pcv-todogrid">
+                  {todoList.map((t) => (
+                    <div key={t.id} className="pcv-copyitem" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #c4b5fd', flexShrink: 0 }} />
+                      <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+                      <DueTag due={t.due} />
+                    </div>
+                  ))}
+                </div>
+                {/* 超过 5 条才出现展开入口；展开后文案变「收起」 */}
+                {todoAll.length > 5 && (
+                  <button
+                    className="pcv-btn-text"
+                    onClick={() => setTodoExpanded((v) => !v)}
+                    style={{
+                      display: 'block', width: '100%', padding: '10px 14px', textAlign: 'center',
+                      borderTop: '0.5px solid rgba(15, 23, 42, 0.05)', color: '#b8517f', fontWeight: 600,
+                    }}
+                  >
+                    {todoExpanded ? '收起' : `查看全部 ${todoAll.length} 条`}
+                  </button>
+                )}
+              </>
             )}
           </div>
 
