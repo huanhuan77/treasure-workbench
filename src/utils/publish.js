@@ -48,10 +48,18 @@ export function daysSincePublishByAccount(sample, account) {
 
 // 「最紧急优先」排序：**已逾期排最前面**，其次「多久没发视频」由久到近
 // （没发过视频的 daysSincePublish = Infinity，也排最前）。
-// 手机版总览 / 发布提醒页、PC 总览的提醒表统一走这一个比较，别各写一份，免得两端口径漂移。
+//
+// ⚠️ 逾期的判定要和界面上那枚红色「已逾期」标签完全一致：
+//    标签是 `status !== 'published' && isOverdue(s)`，如果这里只看 isOverdue，
+//    「已发布但截止日已过」的行也会被算成逾期排到最前，把真正逾期的行挤下去
+//    （PC 总览踩过这个坑）。手机端总览 / 发布提醒页、PC 总览的兜底比较共用这一份。
+function isOverdueRow(sample) {
+  return !!sample && sample.status !== 'published' && isOverdue(sample)
+}
+
 export function compareUrgent(a, b) {
-  const oa = isOverdue(a) ? 1 : 0
-  const ob = isOverdue(b) ? 1 : 0
+  const oa = isOverdueRow(a) ? 1 : 0
+  const ob = isOverdueRow(b) ? 1 : 0
   if (oa !== ob) return ob - oa
   const da = daysSincePublish(a)
   const db = daysSincePublish(b)
