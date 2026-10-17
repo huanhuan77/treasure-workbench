@@ -1518,11 +1518,15 @@
   color: #334155;
 }
 
+/* 文案底部一行：标记 + 用过天数 + 复制/编辑/删除。
+   间距从 8 提到 12（用户要求「间距调大」）—— 三个按钮并排时 8px 会贴在一起。 */
 .pcv-copyfoot {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
 /* 文案的状态标记（出单 / 爆单 / 用过）：默认中性描边，选中时由内联样式换成浅底色 */

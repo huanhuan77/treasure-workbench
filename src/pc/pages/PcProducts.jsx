@@ -457,10 +457,15 @@ export function PcProducts() {
                               {usedAgo(c.usedDate)}
                             </span>
                           )}
-                          {/* 三组标记与右侧操作靠拢排成一排（原来中间有个 spacer 把两边顶到最左最右） */}
-                          <button className="pcv-btn pcv-btn-ghost" onClick={() => copyOne(c)}>复制</button>
-                          <button className="pcv-btn-text" onClick={() => setCopyDialog(c)}>编辑</button>
-                          <button className="pcv-btn-text" style={{ color: '#b96a66' }} onClick={() => setDelTarget(c)}>删除</button>
+                          {/* 复制 / 编辑 / 删除统一成按钮（用户要求），三个同规格并排；
+                              间距由 .pcv-copyfoot 的 gap 控制（已调大到 12px） */}
+                          <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => copyOne(c)}>复制</button>
+                          <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => setCopyDialog(c)}>编辑</button>
+                          <button
+                            className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
+                            style={{ padding: '5px 10px' }}
+                            onClick={() => setDelTarget(c)}
+                          >删除</button>
                         </div>
                       </div>
                     )
