@@ -12,27 +12,30 @@ import './pc.css'
 // 图标与手机版底部导航共用同一批（主 5 项是线性 SVG，其余是 emoji），避免两边画风不一致。
 // 注意：**14 项已全部迁到 `/pc/...`**，点任何一项都留在 PC 壳里，不会再掉到手机版页面。
 // 新增页面时记得同时在 App.jsx 的 `/pc` children 里注册，否则会 404。
+// color：每个菜单固定的低饱和主题色（用户要求「每个菜单一个颜色」）。
+// 只给图标上色，文字仍走中性色 —— 整列不会变成一排彩色文字。
 const NAV = [
-  { to: '/pc', label: '总览', end: true, Icon: HomeIcon },
-  { to: '/pc/products', label: '文案库', Icon: PenIcon },
-  { to: '/pc/samples', label: '样品', Icon: TagIcon, badgeKey: 'samples' },
-  { to: '/pc/publish-records', label: '发布', Icon: VideoIcon },
-  { to: '/pc/orders', label: '出单', Icon: MoneyIcon },
-  { to: '/pc/finance', label: '收支', emoji: '💰' },
-  { to: '/pc/dramas', label: '追剧', emoji: '📺' },
-  { to: '/pc/calendar', label: '日历', emoji: '📅' },
-  { to: '/pc/daily', label: '每日计划', emoji: '📋' },
-  { to: '/pc/reading', label: '读书成长', emoji: '📚' },
-  { to: '/pc/brands', label: '品牌方', emoji: '🤝' },
-  { to: '/pc/savings', label: '攒钱计划', emoji: '🐷' },
-  { to: '/pc/investment', label: '投资跟踪', emoji: '📈' },
-  { to: '/pc/sensitive', label: '违禁词', emoji: '🚫' },
+  { to: '/pc', label: '总览', end: true, Icon: HomeIcon, color: '#b8517f' },
+  { to: '/pc/products', label: '文案库', Icon: PenIcon, color: '#2f7d93' },
+  { to: '/pc/samples', label: '样品', Icon: TagIcon, badgeKey: 'samples', color: '#7a5ea8' },
+  { to: '/pc/publish-records', label: '发布', Icon: VideoIcon, color: '#3f6fa8' },
+  { to: '/pc/orders', label: '出单', Icon: MoneyIcon, color: '#4f8a6d' },
+  { to: '/pc/finance', label: '收支', emoji: '💰', color: '#a97c46' },
+  { to: '/pc/dramas', label: '追剧', emoji: '📺', color: '#b96a66' },
+  { to: '/pc/calendar', label: '日历', emoji: '📅', color: '#4f7f8f' },
+  { to: '/pc/daily', label: '每日计划', emoji: '📋', color: '#6b7280' },
+  { to: '/pc/reading', label: '读书成长', emoji: '📚', color: '#8a6d3b' },
+  { to: '/pc/brands', label: '品牌方', emoji: '🤝', color: '#7a8a4f' },
+  { to: '/pc/savings', label: '攒钱计划', emoji: '🐷', color: '#c08552' },
+  { to: '/pc/investment', label: '投资跟踪', emoji: '📈', color: '#4a7c59' },
+  { to: '/pc/sensitive', label: '违禁词', emoji: '🚫', color: '#a9504b' },
 ]
 
-function NavItem({ to, label, end, Icon, emoji, badge }) {
+function NavItem({ to, label, end, Icon, emoji, badge, color }) {
   return (
     <NavLink to={to} end={end} className={({ isActive }) => `pcv-navitem${isActive ? ' on' : ''}`}>
-      <span className={Icon ? 'pcv-navicon' : 'pcv-navemoji'}>
+      {/* 图标固定用各自的主题色（emoji 自带颜色，color 对它是空操作，无副作用） */}
+      <span className={Icon ? 'pcv-navicon' : 'pcv-navemoji'} style={{ color }}>
         {Icon ? <Icon /> : emoji}
       </span>
       <span>{label}</span>

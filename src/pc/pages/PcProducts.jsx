@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
@@ -45,6 +45,8 @@ export function PcProducts() {
   const [activeId, setActiveId] = useState('')
   const [delTarget, setDelTarget] = useState(null)   // 待删除的「文案」
   const [delProduct, setDelProduct] = useState(null) // 待删除的「产品」（之前漏了状态，点删除会静默报错）
+  // 右侧文案列表的筛选：all / order（已出单）/ hot（已爆单）/ used（已用过）
+  const [copyFilter, setCopyFilter] = useState('all')
   // 产品新增/编辑走弹窗（editing: 'new' | 产品对象 | null），不跳页面
   const [editing, setEditing] = useState(null)
   // 文案编辑弹窗：undefined=关闭、文案对象=打开
@@ -104,6 +106,21 @@ export function PcProducts() {
   const active = list.find((p) => p.id === activeId) || list[0] || null
 
   const totalCopies = (products || []).reduce((n, p) => n + (p.copies?.length || 0), 0)
+
+  // 右侧文案筛选：切产品时自动回到「全部」，否则换了产品还停在「已出单」容易以为没数据
+  useEffect(() => { setCopyFilter('all') }, [activeId])
+  const activeCopies = active?.copies || []
+  const copyCounts = useMemo(() => ({
+    all: activeCopies.length,
+    order: activeCopies.filter((c) => c.hasOrder).length,
+    hot: activeCopies.filter((c) => c.hasHot).length,
+    used: activeCopies.filter((c) => c.used).length,
+  }), [activeCopies])
+  const copyList = useMemo(() => {
+    if (copyFilter === 'all') return activeCopies
+    const key = copyFilter === 'order' ? 'hasOrder' : copyFilter === 'hot' ? 'hasHot' : 'used'
+    return activeCopies.filter((c) => c[key])
+  }, [activeCopies, copyFilter])
 
   // 话题（产品级 ∪ 所有文案自带，去重、按 # 拆分），与手机版 ProductDetailPage 同口径
   const topics = active ? allTopicTags(active) : []
@@ -338,10 +355,34 @@ export function PcProducts() {
                     </button>
                   </div>
                 )}
-                {(active.copies || []).length === 0 ? (
+
+                {/* 文案筛选：按标记过滤，数字是当前的条数（0 的项不显示，避免一排空选项） */}
+                {activeCopies.length > 0 && (
+                  <div className="pcv-copyfilter">
+                    {[
+                      { key: 'all', label: '全部', n: copyCounts.all },
+                      { key: 'order', label: '已出单', n: copyCounts.order, color: '#5f8a74' },
+                      { key: 'hot', label: '已爆单', n: copyCounts.hot, color: '#c0392b' },
+                      { key: 'used', label: '已用过', n: copyCounts.used, color: '#b7791f' },
+                    ].filter((f) => f.key === 'all' || f.n > 0).map((f) => (
+                      <button
+                        key={f.key}
+                        className={copyFilter === f.key ? 'on' : ''}
+                        style={copyFilter === f.key && f.color ? { color: f.color, borderColor: f.color } : undefined}
+                        onClick={() => setCopyFilter(f.key)}
+                      >
+                        {f.label} {f.n}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {activeCopies.length === 0 ? (
                   <div className="pcv-empty">这个产品还没有文案，点右上角「＋ 新增文案」粘贴一批</div>
+                ) : copyList.length === 0 ? (
+                  <div className="pcv-empty">这个产品还没有「{copyFilter === 'order' ? '已出单' : copyFilter === 'hot' ? '已爆单' : '已用过'}」的文案</div>
                 ) : (
-                  (active.copies || []).map((c) => {
+                  copyList.map((c) => {
                     // 竖条颜色直接取 COPY_FLAGS（数组顺序即优先级：出单 > 爆单 > 用过），
                     // 不再在这里重复写一遍色值，改配色只需动上面那张表。
                     const bar = (COPY_FLAGS.find((f) => c[f.key]) || {}).bar || null

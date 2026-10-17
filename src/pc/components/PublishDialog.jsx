@@ -216,8 +216,8 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
             {total > 0 ? `共 ${total} 条（${ACCOUNTS.filter((a) => counts[a] > 0).map((a) => `${a} ${counts[a]}`).join('、')}）` : '还没有条目'}
           </span>
           <div className="pcv-spacer" />
-          <button className="pcv-btn pcv-btn-ghost pcv-btn-lg" onClick={onClose}>取消</button>
-          <button className="pcv-btn pcv-btn-lg" style={{ marginLeft: 10 }} onClick={save} disabled={total === 0}>
+          <button className="pcv-btn pcv-btn-ghost" onClick={onClose}>取消</button>
+          <button className="pcv-btn" style={{ marginLeft: 10 }} onClick={save} disabled={total === 0}>
             保存{total > 1 ? ` ${total} 条` : ''}
           </button>
         </div>

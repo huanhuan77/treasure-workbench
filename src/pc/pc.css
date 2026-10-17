@@ -62,9 +62,12 @@
 .pcv-navitem:hover {
   background: #f6f7f9;
 }
+/* 选中态：粉色底 + 文字加深。
+   文字不再跟着变粉 —— 图标已经有各自的主题色（见 PcShell 的 NAV.color），
+   粉字 + 彩色图标会互相打架，选中感交给底色 + 加粗就够了。 */
 .pcv-navitem.on {
   background: #fbeaf2;
-  color: #b8517f;
+  color: #1f2937;
   font-weight: 700;
 }
 
@@ -496,13 +499,6 @@
   border-color: rgba(15, 23, 42, 0.24);
 }
 
-/* 大号按钮：弹窗底部的主操作（取消/保存）用，比列表里的按钮大一档，好点 */
-.pcv-btn-lg {
-  padding: 10px 22px;
-  border-radius: 10px;
-  font-size: 14px;
-}
-
 /* ghost 的危险变体（删除类操作）：红字 + 淡红描边，hover 略加深 */
 .pcv-btn-ghost--danger {
   color: #b96a66;
@@ -918,6 +914,34 @@
   padding: 18px;
   overflow-y: auto;
 }
+/* 文案列表的筛选行（全部 / 已出单 / 已爆单 / 已用过） */
+.pcv-copyfilter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
+}
+.pcv-copyfilter button {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pcv-copyfilter button:hover {
+  border-color: rgba(15, 23, 42, 0.24);
+}
+.pcv-copyfilter button.on {
+  background: #fdf1f6;
+  border-color: #f2cbdd;
+  color: #b8517f;
+}
+
 .pcv-dialog-f {
   display: flex;
   align-items: center;
@@ -925,6 +949,19 @@
   padding: 12px 18px;
   border-top: 0.5px solid rgba(15, 23, 42, 0.06);
   background: #fafbfc;
+}
+
+/* 弹窗底部按钮统一放大（用户要求「所有弹窗的按钮都大一点」）：
+   写在 .pcv-dialog-f 里一次生效，所有 PC 弹窗（样品/产品/文案/品牌方/追剧/读书/出单/发布…）共用，
+   不用每个弹窗单独加 class。 */
+.pcv-dialog-f .pcv-btn {
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.pcv-dialog-f .pcv-btn-text {
+  padding: 8px 6px;
+  font-size: 13px;
 }
 
 /* ── 表单（PC 版产品表单）────────────────────────────────── */
