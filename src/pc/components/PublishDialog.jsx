@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, hasAccount } from '../../utils/accounts'
+import { CATEGORIES } from '../../utils/categories'
 import { isShotSample, isArchivedSample } from '../../utils/sampleStatus'
 import { todayStr } from '../../utils/helpers'
 import { AccountTabs } from './AccountTabs'
@@ -33,6 +34,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
   })
   const [pickIdx, setPickIdx] = useState(-1)   // 正在为第几行选样品；-1 = 面板收起
   const [query, setQuery] = useState('')
+  const [catFilter, setCatFilter] = useState('')   // 选样面板里的分类筛选，'' = 全部
 
   const entries = byAcc[account] || []
 
@@ -46,14 +48,25 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
     return [...extra, ...base]
   }, [samples, account, entries])
 
+  // 分类选项：只列候选样品里真实出现过的分类（按全局 CATEGORIES 排序）
+  const catOptions = useMemo(() => {
+    const set = new Set()
+    for (const s of candidates) if (s.category) set.add(s.category)
+    return [...set].sort((a, b) => {
+      const ia = CATEGORIES.indexOf(a), ib = CATEGORIES.indexOf(b)
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b, 'zh')
+    })
+  }, [candidates])
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     // 别的行已经选过的样品不再重复列出（正在编辑的这行除外）
     const used = new Set(entries.map((e, i) => (i === pickIdx ? null : e.sampleId)).filter(Boolean))
     return candidates
       .filter((s) => !used.has(s.id))
+      .filter((s) => !catFilter || s.category === catFilter)
       .filter((s) => !q || (s.name || '').toLowerCase().includes(q))
-  }, [candidates, query, entries, pickIdx])
+  }, [candidates, query, entries, pickIdx, catFilter])
 
   const counts = useMemo(() => {
     const o = {}
@@ -76,6 +89,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
     setEntries((p) => p.map((e, k) => (k === pickIdx ? { ...e, sampleId: sid } : e)))
     setPickIdx(-1)
     setQuery('')
+    setCatFilter('')
   }
   const setQty = (idx, v) => setEntries((p) => p.map((e, k) => (k === idx ? { ...e, qty: v } : e)))
   // 加减必须用函数式更新：否则连点两下时，第二次仍拿渲染闭包里的旧 qty 计算，只加得动 1
@@ -133,7 +147,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
           />
 
           <div className="pcv-field-label" style={{ marginTop: 18 }}>账号</div>
-          <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery('') }} counts={counts} />
+          <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} />
 
           <div style={{ display: 'flex', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
             <span className="pcv-field-label" style={{ margin: 0 }}>样品 &amp; 发布数量（可多选）</span>
@@ -181,6 +195,15 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
                 {/* 样品选择面板：内联展开在该行下面 */}
                 {pickIdx === idx && (
                   <div className="pcv-drop">
+                    {/* 分类筛选：只列候选样品里出现过的分类，一个都没有时整行不显示 */}
+                    {catOptions.length > 1 && (
+                      <div className="pcv-catfilter">
+                        <button className={catFilter === '' ? 'on' : ''} onClick={() => setCatFilter('')}>全部</button>
+                        {catOptions.map((c) => (
+                          <button key={c} className={catFilter === c ? 'on' : ''} onClick={() => setCatFilter(c)}>{c}</button>
+                        ))}
+                      </div>
+                    )}
                     <input
                       className="pcv-input"
                       style={{ width: '100%' }}

@@ -3,6 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
+import { CATEGORIES } from '../../utils/financeCategories'
 import { ResetButton } from '../components/ResetButton'
 
 // PC 版「收支明细」。
@@ -13,17 +14,7 @@ import { ResetButton } from '../components/ResetButton'
 //   合计只统计**当前筛选后**的记录（与手机版同一口径，不是全量）。
 // PC 侧差异只有展示层：卡片 + 左滑 → 表格；新增/编辑从整页改成弹窗；
 // 月份从「12 个月网格弹窗」改成下拉（能选到同一个集合，交互更省事）。
-const CATEGORIES = {
-  // 收入类
-  sample: { label: '样品收入', type: 'income', color: '#0d9488', bg: 'rgba(204, 251, 241, 0.8)' },
-  haitao: { label: '海淘', type: 'income', color: '#0284c7', bg: 'rgba(224, 242, 254, 0.8)' },
-  xingchuan: { label: '星川', type: 'income', color: '#c2410c', bg: 'rgba(255, 237, 213, 0.8)' },
-  withdraw: { label: '钱包提现', type: 'income', color: '#7c3aed', bg: 'rgba(237, 233, 254, 0.8)' },
-  // 支出类
-  prop: { label: '拍摄道具', type: 'expense', color: '#e11d48', bg: 'rgba(254, 226, 226, 0.8)' },
-  other_expense: { label: '其他支出', type: 'expense', color: '#c2410c', bg: 'rgba(255, 237, 213, 0.8)' },
-  ad: { label: '投流推广', type: 'expense', color: '#be123c', bg: 'rgba(255, 228, 230, 0.8)' },
-}
+// 分类表统一放在 utils/financeCategories，与手机端三个页面共用一份（新增分类只改一处）
 const INCOME = Object.entries(CATEGORIES).filter(([, c]) => c.type === 'income')
 const EXPENSE = Object.entries(CATEGORIES).filter(([, c]) => c.type === 'expense')
 
@@ -186,17 +177,19 @@ export function PcFinance() {
       </div>
 
       <div className="pcv-body pcv-body--fill">
-        {/* 合计：收入红 / 支出绿（中国习惯），只统计当前筛选 */}
-        <div className="pcv-metrics" style={{ gridTemplateColumns: 'repeat(4, minmax(0,1fr))', marginBottom: 10 }}>
+        {/* 汇总条：一张卡内分 4 段（标签在上、数字在下），段间 1px 竖线。
+            原来 4 张独立卡 + 左侧色条，占地大、颜色还互相打架；
+            现在统一成一条，数字用语义色：收入绿 / 支出红 / 净收支看正负 / 待收款琥珀。 */}
+        <div className="pcv-sumbar">
           {[
-            { label: '收入合计', value: `+¥${fmtMoney(totals.income)}`, color: '#c05a6e' },
-            { label: '支出合计', value: `-¥${fmtMoney(totals.expense)}`, color: '#5f8a74' },
-            { label: '净收支', value: `${totals.net >= 0 ? '+' : ''}¥${fmtMoney(totals.net)}`, color: totals.net >= 0 ? '#c05a6e' : '#5f8a74' },
+            { label: '收入合计', value: `+¥${fmtMoney(totals.income)}`, color: '#4f8a6d' },
+            { label: '支出合计', value: `-¥${fmtMoney(totals.expense)}`, color: '#c05a6e' },
+            { label: '净收支', value: `${totals.net >= 0 ? '+' : ''}¥${fmtMoney(totals.net)}`, color: totals.net >= 0 ? '#4f8a6d' : '#c05a6e' },
             { label: '其中待收款', value: `¥${fmtMoney(totals.receivable)}`, color: totals.receivable > 0 ? '#b1702c' : '#c9cdd4' },
           ].map((m) => (
-            <div key={m.label} className="pcv-metric" style={{ borderLeft: `3px solid ${m.color}` }}>
-              <div className="pcv-metric-label">{m.label}</div>
-              <div className="pcv-metric-value" style={{ color: m.color, fontSize: 18 }}>{m.value}</div>
+            <div key={m.label} className="pcv-sumcell">
+              <div className="pcv-sumlabel">{m.label}</div>
+              <div className="pcv-sumvalue" style={{ color: m.color }}>{m.value}</div>
             </div>
           ))}
         </div>

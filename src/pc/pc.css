@@ -130,17 +130,15 @@
   position: relative;
 }
 
-/* 全站云备份按钮：绝对定位在内容区右上角。
-   各页顶栏（.pcv-bar）的控件都靠左，右侧本来就是空的，所以不会挡到页面自己的按钮。
-   顶栏高度约 68px（14px 内边距 + 两行标题），按钮高 30px，top 19px 正好垂直居中。 */
+/* 全站云备份按钮：内容区顶部的一条工具行，**靠左**排列（用户要求「放左边」）。
+   不再绝对定位到右上角 —— 那样和页面顶栏的视觉重心分离，还容易和窄屏下的搜索框打架。
+   现在是正常文档流：按钮行在最上面，页面自己的顶栏（标题 + 搜索等）紧随其下。 */
 .pcv-globalactions {
-  position: absolute;
-  top: 19px;
-  right: 28px;
-  z-index: 6;
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 10px 28px 0;
+  flex-shrink: 0;
 }
 
 .pcv-bar {
@@ -914,6 +912,69 @@
   padding: 18px;
   overflow-y: auto;
 }
+/* 弹窗里「选样品」面板顶部的分类筛选（记出单 / 记录发布） */
+.pcv-catfilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.pcv-catfilter button {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 0.5px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pcv-catfilter button:hover {
+  border-color: rgba(15, 23, 42, 0.24);
+}
+.pcv-catfilter button.on {
+  background: #fdf1f6;
+  border-color: #f2cbdd;
+  color: #b8517f;
+}
+
+/* ── 收支汇总条（PcFinance 顶部四项合计）─────────────────────
+   4 张独立小卡合成一张卡内的 4 段：标签 11px 灰字在上、金额 19px 语义色在下，
+   段之间只用 1px 竖线分隔。比原来「4卡片 + 左侧色条」更紧凑，数字也不会被
+   色条切得像四块告警块。 */
+.pcv-sumbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: #fff;
+  border: 0.5px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.pcv-sumcell {
+  padding: 11px 16px 12px;
+  min-width: 0;
+}
+.pcv-sumcell + .pcv-sumcell {
+  border-left: 0.5px solid rgba(15, 23, 42, 0.06);
+}
+.pcv-sumlabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8a8f98;
+  margin-bottom: 5px;
+  white-space: nowrap;
+}
+.pcv-sumvalue {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 文案列表的筛选行（全部 / 已出单 / 已爆单 / 已用过） */
 .pcv-copyfilter {
   display: flex;
@@ -951,16 +1012,16 @@
   background: #fafbfc;
 }
 
-/* 弹窗底部按钮统一放大（用户要求「所有弹窗的按钮都大一点」）：
-   写在 .pcv-dialog-f 里一次生效，所有 PC 弹窗（样品/产品/文案/品牌方/追剧/读书/出单/发布…）共用，
-   不用每个弹窗单独加 class。 */
+/* 弹窗底部按钮：比列表按钮略大、但要矮（用户反馈「不要这么高」）。
+   竖向 padding 收到 6px（原来给过 10px，按钮显得又高又笨），横向留 16px 保证好点；
+   字号 13px 介于列表 12px 与标题 17px 之间。所有 PC 弹窗共用这一条。 */
 .pcv-dialog-f .pcv-btn {
-  padding: 10px 22px;
-  border-radius: 10px;
-  font-size: 14px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 13px;
 }
 .pcv-dialog-f .pcv-btn-text {
-  padding: 8px 6px;
+  padding: 6px 6px;
   font-size: 13px;
 }
 
@@ -1381,7 +1442,12 @@
 }
 
 /* 文案的状态标记（出单 / 爆单 / 用过）：默认中性描边，选中时由内联样式换成浅底色 */
+/* 文案标记（出单 / 爆单 / 用过）：白底细边 → 选中后由 JS 内联换成深一档的语义色，
+   图标与文字都走 currentColor，未选中时一起变灰。 */
 .pcv-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 3px 9px;
   border-radius: 6px;
   border: 0.5px solid rgba(15, 23, 42, 0.12);
@@ -1389,6 +1455,7 @@
   color: #8a8f98;
   font-size: 11px;
   font-weight: 600;
+  line-height: 1.5;
   cursor: pointer;
   white-space: nowrap;
 }

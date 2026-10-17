@@ -16,11 +16,30 @@ import { todayStr } from '../../utils/helpers'
 // 出单 / 爆单 / 用过三个可切换标记（手机版是三颗按钮，PC 版做成可切换的小标签）。
 // 配色（用户指定，两端统一）：出单=绿 / 爆单=红 / 用过=黄。
 // bar 是卡片左侧那条 3px 竖条的颜色，优先级由数组顺序决定：出单 > 爆单 > 用过。
+// icon 用 ¥ / SVG 火焰 / ✓ 这类「跟随 currentColor」的符号：
+// 未选中时它们是灰的，选中后跟着标签一起变深色，不会像 emoji 那样永远彩色。
 const COPY_FLAGS = [
-  { key: 'hasOrder', label: '出单', bg: '#eef4ef', fg: '#5f8a74', bar: '#8fbf9f' },
-  { key: 'hasHot', label: '爆单', bg: '#fdebeb', fg: '#c0392b', bar: '#e08a86' },
-  { key: 'used', label: '用过', bg: '#fdf4e3', fg: '#b7791f', bar: '#e8c07a' },
+  { key: 'hasOrder', label: '出单', icon: '¥', bg: '#d8ecdf', fg: '#2f6b4a', border: 'rgba(47,107,74,.28)', bar: '#8fbf9f' },
+  { key: 'hasHot', label: '爆单', icon: 'flame', bg: '#fadada', fg: '#b3261e', border: 'rgba(179,38,30,.24)', bar: '#e08a86' },
+  { key: 'used', label: '用过', icon: 'check', bg: '#fbeccd', fg: '#96620a', border: 'rgba(150,98,10,.26)', bar: '#e8c07a' },
 ]
+
+// 标记按钮里的小图标（11px，走 currentColor）
+function FlagIcon({ kind }) {
+  if (kind === '¥') return <span style={{ fontSize: 11, fontWeight: 800, lineHeight: 1 }}>¥</span>
+  if (kind === 'flame') {
+    return (
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14a8 8 0 1 0 16 0c0-5.39-3.46-9.9-6.5-13.33zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
+      </svg>
+    )
+  }
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+    </svg>
+  )
+}
 
 // 「用过」距今多久：今天 / 昨天 / N天前（与手机版 CopyCard 同口径）。
 // usedDate 存的是 YYYY-MM-DD，解析失败时原样返回，避免脏数据把日期显示成 NaN。
@@ -110,16 +129,28 @@ export function PcProducts() {
   // 右侧文案筛选：切产品时自动回到「全部」，否则换了产品还停在「已出单」容易以为没数据
   useEffect(() => { setCopyFilter('all') }, [activeId])
   const activeCopies = active?.copies || []
-  const copyCounts = useMemo(() => ({
-    all: activeCopies.length,
-    order: activeCopies.filter((c) => c.hasOrder).length,
-    hot: activeCopies.filter((c) => c.hasHot).length,
-    used: activeCopies.filter((c) => c.used).length,
-  }), [activeCopies])
+  const copyCounts = useMemo(() => {
+    const used = activeCopies.filter((c) => c.used).length
+    return {
+      all: activeCopies.length,
+      order: activeCopies.filter((c) => c.hasOrder).length,
+      hot: activeCopies.filter((c) => c.hasHot).length,
+      used,
+      // 未用过 = 总数 − 已用过（同一份数据的补集，不会对不上）
+      unused: activeCopies.length - used,
+    }
+  }, [activeCopies])
   const copyList = useMemo(() => {
-    if (copyFilter === 'all') return activeCopies
-    const key = copyFilter === 'order' ? 'hasOrder' : copyFilter === 'hot' ? 'hasHot' : 'used'
-    return activeCopies.filter((c) => c[key])
+    let base = activeCopies
+    if (copyFilter === 'unused') base = activeCopies.filter((c) => !c.used)
+    else if (copyFilter !== 'all') {
+      const key = copyFilter === 'order' ? 'hasOrder' : copyFilter === 'hot' ? 'hasHot' : 'used'
+      base = activeCopies.filter((c) => c[key])
+    }
+    // 有标记的排前面，顺序与手机版产品详情页一致：爆单 → 出单 → 用过 → 未标记。
+    // 组内保持原有顺序（Array.sort 稳定），不会把同状态的文案打乱。
+    const rank = (c) => (c.hasHot ? 0 : c.hasOrder ? 1 : c.used ? 2 : 3)
+    return [...base].sort((a, b) => rank(a) - rank(b))
   }, [activeCopies, copyFilter])
 
   // 话题（产品级 ∪ 所有文案自带，去重、按 # 拆分），与手机版 ProductDetailPage 同口径
@@ -364,6 +395,7 @@ export function PcProducts() {
                       { key: 'order', label: '已出单', n: copyCounts.order, color: '#5f8a74' },
                       { key: 'hot', label: '已爆单', n: copyCounts.hot, color: '#c0392b' },
                       { key: 'used', label: '已用过', n: copyCounts.used, color: '#b7791f' },
+                      { key: 'unused', label: '未用过', n: copyCounts.unused, color: '#8a8f98' },
                     ].filter((f) => f.key === 'all' || f.n > 0).map((f) => (
                       <button
                         key={f.key}
@@ -380,7 +412,7 @@ export function PcProducts() {
                 {activeCopies.length === 0 ? (
                   <div className="pcv-empty">这个产品还没有文案，点右上角「＋ 新增文案」粘贴一批</div>
                 ) : copyList.length === 0 ? (
-                  <div className="pcv-empty">这个产品还没有「{copyFilter === 'order' ? '已出单' : copyFilter === 'hot' ? '已爆单' : '已用过'}」的文案</div>
+                  <div className="pcv-empty">这个产品还没有「{({ order: '已出单', hot: '已爆单', used: '已用过', unused: '未用过' })[copyFilter] || ''}」的文案</div>
                 ) : (
                   copyList.map((c) => {
                     // 竖条颜色直接取 COPY_FLAGS（数组顺序即优先级：出单 > 爆单 > 用过），
@@ -399,9 +431,12 @@ export function PcProducts() {
                             <button
                               key={f.key}
                               className="pcv-flag"
-                              style={c[f.key] ? { background: f.bg, color: f.fg, borderColor: 'transparent' } : undefined}
+                              style={c[f.key]
+                                ? { background: f.bg, color: f.fg, borderColor: f.border, fontWeight: 700 }
+                                : undefined}
                               onClick={() => toggleFlag(c, f.key)}
                             >
+                              <FlagIcon kind={f.icon} />
                               {f.label}
                             </button>
                           ))}

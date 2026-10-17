@@ -3,19 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
+import { CATEGORIES, INCOME_TYPES, EXPENSE_TYPES } from '../utils/financeCategories'
 
-const CATEGORIES = {
-  sample: { label: '样品收入', type: 'income', color: '#0d9488', bg: 'rgba(204, 251, 241, 0.8)' },
-  haitao: { label: '海淘', type: 'income', color: '#0284c7', bg: 'rgba(224, 242, 254, 0.8)' },
-  xingchuan: { label: '星川', type: 'income', color: '#c2410c', bg: 'rgba(255, 237, 213, 0.8)' },
-  withdraw: { label: '钱包提现', type: 'income', color: '#7c3aed', bg: 'rgba(237, 233, 254, 0.8)' },
-  prop: { label: '拍摄道具', type: 'expense', color: '#e11d48', bg: 'rgba(254, 226, 226, 0.8)' },
-  other_expense: { label: '其他支出', type: 'expense', color: '#c2410c', bg: 'rgba(255, 237, 213, 0.8)' },
-  ad: { label: '投流推广', type: 'expense', color: '#be123c', bg: 'rgba(255, 228, 230, 0.8)' },
-}
-
-const INCOME_TYPES = ['sample', 'haitao', 'xingchuan', 'withdraw']
-const EXPENSE_TYPES = ['prop', 'other_expense', 'ad']
+// 分类表与 PC 端共用 utils/financeCategories（新增分类只改一处）
 
 function PageHeader({ title, onBack }) {
   return (

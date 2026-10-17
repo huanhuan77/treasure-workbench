@@ -7,7 +7,6 @@ import { getAccounts } from '../../utils/accounts'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
 import { ResetButton } from '../components/ResetButton'
-import { CATEGORIES } from '../../utils/categories'
 
 // 日期区间快捷项（与手机版 DateFilterBar 同一套 key，交给 dateBounds 解析区间）
 const RANGES = [
@@ -34,10 +33,8 @@ function parseTs(v) {
 export function PcPublishRecords() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { publishRecords, samples, products, deletePublishRecord } = useStore()
+  const { publishRecords, samples, deletePublishRecord } = useStore()
   const [account, setAccount] = useState('')
-  // 分类筛选：'' = 全部；分类从关联的样品（样品已删则回落到产品）查
-  const [catFilter, setCatFilter] = useState('')
   const [dateRange, setDateRange] = useState('today') // 与手机版同默认值
   const [keyword, setKeyword] = useState('')
   const [sortKey, setSortKey] = useState('dateDesc')
@@ -69,43 +66,26 @@ export function PcPublishRecords() {
     else setSortKey(dir === 'desc' ? 'countAsc' : 'countDesc')
   }
 
-  // 重置：搜索 + 账号 + 分类 + 时间范围 + 排序，回到进页面时的默认（时间范围默认「今天」）
-  const hasFilter = account !== '' || keyword !== '' || catFilter !== '' || dateRange !== 'today' || sortKey !== 'dateDesc'
+  // 重置：搜索 + 账号 + 时间范围 + 排序，回到进页面时的默认（时间范围默认「今天」）
+  const hasFilter = account !== '' || keyword !== '' || dateRange !== 'today' || sortKey !== 'dateDesc'
   const resetFilters = () => {
     setAccount('')
     setKeyword('')
-    setCatFilter('')
     setDateRange('today')
     setSortKey('dateDesc')
   }
 
   const sampleMap = useMemo(() => Object.fromEntries((samples || []).map((s) => [s.id, s])), [samples])
-  const productMap = useMemo(() => Object.fromEntries((products || []).map((p) => [p.id, p])), [products])
-  // 发布记录只存 sampleId / productId，分类按样品 → 产品依次回溯（样品删了还能靠产品认出来）
-  const categoryOf = (r) => sampleMap[r?.sampleId]?.category || productMap[r?.productId]?.category || ''
   const records = useMemo(
     () => [...(publishRecords || [])].sort((a, b) => String(b.publishDate || '').localeCompare(String(a.publishDate || ''))),
     [publishRecords],
   )
-  // 分类选项：只列数据里真实出现过的，顺序跟随全局 CATEGORIES
-  const catOptions = useMemo(() => {
-    const set = new Set()
-    for (const r of records) {
-      const c = sampleMap[r?.sampleId]?.category || productMap[r?.productId]?.category || ''
-      if (c) set.add(c)
-    }
-    return [...set].sort((a, b) => {
-      const ia = CATEGORIES.indexOf(a), ib = CATEGORIES.indexOf(b)
-      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b, 'zh')
-    })
-  }, [records, sampleMap, productMap])
 
   const bounds = dateBounds(dateRange)
   const groups = useMemo(() => {
     const kw = keyword.trim().toLowerCase()
     const arr = records.filter((r) => {
       if (account && !(r.accounts || []).includes(account)) return false
-      if (catFilter && categoryOf(r) !== catFilter) return false
       if (bounds) {
         const t = parseTs(r.publishDate)
         if (t === null || t < bounds[0] || t >= bounds[1]) return false
@@ -149,7 +129,7 @@ export function PcPublishRecords() {
         if (sortKey === 'countAsc') return (a.records.length - b.records.length) || byDate(a, b, 'desc')
         return byDate(a, b, 'desc') || (b.records.length - a.records.length)
       })
-  }, [records, sampleMap, productMap, account, catFilter, bounds, keyword, sortKey])
+  }, [records, sampleMap, account, bounds, keyword, sortKey])
 
   const filteredCount = useMemo(
     () => new Set(groups.flatMap((g) => g.records.map((r) => r.id))).size,
@@ -208,16 +188,6 @@ export function PcPublishRecords() {
           {accountOptions.map((a) => (
             <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{a}</button>
           ))}
-          {/* 分类筛选：竖线分隔，避免和账号胶囊连成一串 */}
-          {catOptions.length > 0 && (
-            <>
-              <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
-              <button className={catFilter === '' ? 'on' : ''} onClick={() => setCatFilter('')}>全部分类</button>
-              {catOptions.map((c) => (
-                <button key={c} className={catFilter === c ? 'on' : ''} onClick={() => setCatFilter(c)}>{c}</button>
-              ))}
-            </>
-          )}
           <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
