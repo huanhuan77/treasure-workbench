@@ -198,8 +198,8 @@ export function PcOrders() {
           <option value="">全部产品</option>
           {productOptions.map((n) => <option key={n} value={n}>{n}</option>)}
         </select>
-        {/* 主操作贴最右（与发布记录页一致）：产品下拉留在左侧，按钮用 marginLeft:auto 顶到右端 */}
-        <button className="pcv-btn" style={{ marginLeft: 'auto' }} onClick={() => { setPrefill(null); setOrderOpen(true) }}>记出单</button>
+        {/* 主操作紧跟产品下拉（与发布记录页一致，不再贴最右） */}
+        <button className="pcv-btn" onClick={() => { setPrefill(null); setOrderOpen(true) }}>记出单</button>
       </div>
 
       <div className="pcv-body pcv-body--fill">

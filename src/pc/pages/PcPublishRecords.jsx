@@ -183,9 +183,9 @@ export function PcPublishRecords() {
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
-        {/* 主操作贴最右（用户要求）：搜索框留在云备份按钮旁边，
-            用 marginLeft:auto 把「记录发布」推到整行右端 */}
-        <button className="pcv-btn" style={{ marginLeft: 'auto' }} onClick={() => setPublishDialog({})}>记录发布</button>
+        {/* 主操作紧跟搜索框（用户要求「按钮靠左」）：
+            之前用 marginLeft:auto 顶到最右，窗口一窄就被挤出可视区、只剩半截 */}
+        <button className="pcv-btn" onClick={() => setPublishDialog({})}>记录发布</button>
       </div>
 
       <div className="pcv-body pcv-body--fill">
@@ -221,7 +221,7 @@ export function PcPublishRecords() {
                   发布日期{sortDirOf('date') ? (sortDirOf('date') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 <th className="pcv-th-sort" onClick={() => toggleSort('count')}>
-                  发布次数{sortDirOf('count') ? (sortDirOf('count') === 'asc' ? ' ↑' : ' ↓') : ''}
+                  发布数量{sortDirOf('count') ? (sortDirOf('count') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
               </tr>
             </thead>

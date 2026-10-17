@@ -910,6 +910,20 @@
   max-height: 300px;
 }
 
+/* 日期输入框右侧的原生日历图标：默认约 14px，太小不好点（用户要求「图标大一点」）。
+   全站 PC 侧的 <input type="date" class="pcv-input"> 一起放大到 20px，hover 提亮。 */
+.pcv-input[type="date"]::-webkit-calendar-picker-indicator {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 0;
+  margin-left: 4px;
+}
+.pcv-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 .pcv-dialog-h {
   display: flex;
   align-items: center;
