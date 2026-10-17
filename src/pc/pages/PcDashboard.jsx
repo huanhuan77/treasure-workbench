@@ -56,7 +56,8 @@ export function PcDashboard() {
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
   const [publishDialog, setPublishDialog] = useState(undefined)
-  // 记出单：PC 版 OrderDialog（账号 Tab 切换，一次可记多个账号；不跳页面）
+  // 「＋ 新增」下拉：新增样品 / 记出单 / 新增待办 / 记收支
+  const [addMenu, setAddMenu] = useState(false)
   const [orderOpen, setOrderOpen] = useState(false)
   // 云备份：上传（本机覆盖云端）/ 恢复（云端覆盖本机，需二次确认）
   const [backingUp, setBackingUp] = useState(false)
@@ -242,9 +243,8 @@ export function PcDashboard() {
           {backingUp ? '上传中…' : '☁️ 上传到云端'}
         </button>
         <button className="pcv-btn pcv-btn-ghost" disabled={restoring} onClick={() => setConfirmRestore(true)}>
-          {restoring ? '恢复中…' : '从云端恢复'}
+          {restoring ? '恢复中…' : '📥 从云端恢复'}
         </button>
-        <button className="pcv-btn" onClick={() => setOrderOpen(true)}>记出单</button>
       </div>
 
       <div className="pcv-body">
@@ -270,6 +270,22 @@ export function PcDashboard() {
               </div>
             )
           })}
+
+          {/* ＋ 新增：放指标行末尾，点开下拉选择要新增什么 */}
+          <div className="pcv-addwrap">
+            <button className="pcv-addcard" onClick={() => setAddMenu((v) => !v)}>＋ 新增</button>
+            {addMenu && (
+              <>
+                <div className="pcv-menu-mask" onClick={() => setAddMenu(false)} />
+                <div className="pcv-menu">
+                  <button onClick={() => { setAddMenu(false); setSampleDialog(null) }}>新增样品</button>
+                  <button onClick={() => { setAddMenu(false); setOrderOpen(true) }}>记出单</button>
+                  <button onClick={() => { setAddMenu(false); navigate('/pc/todos') }}>新增待办</button>
+                  <button onClick={() => { setAddMenu(false); navigate('/pc/finance') }}>记收支</button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="pcv-stack">
@@ -420,7 +436,7 @@ export function PcDashboard() {
         />
       )}
 
-      {/* 记出单：账号 Tab 切换，一次可记多个账号（PC 端不跳页面） */}
+      {/* 记出单：从「＋ 新增」菜单打开，账号 Tab 切换、一次可记多个账号 */}
       {orderOpen && (
         <OrderDialog onClose={() => setOrderOpen(false)} />
       )}

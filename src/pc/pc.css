@@ -187,11 +187,73 @@
 }
 
 /* ── 通用块 ───────────────────────────────────────────────── */
+/* 指标行：4 张数字卡等宽 + 末尾「＋ 新增」入口（自适应宽度，用户要求放这一行） */
 .pcv-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
   gap: 12px;
   margin-bottom: 16px;
+}
+
+.pcv-addwrap {
+  position: relative;
+  display: flex;
+}
+.pcv-addcard {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px dashed rgba(184, 81, 127, 0.35);
+  color: #b8517f;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.pcv-addcard:hover {
+  background: #fdf1f6;
+  border-color: rgba(184, 81, 127, 0.6);
+}
+/* 点开的浮层菜单 */
+.pcv-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 132px;
+  padding: 6px;
+  background: #fff;
+  border-radius: 10px;
+  border: 0.5px solid rgba(15, 23, 42, 0.10);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+}
+.pcv-menu button {
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #334155;
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pcv-menu button:hover {
+  background: #fdf1f6;
+  color: #b8517f;
+}
+/* 点空白处关闭菜单 */
+.pcv-menu-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
 }
 
 .pcv-metric {
@@ -299,21 +361,21 @@
   border-collapse: collapse;
 }
 
-/* 表头着色：浅色系但要能一眼看出是一条「表头带」。
+/* 表头：中性灰「表头带」（用户要求改灰色）。
    全站 13 个 PC 表格共用这一条规则，改这里即全部生效。
    底色必须是实色 —— th 是 sticky 的，半透明会在行滚过时透出来。
-   调色记录：v1 #fdf2f7 太淡(看不出) → v2 #fad4e5 偏重 → v3 #fce9f2 折中
-   → v4 #fbf6f9 用户反馈「不够明显」→ 现值：底色回到 #fce4ef、文字压深到 #a04a72。 */
+   调色记录：粉底(#fdf2f7→#fad4e5→#fce9f2→#fce4ef) 一路调不出满意的，
+   最终改回中性灰：不参与品牌色，读数据时更不抢视线。 */
 .pcv-table th {
   position: sticky;
   top: 0;
   z-index: 1;
   padding: 9px 14px;
-  background: #fce4ef;
-  border-bottom: 0.5px solid rgba(160, 74, 114, 0.16);
+  background: #f1f3f6;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
   font-size: 12px;
   font-weight: 600;
-  color: #a04a72;
+  color: #5f6773;
   text-align: left;
   white-space: nowrap;
 }
@@ -650,8 +712,8 @@
   transition: color 0.12s ease, background 0.12s ease;
 }
 .pcv-table th.pcv-th-sort:hover {
-  color: #8a3b60;
-  background: #f9d3e4;
+  color: #3f4653;
+  background: #e6e9ee;
 }
 
 /* ── 出单记录的「展开明细」────────────────────────────────────
