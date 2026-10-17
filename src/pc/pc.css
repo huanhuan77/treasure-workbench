@@ -396,8 +396,9 @@
   background: #fdf2f8;
 }
 
+/* 名称列（出单 / 敏感词 / 总览提醒）：常规字重，不再加粗（用户要求「都不要加粗」） */
 .pcv-name {
-  font-weight: 600;
+  font-weight: 400;
   color: #333a45;
   white-space: nowrap;
   overflow: hidden;
@@ -758,35 +759,43 @@
    浅灰底 + 环形箭头图标 + 文字，无筛选时半透明不可点。
    放在 .pcv-accountbar 那条规则之后写，并用 .pcv-accountbar button.pcv-reset
    提高优先级，避免被上面对 button 的胶囊样式（白底 + 描边）覆盖。 */
+/* 「重置」按钮：灰底 + 图标。之前底色 #f3f4f6 与白底几乎同色、禁用时又降到 50% 透明，
+   整颗按钮像浮在页面上的水印（用户反馈「不明显」）。现在：
+   · 常态：稍深的灰底 + 细描边 + 深灰字，边界清楚；
+   · 禁用：只降到 70% 并保留描边，仍能看清是个按钮。 */
 .pcv-reset {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  border: none;
+  border: 1px solid rgba(15, 23, 42, 0.10);
   border-radius: 8px;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #eaedf1;
+  color: #4b5563;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .pcv-accountbar button.pcv-reset {
   padding: 5px 10px;
-  border: none;
+  border: 1px solid rgba(15, 23, 42, 0.10);
   border-radius: 8px;
-  background: #f3f4f6;
-  color: #6b7280;
+  background: #eaedf1;
+  color: #4b5563;
   font-size: 12px;
 }
 .pcv-reset:hover:not(:disabled),
 .pcv-accountbar button.pcv-reset:hover:not(:disabled) {
-  background: #e9ebef;
-  color: #4b5563;
+  background: #dfe3e9;
+  color: #1f2937;
+  border-color: rgba(15, 23, 42, 0.18);
 }
 .pcv-reset:disabled {
-  opacity: 0.5;
+  opacity: 0.7;
+  background: #f0f2f5;
+  color: #8a8f98;
+  border-color: rgba(15, 23, 42, 0.07);
   cursor: default;
 }
 .pcv-reset svg {
@@ -877,7 +886,7 @@
 }
 .pcv-detailacct {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   color: #333a45;
   min-width: 78px;
 }

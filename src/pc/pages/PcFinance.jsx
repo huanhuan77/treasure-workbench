@@ -274,8 +274,9 @@ export function PcFinance() {
                   金额{sortDirOf('amount') ? (sortDirOf('amount') === 'desc' ? ' ↓' : ' ↑') : ''}
                 </th>
                 <th style={{ width: 100 }}>收款</th>
-                <th style={{ width: 260 }}>备注</th>
-                <th>操作</th>
+                <th style={{ width: 240 }}>备注</th>
+                {/* 操作列从 auto 定宽到 150：两个按钮并排约需 140px */}
+                <th style={{ width: 150 }}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -288,7 +289,8 @@ export function PcFinance() {
                 const isIncome = t.type === 'income'
                 return (
                   <tr key={t.id}>
-                    <td style={{ fontVariantNumeric: 'tabular-nums', color: '#475569' }}>{t.date || '—'}</td>
+                    {/* 日期字号加大到 14（用户要求）：原来 13px + 灰字，一屏几十行读起来偏小 */}
+                    <td style={{ fontVariantNumeric: 'tabular-nums', color: '#475569', fontSize: 14, whiteSpace: 'nowrap' }}>{t.date || '—'}</td>
                     <td>
                       <span className="pcv-chip" style={{ background: cat.bg, color: cat.color }}>{cat.label}</span>
                     </td>
@@ -324,9 +326,14 @@ export function PcFinance() {
                         {t.remark ? (t.remark.length > 26 ? t.remark.slice(0, 26) + '…' : t.remark) : '—'}
                       </span>
                     </td>
-                    <td>
-                      <button className="pcv-btn-text" onClick={() => openEdit(t)}>编辑</button>
-                      <button className="pcv-btn-text" style={{ marginLeft: 10, color: '#b96a66' }} onClick={() => setDelTarget(t)}>删除</button>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {/* 与文案库/样品页统一：操作是按钮而不是文字链接 */}
+                      <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => openEdit(t)}>编辑</button>
+                      <button
+                        className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
+                        style={{ padding: '5px 10px', marginLeft: 6 }}
+                        onClick={() => setDelTarget(t)}
+                      >删除</button>
                     </td>
                   </tr>
                 )

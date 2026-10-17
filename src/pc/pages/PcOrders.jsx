@@ -260,12 +260,12 @@ export function PcOrders() {
                             title={open ? '收起明细' : '展开明细'}
                             onClick={() => setExpanded(open ? '' : g.name)}
                           >
+                            {/* 实心三角（不用 chevron 折线）：收起时朝右、展开时旋转 90° 朝下 */}
                             <svg
-                              width="12" height="12" viewBox="0 0 24 24" fill="none"
-                              stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"
-                              style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s ease' }}
+                              width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+                              style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease' }}
                             >
-                              <path d="M6 9l6 6 6-6" />
+                              <path d="M8 5v14l11-7z" />
                             </svg>
                           </button>
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
@@ -289,7 +289,19 @@ export function PcOrders() {
                       <td className="pcv-num" style={{ fontWeight: 400, color: '#b96a66' }}>{g.qty}</td>
                       <td style={{ color: g.latest ? '#4b5563' : '#c9cdd4' }}>{g.latest ? dispDate(g.latest) : '未填日期'}</td>
                       <td>
-                        <button className="pcv-btn-text" onClick={() => setExpanded(open ? '' : g.name)}>{open ? '收起明细' : '查看明细'}</button>
+                        {/* 「查看明细 / 收起明细」去掉（产品名前的三角箭头已经承担这个功能）。
+                            这一列改成「编辑」：直接编辑该产品最近的一笔出单；
+                            更早的每一笔，展开后在明细行里各自有「编辑 / 删除」。 */}
+                        <button
+                          className="pcv-btn-text"
+                          title="编辑最近一笔出单"
+                          onClick={() => {
+                            const latest = [...g.entries].sort(
+                              (a, b) => String(b.date || '').localeCompare(String(a.date || '')),
+                            )[0]
+                            if (latest) openEdit(latest)
+                          }}
+                        >编辑</button>
                       </td>
                     </tr>
                     {open && (

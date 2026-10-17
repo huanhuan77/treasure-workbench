@@ -79,7 +79,7 @@ export function PcDashboard() {
       actions: (s) => (
         <>
           <button className="pcv-btn" onClick={() => setPublishDialog({ sampleId: s.id, accounts: getAccounts(s) })}>补记发布</button>
-          <button className="pcv-btn-text" style={{ marginLeft: 10 }} onClick={() => setSampleDialog(s)}>打开样品</button>
+          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
         </>
       ),
     },
@@ -99,7 +99,7 @@ export function PcDashboard() {
       actions: (it) => (
         <>
           <button className="pcv-btn" onClick={() => setPublishDialog({ sampleId: it.sample.id, accounts: it.accounts.map((x) => x.account) })}>补发布</button>
-          <button className="pcv-btn-text" style={{ marginLeft: 10 }} onClick={() => setSampleDialog(it.sample)}>打开样品</button>
+          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(it.sample)}>打开样品</button>
         </>
       ),
     },
@@ -117,7 +117,7 @@ export function PcDashboard() {
         return <span style={{ fontSize: 13, fontWeight: 600, color }}>{text}</span>
       },
       actions: (s) => (
-        <button className="pcv-btn-text" onClick={() => setSampleDialog(s)}>打开样品</button>
+        <button className="pcv-btn pcv-btn-ghost" onClick={() => setSampleDialog(s)}>打开样品</button>
       ),
     },
   }), [all, navigate])
@@ -311,11 +311,10 @@ export function PcDashboard() {
                             若某列定得过宽（早先用 auto / 26%），余量会全堆在那一列，
                             短内容行就会空出一大片（实测中期列 377px、内容只占 107px）。
                             「操作」按用户要求挪到「产品」旁边（原来在最右端，一行要横跨整个屏幕才够得到）。
-                            同时把它从 240 收到 160：240 是它待在最右端时留的宽度，
-                            内容最多只有「补记发布 + 打开样品」≈130px，放第 2 列会空出一块。
-                            右侧空出来的宽度匀给「还差条数/截止时间」那列。 */}
-                        <th style={{ width: 250 }}>产品</th>
-                        <th style={{ width: 160 }}>操作</th>
+                            「打开样品」从文字链接改成按钮后，两个按钮并排约需 175px，
+                            所以这一列 160 → 200，产品列相应 250 → 210。 */}
+                        <th style={{ width: 210 }}>产品</th>
+                        <th style={{ width: 200 }}>操作</th>
                         <th style={{ width: 120 }}>状态</th>
                         <th style={{ width: 260 }}>{cur.header}</th>
                         <th style={{ width: 150 }}>截止日期</th>

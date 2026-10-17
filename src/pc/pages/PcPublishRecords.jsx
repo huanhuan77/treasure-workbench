@@ -262,8 +262,10 @@ export function PcPublishRecords() {
                               className="pcv-chip"
                               title="点击修改发布日期"
                               style={{
-                                background: '#f5f6f8', color: '#4b5563', fontSize: 13,
-                                border: 'none', cursor: 'pointer',
+                                // 数字不加粗 + 浅灰底（原来 .pcv-chip 自带 600 粗体、底色又几乎与白底同色）
+                                background: '#eef1f5', color: '#4b5563', fontSize: 13,
+                                fontWeight: 400, border: '0.5px solid rgba(15,23,42,0.08)',
+                                cursor: 'pointer',
                               }}
                               onClick={() => openDateEdit(g, d)}
                             >{d}</button>
