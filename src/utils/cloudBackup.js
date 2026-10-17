@@ -83,6 +83,26 @@ export async function findLatestGist(token) {
   return found
 }
 
+/**
+ * 404 时给一句能照着做的解释：GitHub 对「没权限」和「不存在」都回 404，
+ * 靠 GET /user 的 x-oauth-scopes 头把两种情况分开（拿不到该头时返回空串，调用方用自己的兜底文案）。
+ */
+async function explain404(tk) {
+  try {
+    const r = await fetch(`${API}/user`, { headers: { Authorization: `Bearer ${tk}` } })
+    if (r.status === 401) return 'Token 无效或已过期，请重新生成'
+    if (!r.ok) return ''
+    const scopes = r.headers.get('x-oauth-scopes')
+    if (scopes == null) return ''
+    if (!/\bgist\b/.test(scopes)) {
+      return `当前 Token 的权限是 [${scopes || '无'}]，不含 gist。请用 classic token 重新生成并勾选 gist 权限（勾 repo 是没用的）`
+    }
+    return 'Token 有 gist 权限，但云端不存在这个 Gist（可能已被删除，或备份属于另一个账号）'
+  } catch (e) {
+    return ''
+  }
+}
+
 /** 把本机数据覆盖上传到 Gist（有 gistId 走 PATCH，没有则新建 POST）。返回 gistId */
 export async function uploadBackup(token) {
   const tk = (token || '').trim()
@@ -110,7 +130,10 @@ export async function uploadBackup(token) {
   }
   if (res.status === 401) throw new Error('Token 无效或已过期')
   if (res.status === 403) throw new Error('GitHub API 限流，或 Token 缺少 gist 权限')
-  if (res.status === 404) throw new Error('Gist 不存在，或 Token 缺少 gist 权限（请改用带 gist scope 的 token，不是 repo）')
+  if (res.status === 404) {
+    const hint = await explain404(tk)
+    throw new Error(hint || 'Gist 不存在，或 Token 缺少 gist 权限（请改用带 gist scope 的 token，不是 repo）')
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const result = await res.json()
   const nextId = gistId || result.id
@@ -140,7 +163,8 @@ export async function restoreBackup(token) {
     }
   }
   if (!gist?.files?.[FILE_NAME]?.content) {
-    throw new Error(`未找到云端备份：Token 的 Gist 列表里没有 ${FILE_NAME}。请先在备份页填写 Gist ID，或先点「上传到云端」`)
+    const hint = await explain404(tk)
+    throw new Error(hint || `未找到云端备份：Token 的 Gist 列表里没有 ${FILE_NAME}。请先在备份页填写 Gist ID，或先点「上传到云端」`)
   }
   if (usedId) localStorage.setItem(GIST_ID_KEY, usedId)
 

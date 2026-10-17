@@ -136,6 +136,9 @@ async function saveGist(token, gistId, payload) {
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
+  if (res.status === 404) {
+    throw new Error('GitHub 返回 404：Gist 不存在或已被删；也可能是当前 Token 没有 gist 权限（请用 classic token 并勾选 gist，勾 repo 无效）')
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const result = await res.json()
   return result.id
