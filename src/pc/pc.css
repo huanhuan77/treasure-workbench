@@ -396,12 +396,15 @@
 }
 
 /* 产品行名称前的「已置顶」标记（SVG 图钉，只做状态提示，不响应点击 ——
-   置顶/取消置顶的开关在右侧操作列）。只有置顶的行才会渲染它。 */
+   置顶/取消置顶的开关在右侧操作列）。
+   宽度固定 12px 且未置顶时也占位（visibility:hidden），否则置顶行会多出
+   这段宽度、把后面的分类图标整体推右，跟普通行错位。 */
 .pcv-pin {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 2px;
+  width: 12px;
+  padding: 0;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -476,6 +479,13 @@
 .pcv-btn-ghost:hover {
   background: #f6f7f9;
   border-color: rgba(15, 23, 42, 0.24);
+}
+
+/* 大号按钮：弹窗底部的主操作（取消/保存）用，比列表里的按钮大一档，好点 */
+.pcv-btn-lg {
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
 }
 
 /* ghost 的危险变体（删除类操作）：红字 + 淡红描边，hover 略加深 */

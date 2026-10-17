@@ -43,7 +43,8 @@ export function PcProducts() {
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('')
   const [activeId, setActiveId] = useState('')
-  const [delTarget, setDelTarget] = useState(null)
+  const [delTarget, setDelTarget] = useState(null)   // 待删除的「文案」
+  const [delProduct, setDelProduct] = useState(null) // 待删除的「产品」（之前漏了状态，点删除会静默报错）
   // 产品新增/编辑走弹窗（editing: 'new' | 产品对象 | null），不跳页面
   const [editing, setEditing] = useState(null)
   // 文案编辑弹窗：undefined=关闭、文案对象=打开
@@ -153,6 +154,15 @@ export function PcProducts() {
     show('文案已删除', 'success')
   }
 
+  // 删除产品：连同它下面的文案一起删（store 里 deleteProduct 会整条移除）
+  const confirmDeleteProduct = () => {
+    if (!delProduct) return
+    deleteProduct(delProduct.id)
+    if (activeId === delProduct.id) setActiveId('')   // 清掉选中，右侧回落到第一行
+    setDelProduct(null)
+    show('产品已删除', 'success')
+  }
+
   // 重置：只清「搜索 + 分类筛选」，不动当前选中的产品（那是浏览位置，不是筛选）
   const hasFilter = keyword !== '' || category !== ''
   const resetFilters = () => {
@@ -231,13 +241,17 @@ export function PcProducts() {
                         {/* 分类图标 + 名称，跟手机版 ProductCard 一致；
                             已置顶的行在名称前挂一个小图钉（只做标记，开关在操作列） */}
                         <span className="pcv-namecell">
-                          {p.pinned && (
-                            <span className="pcv-pin is-on" style={{ color: '#b8517f' }} title="已置顶">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
-                              </svg>
-                            </span>
-                          )}
+                          {/* 图钉位置永远占位（未置顶时 visibility:hidden），
+                              否则置顶行的图标会多占 12px，把后面的分类图标整体推右、与普通行错位 */}
+                          <span
+                            className="pcv-pin"
+                            style={{ color: '#b8517f', visibility: p.pinned ? 'visible' : 'hidden' }}
+                            title={p.pinned ? '已置顶' : undefined}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                            </svg>
+                          </span>
                           <span className="pcv-caticon" style={{ background: icon.bg, color: icon.color }}>{icon.text}</span>
                           <span className="pcv-nametext" title={displayTitle(p)}>{displayTitle(p)}</span>
                         </span>
@@ -374,6 +388,17 @@ export function PcProducts() {
           </div>
         </div>
       </div>
+
+      {/* 删除产品二次确认：会连同该产品下的全部文案一起删掉 */}
+      <ConfirmModal
+        open={!!delProduct}
+        onClose={() => setDelProduct(null)}
+        onConfirm={confirmDeleteProduct}
+        title="删除产品"
+        message={`确定删除产品「${delProduct ? displayTitle(delProduct) : ''}」吗？该产品下的 ${delProduct?.copies?.length || 0} 条文案会一起删除，此操作不可撤销。`}
+        confirmText="删除"
+        danger
+      />
 
       {/* 删除文案二次确认（与手机版一致，删除不可撤销） */}
       <ConfirmModal

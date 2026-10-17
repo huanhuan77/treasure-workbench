@@ -3,7 +3,6 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, hasAccount } from '../../utils/accounts'
 import { isSelectableForOrder } from '../../utils/publish'
-import { todayStr } from '../../utils/helpers'
 import { AccountTabs } from './AccountTabs'
 
 // PC 版「记出单」弹窗（新增）。
@@ -21,7 +20,13 @@ export function OrderDialog({ prefill, onClose }) {
 
   const initAcc = prefill?.account || ACCOUNTS[0]
   const [account, setAccount] = useState(initAcc)
-  const [date, setDate] = useState(prefill?.date || todayStr())
+  // 出单日期默认「昨天」：出单基本都是事后补记，写当天十有八九要改（用户要求）
+  const [date, setDate] = useState(() => {
+    if (prefill?.date) return prefill.date
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  })
   // 每个账号独立的条目：{ [account]: [{ sampleId }] }
   const [byAcc, setByAcc] = useState(() => {
     const o = {}
@@ -187,8 +192,8 @@ export function OrderDialog({ prefill, onClose }) {
             {total > 0 ? `共 ${total} 条（${ACCOUNTS.filter((a) => counts[a] > 0).map((a) => `${a} ${counts[a]}`).join('、')}）` : '还没有条目'}
           </span>
           <div className="pcv-spacer" />
-          <button className="pcv-btn pcv-btn-ghost" onClick={onClose}>取消</button>
-          <button className="pcv-btn" onClick={save} disabled={total === 0}>
+          <button className="pcv-btn pcv-btn-ghost pcv-btn-lg" onClick={onClose}>取消</button>
+          <button className="pcv-btn pcv-btn-lg" style={{ marginLeft: 10 }} onClick={save} disabled={total === 0}>
             保存{total > 1 ? ` ${total} 条` : ''}
           </button>
         </div>
