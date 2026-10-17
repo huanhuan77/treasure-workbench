@@ -84,6 +84,17 @@ export async function findLatestGist(token) {
 }
 
 /**
+ * Token 指纹：只露头尾各 4 位 + 总长度 + 类型，够用来判断两台设备是不是同一个 token，
+ * 又不会把完整凭证显示在页面上（防止截图泄露）。
+ */
+export function tokenFingerprint(token) {
+  const tk = (token || '').trim()
+  if (!tk) return ''
+  const kind = tk.startsWith('github_pat_') ? 'fine-grained' : tk.startsWith('ghp_') ? 'classic' : '未知类型'
+  return `${tk.slice(0, 4)}…${tk.slice(-4)}（${tk.length} 位 · ${kind}）`
+}
+
+/**
  * 检测 Token：调 GET /user 看能不能通过 + 响应头 x-oauth-scopes 里有没有 gist。
  * 返回 { ok, login, scopes, error }。ok=true 表示「有 gist 权限，能读写 Gist」。
  */

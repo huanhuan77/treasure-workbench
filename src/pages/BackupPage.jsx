@@ -6,7 +6,7 @@ import { syncAll } from '../utils/sync'
 // Gist 上传/恢复的实现抽到 utils/cloudBackup，与 PC 总览页顶栏的两个按钮共用一份逻辑
 import {
   KEYS, GIST_ID_KEY, LAST_SYNC_KEY, uploadBackup, restoreBackup,
-  markSynced, formatSyncTime, inspectToken,
+  markSynced, formatSyncTime, inspectToken, tokenFingerprint,
 } from '../utils/cloudBackup'
 
 export function BackupPage() {
@@ -40,6 +40,8 @@ export function BackupPage() {
     }, 600)
     return () => { alive = false; clearTimeout(timer) }
   }, [token])
+  // 检测结果为「缺 gist」时禁用同步/上传/恢复：避免点一次报一次同样的错
+  const tokenBlocked = !!tokenInfo && !tokenInfo.checking && !tokenInfo.ok
 
   // 上传到 GitHub Gist（本机覆盖云端）
   const uploadToGist = async () => {
@@ -215,8 +217,8 @@ export function BackupPage() {
               {tokenInfo.checking
                 ? '正在检测 Token 权限…'
                 : tokenInfo.ok
-                  ? `✓ 账号 ${tokenInfo.login} · 权限 [${tokenInfo.scopes || '无'}] · 含 gist，可以同步`
-                  : `✗ ${tokenInfo.error || `账号 ${tokenInfo.login} 的权限是 [${tokenInfo.scopes || '无'}]，缺少 gist`}`}
+                  ? `✓ 账号 ${tokenInfo.login} · 权限 [${tokenInfo.scopes || '无'}] · ${tokenFingerprint(token)} · 可以同步`
+                  : `✗ ${tokenInfo.error || `账号 ${tokenInfo.login} 的权限是 [${tokenInfo.scopes || '无'}]，缺少 gist`} · ${tokenFingerprint(token)}`}
             </p>
           )}
           <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--gray-400)' }}>
@@ -226,32 +228,38 @@ export function BackupPage() {
           {/* 主操作单独一行；「上传 / 恢复」两个覆盖型操作放下一行各占一半，
               不再和「立即同步」挤在同一排（用户反馈那俩被挤住、看不出来） */}
           <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-            <button onClick={syncToCloud} disabled={syncing || !token} style={{
+            <button onClick={syncToCloud} disabled={syncing || !token || tokenBlocked} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: 'none',
-              background: syncing ? '#9ca3af' : 'linear-gradient(135deg,#6366f1,#4f46e5)',
-              color: '#fff', fontSize: '14px', fontWeight: 700, cursor: syncing ? 'not-allowed' : 'pointer',
-              boxShadow: syncing ? 'none' : '0 4px 14px rgba(99,102,241,0.3)',
+              background: (syncing || tokenBlocked) ? '#9ca3af' : 'linear-gradient(135deg,#6366f1,#4f46e5)',
+              color: '#fff', fontSize: '14px', fontWeight: 700, cursor: (syncing || tokenBlocked) ? 'not-allowed' : 'pointer',
+              boxShadow: (syncing || tokenBlocked) ? 'none' : '0 4px 14px rgba(99,102,241,0.3)',
             }}>
               {syncing ? '同步中...' : '🔄 立即同步（双向合并）'}
             </button>
           </div>
 
           <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-            <button onClick={uploadToGist} disabled={syncing || !token} style={{
+            <button onClick={uploadToGist} disabled={syncing || !token || tokenBlocked} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: '1.5px solid #d1d5db',
-              background: 'transparent', color: '#4b5563', fontSize: '14px', fontWeight: 700,
-              cursor: syncing ? 'not-allowed' : 'pointer',
+              background: 'transparent', color: tokenBlocked ? '#c9cdd4' : '#4b5563', fontSize: '14px', fontWeight: 700,
+              cursor: (syncing || tokenBlocked) ? 'not-allowed' : 'pointer',
             }}>
               {syncing ? '同步中...' : '☁️ 上传到云端'}
             </button>
-            <button onClick={downloadFromGist} disabled={syncing || !token} style={{
+            <button onClick={downloadFromGist} disabled={syncing || !token || tokenBlocked} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: '1.5px dashed #6366f1',
-              background: 'transparent', color: '#4f46e5', fontSize: '14px', fontWeight: 700,
-              cursor: syncing ? 'not-allowed' : 'pointer',
+              background: 'transparent', color: tokenBlocked ? '#c9cdd4' : '#4f46e5', fontSize: '14px', fontWeight: 700,
+              cursor: (syncing || tokenBlocked) ? 'not-allowed' : 'pointer',
+              opacity: tokenBlocked ? 0.6 : 1,
             }}>
               {syncing ? '同步中...' : '☁️ 从云端恢复'}
             </button>
           </div>
+          {tokenBlocked && (
+            <p style={{ margin: '8px 0 0', fontSize: 11, color: '#c0392b' }}>
+              当前 Token 缺 gist 权限，按钮已禁用。换成勾了 <b>gist</b> 的 classic token 后会自动恢复可点。
+            </p>
+          )}
         </div>
 
         {/* 手动备份说明 */}
