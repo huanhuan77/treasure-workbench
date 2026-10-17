@@ -434,6 +434,18 @@ export function PcProducts() {
                       >
                         <div className="pcv-copytext">{c.content}</div>
                         <div className="pcv-copyfoot">
+                          {/* 复制放最前（用户要求）：最常用的动作固定在行首，眼睛不用来回找 */}
+                          <button
+                            className="pcv-btn"
+                            style={{ padding: '7px 16px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                            onClick={() => copyOne(c)}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <rect x="9" y="9" width="12" height="12" rx="2" />
+                              <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+                            </svg>
+                            复制
+                          </button>
                           {COPY_FLAGS.map((f) => (
                             <button
                               key={f.key}
@@ -457,9 +469,7 @@ export function PcProducts() {
                               {usedAgo(c.usedDate)}
                             </span>
                           )}
-                          {/* 复制 / 编辑 / 删除统一成按钮（用户要求），三个同规格并排；
-                              间距由 .pcv-copyfoot 的 gap 控制（已调大到 12px） */}
-                          <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => copyOne(c)}>复制</button>
+                          {/* 编辑 / 删除：次要操作，保持描边样式，紧跟标记与用过时间之后 */}
                           <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => setCopyDialog(c)}>编辑</button>
                           <button
                             className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
