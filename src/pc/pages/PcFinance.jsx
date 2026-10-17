@@ -170,10 +170,12 @@ export function PcFinance() {
           </div>
         </div>
         <div className="pcv-spacer" />
+        {/* 「记一笔」是主操作、「隐藏账号」是视图开关：后者放到整行最右端（用户要求「放右边」），
+            marginLeft:auto 让这一组贴到右边缘，不再和中间那排云备份按钮挤在一起 */}
+        <button className="pcv-btn" style={{ marginLeft: 'auto' }} onClick={openNew}>＋ 记一笔</button>
         <button className="pcv-btn pcv-btn-ghost" onClick={toggleHideAccount}>
           {hideAccount ? '🙈 显示账号' : '👁 隐藏账号'}
         </button>
-        <button className="pcv-btn" onClick={openNew}>＋ 记一笔</button>
       </div>
 
       <div className="pcv-body pcv-body--fill">
@@ -195,8 +197,10 @@ export function PcFinance() {
           ))}
         </div>
 
-        {/* 类型筛选 */}
-        <div className="pcv-accountbar" style={{ padding: '0 0 8px', borderBottom: 'none' }}>
+        {/* 筛选条：一行放完（类型 seg │ 分类 ▾ 月份 ▾ 账号 ▾ …… 重置）。
+            原来拆成三行（类型 / 分类胶囊 / 月份+账号）：分类有 9 个胶囊，一窄就折成两行，
+            整块占掉近 120px、把表格压得很低，所以分类也收进下拉。 */}
+        <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
           <div className="pcv-seg">
             {[
               { k: 'all', l: '全部' },
@@ -211,31 +215,37 @@ export function PcFinance() {
               >{t.l}</button>
             ))}
           </div>
-        </div>
 
-        {/* 分类筛选 */}
-        <div className="pcv-accountbar" style={{ padding: '0 0 8px', borderBottom: 'none' }}>
-          <button className={filterCategory === 'all' ? 'on' : ''} onClick={() => setFilterCategory('all')}>全部分类</button>
-          {catsForFilter.map(([k, c]) => (
-            <button key={k} className={filterCategory === k ? 'on' : ''} onClick={() => setFilterCategory(k)}>{c.label}</button>
-          ))}
-        </div>
+          <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
 
-        {/* 月份 / 账号 / 排序 */}
-        <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
+          {/* 分类：按当前 Tab 只列收入或支出的分类，避免选到必然空结果的组合 */}
+          <select
+            className="pcv-input"
+            style={{ width: 120 }}
+            title="按分类筛选"
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+          >
+            <option value="all">全部分类</option>
+            {catsForFilter.map(([k, c]) => <option key={k} value={k}>{c.label}</option>)}
+          </select>
+
           <select
             className="pcv-input"
             style={{ width: 130 }}
+            title="按月份筛选"
             value={filterMonth}
             onChange={(e) => setFilterMonth(e.target.value)}
           >
             <option value="all">📅 全部月份</option>
             {months.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
+
           {!hideAccount && accounts.length > 0 && (
             <select
               className="pcv-input"
-              style={{ width: 140, marginLeft: 6 }}
+              style={{ width: 140 }}
+              title="按账号筛选"
               value={filterAccount}
               onChange={(e) => setFilterAccount(e.target.value)}
             >
@@ -243,6 +253,7 @@ export function PcFinance() {
               {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
           )}
+
           {/* 重置：分类 / 账号 / 月份 / 排序回到默认（收入·支出那个 seg 是 Tab，不动） */}
           <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>

@@ -609,14 +609,14 @@
   padding: 0;
   background: transparent;
   border-radius: 0;
-  border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
+  /* 不再给整条 Tab 画一条贯穿的细线（用户要求「不要细线」）：
+     选中态只靠底部那 2px 粉色短线 + 文字变色表达。 */
 }
 .pcv-seg--tabs button {
   padding: 8px 4px 9px;
   margin-right: 24px;
   border-radius: 0;
   border-bottom: 2px solid transparent;
-  margin-bottom: -0.5px;
   color: #64748b;
   font-size: 14px;
 }

@@ -121,7 +121,9 @@ export function PcSavings() {
         </div>
 
         <div className="pcv-card pcv-card--scroll">
-          <table className="pcv-table">
+          {/* --lg：与投资跟踪同规格的大字号表（表头 13 / 正文 14 / 标签 13），
+              月份 + 金额 + 差额这一屏数字多，13px 偏小（用户要求「列表字号大一点」） */}
+          <table className="pcv-table pcv-table--lg">
             <thead>
               <tr>
                 <th style={{ width: 70 }}>月份</th>

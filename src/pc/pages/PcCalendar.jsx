@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { recordDelete } from '../../utils/sync'
+import { WEATHER_LIST, WeatherIcon } from '../components/WeatherIcon'
 
 // PC 版「日历」（日记 / 心情 / 天气）。
 // 数据照手机版 CalendarPage / CalendarDetailPage：直接读写 localStorage 的
@@ -20,7 +21,7 @@ const MOODS = [
   { emoji: '🥰', label: '恋爱', color: '#ec4899' },
   { emoji: '🤩', label: '兴奋', color: '#f97316' },
 ]
-const WEATHERS = ['☀️', '🌤', '☁️', '🌧', '⛈', '🌨', '🌫']
+// 天气选项见 components/WeatherIcon（WEATHER_LIST）：存储值仍是 emoji，渲染换成 SVG 图标
 const WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
 // 解析后必须保证是「普通对象」：备份恢复 / 历史脏数据可能把 null、数组、字符串写进这个 key，
@@ -155,8 +156,9 @@ export function PcCalendar() {
                     >
                       <span className="pcv-cal-day">{day}</span>
                       {(e?.mood || e?.weather) && (
-                        <span className="pcv-cal-mark">
-                          {e?.mood || ''}{e?.weather ? ` ${e.weather}` : ''}
+                        <span className="pcv-cal-mark" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                          {e?.mood || ''}
+                          {e?.weather && <WeatherIcon value={e.weather} size={13} />}
                         </span>
                       )}
                       {e?.note && <span className="pcv-cal-note">{e.note}</span>}
@@ -186,7 +188,7 @@ export function PcCalendar() {
                   {parseInt(dateStr.split('-')[2], 10)}日
                 </span>
                 {entry.mood && <span style={{ fontSize: 18, flexShrink: 0 }}>{entry.mood}</span>}
-                {entry.weather && <span style={{ fontSize: 14, flexShrink: 0 }}>{entry.weather}</span>}
+                {entry.weather && <WeatherIcon value={entry.weather} size={15} />}
                 <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#333a45', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {entry.note || <span style={{ color: '#c9cdd4' }}>（没写内容）</span>}
                 </span>
@@ -227,12 +229,16 @@ export function PcCalendar() {
 
               <div className="pcv-field-label" style={{ marginTop: 16 }}>天气</div>
               <div className="pcv-catpick">
-                {WEATHERS.map((w) => (
+                {WEATHER_LIST.map((w) => (
                   <button
-                    key={w}
-                    className={weather === w ? 'on' : ''}
-                    onClick={() => setWeather(weather === w ? '' : w)}
-                  >{w}</button>
+                    key={w.emoji}
+                    className={weather === w.emoji ? 'on' : ''}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                    onClick={() => setWeather(weather === w.emoji ? '' : w.emoji)}
+                  >
+                    <WeatherIcon value={w.emoji} size={16} />
+                    {w.label}
+                  </button>
                 ))}
               </div>
 

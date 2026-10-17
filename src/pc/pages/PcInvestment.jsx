@@ -254,16 +254,16 @@ export function PcInvestment() {
                     现拆成 份额 / 成交额 / 成交价 三列：父行显示买/卖汇总，
                     明细行显示该笔的份额、成交额、成交价，两边对齐不挤。
                     定宽合计 1060，1440 视口下操作列约 105px（「编辑最新」刚好放得下）。 */}
-                <th style={{ width: 100 }}>代码</th>
-                <th style={{ width: 160 }}>名称</th>
-                <th style={{ width: 62 }}>类型</th>
-                <th style={{ width: 135 }}>持仓（买/卖/净）</th>
-                <th style={{ width: 70 }}>份额</th>
-                <th style={{ width: 125 }}>成交额</th>
-                <th style={{ width: 85 }}>成交价</th>
-                <th style={{ width: 80 }}>现价</th>
-                <th style={{ width: 85 }}>最新涨跌</th>
-                <th style={{ width: 100 }}>最新日期</th>
+                <th style={{ width: 90 }}>代码</th>
+                <th style={{ width: 145 }}>名称</th>
+                <th style={{ width: 56 }}>类型</th>
+                <th style={{ width: 158 }}>持仓（买/卖/净）</th>
+                <th style={{ width: 60 }}>份额</th>
+                <th style={{ width: 110 }}>成交额</th>
+                <th style={{ width: 74 }}>成交价</th>
+                <th style={{ width: 74 }}>现价</th>
+                <th style={{ width: 82 }}>最新涨跌</th>
+                <th style={{ width: 90 }}>最新日期</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -286,7 +286,7 @@ export function PcInvestment() {
                       <td>
                         <span className="pcv-chip" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                       </td>
-                      <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45' }}>
+                      <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45', whiteSpace: 'nowrap' }}>
                         {fmtNum(g.buyShares, 0)} / {fmtNum(g.sellShares, 0)} / <span style={{ color: g.netShares >= 0 ? '#333a45' : '#b96a66' }}>{fmtNum(g.netShares, 0)}</span>
                       </td>
                       {/* 份额 / 成交价是明细行才有的字段，父行留空（用 — 占位保持列对齐） */}
