@@ -276,11 +276,17 @@ export function PcOrders() {
                         ) : (
                           g.accounts.map((a, i) => (
                             <span key={a} style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-                              {/* 多个账号之间用「·」分隔（用户要求加圆点）。
-                                  之前的 #c9cdd4 + 6px 太淡了看不出来，这里加深到 #b0b6bf、
-                                  加大字号并加左右 8px，隔着两个名字也能看清 */}
+                              {/* 多个账号之间用**实心圆点分隔**（用户要求）。
+                                  不再用「·」字符 —— 小字号下它几乎是一条缝，看不清；
+                                  改用 4px 的圆形 span，任何字体/缩放下都是明确的点。 */}
                               {i > 0 && (
-                                <span style={{ color: '#b0b6bf', fontSize: 15, fontWeight: 700, margin: '0 8px' }}>·</span>
+                                <span
+                                  aria-hidden="true"
+                                  style={{
+                                    width: 4, height: 4, borderRadius: '50%', background: '#c1c7cf',
+                                    margin: '0 8px', display: 'inline-block', flexShrink: 0,
+                                  }}
+                                />
                               )}
                               {/* 账号名不标账号主题色 —— 与样品页/发布记录页同一偏好 */}
                               <span style={{ color: '#333a45' }}>{a}</span>
