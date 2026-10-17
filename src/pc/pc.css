@@ -123,6 +123,21 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  /* 给 .pcv-globalactions 当定位参照 */
+  position: relative;
+}
+
+/* 全站云备份按钮：绝对定位在内容区右上角。
+   各页顶栏（.pcv-bar）的控件都靠左，右侧本来就是空的，所以不会挡到页面自己的按钮。
+   顶栏高度约 68px（14px 内边距 + 两行标题），按钮高 30px，top 19px 正好垂直居中。 */
+.pcv-globalactions {
+  position: absolute;
+  top: 19px;
+  right: 28px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .pcv-bar {

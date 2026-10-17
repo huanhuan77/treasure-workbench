@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
@@ -57,6 +57,17 @@ export function PcSamples() {
   const [sampleDialog, setSampleDialog] = useState(undefined)
   // 补记发布弹窗：undefined=关闭、{ sampleId, accounts }=打开
   const [publishDialog, setPublishDialog] = useState(undefined)
+
+  // 从总览指标卡的「新增」跳过来（/pc/samples?add=1）时自动打开新增弹窗；
+  // 打开后把 add 参数清掉，免得刷新或关掉弹窗后又弹一次。
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('add') !== '1') return
+    setSampleDialog(null)
+    const next = new URLSearchParams(searchParams)
+    next.delete('add')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
 
   // 「是否出单」按**出单记录表**（store.orders）关联，不是样品里的 countsByAccount。
   // 两者口径不同：countsByAccount 是样品内部维护的影子计数，历史数据可能没跟上；

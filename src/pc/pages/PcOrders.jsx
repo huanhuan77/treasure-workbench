@@ -1,10 +1,12 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { OrderFormModal } from '../../components/OrderFormModal'
 import { OrderDialog } from '../components/OrderDialog'
 import { ResetButton } from '../components/ResetButton'
 import { dateBounds } from '../../components/DateFilterBar'
+import { CATEGORIES } from '../../utils/categories'
 
 const RANGES = [
   { key: '', label: '全部' },
@@ -33,11 +35,13 @@ const dispDate = (v) => (v ? String(v).replace(/-/g, '/') : '未填日期')
 // 每天的明细、单条编辑/删除、按天删除、以及「继续新增一单」。
 export function PcOrders() {
   const { show } = useToast()
-  const { orders, addOrder, updateOrder, deleteOrder } = useStore()
+  const { orders, samples, products, addOrder, updateOrder, deleteOrder } = useStore()
   const [accountFilter, setAccountFilter] = useState('')
   const [dateRange, setDateRange] = useState('yesterday') // 与手机版同默认值
   const [sortKey, setSortKey] = useState('dateDesc')
   const [productFilter, setProductFilter] = useState('')
+  // 分类筛选：'' = 全部；值取自出单关联的样品/产品分类
+  const [catFilter, setCatFilter] = useState('')
   const [expanded, setExpanded] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   // 「记出单」（新增）走 OrderDialog：账号 Tab 切换、一次可记多个账号。
@@ -47,11 +51,22 @@ export function PcOrders() {
   const [prefill, setPrefill] = useState(null)
   const [formSeq, setFormSeq] = useState(0)
 
-  // 重置：产品 / 账号 / 时间范围 / 排序，回到进页面时的默认（时间范围默认「昨天」）
-  const hasFilter = productFilter !== '' || accountFilter !== '' || dateRange !== 'yesterday' || sortKey !== 'dateDesc'
+  // 从总览指标卡「新增」跳过来（/pc/orders?add=1）时直接打开记出单弹窗，随后清掉参数
+  const [searchParams, setSearchParams] = useSearchParams()
+  useEffect(() => {
+    if (searchParams.get('add') !== '1') return
+    setOrderOpen(true)
+    const next = new URLSearchParams(searchParams)
+    next.delete('add')
+    setSearchParams(next, { replace: true })
+  }, [searchParams, setSearchParams])
+
+  // 重置：产品 / 账号 / 分类 / 时间范围 / 排序，回到进页面时的默认（时间范围默认「昨天」）
+  const hasFilter = productFilter !== '' || accountFilter !== '' || catFilter !== '' || dateRange !== 'yesterday' || sortKey !== 'dateDesc'
   const resetFilters = () => {
     setProductFilter('')
     setAccountFilter('')
+    setCatFilter('')
     setDateRange('yesterday')
     setSortKey('dateDesc')
   }
@@ -78,10 +93,22 @@ export function PcOrders() {
     })
   }, [orders])
 
+  // 分类回溯：出单记录只存 sampleId / productId，没有冗余分类字段，
+  // 所以按样品 → 产品依次查（样品可能已被删，产品还在）。
+  const categoryMaps = useMemo(() => {
+    const bySample = new Map()
+    for (const s of samples || []) if (s?.id) bySample.set(s.id, s.category || '')
+    const byProduct = new Map()
+    for (const p of products || []) if (p?.id) byProduct.set(p.id, p.category || '')
+    return { bySample, byProduct }
+  }, [samples, products])
+  const categoryOf = (o) => categoryMaps.bySample.get(o?.sampleId) || categoryMaps.byProduct.get(o?.productId) || ''
+
   const filtered = useMemo(() => {
     let arr = list
     if (accountFilter) arr = arr.filter((o) => o.account === accountFilter)
     if (productFilter) arr = arr.filter((o) => (o.name || '') === productFilter)
+    if (catFilter) arr = arr.filter((o) => categoryOf(o) === catFilter)
     const bounds = dateBounds(dateRange)
     if (bounds) {
       const [s, e] = bounds
@@ -91,7 +118,7 @@ export function PcOrders() {
       })
     }
     return arr
-  }, [list, accountFilter, productFilter, dateRange])
+  }, [list, accountFilter, productFilter, catFilter, dateRange, categoryMaps])
 
   const groups = useMemo(() => {
     const map = new Map()
@@ -138,6 +165,18 @@ export function PcOrders() {
     () => [...new Set((orders || []).map((o) => o.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh')),
     [orders],
   )
+  // 分类选项：只列当前数据里真实出现过的分类，顺序跟随全局 CATEGORIES
+  const catOptions = useMemo(() => {
+    const set = new Set()
+    for (const o of orders || []) {
+      const c = categoryMaps.bySample.get(o?.sampleId) || categoryMaps.byProduct.get(o?.productId) || ''
+      if (c) set.add(c)
+    }
+    return [...set].sort((a, b) => {
+      const ia = CATEGORIES.indexOf(a), ib = CATEGORIES.indexOf(b)
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b, 'zh')
+    })
+  }, [orders, categoryMaps])
   const accountOptions = useMemo(
     () => [...new Set((orders || []).map((o) => o.account).filter(Boolean))],
     [orders],
@@ -208,6 +247,16 @@ export function PcOrders() {
           {accountOptions.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
           ))}
+          {/* 分类筛选：竖线分隔，避免和账号胶囊连成一串 */}
+          {catOptions.length > 0 && (
+            <>
+              <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
+              <button className={catFilter === '' ? 'on' : ''} onClick={() => setCatFilter('')}>全部分类</button>
+              {catOptions.map((c) => (
+                <button key={c} className={catFilter === c ? 'on' : ''} onClick={() => setCatFilter(c)}>{c}</button>
+              ))}
+            </>
+          )}
           <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 

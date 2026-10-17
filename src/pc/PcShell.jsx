@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useIsDesktop } from '../utils/useIsDesktop'
 import { HomeIcon, PenIcon, TagIcon, MoneyIcon, VideoIcon } from '../components/navIcons'
+import { CloudActions } from './components/CloudActions'
 import './pc.css'
 
 // PC 版导航：一列到底，不分组。
@@ -88,6 +89,8 @@ export function PcShell() {
         </div>
       </aside>
       <main className="pcv-main">
+        {/* 云备份三件套：各页顶栏控件都靠左，右上角是空的，放这里全站通用 */}
+        <CloudActions />
         <Outlet />
       </main>
     </div>

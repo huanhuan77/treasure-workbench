@@ -3,15 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
-import { ConfirmModal } from '../../components/Modal'
-import { getStoredToken, uploadBackup, restoreBackup } from '../../utils/cloudBackup'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 import { daysSincePublishByAccount, pendingAccounts, isOverdue, compareUrgent } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
 import { PublishDialog } from '../components/PublishDialog'
-import { OrderDialog } from '../components/OrderDialog'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -56,12 +53,6 @@ export function PcDashboard() {
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
   const [publishDialog, setPublishDialog] = useState(undefined)
-  // 指标卡右侧「＋」里的「记出单」用
-  const [orderOpen, setOrderOpen] = useState(false)
-  // 云备份：上传（本机覆盖云端）/ 恢复（云端覆盖本机，需二次确认）
-  const [backingUp, setBackingUp] = useState(false)
-  const [restoring, setRestoring] = useState(false)
-  const [confirmRestore, setConfirmRestore] = useState(false)
 
   const all = useMemo(() => selectAllReminders(samples), [samples])
 
@@ -157,13 +148,21 @@ export function PcDashboard() {
         map.get(a).push(it)
       }
     }
-    // 「发布提醒」组内排序：**已逾期排最前面**，其次「多久没发视频」由久到近。
-    // 比较逻辑提到 utils/publish 的 compareUrgent，和手机版总览/发布提醒页共用一份。
-    // 只作用于发布提醒 tab：
-    //   · 即将到期 tab 本身已按截止日升序，逾期天然在最前，再排会打乱它；
-    //   · 发布不足5条 tab 保持原顺序即可。
+    // 「发布提醒」组内排序：默认按**截止日期升序**（用户要求）——
+    // 最急的排最前，已逾期的日期最小、自然浮到最上面，符合「先处理快到期/已超期的」。
+    // 截止日相同（或都没有）时再用 compareUrgent 兜底（已逾期优先 → 多久没发），
+    // 那份逻辑与手机版总览/发布提醒页共用。
     if (tab === 'reminders') {
-      for (const arr of map.values()) arr.sort((x, y) => compareUrgent(x.sample || x, y.sample || y))
+      for (const arr of map.values()) {
+        arr.sort((x, y) => {
+          const a = (x.sample || x).deadline || ''
+          const b = (y.sample || y).deadline || ''
+          if (!a && !b) return compareUrgent(x.sample || x, y.sample || y)
+          if (!a) return 1     // 没填截止日的排最后
+          if (!b) return -1
+          return a.localeCompare(b) || compareUrgent(x.sample || x, y.sample || y)
+        })
+      }
     }
     return [...map.entries()].sort((x, y) => accRank(x[0]) - accRank(y[0]))
   }, [items, cur, account, tab])
@@ -181,69 +180,14 @@ export function PcDashboard() {
   const now = new Date()
   const todayLabel = `${now.getMonth() + 1}月${now.getDate()}日`
 
-  // Token 存在备份页（localStorage），这里不重复弹输入框：没配就引导过去
-  const requireToken = () => {
-    const tk = getStoredToken()
-    if (!tk) {
-      show('请先在「数据备份」页填写 GitHub Token', 'error')
-      navigate('/backup')
-      return ''
-    }
-    return tk
-  }
-
-  // 上传：本机数据覆盖云端（不弹确认，与备份页行为一致）
-  const handleUploadCloud = async () => {
-    const tk = requireToken()
-    if (!tk || backingUp) return
-    setBackingUp(true)
-    try {
-      await uploadBackup(tk)
-      show('☁️ 已上传到云端', 'success')
-    } catch (e) {
-      show('上传失败：' + e.message, 'error')
-    } finally {
-      setBackingUp(false)
-    }
-  }
-
-  // 恢复：云端数据覆盖本机 → 必须重载页面，数据才会整体生效
-  const handleRestoreCloud = async () => {
-    const tk = getStoredToken()
-    setConfirmRestore(false)
-    if (!tk) {
-      show('请先在「数据备份」页填写 GitHub Token', 'error')
-      navigate('/backup')
-      return
-    }
-    setRestoring(true)
-    try {
-      const { count } = await restoreBackup(tk)
-      show(`已恢复 ${count} 个模块，正在刷新…`, 'success')
-      setTimeout(() => window.location.reload(), 800)
-    } catch (e) {
-      show('恢复失败：' + e.message, 'error')
-    } finally {
-      setRestoring(false)
-    }
-  }
-
   return (
     <>
+      {/* 数据备份 / 上传 / 恢复三个按钮已上移到 PcShell（全站右上角固定），这里不再重复 */}
       <div className="pcv-bar">
         <div>
           <div className="pcv-title">工作台总览</div>
           <div className="pcv-sub">{greeting()} · {todayLabel}</div>
         </div>
-        <div className="pcv-spacer" />
-        <button className="pcv-btn pcv-btn-ghost" onClick={() => navigate('/backup')}>数据备份</button>
-        {/* 云备份两个动作放首屏顶栏（原来只在备份页里）：上传=本机覆盖云端，恢复=云端覆盖本机 */}
-        <button className="pcv-btn pcv-btn-ghost" disabled={backingUp} onClick={handleUploadCloud}>
-          {backingUp ? '上传中…' : '☁️ 上传到云端'}
-        </button>
-        <button className="pcv-btn pcv-btn-ghost" disabled={restoring} onClick={() => setConfirmRestore(true)}>
-          {restoring ? '恢复中…' : '📥 从云端恢复'}
-        </button>
       </div>
 
       <div className="pcv-body">
@@ -252,11 +196,13 @@ export function PcDashboard() {
               值为 0 时整卡转灰（「有数才亮」）——否则四个 0 会跟真数据抢注意力。
               颜色仍只用现有那三档语义色 + 品牌粉，不新增色板。
               每张卡右侧一个「＋」：就地新增对应的东西（用户要求加在卡片里）。 */}
+          {/* 「新增」统一改成「跳到对应页面并自动打开那页的新增弹窗」（?add=1），
+              这样加完能顺手在列表里看到刚加的那条，而不是在总览上弹一个孤立的表单。 */}
           {[
-            { label: '样品总数', value: samples.length, accent: '#b8517f', addLabel: '新增样品', onAdd: () => setSampleDialog(null) },
+            { label: '样品总数', value: samples.length, accent: '#b8517f', addLabel: '新增样品', onAdd: () => navigate('/pc/samples?add=1') },
             { label: '待办未完成', value: todoUndone, accent: '#a97c46', addLabel: '新增待办', onAdd: () => navigate('/pc/todos') },
-            { label: '发布提醒', value: all.reminders.length, accent: '#b96a66', addLabel: '记一条发布', onAdd: () => navigate('/pc/publish-records') },
-            { label: '出单记录', value: orders.length, accent: '#5f8a74', addLabel: '记出单', onAdd: () => setOrderOpen(true) },
+            { label: '发布提醒', value: all.reminders.length, accent: '#b96a66', addLabel: '记一条发布', onAdd: () => navigate('/pc/publish-records?add=1') },
+            { label: '出单记录', value: orders.length, accent: '#5f8a74', addLabel: '记出单', onAdd: () => navigate('/pc/orders?add=1') },
           ].map((m) => {
             const on = m.value > 0
             return (
@@ -423,21 +369,6 @@ export function PcDashboard() {
         />
       )}
 
-      {/* 记出单：从「＋ 新增」菜单打开，账号 Tab 切换、一次可记多个账号 */}
-      {orderOpen && (
-        <OrderDialog onClose={() => setOrderOpen(false)} />
-      )}
-
-      {/* 从云端恢复是覆盖式操作（云端盖本机），必须二次确认 */}
-      <ConfirmModal
-        open={confirmRestore}
-        onClose={() => setConfirmRestore(false)}
-        onConfirm={handleRestoreCloud}
-        title="从云端恢复"
-        message="会用云端备份覆盖本机全部数据（产品、样品、收支、投资、日历等），本机未上传的内容会丢失。恢复后页面会自动刷新，确定继续？"
-        confirmText="覆盖并恢复"
-        danger
-      />
     </>
   )
 }
