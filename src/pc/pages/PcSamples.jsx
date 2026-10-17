@@ -48,6 +48,8 @@ export function PcSamples() {
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('all')
+  // 是否出单筛选：all=全部 / yes=已出单 / no=未出单（口径同「是否出单」列，以出单记录表为准）
+  const [orderFilter, setOrderFilter] = useState('all')
   const [hideAccount, setHideAccount] = useState(() => isAccountsHidden())
   const [sortKey, setSortKey] = useState('custom')
   const [sortDir, setSortDir] = useState('desc')
@@ -73,10 +75,14 @@ export function PcSamples() {
     let list = samples
     if (accountFilter !== 'all') list = list.filter((s) => getAccounts(s).includes(accountFilter))
     if (filter !== 'all') list = list.filter((s) => sampleMatchesFilter(s, filter))
+    // 是否出单：与「是否出单」列同口径（出单记录表 orderCountBySample 里命中即为已出单）
+    if (orderFilter !== 'all') {
+      list = list.filter((s) => orderCountBySample.has(s.id) === (orderFilter === 'yes'))
+    }
     const kw = keyword.trim().toLowerCase()
     if (kw) list = list.filter((s) => `${s.name || ''} ${s.category || ''}`.toLowerCase().includes(kw))
     return list
-  }, [samples, accountFilter, filter, keyword])
+  }, [samples, accountFilter, filter, orderFilter, orderCountBySample, keyword])
 
   const displayed = useMemo(() => {
     if (sortKey === 'custom') return accountFiltered
@@ -133,10 +139,11 @@ export function PcSamples() {
 
   // 重置筛选：状态卡 / 账号 / 搜索关键词 / 排序 一次清回默认。
   // hasFilter 只用来控制按钮的可用态与深浅，不影响筛选逻辑。
-  const hasFilter = filter !== 'all' || accountFilter !== 'all' || keyword !== '' || sortKey !== 'custom'
+  const hasFilter = filter !== 'all' || accountFilter !== 'all' || orderFilter !== 'all' || keyword !== '' || sortKey !== 'custom'
   const resetFilters = () => {
     setFilter('all')
     setAccountFilter('all')
+    setOrderFilter('all')
     setKeyword('')
     setSortKey('custom')
     setSortDir('desc')
@@ -206,11 +213,24 @@ export function PcSamples() {
           })}
         </div>
 
-        {/* 账号筛选（排序入口已移到表头：点「收货日期」/「截止日期」列名） */}
+        {/* 账号筛选 + 是否出单筛选（排序入口已移到表头：点「收货日期」/「截止日期」列名） */}
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
           <button className={accountFilter === 'all' ? 'on' : ''} onClick={() => setAccountFilter('all')}>全部账号</button>
           {usedAccounts.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
+          ))}
+          {/* 竖线把两组筛选分开，避免读成一长串同类按钮 */}
+          <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
+          {[
+            { key: 'all', label: '出单不限' },
+            { key: 'yes', label: '已出单' },
+            { key: 'no', label: '未出单' },
+          ].map((o) => (
+            <button
+              key={o.key}
+              className={orderFilter === o.key ? 'on' : ''}
+              onClick={() => setOrderFilter(o.key)}
+            >{o.label}</button>
           ))}
           {/* 重置放最右：无筛选时置灰不可点，有筛选时可一键清空 */}
           <ResetButton active={hasFilter} onClick={resetFilters} />

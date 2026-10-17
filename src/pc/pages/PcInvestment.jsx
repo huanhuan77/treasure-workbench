@@ -245,7 +245,7 @@ export function PcInvestment() {
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
-          <table className="pcv-table">
+          <table className="pcv-table pcv-table--lg">
             <thead>
               <tr>
                 {/* 代码列要放下「▸ + 6 位数字」且不折行；成交额要放下「¥150000.00 / ¥63200.00」 */}
@@ -280,7 +280,7 @@ export function PcInvestment() {
                         <span className="pcv-chip" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                       </td>
                       <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45' }}>
-                        {fmtNum(g.buyShares, 0)} / {fmtNum(g.sellShares, 0)} / <b style={{ color: g.netShares >= 0 ? '#333a45' : '#b96a66' }}>{fmtNum(g.netShares, 0)}</b>
+                        {fmtNum(g.buyShares, 0)} / {fmtNum(g.sellShares, 0)} / <span style={{ color: g.netShares >= 0 ? '#333a45' : '#b96a66' }}>{fmtNum(g.netShares, 0)}</span>
                       </td>
                       <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45', whiteSpace: 'nowrap' }}>
                         ¥{fmtNum(g.buyAmount)} / ¥{fmtNum(g.sellAmount)}
@@ -289,7 +289,7 @@ export function PcInvestment() {
                         {g.latest.currentPrice != null ? `¥${fmtNum(g.latest.currentPrice, 3)}` : <span style={{ color: '#c9cdd4' }}>—</span>}
                       </td>
                       <td style={{ fontVariantNumeric: 'tabular-nums' }}>
-                        <span className="pcv-chip" style={{ ...pctStyle(g.change), fontSize: 12 }}>{pctText(g.change)}</span>
+                        <span className="pcv-chip" style={pctStyle(g.change)}>{pctText(g.change)}</span>
                       </td>
                       <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>{g.latest.sellDate || '—'}</td>
                       <td onClick={(e) => e.stopPropagation()}>
@@ -321,7 +321,7 @@ export function PcInvestment() {
                           {inv.currentPrice != null ? `¥${fmtNum(inv.currentPrice, 3)}` : '—'}
                         </td>
                         <td style={{ fontVariantNumeric: 'tabular-nums' }}>
-                          <span className="pcv-chip" style={{ ...pctStyle(inv.change), fontSize: 12 }}>{pctText(inv.change)}</span>
+                          <span className="pcv-chip" style={pctStyle(inv.change)}>{pctText(inv.change)}</span>
                         </td>
                         <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>{inv.sellDate || '—'}</td>
                         <td>

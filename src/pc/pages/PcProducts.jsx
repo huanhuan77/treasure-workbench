@@ -214,14 +214,15 @@ export function PcProducts() {
                     >
                       <td>
                         {/* 分类图标 + 名称，跟手机版 ProductCard 一致；
-                            名称前的小图钉就是「置顶」开关（已置顶为粉色实心，未置顶为浅灰） */}
+                            已置顶的行在名称前挂一个小图钉（只做标记，开关在操作列） */}
                         <span className="pcv-namecell">
-                          <button
-                            className="pcv-pin"
-                            title={p.pinned ? '取消置顶' : '置顶'}
-                            style={{ color: p.pinned ? '#b8517f' : '#c9cdd4' }}
-                            onClick={(e) => { e.stopPropagation(); togglePin(p) }}
-                          >📌</button>
+                          {p.pinned && (
+                            <span className="pcv-pin is-on" style={{ color: '#b8517f' }} title="已置顶">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                              </svg>
+                            </span>
+                          )}
                           <span className="pcv-caticon" style={{ background: icon.bg, color: icon.color }}>{icon.text}</span>
                           <span className="pcv-nametext" title={displayTitle(p)}>{displayTitle(p)}</span>
                         </span>
@@ -239,9 +240,17 @@ export function PcProducts() {
                       {/* 「出单」列已按用户要求去掉 */}
                       <td>
                         {/* 编辑开 ProductDialog、删除走二次确认（PC 端不跳页面）。
-                            stopPropagation 是为了不触发整行的「选中该产品」。 */}
+                            stopPropagation 是为了不触发整行的「选中该产品」。
+                            「置顶」也放这一列：已置顶时文字变粉，再点即取消。 */}
                         <button
                           className="pcv-btn-text"
+                          title={p.pinned ? '取消置顶' : '置顶'}
+                          style={{ color: p.pinned ? '#b8517f' : undefined, fontWeight: p.pinned ? 700 : 600 }}
+                          onClick={(e) => { e.stopPropagation(); togglePin(p) }}
+                        >置顶</button>
+                        <button
+                          className="pcv-btn-text"
+                          style={{ marginLeft: 8 }}
                           onClick={(e) => { e.stopPropagation(); setEditing(p) }}
                         >编辑</button>
                         <button

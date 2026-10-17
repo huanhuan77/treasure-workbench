@@ -269,7 +269,7 @@ export function PcDashboard() {
                   <div className="pcv-metric-label">{m.label}</div>
                   <div className="pcv-metric-value" style={{ color: on ? m.accent : '#c9cdd4' }}>{m.value}</div>
                 </div>
-                <button className="pcv-metric-add" title={m.addLabel} onClick={m.onAdd}>＋</button>
+                <button className="pcv-metric-add" title={m.addLabel} onClick={m.onAdd}>新增</button>
               </div>
             )
           })}

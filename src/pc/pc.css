@@ -195,29 +195,28 @@
   margin-bottom: 16px;
 }
 
-/* 每张指标卡右侧的「＋」：就地新增（新增样品 / 新增待办 / 记发布 / 记出单）
-   视觉：24px 圆角方 + 中性浅底 + 中灰加号，不抢数字；hover 才转粉，作为唯一的“可点”提示。
-   之前那版是虚线圆框，浅底上虚线最显廉价，已弃用。 */
+/* 每张指标卡右侧的「新增」：粉底白字的小胶囊（用户要求：改成「新增」文字 + 粉色背景）
+   就地新增对应内容，比一个「＋」符号更好认。 */
 .pcv-metric-add {
-  width: 24px;
   height: 24px;
+  padding: 0 10px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   border: none;
-  background: #f3f4f7;
-  color: #8a8f98;
-  font-size: 14px;
+  background: #f472b6;
+  color: #fff;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease;
 }
 .pcv-metric-add:hover {
-  background: #fdf1f6;
-  color: #b8517f;
+  background: #ec4899;
 }
 
 .pcv-metric {
@@ -332,21 +331,21 @@
   border-collapse: collapse;
 }
 
-/* 表头：中性灰「表头带」（用户要求改灰色）。
-   全站 13 个 PC 表格共用这一条规则，改这里即全部生效。
+/* 表头：中性灰「表头带」，全站 13 个 PC 表格共用这一条规则。
    底色必须是实色 —— th 是 sticky 的，半透明会在行滚过时透出来。
-   调色记录：粉底(#fdf2f7→#fad4e5→#fce9f2→#fce4ef) 一路调不出满意的，
-   最终改回中性灰：不参与品牌色，读数据时更不抢视线。 */
+   底色要比卡片白底明显深一档：之前 #f1f3f6 与白底几乎重合、看不出表头边界
+   （用户反馈「颜色重合了」），这里压到 #e7eaef。
+   调色记录：粉底(#fdf2f7→#fad4e5→#fce9f2→#fce4ef)一路调不出满意效果，最终定为中性灰。 */
 .pcv-table th {
   position: sticky;
   top: 0;
   z-index: 1;
   padding: 9px 14px;
-  background: #f1f3f6;
-  border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
+  background: #e7eaef;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.12);
   font-size: 12px;
   font-weight: 600;
-  color: #5f6773;
+  color: #4b5563;
   text-align: left;
   white-space: nowrap;
 }
@@ -356,6 +355,18 @@
   border-top: 0.5px solid rgba(15, 23, 42, 0.05);
   font-size: 13px;
   vertical-align: middle;
+}
+
+/* 大字号表（投资跟踪）：数据密、数字多，13px 在 2K 屏上偏小（用户反馈）。
+   只给需要的那张表加 --lg，其它表仍按 13px，避免窄列（样品/收支）被撑到换行。 */
+.pcv-table--lg th {
+  font-size: 13px;
+}
+.pcv-table--lg td {
+  font-size: 14px;
+}
+.pcv-table--lg .pcv-chip {
+  font-size: 13px;
 }
 
 .pcv-table tbody tr:hover td {
@@ -384,21 +395,15 @@
   min-width: 0;
 }
 
-/* 产品行名称前的「置顶」图钉：透明小按钮。
-   已置顶 → 品牌粉（由 JSX 内联上色），未置顶 → 浅灰；hover 抬高一点提示可点。 */
+/* 产品行名称前的「已置顶」标记（SVG 图钉，只做状态提示，不响应点击 ——
+   置顶/取消置顶的开关在右侧操作列）。只有置顶的行才会渲染它。 */
 .pcv-pin {
-  border: none;
-  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0 2px;
-  font-size: 12px;
   line-height: 1;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.pcv-pin:hover {
-  opacity: 1;
-  transform: translateY(-1px);
+  flex-shrink: 0;
 }
 
 .pcv-nametext {
@@ -700,8 +705,8 @@
   transition: color 0.12s ease, background 0.12s ease;
 }
 .pcv-table th.pcv-th-sort:hover {
-  color: #3f4653;
-  background: #e6e9ee;
+  color: #2f3644;
+  background: #d9dee6;
 }
 
 /* ── 出单记录的「展开明细」────────────────────────────────────
