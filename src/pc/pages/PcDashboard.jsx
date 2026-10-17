@@ -149,11 +149,16 @@ export function PcDashboard() {
       }
     }
     // 「发布提醒」组内排序（用户要求「逾期的排前面」）：
-    //   ① 已逾期的一律排最前（不看截止日填没填，只看 isOverdue 判定）；
+    //   ① 已逾期的一律排最前 —— 判定必须与界面上的「已逾期」标签完全一致
+    //      （status !== 'published' && isOverdue），否则已发布但截止日已过的行
+    //      也会被当成逾期排到前面，把真正的逾期行压下去（曾出现这种情况）；
     //   ② 其余按截止日期升序（最早到期的最急）；
     //   ③ 截止日相同/缺失时用 compareUrgent 兜底（多久没发视频）。
     if (tab === 'reminders') {
-      const overdueOf = (it) => (isOverdue(it.sample || it) ? 0 : 1)
+      const overdueOf = (it) => {
+        const s = it.sample || it
+        return (s.status !== 'published' && isOverdue(s)) ? 0 : 1
+      }
       for (const arr of map.values()) {
         arr.sort((x, y) => {
           const oa = overdueOf(x)
