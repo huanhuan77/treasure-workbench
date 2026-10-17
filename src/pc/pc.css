@@ -236,8 +236,30 @@
    原来用 auto-fill 多列网格，条数少时右侧空一大片、扫读还要横着跳。
    改成一列后边框回归 .pcv-copyitem 的默认规则（上边框分隔、首条无上边框），
    所以这里不再覆写 border。 */
+/* 待办清单：卡内滚动（用户要求「可以滚动」）。
+   固定 300px ≈ 6 条可见，再多在卡内滚，卡片高度不再无限长高、
+   不会把下面的「提醒中心」顶出首屏。卡头在滚动区之外，天然固定。
+   滚动条收细，PC 默认那条宽滚动条会把卡片撑得很脏。 */
 .pcv-todogrid {
   display: block;
+  max-height: 300px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.18) transparent;
+}
+.pcv-todogrid::-webkit-scrollbar {
+  width: 6px;
+}
+.pcv-todogrid::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.15);
+  border-radius: 3px;
+}
+.pcv-todogrid::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.28);
+}
+.pcv-todogrid::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .pcv-cols {
@@ -292,20 +314,20 @@
   border-collapse: collapse;
 }
 
-/* 表头着色（用户要求「所有表头改成浅色」）：浅粉底 + 中粉字。
+/* 表头着色（用户要求「表头改成浅色系」）：浅粉灰底 + 浅紫粉字，弱化成一层次要信息层。
    全站 13 个 PC 表格共用这一条规则，改这里即全部生效。
    底色必须是实色 —— th 是 sticky 的，半透明会在行滚过时透出来。
-   色阶取舍：第一版 #fdf2f7 太淡（像白色），第二版 #fad4e5 偏重，这里取中间值。 */
+   与表格正文（#333a45 / #4b5563）拉开明度差，读数据时表头不会抢视线。 */
 .pcv-table th {
   position: sticky;
   top: 0;
   z-index: 1;
   padding: 9px 14px;
-  background: #fce9f2;
-  border-bottom: 0.5px solid rgba(184, 81, 127, 0.12);
+  background: #fbf6f9;
+  border-bottom: 0.5px solid rgba(163, 127, 146, 0.14);
   font-size: 12px;
   font-weight: 600;
-  color: #b8517f;
+  color: #a37f92;
   text-align: left;
   white-space: nowrap;
 }
@@ -511,11 +533,27 @@
    上行「状态色圆点 + 图标/名称」（11px 灰字），下行「大数字」（18px 800）。
    选中态用该状态色描边 + 同色轻阴影（行内 style 打，因为颜色随状态变）。
    —— 原来 PC 这里是「彩色文字胶囊」，用户要求跟手机同步，故替换。 */
+/* 状态卡始终排成一行，不折行（用户要求「不要换行」）：
+   窗口变窄时改为横向滚动，而不是把后几张卡挤到第二行、把表格推下去。 */
 .pcv-statbar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   padding: 0 0 10px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.18) transparent;
+}
+.pcv-statbar::-webkit-scrollbar {
+  height: 6px;
+}
+.pcv-statbar::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.15);
+  border-radius: 3px;
+}
+.pcv-statbar::-webkit-scrollbar-track {
+  background: transparent;
 }
 .pcv-statcard {
   flex: 0 0 auto;
@@ -620,8 +658,8 @@
   transition: color 0.12s ease, background 0.12s ease;
 }
 .pcv-table th.pcv-th-sort:hover {
-  color: #a13a68;
-  background: #f9d8e7;
+  color: #8d6479;
+  background: #f4eaef;
 }
 
 /* ── 出单记录的「展开明细」────────────────────────────────────

@@ -216,18 +216,20 @@ export function PcSamples() {
                     （收货日期本来没有列，为保住这个排序维度才补的这一列）。
                     ⚠️ 加列必须给操作列留够：三个按钮「标记已拍/补记发布/编辑」实测要约 216px，
                     第一版剩下 210px 时「编辑」被挤到第二行（按钮 top 不一致）。
-                    145+70+75+260+65+70+90+95 = 870，总宽不变，操作列宽度不受影响。
-                    账号列 260px 是为了让「3 个账号」也能一行排完（3×(6+4+65) + 2×8 ≈ 240 < 260-28）。 */}
-                <th style={{ width: 145 }}>产品</th>
-                <th style={{ width: 70 }}>分类</th>
+                    130+65+75+260+70+70+107+155 = 932，1440 视口下操作列约 220px，仍够三个按钮。
+                    账号列 260px 是为了让「3 个账号」也能一行排完（3×(6+4+65) + 2×8 ≈ 240 < 260-28）。
+                    两个日期列加宽到 107 / 155：日期本身 78px，截止日期后面还要跟「剩 N 天」约 42px，
+                    原来 90 / 95 装不下，会被折成两行（用户反馈「不要换行」）。 */}
+                <th style={{ width: 130 }}>产品</th>
+                <th style={{ width: 65 }}>分类</th>
                 <th style={{ width: 75 }}>状态</th>
                 <th style={{ width: 260 }}>账号</th>
-                <th style={{ width: 65 }}>发布</th>
+                <th style={{ width: 70 }}>发布</th>
                 <th style={{ width: 70 }}>是否出单</th>
-                <th style={{ width: 90 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
+                <th style={{ width: 107 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
                   收货日期{sortDirOf('receiveDate') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 95 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
+                <th style={{ width: 155 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 <th>操作</th>
@@ -324,12 +326,12 @@ export function PcSamples() {
                         <span style={{ color: '#c9cdd4' }}>—</span>
                       )}
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       {/* 收货日期：仅作为排序维度展示（点表头可排），无则不显示「未设置」占位，
                           避免和截止日期的「未设置」混成一片 */}
                       <span style={{ color: s.receiveDate ? '#4b5563' : '#c9cdd4' }}>{s.receiveDate || '—'}</span>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
                       <span style={{ color: s.deadline ? '#4b5563' : '#c9cdd4' }}>{s.deadline || '未设置'}</span>
                       {/* 只有未发布才显示「过期 N 天 / 剩 N 天」：已发布的样品截止日已经没有提醒意义，
                           一片红字反而盖住真正要跟进的那几条。日期本身保留（列名就叫「截止日期」）。

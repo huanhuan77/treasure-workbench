@@ -44,6 +44,13 @@ export function PcFinance() {
   const [form, setForm] = useState(null)
   const [delTarget, setDelTarget] = useState(null)
 
+  // 表头点击排序（与样品页、出单页同一套交互）：
+  // 只在当前排序列显示箭头；再点同一列翻转方向，换列则回到该列默认方向。
+  const sortDirOf = (field) => (sortBy.startsWith(field) ? (sortBy.endsWith('asc') ? 'asc' : 'desc') : null)
+  const toggleSort = (field) => {
+    setSortBy((p) => (p === `${field}_desc` ? `${field}_asc` : `${field}_desc`))
+  }
+
   const toggleHideAccount = () => {
     const next = !hideAccount
     setHideAccount(next)
@@ -231,27 +238,22 @@ export function PcFinance() {
               {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
             </select>
           )}
-          <div className="pcv-spacer" />
-          <div className="pcv-sortgrp">
-            <button
-              className={sortBy.startsWith('date') ? 'on' : ''}
-              onClick={() => setSortBy((p) => (p === 'date_desc' ? 'date_asc' : 'date_desc'))}
-            >日期 {sortBy === 'date_asc' ? '↑' : '↓'}</button>
-            <button
-              className={sortBy.startsWith('amount') ? 'on' : ''}
-              onClick={() => setSortBy((p) => (p === 'amount_desc' ? 'amount_asc' : 'amount_desc'))}
-            >金额 {sortBy === 'amount_asc' ? '↑' : '↓'}</button>
-          </div>
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
           <table className="pcv-table">
             <thead>
               <tr>
-                <th style={{ width: 110 }}>日期</th>
+                {/* 排序入口统一：去掉右上那排「日期 / 金额」按钮，改为点表头
+                    （与样品页、出单页一致）。箭头只显示在当前排序列上。 */}
+                <th style={{ width: 110 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
+                  日期{sortDirOf('date') ? (sortDirOf('date') === 'desc' ? ' ↓' : ' ↑') : ''}
+                </th>
                 <th style={{ width: 120 }}>分类</th>
                 <th style={{ width: 130 }}>账号</th>
-                <th style={{ width: 130 }}>金额</th>
+                <th style={{ width: 130 }} className="pcv-th-sort" onClick={() => toggleSort('amount')}>
+                  金额{sortDirOf('amount') ? (sortDirOf('amount') === 'desc' ? ' ↓' : ' ↑') : ''}
+                </th>
                 <th style={{ width: 100 }}>收款</th>
                 <th style={{ width: 260 }}>备注</th>
                 <th>操作</th>
