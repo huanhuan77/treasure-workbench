@@ -232,8 +232,9 @@ export function PcSamples() {
           ))}
           {/* 竖线把两组筛选分开，避免读成一长串同类按钮 */}
           <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
+          {/* 是否出单：三档胶囊，默认档直接叫「全部」（与账号组的「全部账号」同义） */}
           {[
-            { key: 'all', label: '出单不限' },
+            { key: 'all', label: '全部' },
             { key: 'yes', label: '已出单' },
             { key: 'no', label: '未出单' },
           ].map((o) => (

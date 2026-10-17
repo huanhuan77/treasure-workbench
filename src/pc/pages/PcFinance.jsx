@@ -181,10 +181,11 @@ export function PcFinance() {
             原来 4 张独立卡 + 左侧色条，占地大、颜色还互相打架；
             现在统一成一条，数字用语义色：收入绿 / 支出红 / 净收支看正负 / 待收款琥珀。 */}
         <div className="pcv-sumbar">
+          {/* 配色按中国习惯：**+ 用红、− 用绿**（与表格里的金额列、手机版一致） */}
           {[
-            { label: '收入合计', value: `+¥${fmtMoney(totals.income)}`, color: '#4f8a6d' },
-            { label: '支出合计', value: `-¥${fmtMoney(totals.expense)}`, color: '#c05a6e' },
-            { label: '净收支', value: `${totals.net >= 0 ? '+' : ''}¥${fmtMoney(totals.net)}`, color: totals.net >= 0 ? '#4f8a6d' : '#c05a6e' },
+            { label: '收入合计', value: `+¥${fmtMoney(totals.income)}`, color: '#c05a6e' },
+            { label: '支出合计', value: `-¥${fmtMoney(totals.expense)}`, color: '#4f8a6d' },
+            { label: '净收支', value: `${totals.net >= 0 ? '+' : ''}¥${fmtMoney(totals.net)}`, color: totals.net >= 0 ? '#c05a6e' : '#4f8a6d' },
             { label: '其中待收款', value: `¥${fmtMoney(totals.receivable)}`, color: totals.receivable > 0 ? '#b1702c' : '#c9cdd4' },
           ].map((m) => (
             <div key={m.label} className="pcv-sumcell">
