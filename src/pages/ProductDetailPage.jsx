@@ -757,12 +757,13 @@ function CopyCard({
   onCopyContent,
   onEdit, onToggleOrder, onToggleHot, onToggleUsed, onDelete,
 }) {
+  // 左侧强调条配色与 PC 文案库统一（用户指定）：出单=绿 / 爆单=红 / 用过=黄
   const cardAccent = copy.hasOrder
-    ? { borderLeft: '4px solid #f59e0b', borderTop: '3px solid #fbbf24' }
+    ? { borderLeft: '4px solid #10b981', borderTop: '3px solid #34d399' }
     : copy.hasHot
       ? { borderLeft: '4px solid #ef4444', borderTop: '3px solid #f87171' }
       : copy.used
-        ? { borderLeft: '4px solid #06b6d4' }
+        ? { borderLeft: '4px solid #f59e0b' }
         : {}
 
   return (
@@ -830,7 +831,7 @@ function CopyCard({
 
       {/* 操作按钮区（编辑/删除已搬到右上角）；「用过」后日期紧跟按钮右侧 */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <ActionBtn active={copy.used} onClick={onToggleUsed} activeColor="info">
+        <ActionBtn active={copy.used} onClick={onToggleUsed} activeColor="warn">
           用过
         </ActionBtn>
         {copy.used && (() => {
@@ -838,7 +839,7 @@ function CopyCard({
           // daysDiff：过去为负、今天为 0、未来为正；只有 0 才是「今天」
           const desc = d === null ? '' : d === 0 ? '今天' : d < 0 ? `${-d}天前` : `${d}天后`
           return desc
-            ? <span style={{ fontSize: '11px', color: '#0891b2', fontWeight: 600, whiteSpace: 'nowrap' }}>{desc}</span>
+            ? <span style={{ fontSize: '11px', color: '#b7791f', fontWeight: 600, whiteSpace: 'nowrap' }}>{desc}</span>
             : null
         })()}
         <ActionBtn active={copy.hasOrder} onClick={onToggleOrder} activeColor="success">
@@ -875,6 +876,8 @@ function ActionBtn({ children, onClick, active, activeColor = 'primary', tone })
     primary: { bg: 'linear-gradient(135deg, #f472b6, #ec4899)', text: '#fff' },
     success: { bg: 'linear-gradient(135deg, #34d399, #10b981)', text: '#fff' },
     info: { bg: 'linear-gradient(135deg, #22d3ee, #06b6d4)', text: '#fff' },
+    // 黄色（与 PC 文案库「用过」同色系：出单绿 / 爆单红 / 用过黄）
+    warn: { bg: 'linear-gradient(135deg, #fbbf24, #f59e0b)', text: '#fff' },
     danger: { bg: 'linear-gradient(135deg, #fb7185, #f43f5e)', text: '#fff' },
     hot: { bg: 'linear-gradient(135deg, #f43f5e, #dc2626)', text: '#fff' },
   }

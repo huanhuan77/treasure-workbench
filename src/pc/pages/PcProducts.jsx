@@ -14,18 +14,19 @@ import { todayStr } from '../../utils/helpers'
 
 // 每条文案的状态标记，与手机版 ProductDetailPage 的 CopyCard 一一对应：
 // 出单 / 爆单 / 用过三个可切换标记（手机版是三颗按钮，PC 版做成可切换的小标签）。
-// bar 是卡片左侧那条 3px 竖条的颜色，优先级同手机版：出单 > 爆单 > 用过。
+// 配色（用户指定，两端统一）：出单=绿 / 爆单=红 / 用过=黄。
+// bar 是卡片左侧那条 3px 竖条的颜色，优先级由数组顺序决定：出单 > 爆单 > 用过。
 const COPY_FLAGS = [
-  { key: 'hasOrder', label: '出单', bg: '#faf1e3', fg: '#a97c46', bar: '#e3c07e' },
-  { key: 'hasHot', label: '爆单', bg: '#fbeaea', fg: '#b96a66', bar: '#dd9a95' },
-  { key: 'used', label: '用过', bg: '#eef2f5', fg: '#6b7d87', bar: '#9dbecb' },
+  { key: 'hasOrder', label: '出单', bg: '#eef4ef', fg: '#5f8a74', bar: '#8fbf9f' },
+  { key: 'hasHot', label: '爆单', bg: '#fdebeb', fg: '#c0392b', bar: '#e08a86' },
+  { key: 'used', label: '用过', bg: '#fdf4e3', fg: '#b7791f', bar: '#e8c07a' },
 ]
 
 // PC 版文案库：左表右详情。
 // 数据全部来自同一个 store（与手机版完全一致），这里只重排展示。
 export function PcProducts() {
   const { show } = useToast()
-  const { products, updateCopy, deleteCopy, deleteProduct } = useStore()
+  const { products, updateCopy, deleteCopy, deleteProduct, updateProduct } = useStore()
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('')
   const [activeId, setActiveId] = useState('')
@@ -73,12 +74,17 @@ export function PcProducts() {
 
   const list = useMemo(() => {
     const kw = keyword.trim().toLowerCase()
-    return (products || []).filter((p) => {
+    const arr = (products || []).filter((p) => {
       if (category && p.category !== category) return false
       if (!kw) return true
       return `${p.brand || ''} ${p.name || ''}`.toLowerCase().includes(kw)
     })
+    // 置顶的产品排在最前，其余保持 store 里的原顺序（filter 结果稳定，sort 只需按 pinned 分流）
+    return arr.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
   }, [products, keyword, category])
+
+  // 置顶：写在产品记录上（pinned 字段），随 store 一起落本地 + 云同步，换设备也在
+  const togglePin = (p) => updateProduct(p.id, { pinned: !p.pinned })
 
   // 选中的产品：默认取第一行；筛选后若选中项被过滤掉，自动回落到第一行
   const active = list.find((p) => p.id === activeId) || list[0] || null
@@ -207,8 +213,15 @@ export function PcProducts() {
                       onClick={() => setActiveId(p.id)}
                     >
                       <td>
-                        {/* 分类图标 + 名称，跟手机版 ProductCard 一致 */}
+                        {/* 分类图标 + 名称，跟手机版 ProductCard 一致；
+                            名称前的小图钉就是「置顶」开关（已置顶为粉色实心，未置顶为浅灰） */}
                         <span className="pcv-namecell">
+                          <button
+                            className="pcv-pin"
+                            title={p.pinned ? '取消置顶' : '置顶'}
+                            style={{ color: p.pinned ? '#b8517f' : '#c9cdd4' }}
+                            onClick={(e) => { e.stopPropagation(); togglePin(p) }}
+                          >📌</button>
                           <span className="pcv-caticon" style={{ background: icon.bg, color: icon.color }}>{icon.text}</span>
                           <span className="pcv-nametext" title={displayTitle(p)}>{displayTitle(p)}</span>
                         </span>
@@ -290,7 +303,9 @@ export function PcProducts() {
                   <div className="pcv-empty">这个产品还没有文案，点右上角「＋ 新增文案」粘贴一批</div>
                 ) : (
                   (active.copies || []).map((c) => {
-                    const bar = c.hasOrder ? '#e3c07e' : c.hasHot ? '#dd9a95' : c.used ? '#9dbecb' : null
+                    // 竖条颜色直接取 COPY_FLAGS（数组顺序即优先级：出单 > 爆单 > 用过），
+                    // 不再在这里重复写一遍色值，改配色只需动上面那张表。
+                    const bar = (COPY_FLAGS.find((f) => c[f.key]) || {}).bar || null
                     return (
                       <div
                         key={c.id}

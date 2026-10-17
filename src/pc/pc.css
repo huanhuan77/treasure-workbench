@@ -195,26 +195,29 @@
   margin-bottom: 16px;
 }
 
-/* 每张指标卡右侧的「＋」：就地新增（新增样品 / 新增待办 / 记发布 / 记出单） */
+/* 每张指标卡右侧的「＋」：就地新增（新增样品 / 新增待办 / 记发布 / 记出单）
+   视觉：24px 圆角方 + 中性浅底 + 中灰加号，不抢数字；hover 才转粉，作为唯一的“可点”提示。
+   之前那版是虚线圆框，浅底上虚线最显廉价，已弃用。 */
 .pcv-metric-add {
-  width: 26px;
-  height: 26px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  border: 1px dashed rgba(184, 81, 127, 0.4);
-  background: #fff;
-  color: #b8517f;
-  font-size: 15px;
+  border-radius: 8px;
+  border: none;
+  background: #f3f4f7;
+  color: #8a8f98;
+  font-size: 14px;
+  font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 .pcv-metric-add:hover {
   background: #fdf1f6;
-  border-color: rgba(184, 81, 127, 0.75);
+  color: #b8517f;
 }
 
 .pcv-metric {
@@ -379,6 +382,23 @@
   align-items: center;
   gap: 9px;
   min-width: 0;
+}
+
+/* 产品行名称前的「置顶」图钉：透明小按钮。
+   已置顶 → 品牌粉（由 JSX 内联上色），未置顶 → 浅灰；hover 抬高一点提示可点。 */
+.pcv-pin {
+  border: none;
+  background: transparent;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.pcv-pin:hover {
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .pcv-nametext {

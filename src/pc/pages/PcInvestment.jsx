@@ -26,6 +26,15 @@ import { ResetButton } from '../components/ResetButton'
 const fmtNum = (n, d = 2) => (Number(n) || 0).toFixed(d)
 const pctText = (v) => (v === null || v === undefined || Number.isNaN(Number(v))) ? '—' : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}%`
 
+// 涨跌幅的底色：涨=淡红、跌=淡绿（A 股习惯），无数据显示浅灰。
+// 只给淡底+同色字，不铺实底，避免整列变成红绿块。
+const pctStyle = (v) => {
+  if (v === null || v === undefined || Number.isNaN(Number(v))) return { background: '#f5f6f8', color: '#c9cdd4' }
+  return Number(v) >= 0
+    ? { background: '#fbeaea', color: '#c05a6e' }
+    : { background: '#eef4ef', color: '#5f8a74' }
+}
+
 const TABS = [
   { key: 'stock', label: '股票' },
   { key: 'fund', label: '基金' },
@@ -262,25 +271,27 @@ export function PcInvestment() {
                 return (
                   <>
                     <tr key={g.code} style={{ cursor: 'pointer' }} onClick={() => setExpanded(open ? '' : g.code)}>
-                      <td style={{ fontVariantNumeric: 'tabular-nums', color: '#475569', whiteSpace: 'nowrap' }}>{open ? '▾' : '▸'} {g.code}</td>
+                      {/* 字号统一用表格默认 13px、文字统一黑色（#333a45）：
+                          原来这里 12px + 灰色，和相邻列一对比就像「次要信息」，
+                          但持仓/成交额/现价/日期都是要看的数据，不该被弱化。 */}
+                      <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45', whiteSpace: 'nowrap' }}>{open ? '▾' : '▸'} {g.code}</td>
                       <td><span className="pcv-nametext" title={g.name}>{g.name || '—'}</span></td>
                       <td>
                         <span className="pcv-chip" style={{ background: st.bg, color: st.color }}>{st.label}</span>
                       </td>
-                      <td style={{ fontVariantNumeric: 'tabular-nums', fontSize: 12, color: '#475569' }}>
+                      <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45' }}>
                         {fmtNum(g.buyShares, 0)} / {fmtNum(g.sellShares, 0)} / <b style={{ color: g.netShares >= 0 ? '#333a45' : '#b96a66' }}>{fmtNum(g.netShares, 0)}</b>
                       </td>
-                      <td style={{ fontVariantNumeric: 'tabular-nums', fontSize: 12, color: '#475569', whiteSpace: 'nowrap' }}>
+                      <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45', whiteSpace: 'nowrap' }}>
                         ¥{fmtNum(g.buyAmount)} / ¥{fmtNum(g.sellAmount)}
                       </td>
-                      <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45' }}>
                         {g.latest.currentPrice != null ? `¥${fmtNum(g.latest.currentPrice, 3)}` : <span style={{ color: '#c9cdd4' }}>—</span>}
                       </td>
-                      <td style={{
-                        fontVariantNumeric: 'tabular-nums', fontWeight: 600,
-                        color: g.change == null ? '#c9cdd4' : (Number(g.change) >= 0 ? '#c05a6e' : '#5f8a74'),
-                      }}>{pctText(g.change)}</td>
-                      <td style={{ fontSize: 12, color: '#6b7280', fontVariantNumeric: 'tabular-nums' }}>{g.latest.sellDate || '—'}</td>
+                      <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                        <span className="pcv-chip" style={{ ...pctStyle(g.change), fontSize: 12 }}>{pctText(g.change)}</span>
+                      </td>
+                      <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>{g.latest.sellDate || '—'}</td>
                       <td onClick={(e) => e.stopPropagation()}>
                         <button className="pcv-btn-text" onClick={() => openEdit(g.latest)}>编辑最新</button>
                       </td>
@@ -290,28 +301,29 @@ export function PcInvestment() {
                     {open && g.items.map((inv) => (
                       <tr key={inv.id} style={{ background: '#fafbfc' }}>
                         <td />
+                        {/* 明细行只留名称：代码在上一行（父行）已经有，重复一遍还会把窄列撑成两行 */}
                         <td colSpan={2} style={{ paddingLeft: 18 }}>
-                          {inv.code} · {inv.name}
+                          {inv.name}
                         </td>
                         <td>
                           <span className="pcv-chip" style={inv._dir === 'sell' ? { background: '#eef4ef', color: '#5f8a74' } : { background: '#fdf1f6', color: '#b8517f' }}>
                             {inv._dir === 'sell' ? '卖出' : '买入'}
                           </span>
                         </td>
-                        <td style={{ fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45' }}>
                           {fmtNum(inv.shares, 0)} 份 × ¥{fmtNum(inv.sellPrice, 3)} = ¥{fmtNum(inv.amount)}
                         </td>
                         {/* 现价 / 涨跌各占一列：原来现价用 colSpan=2 把「最新涨跌」列吞了，
                             明细行的涨跌幅是空白。这里用每条记录自己的 change
-                            （= (现价 - 本笔成交价) / 本笔成交价），所以同一代码下每笔的数字不同。 */}
-                        <td style={{ fontSize: 12, color: '#9aa0a9', fontVariantNumeric: 'tabular-nums' }}>
+                            （= (现价 - 本笔成交价) / 本笔成交价），所以同一代码下每笔的数字不同。
+                            字号同样回到 13px、文字黑色。 */}
+                        <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>
                           {inv.currentPrice != null ? `¥${fmtNum(inv.currentPrice, 3)}` : '—'}
                         </td>
-                        <td style={{
-                          fontSize: 12, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
-                          color: inv.change == null ? '#c9cdd4' : (Number(inv.change) >= 0 ? '#c05a6e' : '#5f8a74'),
-                        }}>{pctText(inv.change)}</td>
-                        <td style={{ fontSize: 12, color: '#6b7280', fontVariantNumeric: 'tabular-nums' }}>{inv.sellDate || '—'}</td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums' }}>
+                          <span className="pcv-chip" style={{ ...pctStyle(inv.change), fontSize: 12 }}>{pctText(inv.change)}</span>
+                        </td>
+                        <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>{inv.sellDate || '—'}</td>
                         <td>
                           <button className="pcv-btn-text" onClick={() => openEdit(inv)}>编辑</button>
                           <button className="pcv-btn-text" style={{ marginLeft: 10, color: '#b96a66' }} onClick={() => setDelTarget(inv)}>删除</button>
