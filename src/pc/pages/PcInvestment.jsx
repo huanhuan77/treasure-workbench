@@ -76,7 +76,8 @@ export function PcInvestment() {
         code,
         name: latest.name || items.find((i) => i.name)?.name || '',
         assetType: getAssetType(latest),
-        items: items.map((i) => ({ ...i, _dir: i.type || 'buy' })),
+        // 明细按成交日期倒序（最新的一笔排最前），与父行的「最新日期」口径一致
+        items: sorted.map((i) => ({ ...i, _dir: i.type || 'buy' })),
         latest,
         buyShares,
         sellShares,
@@ -234,7 +235,7 @@ export function PcInvestment() {
 
       <div className="pcv-body pcv-body--fill">
         <div className="pcv-accountbar" style={{ padding: '0 0 8px', borderBottom: 'none' }}>
-          <div className="pcv-seg">
+          <div className="pcv-seg pcv-seg--tabs">
             {TABS.map((t) => (
               <button key={t.key} className={activeTab === t.key ? 'on' : ''} onClick={() => { setActiveTab(t.key); setExpanded('') }}>
                 <span>{t.label}</span>
@@ -248,22 +249,28 @@ export function PcInvestment() {
           <table className="pcv-table pcv-table--lg">
             <thead>
               <tr>
-                {/* 代码列要放下「▸ + 6 位数字」且不折行；成交额要放下「¥150000.00 / ¥63200.00」 */}
-                <th style={{ width: 110 }}>代码</th>
-                <th style={{ width: 200 }}>名称</th>
-                <th style={{ width: 70 }}>类型</th>
-                <th style={{ width: 150 }}>持仓（买/卖/净）</th>
-                <th style={{ width: 195 }}>成交额（买/卖）</th>
-                <th style={{ width: 90 }}>现价</th>
-                <th style={{ width: 90 }}>最新涨跌</th>
-                <th style={{ width: 110 }}>最新日期</th>
+                {/* 明细行原来把「3500 份 × ¥0.639 = ¥2236.50」全塞进成交额一格，
+                    195px 装不下、被右边列压掉（用户反馈截断）。
+                    现拆成 份额 / 成交额 / 成交价 三列：父行显示买/卖汇总，
+                    明细行显示该笔的份额、成交额、成交价，两边对齐不挤。
+                    定宽合计 1060，1440 视口下操作列约 105px（「编辑最新」刚好放得下）。 */}
+                <th style={{ width: 100 }}>代码</th>
+                <th style={{ width: 160 }}>名称</th>
+                <th style={{ width: 62 }}>类型</th>
+                <th style={{ width: 135 }}>持仓（买/卖/净）</th>
+                <th style={{ width: 70 }}>份额</th>
+                <th style={{ width: 125 }}>成交额</th>
+                <th style={{ width: 85 }}>成交价</th>
+                <th style={{ width: 80 }}>现价</th>
+                <th style={{ width: 85 }}>最新涨跌</th>
+                <th style={{ width: 100 }}>最新日期</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {shown.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="pcv-empty">当前筛选下没有记录</td>
+                  <td colSpan={11} className="pcv-empty">当前筛选下没有记录</td>
                 </tr>
               ) : shown.map((g) => {
                 const st = TYPE_STYLE[g.assetType] || TYPE_STYLE.stock
@@ -282,9 +289,12 @@ export function PcInvestment() {
                       <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45' }}>
                         {fmtNum(g.buyShares, 0)} / {fmtNum(g.sellShares, 0)} / <span style={{ color: g.netShares >= 0 ? '#333a45' : '#b96a66' }}>{fmtNum(g.netShares, 0)}</span>
                       </td>
+                      {/* 份额 / 成交价是明细行才有的字段，父行留空（用 — 占位保持列对齐） */}
+                      <td style={{ color: '#c9cdd4' }}>—</td>
                       <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45', whiteSpace: 'nowrap' }}>
                         ¥{fmtNum(g.buyAmount)} / ¥{fmtNum(g.sellAmount)}
                       </td>
+                      <td style={{ color: '#c9cdd4' }}>—</td>
                       <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45' }}>
                         {g.latest.currentPrice != null ? `¥${fmtNum(g.latest.currentPrice, 3)}` : <span style={{ color: '#c9cdd4' }}>—</span>}
                       </td>
@@ -310,13 +320,17 @@ export function PcInvestment() {
                             {inv._dir === 'sell' ? '卖出' : '买入'}
                           </span>
                         </td>
+                        {/* 明细行的份额 / 成交额 / 成交价各占一列（原来「份 × 价 = 额」挤在一格里被截断） */}
                         <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45' }}>
-                          {fmtNum(inv.shares, 0)} 份 × ¥{fmtNum(inv.sellPrice, 3)} = ¥{fmtNum(inv.amount)}
+                          {fmtNum(inv.shares, 0)}
                         </td>
-                        {/* 现价 / 涨跌各占一列：原来现价用 colSpan=2 把「最新涨跌」列吞了，
-                            明细行的涨跌幅是空白。这里用每条记录自己的 change
-                            （= (现价 - 本笔成交价) / 本笔成交价），所以同一代码下每笔的数字不同。
-                            字号同样回到 13px、文字黑色。 */}
+                        <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45', whiteSpace: 'nowrap' }}>
+                          ¥{fmtNum(inv.amount)}
+                        </td>
+                        <td style={{ fontVariantNumeric: 'tabular-nums', color: '#333a45', whiteSpace: 'nowrap' }}>
+                          ¥{fmtNum(inv.sellPrice, 3)}
+                        </td>
+                        {/* 现价 / 涨跌各占一列（每条记录用自己的 change，所以同一代码下每笔数字不同） */}
                         <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>
                           {inv.currentPrice != null ? `¥${fmtNum(inv.currentPrice, 3)}` : '—'}
                         </td>

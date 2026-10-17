@@ -22,6 +22,19 @@ const COPY_FLAGS = [
   { key: 'used', label: '用过', bg: '#fdf4e3', fg: '#b7791f', bar: '#e8c07a' },
 ]
 
+// 「用过」距今多久：今天 / 昨天 / N天前（与手机版 CopyCard 同口径）。
+// usedDate 存的是 YYYY-MM-DD，解析失败时原样返回，避免脏数据把日期显示成 NaN。
+function usedAgo(dateStr) {
+  const t = new Date(`${String(dateStr).replace(/\//g, '-')}T00:00:00`).getTime()
+  if (Number.isNaN(t)) return String(dateStr)
+  const today = new Date(`${todayStr()}T00:00:00`).getTime()
+  const diff = Math.round((today - t) / 86400000)
+  if (diff === 0) return '今天'
+  if (diff === 1) return '昨天'
+  if (diff > 1) return `${diff}天前`
+  return `${-diff}天后`
+}
+
 // PC 版文案库：左表右详情。
 // 数据全部来自同一个 store（与手机版完全一致），这里只重排展示。
 export function PcProducts() {
@@ -190,10 +203,12 @@ export function PcProducts() {
                       拖动时就只有那一列在涨（用户反馈的原话：「拖动的时候整体都要
                       改变，不是只改操作」）。全给百分比，余量才会按比例摊到每一列。
                       其他 PC 表格没有拖动条、不会出现这个现象，仍是「最后一列吃余量」。
-                      「出单」列按用户要求去掉，腾出的份额主要给了产品列。 */}
-                  <th style={{ width: '55%' }}>产品</th>
-                  <th style={{ width: '22%' }}>分类</th>
-                  <th style={{ width: '23%' }}>操作</th>
+                      「出单」列按用户要求去掉，腾出的份额主要给了产品列。
+                      操作列从 23% 提到 34%：三个操作由文字链接改成按钮后，
+                      23%（560px 左栏下约 129px）放不下「置顶 编辑 删除」三个按钮。 */}
+                  <th style={{ width: '47%' }}>产品</th>
+                  <th style={{ width: '19%' }}>分类</th>
+                  <th style={{ width: '34%' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,24 +253,25 @@ export function PcProducts() {
                         )}
                       </td>
                       {/* 「出单」列已按用户要求去掉 */}
-                      <td>
-                        {/* 编辑开 ProductDialog、删除走二次确认（PC 端不跳页面）。
-                            stopPropagation 是为了不触发整行的「选中该产品」。
-                            「置顶」也放这一列：已置顶时文字变粉，再点即取消。 */}
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        {/* 三个操作统一成按钮（与样品页操作列同规格）：
+                            置顶/编辑 = ghost 描边；删除 = ghost + 红字（危险操作）。
+                            按钮比文字链接窄一点（5×10 内边距），三个能并排不换行。
+                            stopPropagation 是为了不触发整行的「选中该产品」。 */}
                         <button
-                          className="pcv-btn-text"
+                          className="pcv-btn pcv-btn-ghost"
+                          style={{ padding: '5px 10px', ...(p.pinned ? { color: '#b8517f', borderColor: 'rgba(184,81,127,0.45)' } : null) }}
                           title={p.pinned ? '取消置顶' : '置顶'}
-                          style={{ color: p.pinned ? '#b8517f' : undefined, fontWeight: p.pinned ? 700 : 600 }}
                           onClick={(e) => { e.stopPropagation(); togglePin(p) }}
                         >置顶</button>
                         <button
-                          className="pcv-btn-text"
-                          style={{ marginLeft: 8 }}
+                          className="pcv-btn pcv-btn-ghost"
+                          style={{ padding: '5px 10px', marginLeft: 6 }}
                           onClick={(e) => { e.stopPropagation(); setEditing(p) }}
                         >编辑</button>
                         <button
-                          className="pcv-btn-text"
-                          style={{ marginLeft: 8, color: '#b96a66' }}
+                          className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
+                          style={{ padding: '5px 10px', marginLeft: 6 }}
                           onClick={(e) => { e.stopPropagation(); setDelProduct(p) }}
                         >删除</button>
                       </td>
@@ -334,6 +350,16 @@ export function PcProducts() {
                               {f.label}
                             </button>
                           ))}
+                          {/* 「用过」后跟时间（与手机版 CopyCard 同口径：今天 / N天前），
+                              日期本身放 title，鼠标悬停可看具体哪一天 */}
+                          {c.used && c.usedDate && (
+                            <span
+                              title={c.usedDate}
+                              style={{ fontSize: 11, fontWeight: 600, color: '#b7791f', whiteSpace: 'nowrap', marginLeft: 2 }}
+                            >
+                              {usedAgo(c.usedDate)}
+                            </span>
+                          )}
                           {/* 三组标记与右侧操作靠拢排成一排（原来中间有个 spacer 把两边顶到最左最右） */}
                           <button className="pcv-btn pcv-btn-ghost" onClick={() => copyOne(c)}>复制</button>
                           <button className="pcv-btn-text" onClick={() => setCopyDialog(c)}>编辑</button>

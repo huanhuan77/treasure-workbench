@@ -478,6 +478,16 @@
   border-color: rgba(15, 23, 42, 0.24);
 }
 
+/* ghost 的危险变体（删除类操作）：红字 + 淡红描边，hover 略加深 */
+.pcv-btn-ghost--danger {
+  color: #b96a66;
+  border-color: rgba(185, 106, 102, 0.35);
+}
+.pcv-btn-ghost--danger:hover {
+  background: #fdf3f3;
+  border-color: rgba(185, 106, 102, 0.6);
+}
+
 .pcv-btn-text {
   padding: 5px 2px;
   border: none;
@@ -567,6 +577,35 @@
   background: #fff;
   color: #b8517f;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+/* 下划线式 Tab（投资跟踪的「股票 / 基金」用）：
+   去掉灰胶囊容器，改成贴着内容的下划线标题，和下方筛选条不再撞色。 */
+.pcv-seg--tabs {
+  width: 100%;
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.08);
+}
+.pcv-seg--tabs button {
+  padding: 8px 4px 9px;
+  margin-right: 24px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -0.5px;
+  color: #64748b;
+  font-size: 14px;
+}
+.pcv-seg--tabs button:hover {
+  color: #334155;
+}
+.pcv-seg--tabs button.on {
+  background: transparent;
+  box-shadow: none;
+  color: #b8517f;
+  border-bottom-color: #b8517f;
 }
 
 /* ── 状态统计卡片（样品页顶部筛选）─────────────────────────────
@@ -680,6 +719,45 @@
   font-weight: 600;
   cursor: pointer;
 }
+/* 「重置」按钮（各页筛选条最右，ResetButton 组件共用）：
+   浅灰底 + 环形箭头图标 + 文字，无筛选时半透明不可点。
+   放在 .pcv-accountbar 那条规则之后写，并用 .pcv-accountbar button.pcv-reset
+   提高优先级，避免被上面对 button 的胶囊样式（白底 + 描边）覆盖。 */
+.pcv-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pcv-accountbar button.pcv-reset {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 12px;
+}
+.pcv-reset:hover:not(:disabled),
+.pcv-accountbar button.pcv-reset:hover:not(:disabled) {
+  background: #e9ebef;
+  color: #4b5563;
+}
+.pcv-reset:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pcv-reset svg {
+  flex-shrink: 0;
+}
+
 .pcv-accountbar button.on {
   border-color: #f2cbdd;
   background: #fdf1f6;
