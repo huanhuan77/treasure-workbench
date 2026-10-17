@@ -241,6 +241,11 @@
 .pcv-todogrid {
   display: block;
 }
+/* 待办行压紧（用户要求「行高小一点」）：只作用于这里，
+   文案库等同样用 .pcv-copyitem 的列表保持原行高。 */
+.pcv-todogrid .pcv-copyitem {
+  padding: 6px 14px;
+}
 
 .pcv-cols {
   display: grid;

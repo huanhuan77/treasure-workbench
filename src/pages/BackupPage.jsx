@@ -6,7 +6,7 @@ import { syncAll } from '../utils/sync'
 // Gist 上传/恢复的实现抽到 utils/cloudBackup，与 PC 总览页顶栏的两个按钮共用一份逻辑
 import {
   KEYS, GIST_ID_KEY, LAST_SYNC_KEY, uploadBackup, restoreBackup,
-  markSynced, formatSyncTime,
+  markSynced, formatSyncTime, inspectToken,
 } from '../utils/cloudBackup'
 
 export function BackupPage() {
@@ -25,6 +25,21 @@ export function BackupPage() {
     }, 10000)
     return () => clearInterval(handle)
   }, [])
+
+  // Token 权限自检：填完 600ms 后调 GET /user，把「账号 + 权限」显示在输入框下面。
+  // 之前只有一个笼统的「上传失败: HTTP 404」，分不清是 Token 缺 gist 还是 Gist 被删。
+  const [tokenInfo, setTokenInfo] = useState(null)   // null=没填 / {checking} / {ok,login,scopes,error}
+  useEffect(() => {
+    const tk = token.trim()
+    if (!tk) { setTokenInfo(null); return }
+    let alive = true
+    setTokenInfo({ checking: true })
+    const timer = setTimeout(async () => {
+      const r = await inspectToken(tk)
+      if (alive) setTokenInfo({ ...r, checking: false })
+    }, 600)
+    return () => { alive = false; clearTimeout(timer) }
+  }, [token])
 
   // 上传到 GitHub Gist（本机覆盖云端）
   const uploadToGist = async () => {
@@ -191,6 +206,19 @@ export function BackupPage() {
               {showToken ? '隐藏' : '显示'}
             </button>
           </div>
+          {/* Token 权限实时自检：填完就告诉你这个 token 到底能不能读写 Gist */}
+          {tokenInfo && (
+            <p style={{
+              margin: '6px 0 0', fontSize: '11px', lineHeight: 1.6,
+              color: tokenInfo.checking ? '#9ca3af' : (tokenInfo.ok ? '#16a34a' : '#c0392b'),
+            }}>
+              {tokenInfo.checking
+                ? '正在检测 Token 权限…'
+                : tokenInfo.ok
+                  ? `✓ 账号 ${tokenInfo.login} · 权限 [${tokenInfo.scopes || '无'}] · 含 gist，可以同步`
+                  : `✗ ${tokenInfo.error || `账号 ${tokenInfo.login} 的权限是 [${tokenInfo.scopes || '无'}]，缺少 gist`}`}
+            </p>
+          )}
           <p style={{ margin: '6px 0 0', fontSize: '11px', color: 'var(--gray-400)' }}>
             需要 <b>gist</b> 权限的 token（不是 repo），数据存储在私密 Gist 中。在 GitHub → Settings → Developer settings → Personal access tokens 勾选 gist 生成。
           </p>

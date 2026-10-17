@@ -84,6 +84,26 @@ export async function findLatestGist(token) {
 }
 
 /**
+ * 检测 Token：调 GET /user 看能不能通过 + 响应头 x-oauth-scopes 里有没有 gist。
+ * 返回 { ok, login, scopes, error }。ok=true 表示「有 gist 权限，能读写 Gist」。
+ */
+export async function inspectToken(token) {
+  const tk = (token || '').trim()
+  if (!tk) return { ok: false, login: '', scopes: '', error: '未填写 Token' }
+  try {
+    const res = await fetch(`${API}/user`, { headers: { Authorization: `Bearer ${tk}` } })
+    if (res.status === 401) return { ok: false, login: '', scopes: '', error: 'Token 无效或已过期' }
+    if (!res.ok) return { ok: false, login: '', scopes: '', error: `HTTP ${res.status}` }
+    const me = await res.json()
+    // 注意：classic token 才有这个头；fine-grained token 拿不到，按「缺 gist」处理
+    const scopes = (res.headers.get('x-oauth-scopes') || '').trim()
+    return { ok: /\bgist\b/.test(scopes), login: me.login || '', scopes, error: '' }
+  } catch (e) {
+    return { ok: false, login: '', scopes: '', error: '网络错误：' + e.message }
+  }
+}
+
+/**
  * 404 时给一句能照着做的解释：GitHub 对「没权限」和「不存在」都回 404，
  * 靠 GET /user 的 x-oauth-scopes 头把两种情况分开（拿不到该头时返回空串，调用方用自己的兜底文案）。
  */
