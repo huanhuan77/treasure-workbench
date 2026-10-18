@@ -79,7 +79,7 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
             fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: p.pinnedBottom ? 1 : 0.3,
           }}
-        >📥</button>
+        >⬇️</button>
 
         {/* 右侧：拖动排序手柄 */}
         {handle}
