@@ -26,6 +26,7 @@ const sideTabs = [
   { to: '/savings', label: '攒钱计划', icon: '🐷' },
   { to: '/investment', label: '投资跟踪', icon: '📈' },
   { to: '/sensitive', label: '违禁词', icon: '🚫' },
+  { to: '/backup', label: '数据备份', icon: '💾' },
 ]
 
 // 桌面端断点判断已抽到 utils/useIsDesktop（总览页的提醒表格也要用同一份判断）

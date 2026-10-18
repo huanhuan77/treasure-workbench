@@ -10,6 +10,8 @@ import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 import { SampleForm } from '../components/SampleForm'
 import { useIsDesktop } from '../utils/useIsDesktop'
+import { syncAll } from '../utils/sync'
+import { getStoredToken } from '../utils/cloudBackup'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -132,7 +134,7 @@ function ReminderTable({ items, accountsOf, midHeader, renderMid, renderActions,
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders, publishRecords, todos, updateSample } = useStore()
+  const { samples, transactions, orders, publishRecords, todos, updateSample, applySyncResult } = useStore()
   const { show } = useToast()
   // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
   const isDesktop = useIsDesktop()
@@ -147,6 +149,7 @@ export function DashboardPage() {
     document.head.appendChild(s)
   }, [])
   const [checking, setChecking] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [editingSample, setEditingSample] = useState(null)
   // 提醒中心 Tab：reminders（发布提醒）| low（发布不足5条）| expiring（即将到期）
   // 用 lazy init 从 sessionStorage 恢复，刷新 / keep-alive 回场时保留上次选中
@@ -166,9 +169,30 @@ export function DashboardPage() {
       show('已是最新版本', 'success')
       const standalone =
         window.navigator.standalone === true ||
-        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+        (window.matchMedia && window.matchMedia('display-mode: standalone)').matches)
       if (standalone) setTimeout(() => location.reload(true), 800)
     } else if (result === 'error') show('检查更新失败，请重试', 'error')
+  }
+
+  const handleSync = async () => {
+    const tk = getStoredToken()
+    if (!tk) {
+      show('请先在「更多 → 数据备份」填写 GitHub Token', 'error')
+      go('/backup')
+      return
+    }
+    setSyncing(true)
+    try {
+      const gistId = localStorage.getItem('backup_gist_id')
+      const result = await syncAll(tk, gistId)
+      if (result.gistId) localStorage.setItem('backup_gist_id', result.gistId)
+      applySyncResult(result.merged['blogger_workbench_data_v1'])
+      show(result.hasChanges ? '✅ 同步完成' : '✅ 已是最新', 'success')
+    } catch (e) {
+      show('同步失败：' + e.message, 'error')
+    } finally {
+      setSyncing(false)
+    }
   }
 
   // ── 待办清单：独立事项池（截止日期可有可无），管理页 /todos
@@ -344,13 +368,13 @@ export function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px' }}>工作台总览</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-            <button onClick={() => go('/backup')}
+            <button onClick={handleSync} disabled={syncing}
               style={{
                 padding: '7px 12px', borderRadius: '8px',
                 border: '1px solid #fbcfe8', background: '#fff', color: '#db2777',
-                fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontSize: '12px', fontWeight: 600, cursor: syncing ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
               }}
-            >💾 数据备份</button>
+            >{syncing ? '同步中…' : '🔄 同步'}</button>
             <button
               onClick={handleCheckUpdate}
               disabled={checking}
