@@ -99,9 +99,9 @@ function SortableProductCard(props) {
       }}
     >
       <svg width="12" height="20" viewBox="0 0 12 20" fill="currentColor" aria-hidden="true">
-        <rect x="2" y="2" width="8" height="2" rx="1"/>
-        <rect x="2" y="9" width="8" height="2" rx="1"/>
-        <rect x="2" y="16" width="8" height="2" rx="1"/>
+        <rect x="1.5" y="2" width="1.6" height="16" rx="0.8"/>
+        <rect x="5.2" y="2" width="1.6" height="16" rx="0.8"/>
+        <rect x="8.9" y="2" width="1.6" height="16" rx="0.8"/>
       </svg>
     </button>
   )

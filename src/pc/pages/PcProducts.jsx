@@ -92,9 +92,9 @@ function SortableProductRow({ p, isActive, onClick, children }) {
           }}
         >
           <svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor" aria-hidden="true">
-            <rect x="1" y="1.5" width="8" height="1.6" rx="0.8"/>
-            <rect x="1" y="7.2" width="8" height="1.6" rx="0.8"/>
-            <rect x="1" y="12.9" width="8" height="1.6" rx="0.8"/>
+            <rect x="1" y="1.5" width="1.4" height="13" rx="0.7"/>
+            <rect x="4.3" y="1.5" width="1.4" height="13" rx="0.7"/>
+            <rect x="7.6" y="1.5" width="1.4" height="13" rx="0.7"/>
           </svg>
         </button>
       </td>
