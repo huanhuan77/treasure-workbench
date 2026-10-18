@@ -141,13 +141,12 @@ export function HomePage() {
   })
   const active = keyword || categoryFilter
 
-  // 置顶产品：按 p.pinned 字段排序（PC端与手机端共用），洁比兔两个默认置顶
+  // 置顶产品：按 p.pinned 字段排序（PC端与手机端共用）
   const pinFirst = (list) => {
     const pinned = []
     const rest = []
     list.forEach((p) => {
-      const isDefaultPin = /洁比兔/.test(p.name) && (/湿巾|湿厕纸/.test(p.name) || /洗液|洗护液/.test(p.name))
-      if (p.pinned || isDefaultPin) pinned.push(p)
+      if (p.pinned) pinned.push(p)
       else rest.push(p)
     })
     return [...pinned, ...rest]
