@@ -98,10 +98,9 @@ function SortableProductCard(props) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
-      <svg width="12" height="20" viewBox="0 0 12 20" fill="currentColor" aria-hidden="true">
-        <rect x="1.5" y="2" width="1.6" height="16" rx="0.8"/>
-        <rect x="5.2" y="2" width="1.6" height="16" rx="0.8"/>
-        <rect x="8.9" y="2" width="1.6" height="16" rx="0.8"/>
+      <svg width="14" height="20" viewBox="0 0 14 20" fill="currentColor" aria-hidden="true">
+        <path d="M7 2 L11 7 L3 7 Z"/>
+        <path d="M7 18 L3 13 L11 13 Z"/>
       </svg>
     </button>
   )
