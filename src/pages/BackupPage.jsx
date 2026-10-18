@@ -5,7 +5,7 @@ import { useStore } from '../store'
 import { syncAll } from '../utils/sync'
 // Gist 上传/恢复的实现抽到 utils/cloudBackup，与 PC 总览页顶栏的两个按钮共用一份逻辑
 import {
-  KEYS, GIST_ID_KEY, LAST_SYNC_KEY, uploadBackup, restoreBackup,
+  KEYS, GIST_ID_KEY, LAST_SYNC_KEY, restoreBackup,
   markSynced, formatSyncTime, inspectToken, tokenFingerprint,
 } from '../utils/cloudBackup'
 
