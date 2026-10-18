@@ -162,12 +162,16 @@ export function PcProducts() {
       if (!kw) return true
       return `${p.brand || ''} ${p.name || ''}`.toLowerCase().includes(kw)
     })
-    // 置顶的产品排在最前，其余保持 store 里的原顺序（filter 结果稳定，sort 只需按 pinned 分流）
-    return arr.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+    // 置顶最前，置底最后，其余保持原顺序
+    return arr.sort((a, b) => {
+      const rank = (p) => p.pinned ? 0 : p.pinnedBottom ? 2 : 1
+      return rank(a) - rank(b)
+    })
   }, [products, keyword, category])
 
   // 置顶：写在产品记录上（pinned 字段），随 store 一起落本地 + 云同步，换设备也在
   const togglePin = (p) => updateProduct(p.id, { pinned: !p.pinned })
+  const togglePinBottom = (p) => updateProduct(p.id, { pinnedBottom: !p.pinnedBottom })
 
   // 拖动排序
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
@@ -369,6 +373,12 @@ export function PcProducts() {
                                 title={p.pinned ? '取消置顶' : '置顶'}
                                 onClick={(e) => { e.stopPropagation(); togglePin(p) }}
                               >置顶</button>
+                              <button
+                                className="pcv-btn pcv-btn-ghost"
+                                style={{ padding: '5px 10px', marginLeft: 6, ...(p.pinnedBottom ? { color: '#2563eb', borderColor: 'rgba(37,99,235,0.45)' } : null) }}
+                                title={p.pinnedBottom ? '取消置底' : '置底'}
+                                onClick={(e) => { e.stopPropagation(); togglePinBottom(p) }}
+                              >置底</button>
                               <button
                                 className="pcv-btn pcv-btn-ghost"
                                 style={{ padding: '5px 10px', marginLeft: 6 }}

@@ -19,7 +19,7 @@ const CATEGORIES = ['保健品', '美妆', '护肤', '洗护', '日用', '饮品
 // 手机版与 PC 版共用同一份（这里保留本页自己的 CATEGORIES 顺序，不动筛选条排列）
 
 // 产品卡片视觉层：左滑编辑/删除
-function ProductCard({ p, openEdit, onDelete, onTogglePin, navigate, outerRef, outerStyle, handle }) {
+function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, navigate, outerRef, outerStyle, handle }) {
   const iconInfo = getIconInfo(p.name, p.category)
   const copies = p.copies?.length || 0
   const orders = (p.copies || []).filter((c) => c.hasOrder).length
@@ -59,13 +59,27 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, navigate, outerRef, o
         <button
           onClick={(e) => { e.stopPropagation(); onTogglePin(p) }}
           aria-label="置顶"
+          title={p.pinned ? '取消置顶' : '置顶'}
           style={{
-            flexShrink: 0, width: '32px', height: '32px', border: 'none', borderRadius: '8px',
+            flexShrink: 0, width: '30px', height: '30px', border: 'none', borderRadius: '8px',
             background: p.pinned ? '#fef3c7' : 'transparent', cursor: 'pointer',
-            fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: p.pinned ? 1 : 0.35,
+            fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: p.pinned ? 1 : 0.3,
           }}
         >📌</button>
+
+        {/* 右侧：置底按钮 */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onTogglePinBottom(p) }}
+          aria-label="置底"
+          title={p.pinnedBottom ? '取消置底' : '置底'}
+          style={{
+            flexShrink: 0, width: '30px', height: '30px', border: 'none', borderRadius: '8px',
+            background: p.pinnedBottom ? '#dbeafe' : 'transparent', cursor: 'pointer',
+            fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: p.pinnedBottom ? 1 : 0.3,
+          }}
+        >📥</button>
 
         {/* 右侧：拖动排序手柄 */}
         {handle}
@@ -135,6 +149,11 @@ export function HomePage() {
     show(p.pinned ? '已取消置顶' : '已置顶', 'success')
   }
 
+  const togglePinBottom = (p) => {
+    updateProduct(p.id, { pinnedBottom: !p.pinnedBottom })
+    show(p.pinnedBottom ? '已取消置底' : '已置底', 'success')
+  }
+
 
   // 搜索过滤：匹配产品名 / 品牌；分类由独立下拉框筛选
   const keyword = search.trim().toLowerCase()
@@ -145,15 +164,17 @@ export function HomePage() {
   })
   const active = keyword || categoryFilter
 
-  // 置顶产品：按 p.pinned 字段排序（PC端与手机端共用）
+  // 置顶产品：置顶最前，置底最后，中间保持原顺序
   const pinFirst = (list) => {
-    const pinned = []
-    const rest = []
+    const top = []
+    const mid = []
+    const bottom = []
     list.forEach((p) => {
-      if (p.pinned) pinned.push(p)
-      else rest.push(p)
+      if (p.pinned) top.push(p)
+      else if (p.pinnedBottom) bottom.push(p)
+      else mid.push(p)
     })
-    return [...pinned, ...rest]
+    return [...top, ...mid, ...bottom]
   }
   const displayedList = pinFirst(active ? filtered : products)
 
@@ -299,7 +320,7 @@ export function HomePage() {
               <SortableContext items={displayedList.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {displayedList.map((p) => (
-                    <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} navigate={navigate} />
+                    <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} onTogglePinBottom={togglePinBottom} navigate={navigate} />
                   ))}
                 </div>
               </SortableContext>
@@ -310,7 +331,7 @@ export function HomePage() {
         ) : (
           <div className="product-grid pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {displayedList.map((p) => (
-              <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} navigate={navigate} />
+              <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} onTogglePinBottom={togglePinBottom} navigate={navigate} />
             ))}
           </div>
         )}
