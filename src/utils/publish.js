@@ -107,17 +107,21 @@ export function needPublishReminder(sample) {
     })
     if (anyUnpublished) return true
   }
-  // 任何样品：某个账号从未发过 或 超过 7 天没发，就提醒
-  // （不能只看全局 lastPublishAt——别的账号刚发过会把时间刷新掉，漏掉从未发过的账号）
+  // 已发布的样品：某个账号超过 7 天没发，就提醒
+  // 未拍/未到货的样品不走这个判断（它们由逾期逻辑管）
   {
-    const execByAccount = sample.execByAccount || {}
-    const accounts = getAccounts(sample)
-    const anyNeed = accounts.some((a) => {
-      if (execByAccount[a] === 'abandoned') return false
-      const d = daysSincePublishByAccount(sample, a)
-      return d === Infinity || d > N_PUBLISH_DAYS
-    })
-    if (anyNeed) return true
+    const counts = sample.countsByAccount || {}
+    const hasAnyPublish = Object.values(counts).some((c) => (Number(c?.publishCount) || 0) > 0)
+    if (hasAnyPublish) {
+      const execByAccount = sample.execByAccount || {}
+      const accounts = getAccounts(sample)
+      const anyNeed = accounts.some((a) => {
+        if (execByAccount[a] === 'abandoned') return false
+        const d = daysSincePublishByAccount(sample, a)
+        return d === Infinity || d > N_PUBLISH_DAYS
+      })
+      if (anyNeed) return true
+    }
   }
   return false
 }
