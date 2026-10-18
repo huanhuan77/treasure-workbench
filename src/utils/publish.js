@@ -106,10 +106,17 @@ export function needPublishReminder(sample) {
     })
     if (anyUnpublished) return true
   }
-  // 已出单的样品：7 天未发视频才提醒
+  // 已出单的样品：任何一个账号从未发过 或 超过 7 天没发，就提醒
+  // （不能只看全局 lastPublishAt——别的账号刚发过会把时间刷新掉，漏掉从未发过的账号）
   if ((Number(sample.orderCount) || 0) > 0) {
-    const days = daysSincePublish(sample)
-    if (days === Infinity || days > N_PUBLISH_DAYS) return true
+    const execByAccount = sample.execByAccount || {}
+    const accounts = getAccounts(sample)
+    const anyNeed = accounts.some((a) => {
+      if (execByAccount[a] === 'abandoned') return false
+      const d = daysSincePublishByAccount(sample, a)
+      return d === Infinity || d > N_PUBLISH_DAYS
+    })
+    if (anyNeed) return true
   }
   return false
 }
