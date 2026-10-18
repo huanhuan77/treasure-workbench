@@ -87,8 +87,9 @@ function SortableProductRow({ p, isActive, onClick, children }) {
           onClick={(e) => e.stopPropagation()}
           title="拖动排序"
           style={{
-            cursor: 'grab', border: 'none', background: 'transparent', padding: '2px 4px',
-            color: '#b0a0ac', touchAction: 'none', display: 'flex', alignItems: 'center',
+            cursor: 'grab', border: 'none', background: '#fce7f3', borderRadius: 6,
+            padding: '3px 5px', color: '#ec4899', touchAction: 'none',
+            display: 'flex', alignItems: 'center',
           }}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

@@ -92,9 +92,9 @@ function SortableProductCard(props) {
       onTouchStart={(e) => { e.stopPropagation(); listeners?.onTouchStart?.(e) }}
       aria-label="拖动排序"
       style={{
-        flexShrink: 0, width: '28px', height: '40px', alignSelf: 'center',
-        border: 'none', background: 'transparent', color: '#c4a0b0',
-        cursor: 'grab', touchAction: 'none',
+        flexShrink: 0, width: '28px', height: '32px', alignSelf: 'center',
+        border: 'none', borderRadius: '8px', background: '#fce7f3',
+        color: '#ec4899', cursor: 'grab', touchAction: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
