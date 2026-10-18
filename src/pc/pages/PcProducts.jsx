@@ -88,7 +88,7 @@ function SortableProductRow({ p, isActive, onClick, children }) {
           title="拖动排序"
           style={{
             cursor: 'grab', border: 'none', background: '#fce7f3', borderRadius: 6,
-            padding: '3px 5px', color: '#ec4899', touchAction: 'none',
+            padding: '3px 5px', color: '#9ca3af', touchAction: 'none',
             display: 'flex', alignItems: 'center',
           }}
         >

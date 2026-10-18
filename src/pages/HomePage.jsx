@@ -94,7 +94,7 @@ function SortableProductCard(props) {
       style={{
         flexShrink: 0, width: '28px', height: '32px', alignSelf: 'center',
         border: 'none', borderRadius: '8px', background: '#fce7f3',
-        color: '#ec4899', cursor: 'grab', touchAction: 'none',
+        color: '#9ca3af', cursor: 'grab', touchAction: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
