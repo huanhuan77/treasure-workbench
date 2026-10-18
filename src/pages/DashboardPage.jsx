@@ -286,8 +286,14 @@ export function DashboardPage() {
   const [remindAccount, setRemindAccount] = useState('all')
   const ACC_META = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
 
-  // 样品是否归属某账号（未筛时全部通过）
-  const matchAcct = (s, a) => a === 'all' || getAccounts(s).includes(a)
+  // 样品是否命中当前账号筛选：
+  // - 未筛时全部通过
+  // - 筛了账号：只有该账号确实"需要发"（从未发过或超过7天没发）才显示
+  //   避免多账号样品中，是别的账号需要发、但本账号刚发过的情况被错误列出
+  const matchAcct = (s, a) => {
+    if (a === 'all') return true
+    return pendingAccounts(s).includes(a)
+  }
 
   // 筛选后的三组数据 —— 列表渲染与 Tab 气泡计数都读它们，保证「气泡数 = 点进去的条数」。
   // 三个列表现在都是**样品粒度**，账号筛选统一走 matchAcct（样品归属账号命中即显示）。
@@ -300,7 +306,7 @@ export function DashboardPage() {
     [reminders, remindAccount],
   )
   const fLowPublish = useMemo(
-    () => lowPublish.filter((item) => remindAccount === 'all' || getAccounts(item.sample).includes(remindAccount)),
+    () => lowPublish.filter((item) => matchAcct(item.sample, remindAccount)),
     [lowPublish, remindAccount],
   )
   const fExpiring = useMemo(
