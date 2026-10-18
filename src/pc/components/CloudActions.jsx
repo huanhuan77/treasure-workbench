@@ -2,22 +2,16 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
-import { getStoredToken, uploadBackup, restoreBackup } from '../../utils/cloudBackup'
+import { getStoredToken } from '../../utils/cloudBackup'
+import { syncAll } from '../../utils/sync'
+import { useStore } from '../../store'
 
-// PC 全站右上角的云备份三件套（数据备份 / 上传到云端 / 从云端恢复）。
-//
-// 原来这三个按钮只在「总览」页的顶栏里，其余 13 个页面要备份得先回总览。
-// 现在由 PcShell 统一渲染一次（绝对定位在内容区右上角）——因为各页顶栏的
-// 控件都靠左，右侧天然是空的，不会和页面自己的按钮打架。
-//
-// 逻辑与之前总览页里的实现完全一致：
-//   · Token 存在「数据备份」页的 localStorage 里，没配就引导过去；
-//   · 上传 = 本机覆盖云端（直接执行）；
-//   · 恢复 = 云端覆盖本机（必须二次确认，成功后刷新页面）。
+// PC 全站右上角的云备份（数据备份 / 同步 / 恢复）
 export function CloudActions() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const [backingUp, setBackingUp] = useState(false)
+  const { applySyncResult } = useStore()
+  const [syncing, setSyncing] = useState(false)
   const [restoring, setRestoring] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
 
@@ -31,17 +25,20 @@ export function CloudActions() {
     return tk
   }
 
-  const handleUpload = async () => {
+  const handleSync = async () => {
     const tk = requireToken()
-    if (!tk || backingUp) return
-    setBackingUp(true)
+    if (!tk || syncing) return
+    setSyncing(true)
     try {
-      await uploadBackup(tk)
-      show('☁️ 已上传到云端', 'success')
+      const gistId = localStorage.getItem('backup_gist_id')
+      const result = await syncAll(tk, gistId)
+      if (result.gistId) localStorage.setItem('backup_gist_id', result.gistId)
+      applySyncResult(result.merged['blogger_workbench_data_v1'])
+      show(result.hasChanges ? '✅ 同步完成：本机与云端已合并' : '✅ 已是最新', 'success')
     } catch (e) {
-      show('上传失败：' + e.message, 'error')
+      show('同步失败：' + e.message, 'error')
     } finally {
-      setBackingUp(false)
+      setSyncing(false)
     }
   }
 
@@ -55,6 +52,7 @@ export function CloudActions() {
     }
     setRestoring(true)
     try {
+      const { restoreBackup } = await import('../../utils/cloudBackup')
       const { count } = await restoreBackup(tk)
       show(`已恢复 ${count} 个模块，正在刷新…`, 'success')
       setTimeout(() => window.location.reload(), 800)
@@ -69,11 +67,11 @@ export function CloudActions() {
     <>
       <div className="pcv-globalactions">
         <button className="pcv-btn pcv-btn-ghost" onClick={() => navigate('/backup')}>数据备份</button>
-        <button className="pcv-btn pcv-btn-ghost" disabled={backingUp} onClick={handleUpload}>
-          {backingUp ? '上传中…' : '☁️ 上传到云端'}
+        <button className="pcv-btn pcv-btn-ghost" disabled={syncing} onClick={handleSync}>
+          {syncing ? '同步中…' : '🔄 同步'}
         </button>
         <button className="pcv-btn pcv-btn-ghost" disabled={restoring} onClick={() => setConfirmRestore(true)}>
-          {restoring ? '恢复中…' : '📥 从云端恢复'}
+          {restoring ? '恢复中…' : '📥 恢复'}
         </button>
       </div>
 

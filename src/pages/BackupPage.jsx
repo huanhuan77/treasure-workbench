@@ -225,8 +225,7 @@ export function BackupPage() {
             需要 <b>gist</b> 权限的 token（不是 repo），数据存储在私密 Gist 中。在 GitHub → Settings → Developer settings → Personal access tokens 勾选 gist 生成。
           </p>
 
-          {/* 主操作单独一行；「上传 / 恢复」两个覆盖型操作放下一行各占一半，
-              不再和「立即同步」挤在同一排（用户反馈那俩被挤住、看不出来） */}
+          {/* 两个按钮：同步（双向合并） + 恢复（云端覆盖本机） */}
           <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
             <button onClick={syncToCloud} disabled={syncing || !token || tokenBlocked} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: 'none',
@@ -234,17 +233,7 @@ export function BackupPage() {
               color: '#fff', fontSize: '14px', fontWeight: 700, cursor: (syncing || tokenBlocked) ? 'not-allowed' : 'pointer',
               boxShadow: (syncing || tokenBlocked) ? 'none' : '0 4px 14px rgba(99,102,241,0.3)',
             }}>
-              {syncing ? '同步中...' : '🔄 立即同步（双向合并）'}
-            </button>
-          </div>
-
-          <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-            <button onClick={uploadToGist} disabled={syncing || !token || tokenBlocked} style={{
-              flex: 1, padding: '14px 0', borderRadius: '10px', border: '1.5px solid #d1d5db',
-              background: 'transparent', color: tokenBlocked ? '#c9cdd4' : '#4b5563', fontSize: '14px', fontWeight: 700,
-              cursor: (syncing || tokenBlocked) ? 'not-allowed' : 'pointer',
-            }}>
-              {syncing ? '同步中...' : '☁️ 上传到云端'}
+              {syncing ? '同步中...' : '🔄 同步'}
             </button>
             <button onClick={downloadFromGist} disabled={syncing || !token || tokenBlocked} style={{
               flex: 1, padding: '14px 0', borderRadius: '10px', border: '1.5px dashed #6366f1',
@@ -252,7 +241,7 @@ export function BackupPage() {
               cursor: (syncing || tokenBlocked) ? 'not-allowed' : 'pointer',
               opacity: tokenBlocked ? 0.6 : 1,
             }}>
-              {syncing ? '同步中...' : '☁️ 从云端恢复'}
+              {syncing ? '同步中...' : '☁️ 恢复'}
             </button>
           </div>
           {tokenBlocked && (
@@ -264,11 +253,10 @@ export function BackupPage() {
 
         {/* 手动备份说明 */}
         <div style={{ marginTop: '4px', padding: '12px', borderRadius: '10px', background: 'rgba(251,191,36,0.08)', fontSize: '12px', color: '#92400e', lineHeight: 1.7 }}>
-          📱 <b>首次使用</b>：一台手机点「立即同步」创建云端，另一台填同一个 token 后点「立即同步」即可打通。<br />
-          🔄 <b>立即同步（双向合并）</b>：手动拉取云端并智能合并，两边各自新增的内容都会保留，不会互相覆盖；同一条记录同时改，以最后修改时间为准。<br />
+          📱 <b>首次使用</b>：一台手机点「同步」创建云端，另一台填同一个 token 后点「同步」即可打通。<br />
+          🔄 <b>同步</b>：双向合并，两边各自新增的内容都会保留，不会互相覆盖；同一条记录同时改，以最后修改时间为准。<br />
           🗑️ <b>删除会同步</b>：同步后一端删除的数据，另一端也会删除。<br />
-          ☁️ <b>上传到云端</b>：手动把本机数据覆盖上传到云端（仅用于确认本机数据更全时）。<br />
-          ⚠️ <b>从云端恢复</b>：用云端数据<b>覆盖本机全部数据</b>，仅用于换新手机或数据混乱时抢救。<br />
+          ⚠️ <b>恢复</b>：用云端数据<b>覆盖本机全部数据</b>，仅用于换新手机或数据混乱时抢救。<br />
           📦 同步包含：产品、样品、收支、攒钱、投资、日历、每日计划、品牌方、读书成长等全部数据。
         </div>
       </div>
