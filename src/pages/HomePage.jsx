@@ -68,6 +68,9 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
           }}
         >📌</button>
 
+        {/* 右侧：拖动排序手柄 */}
+        {handle}
+
         {/* 右侧：置底按钮 */}
         <button
           onClick={(e) => { e.stopPropagation(); onTogglePinBottom(p) }}
@@ -80,9 +83,6 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
             opacity: p.pinnedBottom ? 1 : 0.3,
           }}
         >⬇️</button>
-
-        {/* 右侧：拖动排序手柄 */}
-        {handle}
       </div>
     </div>
   )
