@@ -92,9 +92,8 @@ function SortableProductRow({ p, isActive, onClick, children }) {
             display: 'flex', alignItems: 'center',
           }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/>
-            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 4l-4 4h3v4h2V8h3l-4-4zm0 16l4-4h-3v-4h-2v4H8l4 4z"/>
           </svg>
         </button>
       </td>
