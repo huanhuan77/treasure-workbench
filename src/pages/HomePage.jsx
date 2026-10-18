@@ -92,12 +92,18 @@ function SortableProductCard(props) {
       onTouchStart={(e) => { e.stopPropagation(); listeners?.onTouchStart?.(e) }}
       aria-label="拖动排序"
       style={{
-        flexShrink: 0, width: '24px', height: '40px', alignSelf: 'center',
-        border: 'none', background: 'transparent', color: 'var(--gray-400)',
-        fontSize: '18px', lineHeight: 1, cursor: 'grab', touchAction: 'none',
+        flexShrink: 0, width: '28px', height: '40px', alignSelf: 'center',
+        border: 'none', background: 'transparent', color: '#c4a0b0',
+        cursor: 'grab', touchAction: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
-    >⇕</button>
+    >
+      <svg width="16" height="20" viewBox="0 0 16 20" fill="currentColor" aria-hidden="true">
+        <circle cx="4" cy="3" r="1.8"/><circle cx="12" cy="3" r="1.8"/>
+        <circle cx="4" cy="10" r="1.8"/><circle cx="12" cy="10" r="1.8"/>
+        <circle cx="4" cy="17" r="1.8"/><circle cx="12" cy="17" r="1.8"/>
+      </svg>
+    </button>
   )
   return <ProductCard {...props} outerRef={setNodeRef} outerStyle={outerStyle} handle={handle} />
 }

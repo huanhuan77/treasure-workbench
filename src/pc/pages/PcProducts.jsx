@@ -79,7 +79,7 @@ function SortableProductRow({ p, isActive, onClick, children }) {
   }
   return (
     <tr ref={setNodeRef} style={style} className={isActive ? 'on' : ''} onClick={onClick}>
-      <td style={{ width: 28, padding: '4px 4px', verticalAlign: 'middle' }}>
+      <td style={{ width: 32, padding: '4px 4px', verticalAlign: 'middle' }}>
         <button
           {...attributes}
           {...listeners}
@@ -88,9 +88,15 @@ function SortableProductRow({ p, isActive, onClick, children }) {
           title="拖动排序"
           style={{
             cursor: 'grab', border: 'none', background: 'transparent', padding: '2px 4px',
-            color: '#9ca3af', fontSize: 14, lineHeight: 1, touchAction: 'none',
+            color: '#b0a0ac', touchAction: 'none', display: 'flex', alignItems: 'center',
           }}
-        >⠿</button>
+        >
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true">
+            <circle cx="3" cy="2.5" r="1.4"/><circle cx="9" cy="2.5" r="1.4"/>
+            <circle cx="3" cy="8" r="1.4"/><circle cx="9" cy="8" r="1.4"/>
+            <circle cx="3" cy="13.5" r="1.4"/><circle cx="9" cy="13.5" r="1.4"/>
+          </svg>
+        </button>
       </td>
       {children}
     </tr>
