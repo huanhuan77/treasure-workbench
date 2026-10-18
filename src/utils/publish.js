@@ -1,6 +1,7 @@
 // 视频发布 / 出单关联 / N 天未发提醒 相关纯函数
 import { todayStr, daysDiff } from './helpers'
 import { getAccounts } from './accounts'
+import { getAggregateCounts } from './sampleStatus'
 
 // 提醒阈值：超过该天数未发视频即提醒
 export const N_PUBLISH_DAYS = 7
@@ -108,7 +109,8 @@ export function needPublishReminder(sample) {
   }
   // 已出单的样品：任何一个账号从未发过 或 超过 7 天没发，就提醒
   // （不能只看全局 lastPublishAt——别的账号刚发过会把时间刷新掉，漏掉从未发过的账号）
-  if ((Number(sample.orderCount) || 0) > 0) {
+  const { orderCount: aggOrders } = getAggregateCounts(sample)
+  if (aggOrders > 0) {
     const execByAccount = sample.execByAccount || {}
     const accounts = getAccounts(sample)
     const anyNeed = accounts.some((a) => {
