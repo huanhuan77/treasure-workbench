@@ -19,7 +19,7 @@ const CATEGORIES = ['保健品', '美妆', '护肤', '洗护', '日用', '饮品
 // 手机版与 PC 版共用同一份（这里保留本页自己的 CATEGORIES 顺序，不动筛选条排列）
 
 // 产品卡片视觉层：左滑编辑/删除
-function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, handle, swipedId, setSwipedId }) {
+function ProductCard({ p, openEdit, onDelete, onTogglePin, navigate, outerRef, outerStyle, handle, swipedId, setSwipedId }) {
   const iconInfo = getIconInfo(p.name, p.category)
   const copies = p.copies?.length || 0
   const orders = (p.copies || []).filter((c) => c.hasOrder).length
@@ -29,8 +29,9 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
     <div ref={outerRef} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', ...outerStyle }}>
       {/* 左滑操作按钮 */}
       <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
-        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); openEdit(p) }} style={{ width: '72px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
-        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); onDelete(p.id) }} style={{ width: '72px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
+        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); onTogglePin(p) }} style={{ width: '56px', height: '80%', border: 'none', background: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>置顶</button>
+        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); openEdit(p) }} style={{ width: '56px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
+        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); onDelete(p.id) }} style={{ width: '56px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
       </div>
       <div
         onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
@@ -41,7 +42,7 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
         style={{
           ...glassStyle, position: 'relative', padding: '11px 12px', cursor: 'pointer',
           display: 'flex', alignItems: 'center', gap: '9px',
-          transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-148px)' : 'translateX(0)',
+          transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-176px)' : 'translateX(0)',
           zIndex: 1,
         }}
       >
@@ -62,7 +63,7 @@ function ProductCard({ p, openEdit, onDelete, navigate, outerRef, outerStyle, ha
             fontSize: '17px', fontWeight: 600, color: 'var(--text-main)',
             lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             paddingRight: '4px',
-          }}>{displayTitle(p)}</div>
+          }}>{p.pinned && <span style={{ color: '#f59e0b', marginRight: '2px' }}>📌</span>}{displayTitle(p)}</div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-sub)' }}>📋{copies}</span>
@@ -104,7 +105,7 @@ function SortableProductCard(props) {
 }
 
 export function HomePage() {
-  const { products, deleteProduct, reorderProducts } = useStore()
+  const { products, deleteProduct, reorderProducts, updateProduct } = useStore()
   const { show } = useToast()
   const navigate = useNavigate()
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -128,6 +129,11 @@ export function HomePage() {
     navigate(`/product/${p.id}/edit`)
   }
 
+  const togglePin = (p) => {
+    updateProduct(p.id, { pinned: !p.pinned })
+    show(p.pinned ? '已取消置顶' : '已置顶', 'success')
+  }
+
 
   // 搜索过滤：匹配产品名 / 品牌；分类由独立下拉框筛选
   const keyword = search.trim().toLowerCase()
@@ -138,18 +144,15 @@ export function HomePage() {
   })
   const active = keyword || categoryFilter
 
-  // 置顶产品：洁比兔湿巾(湿厕纸) / 洁比兔洗护液(洗液) 永远在最前
-  const isPinWet = (p) => /洁比兔/.test(p.name) && /湿巾|湿厕纸/.test(p.name)
-  const isPinWash = (p) => /洁比兔/.test(p.name) && /洗液|洗护液/.test(p.name)
+  // 置顶产品：按 p.pinned 字段排序（PC端与手机端共用），洁比兔两个默认置顶
   const pinFirst = (list) => {
     const pinned = []
     const rest = []
     list.forEach((p) => {
-      if (isPinWet(p) || isPinWash(p)) pinned.push(p)
+      const isDefaultPin = /洁比兔/.test(p.name) && (/湿巾|湿厕纸/.test(p.name) || /洗液|洗护液/.test(p.name))
+      if (p.pinned || isDefaultPin) pinned.push(p)
       else rest.push(p)
     })
-    // 保持置顶产品内部的相对顺序（湿巾在洗液前面）
-    pinned.sort((a, b) => (isPinWet(a) ? 0 : 1) - (isPinWet(b) ? 0 : 1))
     return [...pinned, ...rest]
   }
   const displayedList = pinFirst(active ? filtered : products)
@@ -296,7 +299,7 @@ export function HomePage() {
               <SortableContext items={displayedList.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {displayedList.map((p) => (
-                    <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
+                    <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
                   ))}
                 </div>
               </SortableContext>
@@ -307,7 +310,7 @@ export function HomePage() {
         ) : (
           <div className="product-grid pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {displayedList.map((p) => (
-              <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
+              <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
             ))}
           </div>
         )}
