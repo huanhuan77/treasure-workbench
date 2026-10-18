@@ -306,7 +306,12 @@ export function DashboardPage() {
     [reminders, remindAccount],
   )
   const fLowPublish = useMemo(
-    () => lowPublish.filter((item) => matchAcct(item.sample, remindAccount)),
+    () => lowPublish.filter((item) => {
+      if (remindAccount === 'all') return true
+      // 不足5条：筛了账号后，只显示该账号发布数不足5的
+      return item.accounts.some(({ account: a, publishCount: n }) =>
+        a === remindAccount && n < LOW_PUBLISH_LIMIT)
+    }),
     [lowPublish, remindAccount],
   )
   const fExpiring = useMemo(
@@ -864,19 +869,20 @@ export function DashboardPage() {
                             </span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {/* 列出各账号的条数分布（账号主题色，跨页面一致），供参考该给谁补。
-                                判定在样品级，所以这是「有发布记录的账号」，不是「未达标账号」。 */}
-                            {it.accounts.map(({ account: a, publishCount: n }) => {
-                              const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
-                              return (
-                                <span key={a} style={{
-                                  fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
-                                  background: col.bg, color: col.c, fontWeight: 600,
-                                  border: `1px solid ${col.c}`,
-                                  whiteSpace: 'nowrap', flexShrink: 0,
-                                }}>{a}({n}条)</span>
-                              )
-                            })}
+                            {/* 列出各账号的条数分布；筛了具体账号时只显示该账号 */}
+                            {it.accounts
+                              .filter(({ account: a }) => remindAccount === 'all' || a === remindAccount)
+                              .map(({ account: a, publishCount: n }) => {
+                                const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+                                return (
+                                  <span key={a} style={{
+                                    fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
+                                    background: col.bg, color: col.c, fontWeight: 600,
+                                    border: `1px solid ${col.c}`,
+                                    whiteSpace: 'nowrap', flexShrink: 0,
+                                  }}>{a}({n}条)</span>
+                                )
+                              })}
                           </div>
                         </div>
                         <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
