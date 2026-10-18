@@ -19,36 +19,21 @@ const CATEGORIES = ['保健品', '美妆', '护肤', '洗护', '日用', '饮品
 // 手机版与 PC 版共用同一份（这里保留本页自己的 CATEGORIES 顺序，不动筛选条排列）
 
 // 产品卡片视觉层：左滑编辑/删除
-function ProductCard({ p, openEdit, onDelete, onTogglePin, navigate, outerRef, outerStyle, handle, swipedId, setSwipedId }) {
+function ProductCard({ p, openEdit, onDelete, onTogglePin, navigate, outerRef, outerStyle, handle }) {
   const iconInfo = getIconInfo(p.name, p.category)
   const copies = p.copies?.length || 0
   const orders = (p.copies || []).filter((c) => c.hasOrder).length
-  const isSwiped = swipedId === p.id
 
   return (
     <div ref={outerRef} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', ...outerStyle }}>
-      {/* 左滑操作按钮 */}
-      <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '2px', paddingRight: '4px' }}>
-        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); onTogglePin(p) }} style={{ width: '56px', height: '80%', border: 'none', background: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>置顶</button>
-        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); openEdit(p) }} style={{ width: '56px', height: '80%', border: 'none', background: '#6366f1', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>编辑</button>
-        <button onClick={(e) => { e.stopPropagation(); setSwipedId(null); onDelete(p.id) }} style={{ width: '56px', height: '80%', border: 'none', background: '#ef4444', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer', borderRadius: '10px' }}>删除</button>
-      </div>
       <div
-        onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.swipeStart = `${t.clientX},${t.clientY}`; e.currentTarget.dataset.swiping = 'false' }}
-        onTouchMove={(e) => { const t = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = t.clientX - start[0]; const dy = t.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
-        onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedId(prev => prev === p.id ? null : p.id) } }}
-        onClick={() => { if (!isSwiped) navigate(`/product/${p.id}`) }}
+        onClick={() => navigate(`/product/${p.id}`)}
         className="pc-card"
         style={{
-          ...glassStyle, position: 'relative', padding: '11px 12px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: '9px',
-          transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-176px)' : 'translateX(0)',
-          zIndex: 1,
+          ...glassStyle, position: 'relative', padding: '11px 10px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: '9px', zIndex: 1,
         }}
       >
-        {/* 拖拽手柄 */}
-        {handle}
-
         {/* 左侧图标：显示分类名 */}
         <div style={{
           width: '44px', height: '36px', borderRadius: '10px', background: iconInfo.bg,
@@ -62,8 +47,7 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, navigate, outerRef, o
           <div style={{
             fontSize: '17px', fontWeight: 600, color: 'var(--text-main)',
             lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            paddingRight: '4px',
-          }}>{p.pinned && <span style={{ color: '#f59e0b', marginRight: '2px' }}>📌</span>}{displayTitle(p)}</div>
+          }}>{displayTitle(p)}</div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-sub)' }}>📋{copies}</span>
@@ -71,8 +55,22 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, navigate, outerRef, o
           </div>
         </div>
 
-        </div>
+        {/* 右侧：置顶按钮 */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onTogglePin(p) }}
+          aria-label="置顶"
+          style={{
+            flexShrink: 0, width: '32px', height: '32px', border: 'none', borderRadius: '8px',
+            background: p.pinned ? '#fef3c7' : 'transparent', cursor: 'pointer',
+            fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: p.pinned ? 1 : 0.35,
+          }}
+        >📌</button>
+
+        {/* 右侧：拖动排序手柄 */}
+        {handle}
       </div>
+    </div>
   )
 }
 
@@ -94,14 +92,14 @@ function SortableProductCard(props) {
       onTouchStart={(e) => { e.stopPropagation(); listeners?.onTouchStart?.(e) }}
       aria-label="拖动排序"
       style={{
-        flexShrink: 0, width: '20px', height: '40px', alignSelf: 'center',
+        flexShrink: 0, width: '24px', height: '40px', alignSelf: 'center',
         border: 'none', background: 'transparent', color: 'var(--gray-400)',
-        fontSize: '22px', lineHeight: 1, letterSpacing: '1px', cursor: 'grab', touchAction: 'none',
+        fontSize: '18px', lineHeight: 1, cursor: 'grab', touchAction: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >⇕</button>
   )
-  return <ProductCard {...props} onDelete={props.onDelete} outerRef={setNodeRef} outerStyle={outerStyle} handle={handle} />
+  return <ProductCard {...props} outerRef={setNodeRef} outerStyle={outerStyle} handle={handle} />
 }
 
 export function HomePage() {
@@ -109,7 +107,6 @@ export function HomePage() {
   const { show } = useToast()
   const navigate = useNavigate()
   const [categoryFilter, setCategoryFilter] = useState('')
-  const [swipedId, setSwipedId] = useState(null)
   const [delId, setDelId] = useState(null)
 
   // 恢复滚动位置（从产品详情返回时）
@@ -299,7 +296,7 @@ export function HomePage() {
               <SortableContext items={displayedList.map((p) => p.id)} strategy={verticalListSortingStrategy}>
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {displayedList.map((p) => (
-                    <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
+                    <SortableProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} navigate={navigate} />
                   ))}
                 </div>
               </SortableContext>
@@ -310,7 +307,7 @@ export function HomePage() {
         ) : (
           <div className="product-grid pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {displayedList.map((p) => (
-              <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} navigate={navigate} swipedId={swipedId} setSwipedId={setSwipedId} />
+              <ProductCard key={p.id} p={p} openEdit={openEdit} onDelete={setDelId} onTogglePin={togglePin} navigate={navigate} />
             ))}
           </div>
         )}

@@ -11,6 +11,13 @@ import { CopyImportDialog } from '../components/CopyImportDialog'
 import { TopicDialog, allTopicTags } from '../components/TopicDialog'
 import { ResetButton } from '../components/ResetButton'
 import { todayStr } from '../../utils/helpers'
+import {
+  DndContext, PointerSensor, useSensor, useSensors, closestCenter,
+} from '@dnd-kit/core'
+import {
+  SortableContext, useSortable, verticalListSortingStrategy, arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 // 每条文案的状态标记，与手机版 ProductDetailPage 的 CopyCard 一一对应：
 // 出单 / 爆单 / 用过三个可切换标记（手机版是三颗按钮，PC 版做成可切换的小标签）。
@@ -61,11 +68,40 @@ function usedAgo(dateStr) {
   return `${-diff}天后`
 }
 
+// 可拖拽排序的产品行
+function SortableProductRow({ p, isActive, onClick, children }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    background: isDragging ? '#fdf2f8' : undefined,
+  }
+  return (
+    <tr ref={setNodeRef} style={style} className={isActive ? 'on' : ''} onClick={onClick}>
+      <td style={{ width: 28, padding: '4px 4px', verticalAlign: 'middle' }}>
+        <button
+          {...attributes}
+          {...listeners}
+          onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
+          onClick={(e) => e.stopPropagation()}
+          title="拖动排序"
+          style={{
+            cursor: 'grab', border: 'none', background: 'transparent', padding: '2px 4px',
+            color: '#9ca3af', fontSize: 14, lineHeight: 1, touchAction: 'none',
+          }}
+        >⠿</button>
+      </td>
+      {children}
+    </tr>
+  )
+}
+
 // PC 版文案库：左表右详情。
 // 数据全部来自同一个 store（与手机版完全一致），这里只重排展示。
 export function PcProducts() {
   const { show } = useToast()
-  const { products, updateCopy, deleteCopy, deleteProduct, updateProduct } = useStore()
+  const { products, updateCopy, deleteCopy, deleteProduct, updateProduct, reorderProducts } = useStore()
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('')
   const [activeId, setActiveId] = useState('')
@@ -127,6 +163,17 @@ export function PcProducts() {
 
   // 置顶：写在产品记录上（pinned 字段），随 store 一起落本地 + 云同步，换设备也在
   const togglePin = (p) => updateProduct(p.id, { pinned: !p.pinned })
+
+  // 拖动排序
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }))
+  const onDragEnd = (event) => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = list.findIndex((p) => p.id === active.id)
+    const newIndex = list.findIndex((p) => p.id === over.id)
+    const newList = arrayMove(list, oldIndex, newIndex)
+    reorderProducts(newList.map((p) => p.id))
+  }
 
   // 选中的产品：默认取第一行；筛选后若选中项被过滤掉，自动回落到第一行
   const active = list.find((p) => p.id === activeId) || list[0] || null
@@ -263,15 +310,8 @@ export function PcProducts() {
             <table className="pcv-table">
               <thead>
                 <tr>
-                  {/* 这张表**每一列都按百分比分配**，故意不留「吃余量」的列。
-                      原因：本页左栏可拖动改宽，如果几列定死 px、只让最后一列吃余量，
-                      拖动时就只有那一列在涨（用户反馈的原话：「拖动的时候整体都要
-                      改变，不是只改操作」）。全给百分比，余量才会按比例摊到每一列。
-                      其他 PC 表格没有拖动条、不会出现这个现象，仍是「最后一列吃余量」。
-                      「出单」列按用户要求去掉，腾出的份额主要给了产品列。
-                      操作列从 23% 提到 34%：三个操作由文字链接改成按钮后，
-                      23%（560px 左栏下约 129px）放不下「置顶 编辑 删除」三个按钮。 */}
-                  <th style={{ width: '47%' }}>产品</th>
+                  <th style={{ width: '3%' }}></th>
+                  <th style={{ width: '44%' }}>产品</th>
                   <th style={{ width: '19%' }}>分类</th>
                   <th style={{ width: '34%' }}>操作</th>
                 </tr>
@@ -279,74 +319,68 @@ export function PcProducts() {
               <tbody>
                 {list.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="pcv-empty">没有匹配的产品</td>
+                    <td colSpan={4} className="pcv-empty">没有匹配的产品</td>
                   </tr>
-                ) : list.map((p) => {
-                  const st = CATEGORY_STYLE[p.category] || CATEGORY_STYLE['其他']
-                  // 与手机版 ProductCard 同一个图标来源（浅底 + 分类色 + 两字缩写）
-                  const icon = getIconInfo(p.name, p.category)
-                  return (
-                    <tr
-                      key={p.id}
-                      className={active && p.id === active.id ? 'on' : ''}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => setActiveId(p.id)}
-                    >
-                      <td>
-                        {/* 分类图标 + 名称，跟手机版 ProductCard 一致；
-                            已置顶的行在名称前挂一个小图钉（只做标记，开关在操作列） */}
-                        <span className="pcv-namecell">
-                          {/* 图钉位置永远占位（未置顶时 visibility:hidden），
-                              否则置顶行的图标会多占 12px，把后面的分类图标整体推右、与普通行错位 */}
-                          <span
-                            className="pcv-pin"
-                            style={{ color: '#b8517f', visibility: p.pinned ? 'visible' : 'hidden' }}
-                            title={p.pinned ? '已置顶' : undefined}
+                ) : (
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+                    <SortableContext items={list.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                      {list.map((p) => {
+                        const st = CATEGORY_STYLE[p.category] || CATEGORY_STYLE['其他']
+                        const icon = getIconInfo(p.name, p.category)
+                        return (
+                          <SortableProductRow
+                            key={p.id}
+                            p={p}
+                            isActive={active && p.id === active.id}
+                            onClick={() => setActiveId(p.id)}
                           >
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                              <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
-                            </svg>
-                          </span>
-                          <span className="pcv-caticon" style={{ background: icon.bg, color: icon.color }}>{icon.text}</span>
-                          <span className="pcv-nametext" title={displayTitle(p)}>{displayTitle(p)}</span>
-                        </span>
-                      </td>
-                      <td>
-                        {/* 分类：浅灰底 + 中性文字，只靠一个 6px 分类色圆点保留识别度 ——
-                            既不铺彩色底（用户要求少颜色），又能扫一眼认出分类 */}
-                        {p.category && (
-                          <span className="pcv-chip" style={{ background: '#f3f4f6', color: '#6b7280', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.7, background: st.color }} />
-                            {p.category}
-                          </span>
-                        )}
-                      </td>
-                      {/* 「出单」列已按用户要求去掉 */}
-                      <td style={{ whiteSpace: 'nowrap' }}>
-                        {/* 三个操作统一成按钮（与样品页操作列同规格）：
-                            置顶/编辑 = ghost 描边；删除 = ghost + 红字（危险操作）。
-                            按钮比文字链接窄一点（5×10 内边距），三个能并排不换行。
-                            stopPropagation 是为了不触发整行的「选中该产品」。 */}
-                        <button
-                          className="pcv-btn pcv-btn-ghost"
-                          style={{ padding: '5px 10px', ...(p.pinned ? { color: '#b8517f', borderColor: 'rgba(184,81,127,0.45)' } : null) }}
-                          title={p.pinned ? '取消置顶' : '置顶'}
-                          onClick={(e) => { e.stopPropagation(); togglePin(p) }}
-                        >置顶</button>
-                        <button
-                          className="pcv-btn pcv-btn-ghost"
-                          style={{ padding: '5px 10px', marginLeft: 6 }}
-                          onClick={(e) => { e.stopPropagation(); setEditing(p) }}
-                        >编辑</button>
-                        <button
-                          className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
-                          style={{ padding: '5px 10px', marginLeft: 6 }}
-                          onClick={(e) => { e.stopPropagation(); setDelProduct(p) }}
-                        >删除</button>
-                      </td>
-                    </tr>
-                  )
-                })}
+                            <td>
+                              <span className="pcv-namecell">
+                                <span
+                                  className="pcv-pin"
+                                  style={{ color: '#b8517f', visibility: p.pinned ? 'visible' : 'hidden' }}
+                                  title={p.pinned ? '已置顶' : undefined}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                                  </svg>
+                                </span>
+                                <span className="pcv-caticon" style={{ background: icon.bg, color: icon.color }}>{icon.text}</span>
+                                <span className="pcv-nametext" title={displayTitle(p)}>{displayTitle(p)}</span>
+                              </span>
+                            </td>
+                            <td>
+                              {p.category && (
+                                <span className="pcv-chip" style={{ background: '#f3f4f6', color: '#6b7280', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                  <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.7, background: st.color }} />
+                                  {p.category}
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ whiteSpace: 'nowrap' }}>
+                              <button
+                                className="pcv-btn pcv-btn-ghost"
+                                style={{ padding: '5px 10px', ...(p.pinned ? { color: '#b8517f', borderColor: 'rgba(184,81,127,0.45)' } : null) }}
+                                title={p.pinned ? '取消置顶' : '置顶'}
+                                onClick={(e) => { e.stopPropagation(); togglePin(p) }}
+                              >置顶</button>
+                              <button
+                                className="pcv-btn pcv-btn-ghost"
+                                style={{ padding: '5px 10px', marginLeft: 6 }}
+                                onClick={(e) => { e.stopPropagation(); setEditing(p) }}
+                              >编辑</button>
+                              <button
+                                className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
+                                style={{ padding: '5px 10px', marginLeft: 6 }}
+                                onClick={(e) => { e.stopPropagation(); setDelProduct(p) }}
+                              >删除</button>
+                            </td>
+                          </SortableProductRow>
+                        )
+                      })}
+                    </SortableContext>
+                  </DndContext>
+                )}
               </tbody>
             </table>
           </div>
