@@ -552,13 +552,14 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
                 ? <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: 'rgba(148,163,184,0.16)', color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>***</span>
                 : acList.map((a) => {
                     const c = getCounts(s, a.name)
-                    const stat = c.publishCount > 0 ? `发${c.publishCount}${c.orderCount > 0 ? ` · 出${c.orderCount}` : ''}` : ''
+                    const stat = c.publishCount > 0 ? `发${c.publishCount}` : ''
                     const statColor = c.publishCount > 0 ? '#16a34a' : '#94a3b8'
                     const statBg = c.publishCount > 0 ? 'rgba(22,163,74,0.14)' : 'rgba(148,163,184,0.16)'
                     return (
                       <span key={a.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {a.name}
-                        <span style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: statBg, color: statColor, fontWeight: 700 }}>{stat}</span>
+                        {stat && <span style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: statBg, color: statColor, fontWeight: 700 }}>{stat}</span>}
+                        {c.orderCount > 0 && <span title="已出单" style={{ fontSize: '9px', color: '#e11d48' }}>📦</span>}
                       </span>
                     )
                   })
