@@ -136,44 +136,47 @@ export function PcDashboard() {
     return [...set].sort((x, y) => accRank(x) - accRank(y))
   }, [cur])
 
-  // 按账号分组：同一账号下的待处理产品排在一起，便于「一个账号一个账号地补」。
-  // ⚠️ 已选定某个账号时，必须只保留该账号这一个分组 —— 否则样品会按自己的
-  // 全部账号重新散回各组（点「努力成为富婆」却还能看到 广东刘亦菲 的组），筛选形同失效。
-  const groups = useMemo(() => {
-    const map = new Map()
+  // 「全部账号」时**合并成一张表**，用一列「账号」标出属于谁（用户要求）：
+  //   · 发布提醒 / 发布不足：一个样品可能挂着多个账号，这里按账号**拆行** ——
+  //     每行只代表「某账号 × 该样品」，这样「未发布天数 / 还差条数」才是该账号自己的数；
+  //   · 即将到期：截止日是样品级别的，不拆行，账号列里并列显示全部账号。
+  // 选定了某个账号时只保留该账号的行，筛选依旧生效。
+  const rows = useMemo(() => {
+    const out = []
     for (const it of items) {
-      for (const a of cur.accountsOf(it)) {
-        if (account && a !== account) continue
-        if (!map.has(a)) map.set(a, [])
-        map.get(a).push(it)
-      }
+      const accs = cur.accountsOf(it).filter((a) => !account || a === account)
+      if (accs.length === 0) continue
+      if (tab === 'expiring') out.push({ it, accs, acc: accs[0] })
+      else for (const a of accs) out.push({ it, accs: [a], acc: a })
     }
-    // 「发布提醒」组内排序（用户要求「逾期的排前面」）：
-    //   ① 已逾期的一律排最前 —— 判定必须与界面上的「已逾期」标签完全一致
-    //      （status !== 'published' && isOverdue），否则已发布但截止日已过的行
-    //      也会被当成逾期排到前面，把真正的逾期行压下去（曾出现这种情况）；
+    // 「发布提醒」排序（用户要求「逾期的排前面」）：
+    //   ① 已逾期的一律排最前 —— 判定必须与界面上的「已逾期」标签完全一致；
     //   ② 其余按截止日期升序（最早到期的最急）；
-    //   ③ 截止日相同/缺失时用 compareUrgent 兜底（多久没发视频）。
+    //   ③ 截止日相同/缺失时用 compareUrgent 兜底（多久没发视频）；
+    //   ④ 最后按账号顺序，让同一账号的行尽量挨在一起。
     if (tab === 'reminders') {
-      const overdueOf = (it) => {
-        const s = it.sample || it
+      const overdueOf = (r) => {
+        const s = r.it.sample || r.it
         return (s.status !== 'published' && isOverdue(s)) ? 0 : 1
       }
-      for (const arr of map.values()) {
-        arr.sort((x, y) => {
-          const oa = overdueOf(x)
-          const ob = overdueOf(y)
-          if (oa !== ob) return oa - ob
-          const a = (x.sample || x).deadline || ''
-          const b = (y.sample || y).deadline || ''
-          if (!a && !b) return compareUrgent(x.sample || x, y.sample || y)
-          if (!a) return 1     // 没填截止日的排在同组最后
-          if (!b) return -1
-          return a.localeCompare(b) || compareUrgent(x.sample || x, y.sample || y)
-        })
-      }
+      out.sort((x, y) => {
+        const oa = overdueOf(x)
+        const ob = overdueOf(y)
+        if (oa !== ob) return oa - ob
+        const a = (x.it.sample || x.it).deadline || ''
+        const b = (y.it.sample || y.it).deadline || ''
+        if (!a && !b) return accRank(x.acc) - accRank(y.acc)
+        if (!a) return 1     // 没填截止日的排在最后
+        if (!b) return -1
+        return a.localeCompare(b)
+          || accRank(x.acc) - accRank(y.acc)
+          || compareUrgent(x.it.sample || x.it, y.it.sample || y.it)
+      })
+    } else if (account === '') {
+      // 其它 Tab 未筛选时按账号归拢，读起来是「一账号一段」而不是随机交错
+      out.sort((x, y) => accRank(x.acc) - accRank(y.acc))
     }
-    return [...map.entries()].sort((x, y) => accRank(x[0]) - accRank(y[0]))
+    return out
   }, [items, cur, account, tab])
 
   // 待办清单默认只列 5 条，卡片底部「查看全部 N 条」再展开剩余（用户要求）。
@@ -303,68 +306,62 @@ export function PcDashboard() {
               </div>
             </div>
 
-            {groups.length === 0 ? (
+            {rows.length === 0 ? (
               <div className="pcv-empty">当前筛选下没有需要处理的样品</div>
             ) : (
-              groups.map(([acc, list]) => (
-                <div key={acc}>
-                  <div className="pcv-grouphead">
-                    {/* 账号主题色退成一个小圆点，名字回归中性色 —— 原来三个账号
-                        三个颜色的粗体标题，是整页最花的地方 */}
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.55, background: (ACCOUNT_COLOR[acc] || {}).c || '#c9cdd4' }} />
-                    <span>{acc}</span>
-                    <span>{list.length} 个待处理</span>
-                  </div>
-                  <table className="pcv-table">
-                    <thead>
-                      <tr>
-                        {/* 列宽按「内容宽度 + 适度留白」定死，且总和接近表格可用宽度（约 1100px）：
-                            表格是 width:100%，指定宽度后余量按比例摊到各列；
-                            若某列定得过宽（早先用 auto / 26%），余量会全堆在那一列，
-                            短内容行就会空出一大片（实测中期列 377px、内容只占 107px）。
-                            「操作」按用户要求挪到「产品」旁边（原来在最右端，一行要横跨整个屏幕才够得到）。
-                            「打开样品」从文字链接改成按钮后，两个按钮并排约需 175px，
-                            所以这一列 160 → 200，产品列相应 250 → 210。 */}
-                        <th style={{ width: 210 }}>产品</th>
-                        <th style={{ width: 200 }}>操作</th>
-                        <th style={{ width: 120 }}>状态</th>
-                        <th style={{ width: 260 }}>{cur.header}</th>
-                        <th style={{ width: 150 }}>截止日期</th>
+              // 合并成一张表：账号不再各占一个标题+表格，改成一列「账号」（用户要求）
+              <table className="pcv-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: 190 }}>产品</th>
+                    <th style={{ width: 180 }}>操作</th>
+                    <th style={{ width: 170 }}>账号</th>
+                    <th style={{ width: 90 }}>状态</th>
+                    <th style={{ width: 230 }}>{cur.header}</th>
+                    <th style={{ width: 110 }}>截止日期</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(({ it, accs, acc }, i) => {
+                    const s = it.sample || it
+                    const st = SAMPLE_STATUS[s.status]
+                    // 逾期行重点标注：整行淡红底 + 产品单元格左侧 3px 竖条（inset 阴影，
+                    // 不吃布局空间，也不会被圆角切弯）+ 截止日期转红加粗。
+                    const overdue = s.status !== 'published' && isOverdue(s)
+                    return (
+                      <tr key={`${acc}-${s.id}-${i}`} style={overdue ? { background: '#fdf7f6' } : undefined}>
+                        <td
+                          className="pcv-name"
+                          title={s.name}
+                          style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
+                        >{s.name}</td>
+                        <td>{cur.actions(it)}</td>
+                        {/* 账号列：彩色圆点 + 名字；多账号（即将到期）并列显示 */}
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            {accs.map((a, k) => (
+                              <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                {k > 0 && <span style={{ width: 8 }} />}
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.75, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
+                                <span style={{ color: '#333a45' }}>{a}</span>
+                              </span>
+                            ))}
+                          </span>
+                        </td>
+                        <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>
+                        <td>{cur.mid(it, acc)}</td>
+                        <td
+                          className="pcv-num"
+                          style={{
+                            color: overdue ? '#ad5c58' : (s.deadline ? '#475569' : '#cbd5e1'),
+                            fontWeight: overdue ? 600 : 400,
+                          }}
+                        >{s.deadline || '—'}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {list.map((it, i) => {
-                        const s = it.sample || it
-                        const st = SAMPLE_STATUS[s.status]
-                        // 逾期行重点标注：整行淡红底 + 产品单元格左侧 3px 竖条（inset 阴影，
-                        // 不吃布局空间，也不会被圆角切弯）+ 截止日期转红加粗。
-                        // 光靠那枚浅红 chip 在一屏几十行里太弱，扫不出来。
-                        const overdue = s.status !== 'published' && isOverdue(s)
-                        return (
-                          <tr key={`${acc}-${s.id}-${i}`} style={overdue ? { background: '#fdf7f6' } : undefined}>
-                            <td
-                              className="pcv-name"
-                              title={s.name}
-                              style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
-                            >{s.name}</td>
-                            {/* 操作紧跟在产品后面（表头顺序已同步） */}
-                            <td>{cur.actions(it)}</td>
-                            <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>
-                            <td>{cur.mid(it, acc)}</td>
-                            <td
-                              className="pcv-num"
-                              style={{
-                                color: overdue ? '#ad5c58' : (s.deadline ? '#475569' : '#cbd5e1'),
-                                fontWeight: overdue ? 600 : 400,
-                              }}
-                            >{s.deadline || '—'}</td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ))
+                    )
+                  })}
+                </tbody>
+              </table>
             )}
           </div>
         </div>
