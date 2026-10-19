@@ -4,11 +4,12 @@ import { ConfirmModal } from '../../components/Modal'
 import { recordDelete } from '../../utils/sync'
 import { WEATHER_LIST, WeatherIcon } from '../components/WeatherIcon'
 
-// PC 版「日历」（日记 / 心情 / 天气）。
-// 数据照手机版 CalendarPage / CalendarDetailPage：直接读写 localStorage 的
-// `blogger_calendar_v1`（**不走 store**），删除时调 recordDelete 记墓碑以同步。
-// 结构：左月历 + 右「本月记录」列表；点某一天开弹窗写日记（PC 端不跳页面，
-// 手机版是跳到 /calendar/:date 整页 —— 那个页面在 PC 侧没有入口）。
+// PC 版「日记本」（原「日历」页，用户要求改成记事本 / 日记）：
+//   · 左侧：全部日记按日期倒序列出（可搜索），点一条就在右侧编辑
+//   · 右侧：日期 / 心情 / 天气 / 正文，保存、删除都在这一栏
+// 数据层完全沿用手机版 CalendarPage：直接读写 localStorage 的 `blogger_calendar_v1`
+// （**不走 store**），删除时调 recordDelete 记墓碑以同步；存储结构不变，
+// 所以手机端「日历」与这里看到的是同一批日记。
 const STORAGE_KEY = 'blogger_calendar_v1'
 
 const MOODS = [
@@ -21,11 +22,10 @@ const MOODS = [
   { emoji: '🥰', label: '恋爱', color: '#ec4899' },
   { emoji: '🤩', label: '兴奋', color: '#f97316' },
 ]
-// 天气选项见 components/WeatherIcon（WEATHER_LIST）：存储值仍是 emoji，渲染换成 SVG 图标
 const WEEK = ['日', '一', '二', '三', '四', '五', '六']
 
 // 解析后必须保证是「普通对象」：备份恢复 / 历史脏数据可能把 null、数组、字符串写进这个 key，
-// 后面 Object.entries(data) 遇到 null 会抛 "Cannot convert undefined or null to object"，整页白屏。
+// 后面 Object.entries(data) 遇到 null 会抛错，整页白屏。
 const load = () => {
   try {
     const r = localStorage.getItem(STORAGE_KEY)
@@ -41,242 +41,289 @@ const todayStr = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-function dateLabel(dateStr) {
-  const parts = String(dateStr).split('-')
+function weekdayOf(dateStr) {
   const d = new Date(dateStr)
-  return `${parseInt(parts[1], 10)}月${parseInt(parts[2], 10)}日 星期${WEEK[d.getDay()]}`
+  return Number.isNaN(d.getTime()) ? '' : `星期${WEEK[d.getDay()]}`
+}
+
+// 「2026-10-19」→「10月19日」
+function shortDate(dateStr) {
+  const p = String(dateStr).split('-')
+  if (p.length < 3) return dateStr
+  return `${parseInt(p[1], 10)}月${parseInt(p[2], 10)}日`
 }
 
 export function PcCalendar() {
   const { show } = useToast()
-  // 手机版是挂载时读一次；这里存到 state，写完/删完能立刻反映到月历上（存储格式完全一致）
   const [data, setData] = useState(load)
-  const [year, setYear] = useState(() => new Date().getFullYear())
-  const [month, setMonth] = useState(() => new Date().getMonth() + 1)
-  const [openDate, setOpenDate] = useState(null)
-  const [delOpen, setDelOpen] = useState(false)
+  const [keyword, setKeyword] = useState('')
+
+  // 正在编辑：editingKey 是「这条日记原本的日期」（新建时为空串）
+  const [editingKey, setEditingKey] = useState(null)
+  const [date, setDate] = useState('')
   const [mood, setMood] = useState('')
   const [weather, setWeather] = useState('')
   const [note, setNote] = useState('')
+  const [delOpen, setDelOpen] = useState(false)
 
   const today = todayStr()
-  const daysInMonth = new Date(year, month, 0).getDate()
-  const firstDay = new Date(year, month - 1, 1).getDay()
-  const monthPrefix = `${year}-${pad(month)}`
 
-  const monthEntries = useMemo(
-    () => Object.entries(data)
-      .filter(([k]) => k.startsWith(monthPrefix))
-      .sort(([a], [b]) => b.localeCompare(a)),
-    [data, monthPrefix],
-  )
+  // 全部日记按日期倒序；搜索命中日期、心情标签或正文
+  const entries = useMemo(() => {
+    const kw = keyword.trim().toLowerCase()
+    return Object.entries(data)
+      .filter(([k, v]) => {
+        if (!v) return false
+        if (!kw) return true
+        const moodLabel = (MOODS.find((m) => m.emoji === v.mood) || {}).label || ''
+        return k.includes(kw) || String(v.note || '').toLowerCase().includes(kw) || moodLabel.includes(kw)
+      })
+      .sort(([a], [b]) => b.localeCompare(a))
+  }, [data, keyword])
 
-  const prevMonth = () => { if (month === 1) { setYear((y) => y - 1); setMonth(12) } else setMonth((m) => m - 1) }
-  const nextMonth = () => { if (month === 12) { setYear((y) => y + 1); setMonth(1) } else setMonth((m) => m + 1) }
-  const goToday = () => {
-    const d = new Date()
-    setYear(d.getFullYear()); setMonth(d.getMonth() + 1)
-    openDay(todayStr())
-  }
+  const total = Object.keys(data).filter((k) => data[k]).length
+  const thisMonth = Object.keys(data).filter((k) => k.startsWith(today.slice(0, 7))).length
 
-  const openDay = (dateStr) => {
-    const e = data[dateStr] || {}
+  const openEntry = (key) => {
+    const e = data[key] || {}
+    setEditingKey(key)
+    setDate(key)
     setMood(e.mood || '')
     setWeather(e.weather || '')
     setNote(e.note || '')
-    setOpenDate(dateStr)
   }
 
-  const saveEntry = () => {
-    if (!openDate) return
-    const next = { ...data, [openDate]: { mood, weather, note: note.trim() } }
+  // 「写今天」：今天已有日记就打开它，否则建一条空白
+  const writeToday = () => {
+    if (data[today]) { openEntry(today); return }
+    setEditingKey('')
+    setDate(today)
+    setMood('')
+    setWeather('')
+    setNote('')
+  }
+
+  const save = () => {
+    if (!date) { show('请选择日期', 'error'); return }
+    const next = { ...data }
+    // 改过日期 → 把旧那天的条目挪走，避免同一篇留在两个日期下
+    if (editingKey && editingKey !== date) delete next[editingKey]
+    next[date] = { mood, weather, note: note.trim() }
     persist(next)
     setData(next)
+    setEditingKey(date)
     show('已保存', 'success')
-    setOpenDate(null)
   }
 
-  const delEntry = () => {
-    if (!openDate) return
+  const del = () => {
+    const key = editingKey || date
+    if (!key) return
     const next = { ...data }
-    delete next[openDate]
+    delete next[key]
     persist(next)
-    try { recordDelete(STORAGE_KEY, openDate) } catch (e) { /* 同步模块异常不影响本地删除 */ }
+    try { recordDelete(STORAGE_KEY, key) } catch (e) { /* 同步模块异常不影响本地删除 */ }
     setData(next)
     setDelOpen(false)
-    setOpenDate(null)
+    setEditingKey(null)
+    setNote('')
     show('已删除', 'success')
   }
 
-  const isEntryDate = openDate && data[openDate]
+  const editing = editingKey !== null
+  const charCount = note.trim().length
 
   return (
     <>
       <div className="pcv-bar">
         <div>
-          <div className="pcv-title">日历</div>
+          <div className="pcv-title">日记本</div>
           <div className="pcv-sub">
-            {year} 年 {month} 月 · 本月 {monthEntries.length}/{daysInMonth} 天有记录
+            共 {total} 篇 · 本月 {thisMonth} 篇{total === 0 ? ' · 点右上角「写今天」开始' : ''}
           </div>
         </div>
         <div className="pcv-spacer" />
-        <button className="pcv-btn pcv-btn-ghost" onClick={prevMonth}>‹</button>
-        <span style={{ fontSize: 13, fontWeight: 700, minWidth: 84, textAlign: 'center' }}>{year}年{month}月</span>
-        <button className="pcv-btn pcv-btn-ghost" onClick={nextMonth}>›</button>
-        <button className="pcv-btn" onClick={goToday}>今天</button>
+        <input
+          className="pcv-input"
+          style={{ width: 200 }}
+          placeholder="搜索正文 / 日期 / 心情"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+        />
+        <button className="pcv-btn" onClick={writeToday}>✎ 写今天</button>
       </div>
 
-      <div className="pcv-body">
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.45fr) minmax(0, 1fr)', gap: 14, alignItems: 'start' }}>
-          {/* 月历 */}
-          <div className="pcv-card">
+      <div className="pcv-body pcv-body--fill">
+        <div
+          style={{
+            display: 'grid', gridTemplateColumns: '320px minmax(0, 1fr)', gap: 14,
+            alignItems: 'stretch', height: '100%', minHeight: 0,
+          }}
+        >
+          {/* 左：日记列表 */}
+          <div className="pcv-card pcv-card--scroll">
             <div className="pcv-card-h">
-              <span>📅 {year} 年 {month} 月</span>
-              <div className="pcv-spacer" />
-              <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>
-                点日期写日记 · 今天已框出
-              </span>
+              <span>全部日记</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>{entries.length} 篇</span>
             </div>
-            <div className="pcv-cal">
-              <div className="pcv-cal-week">
-                {WEEK.map((w) => <div key={w}>{w}</div>)}
+            {entries.length === 0 ? (
+              <div className="pcv-empty">
+                {keyword ? '没有匹配的日记' : '还没有日记，点右上角「写今天」写第一篇'}
               </div>
-              <div className="pcv-cal-grid">
-                {Array.from({ length: firstDay }).map((_, i) => <div key={`e${i}`} className="pcv-cal-cell empty" />)}
-                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-                  const dateStr = `${monthPrefix}-${pad(day)}`
-                  const e = data[dateStr]
-                  const isToday = dateStr === today
+            ) : (
+              <div>
+                {entries.map(([key, e]) => {
+                  const on = editingKey === key
+                  const m = MOODS.find((x) => x.emoji === e.mood)
                   return (
-                    <div
-                      key={day}
-                      className={`pcv-cal-cell${isToday ? ' today' : ''}`}
-                      onClick={() => openDay(dateStr)}
-                      title={e?.note || ''}
+                    <button
+                      key={key}
+                      onClick={() => openEntry(key)}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left', cursor: 'pointer',
+                        padding: '10px 14px', border: 'none', borderBottom: '0.5px solid rgba(15,23,42,0.06)',
+                        background: on ? '#fdf1f6' : 'transparent',
+                        borderLeft: on ? '3px solid #b8517f' : '3px solid transparent',
+                      }}
                     >
-                      <span className="pcv-cal-day">{day}</span>
-                      {(e?.mood || e?.weather) && (
-                        <span className="pcv-cal-mark" style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
-                          {e?.mood || ''}
-                          {e?.weather && <WeatherIcon value={e.weather} size={13} />}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: on ? '#b8517f' : '#333a45' }}>
+                          {shortDate(key)}
                         </span>
-                      )}
-                      {e?.note && <span className="pcv-cal-note">{e.note}</span>}
-                    </div>
+                        <span style={{ fontSize: 11, color: '#9aa0a9' }}>{weekdayOf(key)}</span>
+                        {key === today && (
+                          <span className="pcv-chip" style={{ background: '#fdf1f6', color: '#b8517f', fontSize: 10 }}>今天</span>
+                        )}
+                        <div style={{ flex: 1 }} />
+                        {m && <span style={{ fontSize: 12 }} title={m.label}>{m.emoji}</span>}
+                        {e.weather && <WeatherIcon value={e.weather} size={13} />}
+                      </div>
+                      <div style={{
+                        fontSize: 12, color: e.note ? '#6b7280' : '#c9cdd4',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {e.note || '（空白日记）'}
+                      </div>
+                    </button>
                   )
                 })}
               </div>
-            </div>
+            )}
           </div>
 
-          {/* 本月记录 */}
-          <div className="pcv-card pcv-card--scroll">
-            <div className="pcv-card-h">
-              <span>{month} 月记录</span>
-              <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>{monthEntries.length} 天</span>
-            </div>
-            {monthEntries.length === 0 ? (
-              <div className="pcv-empty">这个月还没有记录，点左边任意一天开始写</div>
-            ) : monthEntries.map(([dateStr, entry]) => (
-              <div
-                key={dateStr}
-                className="pcv-copyitem"
-                style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}
-                onClick={() => openDay(dateStr)}
-              >
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#9aa0a9', minWidth: 34, flexShrink: 0 }}>
-                  {parseInt(dateStr.split('-')[2], 10)}日
-                </span>
-                {entry.mood && <span style={{ fontSize: 18, flexShrink: 0 }}>{entry.mood}</span>}
-                {entry.weather && <WeatherIcon value={entry.weather} size={15} />}
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#333a45', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {entry.note || <span style={{ color: '#c9cdd4' }}>（没写内容）</span>}
-                </span>
+          {/* 右：编辑区 */}
+          <div className="pcv-card" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+            {!editing ? (
+              <div className="pcv-empty" style={{ padding: '60px 0' }}>
+                选左边一篇日记，或点右上角「✎ 写今天」开始写
               </div>
-            ))}
+            ) : (
+              <>
+                <div className="pcv-card-h">
+                  <span>{date ? `${shortDate(date)} ${weekdayOf(date)}` : '新日记'}</span>
+                  <div className="pcv-spacer" />
+                  <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>{charCount} 字</span>
+                </div>
+
+                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
+                  {/* 日期 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span className="pcv-field-label" style={{ margin: 0, minWidth: 30 }}>日期</span>
+                    <input
+                      className="pcv-input"
+                      type="date"
+                      style={{ width: 170 }}
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                    />
+                    {editingKey && editingKey !== date && (
+                      <span style={{ fontSize: 11, color: '#b1702c' }}>保存后会从 {shortDate(editingKey)} 挪过来</span>
+                    )}
+                  </div>
+
+                  {/* 心情 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span className="pcv-field-label" style={{ margin: 0, minWidth: 30 }}>心情</span>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      {MOODS.map((m) => {
+                        const on = mood === m.emoji
+                        return (
+                          <button
+                            key={m.emoji}
+                            title={m.label}
+                            onClick={() => setMood(on ? '' : m.emoji)}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              padding: '3px 8px', borderRadius: 7, cursor: 'pointer',
+                              fontSize: 12, fontWeight: on ? 600 : 400,
+                              border: `0.5px solid ${on ? m.color : 'rgba(15,23,42,0.10)'}`,
+                              background: on ? `${m.color}18` : '#fff',
+                              color: on ? m.color : '#4b5563',
+                            }}
+                          >{m.emoji}{m.label}</button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 天气 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span className="pcv-field-label" style={{ margin: 0, minWidth: 30 }}>天气</span>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      {WEATHER_LIST.map((w) => {
+                        const on = weather === w.emoji
+                        return (
+                          <button
+                            key={w.emoji}
+                            onClick={() => setWeather(on ? '' : w.emoji)}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              padding: '3px 8px', borderRadius: 7, cursor: 'pointer',
+                              fontSize: 12, fontWeight: on ? 600 : 400,
+                              border: `0.5px solid ${on ? '#b8517f' : 'rgba(15,23,42,0.10)'}`,
+                              background: on ? '#fdf1f6' : '#fff',
+                              color: on ? '#b8517f' : '#4b5563',
+                            }}
+                          >
+                            <WeatherIcon value={w.emoji} size={14} />{w.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 正文 */}
+                  <textarea
+                    className="pcv-input"
+                    style={{
+                      flex: 1, minHeight: 180, resize: 'none', lineHeight: 1.9,
+                      padding: '12px 14px', fontSize: 14, fontFamily: 'inherit',
+                    }}
+                    placeholder="今天发生了什么？随便写点…"
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                  />
+                </div>
+
+                <div className="pcv-dialog-f" style={{ borderTop: '0.5px solid rgba(15,23,42,0.06)', padding: '10px 16px' }}>
+                  <span style={{ fontSize: 11, color: '#9aa0a9' }}>按日期归档，手机端「日历」能看到同一批日记</span>
+                  <div className="pcv-spacer" />
+                  {editingKey && data[editingKey] && (
+                    <button className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger" onClick={() => setDelOpen(true)}>删除</button>
+                  )}
+                  <button className="pcv-btn" style={{ marginLeft: 8 }} onClick={save}>保存</button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
-
-      {/* 写日记：弹窗 */}
-      {openDate && (
-        <div className="pcv-overlay" onClick={() => setOpenDate(null)}>
-          <div className="pcv-dialog" style={{ maxWidth: 620 }} onClick={(e) => e.stopPropagation()}>
-            <div className="pcv-dialog-h">
-              <span>{openDate === today ? '今天' : dateLabel(openDate)}</span>
-              {openDate === today && (
-                <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>{dateLabel(openDate)}</span>
-              )}
-              {mood && <span style={{ fontSize: 18 }}>{mood}</span>}
-              <div className="pcv-spacer" />
-              <button className="pcv-dialog-x" title="关闭" onClick={() => setOpenDate(null)}>×</button>
-            </div>
-
-            <div className="pcv-dialog-b">
-              <div className="pcv-field-label">今天心情</div>
-              <div className="pcv-catpick">
-                {MOODS.map((m) => (
-                  <button
-                    key={m.emoji}
-                    className={mood === m.emoji ? 'on' : ''}
-                    style={mood === m.emoji ? { borderColor: m.color, background: `${m.color}15`, color: m.color } : undefined}
-                    onClick={() => setMood(mood === m.emoji ? '' : m.emoji)}
-                  >
-                    {m.emoji} {m.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="pcv-field-label" style={{ marginTop: 16 }}>天气</div>
-              <div className="pcv-catpick">
-                {WEATHER_LIST.map((w) => (
-                  <button
-                    key={w.emoji}
-                    className={weather === w.emoji ? 'on' : ''}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
-                    onClick={() => setWeather(weather === w.emoji ? '' : w.emoji)}
-                  >
-                    <WeatherIcon value={w.emoji} size={16} />
-                    {w.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="pcv-field-label" style={{ marginTop: 16 }}>日记 / 心事</div>
-              <textarea
-                className="pcv-input"
-                style={{ width: '100%', minHeight: 200, resize: 'vertical', lineHeight: 1.7, fontFamily: 'inherit' }}
-                placeholder={'今天发生了什么？\n有什么想记录的？'}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                autoFocus
-              />
-            </div>
-
-            <div className="pcv-dialog-f">
-              {isEntryDate && (
-                <button
-                  className="pcv-btn pcv-btn-ghost"
-                  style={{ color: '#b96a66', borderColor: 'rgba(185, 106, 102, 0.35)' }}
-                  onClick={() => setDelOpen(true)}
-                >删除</button>
-              )}
-              <div className="pcv-spacer" />
-              <button className="pcv-btn pcv-btn-ghost" onClick={() => setOpenDate(null)}>取消</button>
-              <button className="pcv-btn" onClick={saveEntry}>保存</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <ConfirmModal
         open={delOpen}
         onClose={() => setDelOpen(false)}
-        onConfirm={delEntry}
-        title="删除这天的记录"
-        message={openDate ? `确定删除「${dateLabel(openDate)}」的心情与日记吗？` : ''}
-        confirmText="删除"
-        danger
+        onConfirm={del}
+        title="删除日记"
+        message={`确定删除 ${editingKey ? shortDate(editingKey) : ''} 的日记吗？此操作不可撤销。`}
       />
     </>
   )

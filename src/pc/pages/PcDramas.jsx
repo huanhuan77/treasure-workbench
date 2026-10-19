@@ -21,7 +21,8 @@ export function PcDramas() {
 
   const [name, setName] = useState('')
   const [typeTab, setTypeTab] = useState('tv')
-  const [statusTab, setStatusTab] = useState('all')
+  // 默认看「想看」（用户要求）：这页日常就是挑下一部看什么，全部视图反而混进看过的
+  const [statusTab, setStatusTab] = useState('want')
   const [editing, setEditing] = useState(null)          // 编辑中的对象
   const [editForm, setEditForm] = useState({ name: '', type: 'tv' })
   const [delTarget, setDelTarget] = useState(null)
@@ -98,7 +99,7 @@ export function PcDramas() {
               <button
                 key={t.key}
                 className={typeTab === t.key ? 'on' : ''}
-                onClick={() => { setTypeTab(t.key); setStatusTab('all') }}
+                onClick={() => { setTypeTab(t.key); setStatusTab('want') }}
               >
                 <span>{t.label}</span>
                 <span className="pcv-count">{typeCount(t.key)}</span>
@@ -120,7 +121,7 @@ export function PcDramas() {
           </div>
           {/* 重置只清状态筛选（电视剧/综艺是 Tab，不动）。
               用 inline：紧跟在「放弃」后面，不再被 spacer 顶到整行最右端（那样会孤零零挂在窗口边缘） */}
-          <ResetButton active={statusTab !== 'all'} onClick={() => setStatusTab('all')} inline />
+          <ResetButton active={statusTab !== 'want'} onClick={() => setStatusTab('want')} inline />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>

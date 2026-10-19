@@ -143,6 +143,25 @@
   align-items: center;
   gap: 8px;
 }
+/* 表格里的发布日期：去掉胶囊边框，做成**超链接**的样子（蓝字，悬停出下划线）。
+   点它打开「发布详情」弹窗。 */
+.pcv-datelink {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #3f6fa8;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.pcv-datelink:hover {
+  color: #2f5c8f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* 淡彩按钮（次要操作用）：粉底 + 粉边 + 粉字，比白底 ghost 更有存在感，
    又不像主按钮那样抢眼。用于「查看明细」这类行内查看入口。 */
 /* 用 .pcv-btn.pcv-btn--tint 提高优先级：本规则写在 .pcv-btn-ghost（第 514 行）之前，
@@ -1709,7 +1728,10 @@ select.pcv-input {
   padding: 5px;
   gap: 6px;
   border-radius: 13px;
-  background: #f1f2f4;
+  /* 轨道底色加深（用户要求「加背景色」）：原来 #f1f2f4 与页面底色几乎同色，
+     整组控件看着像悬空的文字；现在用 #e6eaf0 + 内描边，白色选中块才真正「浮」出来。 */
+  background: #e6eaf0;
+  box-shadow: inset 0 0 0 0.5px rgba(15, 23, 42, 0.06);
 }
 .pcv-accountbar .pcv-seg--lg button {
   padding: 10px 20px;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
@@ -146,17 +147,24 @@ export function CloudActions({ vertical = false }) {
         </button>
       </div>
 
-      {showStatus && <SyncStatusDialog onClose={() => setShowStatus(false)} />}
-
-      <ConfirmModal
-        open={confirmRestore}
-        onClose={() => setConfirmRestore(false)}
-        onConfirm={handleRestore}
-        title="从云端恢复"
-        message="会用云端备份覆盖本机全部数据（产品、样品、收支、投资、日历等），本机未上传的内容会丢失。恢复后页面会自动刷新，确定继续？"
-        confirmText="覆盖并恢复"
-        danger
-      />
+      {/* ⚠️ 必须 portal 到 body：这组按钮现在渲染在**侧边栏**里，
+          .pcv-side 是 sticky、.pcv-root 又是 overflow:hidden，
+          直接挂弹窗会被裁在侧栏内、且被主内容盖住（点「备份与同步」只看到页面变灰、弹窗不见）。 */}
+      {createPortal(
+        <>
+          {showStatus && <SyncStatusDialog onClose={() => setShowStatus(false)} />}
+          <ConfirmModal
+            open={confirmRestore}
+            onClose={() => setConfirmRestore(false)}
+            onConfirm={handleRestore}
+            title="从云端恢复"
+            message="会用云端备份覆盖本机全部数据（产品、样品、收支、投资、日历等），本机未上传的内容会丢失。恢复后页面会自动刷新，确定继续？"
+            confirmText="覆盖并恢复"
+            danger
+          />
+        </>,
+        document.body,
+      )}
     </>
   )
 }

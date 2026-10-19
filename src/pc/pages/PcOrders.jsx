@@ -214,6 +214,9 @@ export function PcOrders() {
             style={{ padding: '4px 8px' }}
             onChange={(e) => setDateRange(e.target.value ? `day:${e.target.value}` : '')}
           />
+          {/* 「重置」放这一行最右（用户要求）：跟在日期选择器之后，账号行只留账号胶囊 */}
+          <div className="pcv-spacer" />
+          <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
@@ -221,8 +224,6 @@ export function PcOrders() {
           {accountOptions.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
           ))}
-          {/* inline：紧跟账号胶囊，不再被 spacer 顶到窗口最右端（与收支/追剧页一致） */}
-          <ResetButton active={hasFilter} onClick={resetFilters} inline />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>

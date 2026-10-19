@@ -28,7 +28,8 @@ const NAV = [
   { to: '/pc/orders', label: '出单', Icon: MoneyIcon, color: '#4f8a6d' },
   { to: '/pc/finance', label: '收支', Icon: WalletIcon, color: '#a97c46' },
   { to: '/pc/dramas', label: '追剧', Icon: TvIcon, color: '#b96a66' },
-  { to: '/pc/calendar', label: '日历', Icon: CalendarIcon, color: '#4f7f8f' },
+  // 这一页已从「日历」改成日记本（用户要求），菜单名跟着改
+  { to: '/pc/calendar', label: '日记', Icon: CalendarIcon, color: '#4f7f8f' },
   { to: '/pc/daily', label: '每日计划', Icon: ListIcon, color: '#6b7280' },
   { to: '/pc/reading', label: '读书成长', Icon: BookIcon, color: '#8a6d3b' },
   { to: '/pc/brands', label: '品牌方', Icon: CardIcon, color: '#7a8a4f' },
@@ -80,12 +81,6 @@ export function PcShell() {
     if (!isDesktop) navigate('/', { replace: true })
   }, [isDesktop, navigate])
 
-  // 切回手机版：本次会话内不再自动跳回 PC（sessionStorage，关掉标签页即失效）
-  const backToMobile = () => {
-    try { sessionStorage.setItem('pc_force_mobile', '1') } catch (e) { /* 隐私模式忽略 */ }
-    navigate('/', { replace: true })
-  }
-
   return (
     <div className="pcv-root">
       <aside className="pcv-side">
@@ -95,13 +90,10 @@ export function PcShell() {
             <NavItem key={it.to} {...it} badge={it.badgeKey ? badgeOf(it.badgeKey) : 0} />
           ))}
         </nav>
-        {/* 云备份三件套移到侧边栏底部（用户要求「放侧边栏」）：
-            三个按钮竖排等宽，和「切回手机版」放在一起，不再占用页面顶栏空间 */}
+        {/* 云备份三件套放在侧边栏底部（用户要求「放侧边栏」）：三个按钮竖排等宽。
+            「切回手机版」已去掉（用户要求）—— 需要时直接访问站点根路径即可。 */}
         <div className="pcv-sidefoot">
           <CloudActions vertical />
-          <button className="pcv-btn pcv-btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={backToMobile}>
-            切回手机版
-          </button>
         </div>
       </aside>
       <main className="pcv-main">

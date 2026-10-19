@@ -206,6 +206,10 @@ export function PcPublishRecords() {
             style={{ padding: '4px 8px' }}
             onChange={(e) => setDateRange(e.target.value ? `day:${e.target.value}` : '')}
           />
+          {/* 「重置」放这一行最右（用户要求）：紧跟日期选择器之后，账号那行只留账号胶囊，
+              不会再把重置读成第 4 个账号 */}
+          <div className="pcv-spacer" />
+          <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
@@ -213,7 +217,6 @@ export function PcPublishRecords() {
           {accountOptions.map((a) => (
             <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{a}</button>
           ))}
-          <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
@@ -259,7 +262,7 @@ export function PcPublishRecords() {
                         {dates.map((d) => (
                           <button
                             key={d}
-                            className="pcv-datechip"
+                            className="pcv-datelink"
                             title={`查看详情（共 ${g.dates.length} 个日期）`}
                             onClick={() => setDetailKey(g.key)}
                           >{d}</button>
