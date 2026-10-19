@@ -65,21 +65,26 @@ export function PcTodos() {
           <div className="pcv-title">待办清单</div>
           <div className="pcv-sub">{undone} 未完成 · {done} 已完成</div>
         </div>
-        <div className="pcv-spacer" />
-        <div className="pcv-seg">
-          <button className={filter === 'undone' ? 'on' : ''} onClick={() => setFilter('undone')}>
-            <span>未完成</span><span className="pcv-count">{undone}</span>
-          </button>
-          <button className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>
-            <span>全部</span><span className="pcv-count">{undone + done}</span>
-          </button>
-          <button className={filter === 'done' ? 'on' : ''} onClick={() => setFilter('done')}>
-            <span>已完成</span><span className="pcv-count">{done}</span>
-          </button>
-        </div>
       </div>
 
       <div className="pcv-body">
+        {/* 状态筛选从顶栏挪下来了（用户：「不要放在顶部」）——
+            它是「看哪些待办」的列表视图切换，跟列表放一起更顺，
+            顶栏只留标题，也不再和右上角的全站云备份按钮挤在一行。
+            样式沿用其它页的筛选条（.pcv-accountbar + .pcv-seg）。 */}
+        <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
+          <div className="pcv-seg">
+            <button className={filter === 'undone' ? 'on' : ''} onClick={() => setFilter('undone')}>
+              <span>未完成</span><span className="pcv-count">{undone}</span>
+            </button>
+            <button className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>
+              <span>全部</span><span className="pcv-count">{undone + done}</span>
+            </button>
+            <button className={filter === 'done' ? 'on' : ''} onClick={() => setFilter('done')}>
+              <span>已完成</span><span className="pcv-count">{done}</span>
+            </button>
+          </div>
+        </div>
         {/* 新增：内联一行，回车即添加 */}
         <div className="pcv-card" style={{ marginBottom: 14 }}>
           {/* 输入行整体靠左：任务输入框不再 flex:1 铺满整行（用户反馈「输入框太长」），
