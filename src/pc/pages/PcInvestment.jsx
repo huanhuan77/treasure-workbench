@@ -26,13 +26,14 @@ import { ResetButton } from '../components/ResetButton'
 const fmtNum = (n, d = 2) => (Number(n) || 0).toFixed(d)
 const pctText = (v) => (v === null || v === undefined || Number.isNaN(Number(v))) ? '—' : `${Number(v) >= 0 ? '+' : ''}${Number(v).toFixed(2)}%`
 
-// 涨跌幅的底色：涨=淡红、跌=淡绿（A 股习惯），无数据显示浅灰。
-// 只给淡底+同色字，不铺实底，避免整列变成红绿块。
+// 涨跌幅的底色：涨=红、跌=绿（A 股习惯），无数据显示浅灰。
+// 之前的绿是 #5f8a74（偏灰的军绿），在浅底上几乎看不出是"绿"，用户反馈「不够绿」；
+// 现在换成标准涨跌绿 #12864b + 更通透的淡绿底，红也同步加深保持平衡。
 const pctStyle = (v) => {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return { background: '#f5f6f8', color: '#c9cdd4' }
   return Number(v) >= 0
-    ? { background: '#fbeaea', color: '#c05a6e' }
-    : { background: '#eef4ef', color: '#5f8a74' }
+    ? { background: '#fdeaea', color: '#d92e3f' }
+    : { background: '#e6f6ec', color: '#12864b' }
 }
 
 const TABS = [
@@ -106,11 +107,16 @@ export function PcInvestment() {
     setForm({ code: '', name: '', direction: 'buy', shares: '', price: '', date: '', assetType: activeTab })
     setFetchedPrice(null)
     setNameFail(false)
+    setLockIdentity(false)   // 顶部新增：代码/名称/类型都可改
     setEditing('new')
   }
   // 「编辑最新」按钮：不是改旧记录，而是**基于这一行再记一笔**（用户要求弹窗要清空）。
   // 只带过 代码 / 名称 / 资产类型，份额、成交价、日期全空 —— 否则会沿用上一笔的数字，
   // 一不留神就把新买入存成旧价格。
+  // 只有顶部「＋ 新增记录」才允许改代码 / 名称 / 资产类型（用户要求）；
+  // 从某一行「记一笔」进来时基金已确定，这三项锁成只读，避免手滑把记录记到别的基金上。
+  const [lockIdentity, setLockIdentity] = useState(false)
+
   const openNewFrom = (inv) => {
     const today = new Date()
     const pad = (n) => String(n).padStart(2, '0')
@@ -125,6 +131,7 @@ export function PcInvestment() {
     })
     setFetchedPrice(null)
     setNameFail(false)
+    setLockIdentity(true)   // 「记一笔」不改身份
     setEditing('new')
   }
 
@@ -143,6 +150,7 @@ export function PcInvestment() {
     })
     setFetchedPrice(inv.currentPrice ?? null)
     setNameFail(false)
+    setLockIdentity(true)   // 编辑已有记录同样不改身份（只改份额/价格/日期）
     setEditing(inv)
   }
 
@@ -470,69 +478,90 @@ export function PcInvestment() {
             </div>
 
             <div className="pcv-dialog-b">
-              <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ flex: 1 }}>
-                  <div className="pcv-field-label">代码 <span style={{ color: '#b96a66' }}>*</span></div>
+              {/* 代码 / 名称 / 资产类型：**只有顶部「＋ 新增记录」可改**。
+                  从某一行「记一笔」或「编辑」进来时基金已确定，这里改成只读摘要，
+                  避免手滑把这一笔记到别的基金上。 */}
+              {lockIdentity ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                  padding: '10px 12px', borderRadius: 10,
+                  background: '#fdf1f6', border: '0.5px solid #f2cbdd',
+                }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, color: '#333a45' }}>{form.name || '（未命名）'}</span>
+                  <span style={{ fontSize: 12, color: '#b8517f', fontVariantNumeric: 'tabular-nums' }}>{form.code}</span>
+                  <span className="pcv-chip" style={{ background: '#fff', color: '#6b7280', border: '0.5px solid rgba(15,23,42,0.10)' }}>
+                    {form.assetType === 'fund' ? '基金' : '股票'}
+                  </span>
+                  <span style={{ marginLeft: 'auto', fontSize: 11, color: '#a5808f' }}>
+                    代码 / 名称 / 类型不可改（改请用顶部「＋ 新增记录」）
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div className="pcv-field-label">代码 <span style={{ color: '#b96a66' }}>*</span></div>
+                      <input
+                        className="pcv-input"
+                        style={{ width: '100%' }}
+                        placeholder="如 600519 / 110022"
+                        value={form.code}
+                        onChange={(e) => onCodeChange(e.target.value)}
+                        // 光标离开时立刻补查一次（防抖没触发、或粘贴后直接点别处都能兜住）
+                        onBlur={(e) => {
+                          if (lookupTimer.current) clearTimeout(lookupTimer.current)
+                          lookupName(e.target.value, form.assetType)
+                        }}
+                        autoFocus
+                      />
+                    </div>
+                    <div style={{ width: 130 }}>
+                      <div className="pcv-field-label">资产类型</div>
+                      <select
+                        className="pcv-input"
+                        style={{ width: '100%' }}
+                        value={form.assetType}
+                        onChange={(e) => setForm((f) => ({ ...f, assetType: e.target.value }))}
+                      >
+                        <option value="stock">股票</option>
+                        <option value="fund">基金</option>
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                      {/* 与手机端一致的「🔍 获取行情」：点一下按代码取名称 + 当前价 */}
+                      <button
+                        className="pcv-btn pcv-btn-ghost"
+                        style={{ height: 34, whiteSpace: 'nowrap' }}
+                        disabled={nameBusy || String(form.code).replace(/\D/g, '').length < 6}
+                        onClick={() => lookupName(form.code, form.assetType)}
+                      >{nameBusy ? '获取中…' : '🔍 获取行情'}</button>
+                    </div>
+                  </div>
+
+                  <div className="pcv-field-label" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    名称 <span style={{ color: '#b96a66' }}>*</span>
+                    {nameBusy ? (
+                      <span style={{ fontWeight: 400, color: '#8a8f98' }}>正在按代码查询名称…</span>
+                    ) : nameFail ? (
+                      <span style={{ fontWeight: 400, color: '#b96a66' }}>没查到，请手动填写</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="pcv-btn-text"
+                        style={{ padding: 0, fontWeight: 400 }}
+                        onClick={() => lookupName(form.code, form.assetType)}
+                      >按代码查名称</button>
+                    )}
+                  </div>
                   <input
                     className="pcv-input"
                     style={{ width: '100%' }}
-                    placeholder="如 600519 / 110022"
-                    value={form.code}
-                    onChange={(e) => onCodeChange(e.target.value)}
-                    // 光标离开时立刻补查一次（防抖没触发、或粘贴后直接点别处都能兜住）
-                    onBlur={(e) => {
-                      if (lookupTimer.current) clearTimeout(lookupTimer.current)
-                      lookupName(e.target.value, form.assetType)
-                    }}
-                    autoFocus
+                    placeholder="如 贵州茅台 / 易方达蓝筹"
+                    value={form.name}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   />
-                </div>
-                <div style={{ width: 130 }}>
-                  <div className="pcv-field-label">资产类型</div>
-                  <select
-                    className="pcv-input"
-                    style={{ width: '100%' }}
-                    value={form.assetType}
-                    onChange={(e) => setForm((f) => ({ ...f, assetType: e.target.value }))}
-                  >
-                    <option value="stock">股票</option>
-                    <option value="fund">基金</option>
-                  </select>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                  {/* 与手机端一致的「🔍 获取行情」：点一下按代码取名称 + 当前价 */}
-                  <button
-                    className="pcv-btn pcv-btn-ghost"
-                    style={{ height: 34, whiteSpace: 'nowrap' }}
-                    disabled={nameBusy || String(form.code).replace(/\D/g, '').length < 6}
-                    onClick={() => lookupName(form.code, form.assetType)}
-                  >{nameBusy ? '获取中…' : '🔍 获取行情'}</button>
-                </div>
-              </div>
-
-              <div className="pcv-field-label" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                名称 <span style={{ color: '#b96a66' }}>*</span>
-                {/* 名称旁的查询状态 / 手动重查：代码填满 6 位会自动查一次 */}
-                {nameBusy ? (
-                  <span style={{ fontWeight: 400, color: '#8a8f98' }}>正在按代码查询名称…</span>
-                ) : nameFail ? (
-                  <span style={{ fontWeight: 400, color: '#b96a66' }}>没查到，请手动填写</span>
-                ) : (
-                  <button
-                    type="button"
-                    className="pcv-btn-text"
-                    style={{ padding: 0, fontWeight: 400 }}
-                    onClick={() => lookupName(form.code, form.assetType)}
-                  >按代码查名称</button>
-                )}
-              </div>
-              <input
-                className="pcv-input"
-                style={{ width: '100%' }}
-                placeholder="如 贵州茅台 / 易方达蓝筹"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              />
+                </>
+              )}
               {/* 当前价卡片：与手机端「获取行情」后显示的那块一致，保存时会写进记录 */}
               {fetchedPrice != null && (
                 <div style={{
