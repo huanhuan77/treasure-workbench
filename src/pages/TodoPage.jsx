@@ -178,9 +178,9 @@ export function TodoPage() {
             style={inputStyle}
           />
         </Field>
-        <Field label="截止时间（可不填）">
+        <Field label="截止日期（可不填）">
           <input
-            type="datetime-local"
+            type="date"
             value={due}
             onChange={(e) => setDue(e.target.value)}
             style={inputStyle}
