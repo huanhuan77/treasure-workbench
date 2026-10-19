@@ -17,7 +17,7 @@ import { SyncStatusDialog } from './SyncStatusDialog'
 const AUTO_SYNC_GAP = 5 * 60 * 1000
 const LAST_AUTO_KEY = 'pc_auto_sync_at'
 
-export function CloudActions() {
+export function CloudActions({ vertical = false }) {
   const navigate = useNavigate()
   const { show } = useToast()
   const { applySyncResult } = useStore()
@@ -114,16 +114,34 @@ export function CloudActions() {
 
   return (
     <>
-      <div className="pcv-globalactions">
+      {/* vertical：放在左侧边栏底部，三个按钮竖排、等宽（用户要求「放侧边栏」）。
+          默认横排（用于顶栏场景）。 */}
+      <div className={`pcv-globalactions${vertical ? ' pcv-globalactions--side' : ''}`}>
         {/* 「备份与同步」= 同步诊断弹窗：云端/本机各模块条数对照 +
-            上次同步时间，弹窗里可跳去备份页。取代原来直接跳手机版备份页的「数据备份」。 */}
-        <button className="pcv-btn pcv-btn-ghost" onClick={() => setShowStatus(true)} title="查看本机与云端的差异">
+            上次同步时间，弹窗里可跳去备份页。 */}
+        <button
+          className="pcv-btn pcv-btn-ghost"
+          style={vertical ? { width: '100%', justifyContent: 'center' } : undefined}
+          onClick={() => setShowStatus(true)}
+          title="查看本机与云端的差异"
+        >
           备份与同步
         </button>
-        <button className="pcv-btn pcv-btn-ghost" disabled={syncing} onClick={handleSync} title={syncTitle}>
+        <button
+          className="pcv-btn pcv-btn-ghost"
+          style={vertical ? { width: '100%', justifyContent: 'center' } : undefined}
+          disabled={syncing}
+          onClick={handleSync}
+          title={syncTitle}
+        >
           {syncing ? '同步中…' : '🔄 同步'}
         </button>
-        <button className="pcv-btn pcv-btn-ghost" disabled={restoring} onClick={() => setConfirmRestore(true)}>
+        <button
+          className="pcv-btn pcv-btn-ghost"
+          style={vertical ? { width: '100%', justifyContent: 'center' } : undefined}
+          disabled={restoring}
+          onClick={() => setConfirmRestore(true)}
+        >
           {restoring ? '恢复中…' : '📥 恢复'}
         </button>
       </div>

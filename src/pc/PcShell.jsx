@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useIsDesktop } from '../utils/useIsDesktop'
 import {
@@ -53,27 +52,12 @@ function NavItem({ to, label, end, Icon, emoji, badge, color }) {
 
 export function PcShell() {
   const navigate = useNavigate()
-  const location = useLocation()
   const isDesktop = useIsDesktop()
   const { samples } = useStore()
   // 全站弹窗可拖动：文档级委托，挂一次对所有 .pcv-dialog 生效
   useDialogDrag()
 
-  // 云备份按钮的挂载点：每页渲染完成后，把 host 插到该页顶栏（.pcv-bar）里
-  // 第一个 .pcv-spacer 之后 —— 也就是「标题组」与「搜索框/新增按钮」之间的空位。
-  // 换页时（pathname 变化）重新找一次，旧的 host 由 cleanup 移除。
-  const [cloudHost, setCloudHost] = useState(null)
-  useEffect(() => {
-    const bar = document.querySelector('.pcv-main .pcv-bar')
-    if (!bar) { setCloudHost(null); return }
-    const host = document.createElement('div')
-    host.className = 'pcv-cloudhost'
-    const spacer = bar.querySelector('.pcv-spacer')
-    if (spacer) spacer.after(host)
-    else bar.appendChild(host)
-    setCloudHost(host)
-    return () => { host.remove() }
-  }, [location.pathname])
+  // 云备份按钮已改为直接渲染在侧边栏底部，不再需要往页面顶栏插挂载点
 
   // 样品角标口径与手机版底部导航一致：未到货 + 已到货未拍 + 已拍未发
   const samplesBadge = (samples || []).filter(
@@ -111,16 +95,16 @@ export function PcShell() {
             <NavItem key={it.to} {...it} badge={it.badgeKey ? badgeOf(it.badgeKey) : 0} />
           ))}
         </nav>
+        {/* 云备份三件套移到侧边栏底部（用户要求「放侧边栏」）：
+            三个按钮竖排等宽，和「切回手机版」放在一起，不再占用页面顶栏空间 */}
         <div className="pcv-sidefoot">
-          <button className="pcv-btn pcv-btn-ghost" style={{ width: '100%' }} onClick={backToMobile}>
+          <CloudActions vertical />
+          <button className="pcv-btn pcv-btn-ghost" style={{ width: '100%', marginTop: 8 }} onClick={backToMobile}>
             切回手机版
           </button>
         </div>
       </aside>
       <main className="pcv-main">
-        {/* 云备份三件套：portal 插进当前页顶栏的标题组后面（标题 → 24px 间隔 → 云备份 → 搜索框…），
-            这样不额外占一条横条，也不会在标题和搜索框之间留出空白带。 */}
-        {cloudHost && createPortal(<CloudActions />, cloudHost)}
         <Outlet />
       </main>
     </div>

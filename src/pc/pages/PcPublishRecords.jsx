@@ -55,7 +55,8 @@ export function PcPublishRecords() {
   const [dateRange, setDateRange] = useState('')
   const [keyword, setKeyword] = useState('')
   const [sortKey, setSortKey] = useState('dateDesc')
-  const [expanded, setExpanded] = useState('')
+  // 「发布详情」弹窗：存 group.key，渲染时再从 groups 里取最新对象（删除/改日期后自动同步）
+  const [detailKey, setDetailKey] = useState('')
   const [delTarget, setDelTarget] = useState(null)
   // 记录发布弹窗：undefined=关闭、对象=打开（可带预填）
   const [publishDialog, setPublishDialog] = useState(undefined)
@@ -222,47 +223,46 @@ export function PcPublishRecords() {
                 {/* 排序入口统一为「点表头」（与样品页、出单页、收支页一致）：
                     「发布日期」点一下切升/降序，「发布数量」点一下按次数排。
                     发布日期放第一列（用户要求）：日期是这条记录的主键，展开箭头也跟着它。 */}
-                <th style={{ width: 260 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
+                <th style={{ width: 240 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
                   发布日期{sortDirOf('date') ? (sortDirOf('date') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th>产品</th>
-                <th style={{ width: 150 }}>账号</th>
+                {/* 产品列给固定宽：之前它吃掉所有剩余宽度，长名不多时右边空一大片（用户反馈「太宽了」）。
+                    剩余宽度交给末尾的空白列吸收。 */}
+                <th style={{ width: 340 }}>产品</th>
+                <th style={{ width: 170 }}>账号</th>
                 <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleSort('count')}>
                   发布数量{sortDirOf('count') ? (sortDirOf('count') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
+                <th />{/* 吸收剩余宽度，避免被某一列独占 */}
               </tr>
             </thead>
             <tbody>
               {groups.length === 0 ? (
                 <tr>
                   {/* 区分两种空：本机根本没有记录（要去同步）vs 被筛选挡掉了 */}
-                  <td colSpan={4} className="pcv-empty">
+                  <td colSpan={5} className="pcv-empty">
                     {records.length === 0
                       ? '本机还没有发布记录 —— 点右上角「同步」从云端拉取一次'
                       : '当前筛选下暂无记录，试试把日期切到「全部」'}
                   </td>
                 </tr>
               ) : groups.map((g) => {
-                const open = expanded === g.key
-                // 单元格里**只显示最新一个日期**；其余日期放进下方的手风琴展开区
+                // 单元格里**只显示最新一个日期**；其余日期在「详情」弹窗里列出
                 const dates = g.dates.slice(0, 1)
                 return (
                   <Fragment key={g.key}>
                   <tr>
-                    {/* 第一列：三角（15px）+ 最新日期胶囊。三角只在有多个日期时出现，
-                        单个日期时留 19px 占位，保证各行日期左对齐。 */}
+                    {/* 第一列：三角（15px）+ 最新日期胶囊。点三角打开「发布详情」弹窗
+                        （原来是行内展开，十几个日期会把表格撑得很长）。 */}
                     <td>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         {g.dates.length > 1 ? (
                           <button
                             className="pcv-caret"
-                            title={open ? `收起（共 ${g.dates.length} 个日期）` : `展开另外 ${g.dates.length - 1} 个日期`}
-                            onClick={() => setExpanded(open ? '' : g.key)}
+                            title={`查看详情（共 ${g.dates.length} 个日期）`}
+                            onClick={() => setDetailKey(g.key)}
                           >
-                            <svg
-                              width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
-                              style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease' }}
-                            >
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </button>
@@ -299,44 +299,11 @@ export function PcPublishRecords() {
                         <span style={{ color: '#9aa0a9' }}>—</span>
                       )}
                     </td>
-                    {/* 发布次数 = 该「产品 × 账号」下**视频条数总和**（qty 累加），
-                        不是记录条数 —— 一条记录可以记 2 条发布（qty=2），
-                        之前这里显示 records.length，才会出现「×2 但发布次数 1」的矛盾。 */}
+                    {/* 发布数量 = 该「产品 × 账号」下**视频条数总和**（qty 累加），
+                        不是记录条数 —— 一条记录可以记 2 条发布（qty=2）。 */}
                     <td className="pcv-num">{g.qty}</td>
+                    <td />{/* 吸收列 */}
                   </tr>
-
-                  {/* 手风琴展开区：占满整行，图一那种「标签：值」的纯文本块。
-                      其余发布日期逐行列出，日期可点改、右侧 × 可删这一天。 */}
-                  {open && (
-                    <tr className="pcv-pr-detailrow">
-                      <td colSpan={4}>
-                        <div className="pcv-detailblock">
-                          <div>产品：<b>{g.name}</b></div>
-                          <div>账号：<b>{g.account || '—'}</b></div>
-                          <div>发布数量：<b>{g.qty}</b></div>
-                          <div style={{ marginTop: 2 }}>发布日期：</div>
-                          {/* 日期**横向排列**（一行放 4~6 个，自动换行）：
-                              竖着一行一个，十几个日期会把弹窗撑得很长 */}
-                          <div className="pcv-detaildates">
-                            {g.dates.map((d) => (
-                              <span key={d} className="pcv-detaildate">
-                                <button
-                                  className="pcv-date-plain"
-                                  title="点击修改发布日期"
-                                  onClick={() => openDateEdit(g, d)}
-                                >{d}</button>
-                                <button
-                                  className="pcv-x pcv-x--soft"
-                                  title={`删除 ${d} 的发布记录`}
-                                  onClick={() => setDelTarget({ group: g, date: d })}
-                                >×</button>
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
                   </Fragment>
                 )
               })}
@@ -352,6 +319,55 @@ export function PcPublishRecords() {
         title="删除发布记录"
         message={delTarget ? `确定删除 ${delTarget.date} 的发布记录吗？此操作不可撤销。` : ''}
       />
+
+      {/* 发布详情弹窗：点行首三角打开（原来是行内展开，十几个日期会把表格撑得很长） */}
+      {detailKey && (() => {
+        const g = groups.find((x) => x.key === detailKey)
+        if (!g) return null
+        return (
+          <div className="pcv-overlay" onClick={() => setDetailKey('')}>
+            <div className="pcv-dialog" style={{ maxWidth: 620 }} onClick={(e) => e.stopPropagation()}>
+              <div className="pcv-dialog-h">
+                <span>发布详情</span>
+                <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>共 {g.dates.length} 个日期</span>
+                <div className="pcv-spacer" />
+                <button className="pcv-dialog-x" title="关闭" onClick={() => setDetailKey('')}>×</button>
+              </div>
+
+              <div className="pcv-dialog-b">
+                <div className="pcv-detailblock" style={{ paddingLeft: 0 }}>
+                  <div>产品：<b>{g.name}</b></div>
+                  <div>账号：<b>{g.account || '—'}</b></div>
+                  <div>发布数量：<b>{g.qty}</b></div>
+                  <div style={{ marginTop: 4 }}>发布日期：</div>
+                  <div className="pcv-detaildates" style={{ paddingLeft: 0 }}>
+                    {g.dates.map((d) => (
+                      <span key={d} className="pcv-detaildate">
+                        <button
+                          className="pcv-date-plain"
+                          title="点击修改发布日期"
+                          onClick={() => { setDetailKey(''); openDateEdit(g, d) }}
+                        >{d}</button>
+                        <button
+                          className="pcv-x"
+                          title={`删除 ${d} 的发布记录`}
+                          onClick={() => setDelTarget({ group: g, date: d })}
+                        >×</button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pcv-dialog-f">
+                <span style={{ fontSize: 11, color: '#9aa0a9' }}>点日期可改，点 × 可删当天记录</span>
+                <div className="pcv-spacer" />
+                <button className="pcv-btn" onClick={() => setDetailKey('')}>关闭</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* 修改发布日期：点日期胶囊打开 */}
       {dateEdit && (

@@ -143,6 +143,13 @@
   align-items: center;
   gap: 8px;
 }
+/* 侧边栏底部版本：竖排、等宽，按钮靠左对齐文字 */
+.pcv-globalactions--side {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+}
 
 .pcv-bar {
   display: flex;
