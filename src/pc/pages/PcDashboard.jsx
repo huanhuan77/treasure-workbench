@@ -87,12 +87,14 @@ export function PcDashboard() {
       items: all.low,
       accountsOf: (it) => it.accounts.map((x) => x.account),
       header: '还差条数',
-      mid: (it, a) => {
-        const row = it.accounts.find((x) => x.account === a)
+      // 条目粒度是**样品**（与手机端一致）：「还差 N 条」按样品合计，账号列列出涉及的账号，
+      // 已发条数用合计，避免把同一个品拆成好几行后数字被摊薄
+      mid: (it) => {
+        const sent = it.accounts.reduce((n, x) => n + (x.publishCount || 0), 0)
         return (
           <>
             <span className="pcv-chip" style={TONE.warn}>还差 {it.minLack} 条</span>
-            <span style={{ marginLeft: 8, fontSize: 12, color: '#9aa0a9' }}>该账号已发 {row ? row.publishCount : 0} 条</span>
+            <span style={{ marginLeft: 8, fontSize: 12, color: '#9aa0a9' }}>合计已发 {sent} 条</span>
           </>
         )
       },
@@ -136,18 +138,21 @@ export function PcDashboard() {
     return [...set].sort((x, y) => accRank(x) - accRank(y))
   }, [cur])
 
-  // 「全部账号」时**合并成一张表**，用一列「账号」标出属于谁（用户要求）：
-  //   · 发布提醒 / 发布不足：一个样品可能挂着多个账号，这里按账号**拆行** ——
-  //     每行只代表「某账号 × 该样品」，这样「未发布天数 / 还差条数」才是该账号自己的数；
-  //   · 即将到期：截止日是样品级别的，不拆行，账号列里并列显示全部账号。
-  // 选定了某个账号时只保留该账号的行，筛选依旧生效。
+  // 「全部账号」时**合并成一张表**，用一列「账号」标出属于谁（用户要求）。
+  // 粒度与手机端一致：**一个样品一行**（同一个品不按账号拆成多行），
+  // 账号列里并列列出涉及的账号；天数这类数字取「最严重的那个账号」。
+  // 选定了某个账号时只保留包含该账号的行，筛选依旧生效。
   const rows = useMemo(() => {
     const out = []
     for (const it of items) {
       const accs = cur.accountsOf(it).filter((a) => !account || a === account)
       if (accs.length === 0) continue
-      if (tab === 'expiring') out.push({ it, accs, acc: accs[0] })
-      else for (const a of accs) out.push({ it, accs: [a], acc: a })
+      const s = it.sample || it
+      // 天数 / 条数这类数字按「最严重的那一个账号」展示（与手机端一致：取最大值）
+      const worst = tab === 'reminders'
+        ? accs.reduce((w, a) => (daysSincePublishByAccount(s, a) > daysSincePublishByAccount(s, w) ? a : w), accs[0])
+        : accs[0]
+      out.push({ it, accs, acc: worst })
     }
     // 「发布提醒」排序（用户要求「逾期的排前面」）：
     //   ① 已逾期的一律排最前 —— 判定必须与界面上的「已逾期」标签完全一致；
@@ -285,24 +290,55 @@ export function PcDashboard() {
           {/* 提醒中心：Tab 与账号筛选合并到卡头同一行（原来分两行，白占一层高度） */}
           <div className="pcv-card">
             <div className="pcv-card-h" style={{ flexWrap: 'nowrap', overflow: 'hidden' }}>
-              <div className="pcv-seg">
-                {REMINDER_TABS.map((t) => (
-                  <button
-                    key={t.id}
-                    className={tab === t.id ? 'on' : ''}
-                    onClick={() => { setTab(t.id); setAccount('') }}
-                  >
-                    <span>{t.label}</span>
-                    <span className="pcv-count">{spec[t.id].items.length}</span>
-                  </button>
-                ))}
+              {/* Tab 样式照手机端：透明底 + 选中粉字 + 彩色计数气泡 + 短下划线
+                  （原来是白底药丸 + 灰气泡，和手机端不是一套语言） */}
+              <div className="pcv-rtabs">
+                {REMINDER_TABS.map((t) => {
+                  const on = tab === t.id
+                  const n = spec[t.id].items.length
+                  return (
+                    <button
+                      key={t.id}
+                      className={`pcv-rtab${on ? ' on' : ''}`}
+                      onClick={() => { setTab(t.id); setAccount('') }}
+                    >
+                      <span>{t.label}</span>
+                      <span className="pcv-rtab-count">{n}</span>
+                    </button>
+                  )
+                })}
               </div>
               <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', flexShrink: 0, margin: '0 4px' }} />
-              <div className="pcv-accountbar" style={{ borderBottom: 'none', padding: 0, flexWrap: 'nowrap' }}>
-                <button className={account === '' ? 'on' : ''} onClick={() => setAccount('')}>全部账号</button>
-                {accountOptions.map((a) => (
-                  <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{a}</button>
-                ))}
+              {/* 账号胶囊也照手机端：用账号主题色描边，选中填充同色白字
+                  （原来是统一的灰色胶囊，和手机端的账号色对不上） */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflow: 'hidden' }}>
+                <button
+                  onClick={() => setAccount('')}
+                  style={{
+                    padding: '5px 11px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                    fontSize: 12, fontWeight: 600,
+                    border: account === '' ? 'none' : '1px solid rgba(15,23,42,0.14)',
+                    background: account === '' ? '#333a45' : '#fff',
+                    color: account === '' ? '#fff' : '#4b5563',
+                  }}
+                >全部账号</button>
+                {accountOptions.map((a) => {
+                  const col = (ACCOUNT_COLOR[a] || {}).c || '#6b7280'
+                  const on = account === a
+                  return (
+                    <button
+                      key={a}
+                      onClick={() => setAccount(a)}
+                      style={{
+                        padding: '5px 11px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                        fontSize: 12, fontWeight: 600,
+                        border: on ? 'none' : `1px solid ${col}`,
+                        background: on ? col : '#fff',
+                        color: on ? '#fff' : col,
+                      }}
+                    >{a}</button>
+                  )
+                })}
               </div>
             </div>
 
