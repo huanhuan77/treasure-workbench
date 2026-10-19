@@ -41,19 +41,20 @@ export function PcBackup() {
   // 同步后会重渲染，这里存一份「上次同步时间」用于展示
   const [lastSync, setLastSync] = useState(() => localStorage.getItem(LAST_SYNC_KEY) || '')
 
+  // 每个模块给一个**自己的主题色**（与左侧菜单同色系），卡片配色一眼能认出是哪一块
   const stats = useMemo(() => ([
-    { label: '产品', value: countArr(products) },
-    { label: '样品', value: countArr(samples) },
-    { label: '收支', value: countArr(transactions) },
-    { label: '投资', value: countArr(readLocal('blogger_investments_v1')) },
-    { label: '每日计划', value: countObj(readLocal('daily_plan_v1')) },
-    { label: '品牌方', value: countArr(readLocal('brand_contacts_v1')) },
-    { label: '读书成长', value: countArr(readLocal('reading_growth_v1')?.items) },
-    { label: '日记', value: countObj(readLocal('blogger_calendar_v1')) },
-    { label: '发布记录', value: countArr(publishRecords) },
-    { label: '出单记录', value: countArr(orders) },
-    { label: '待办', value: countArr(todos) },
-    { label: '追剧', value: countArr(dramas) },
+    { label: '产品', value: countArr(products), color: '#2f7d93' },
+    { label: '样品', value: countArr(samples), color: '#7a5ea8' },
+    { label: '发布记录', value: countArr(publishRecords), color: '#3f6fa8' },
+    { label: '出单记录', value: countArr(orders), color: '#4f8a6d' },
+    { label: '收支', value: countArr(transactions), color: '#a97c46' },
+    { label: '投资', value: countArr(readLocal('blogger_investments_v1')), color: '#4a7c59' },
+    { label: '每日计划', value: countObj(readLocal('daily_plan_v1')), color: '#6b7280' },
+    { label: '待办', value: countArr(todos), color: '#b8517f' },
+    { label: '日记', value: countObj(readLocal('blogger_calendar_v1')), color: '#4f7f8f' },
+    { label: '追剧', value: countArr(dramas), color: '#b96a66' },
+    { label: '读书成长', value: countArr(readLocal('reading_growth_v1')?.items), color: '#8a6d3b' },
+    { label: '品牌方', value: countArr(readLocal('brand_contacts_v1')), color: '#7a8a4f' },
   ]), [products, samples, orders, transactions, todos, publishRecords, dramas])
 
   const saveToken = () => {
@@ -133,11 +134,29 @@ export function PcBackup() {
         <div className="pcv-card" style={{ marginBottom: 14 }}>
           <div className="pcv-card-h"><span>当前数据</span></div>
           <div className="pcv-card-b">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+            {/* 6 列 × 2 行：12 个模块刚好排满，不再出现第二行只剩两块的尴尬；
+                每块用自己的主题色（淡色底 + 彩字 + 顶部色条），扫一眼能认出是哪个模块 */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 10 }}>
               {stats.map((s) => (
-                <div key={s.label} style={{ background: '#fafbfc', borderRadius: 10, padding: '10px 12px' }}>
-                  <div style={{ fontSize: 11, color: '#8a8f98', marginBottom: 3 }}>{s.label}</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#333a45', fontVariantNumeric: 'tabular-nums' }}>{s.value}</div>
+                <div
+                  key={s.label}
+                  style={{
+                    position: 'relative', overflow: 'hidden',
+                    background: `${s.color}0f`,      // 主题色 6% 淡底
+                    border: `0.5px solid ${s.color}33`,
+                    borderRadius: 10, padding: '10px 12px 11px',
+                  }}
+                >
+                  {/* 顶部 3px 色条：模块身份标识 */}
+                  <span style={{
+                    position: 'absolute', left: 0, right: 0, top: 0, height: 3,
+                    background: s.color, opacity: 0.85,
+                  }} />
+                  <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>{s.label}</div>
+                  <div style={{
+                    fontSize: 20, fontWeight: 700, color: s.color,
+                    fontVariantNumeric: 'tabular-nums', lineHeight: 1.15,
+                  }}>{s.value}</div>
                 </div>
               ))}
             </div>

@@ -1841,3 +1841,27 @@ select.pcv-input {
 tr:hover .pcv-x--soft {
   opacity: 1;
 }
+
+/* ── 选样面板（记录发布 / 记出单）─────────────────────────────
+   整体限高、列表内部滚动，底部「已选 N 个 / 取消 / 确定」固定在面板底部：
+   之前面板跟着内容一起长高，确认条被挤到中间、要滚动才能点到（用户要求「固定住」）。 */
+.pcv-drop {
+  display: flex;
+  flex-direction: column;
+  max-height: 360px;
+}
+.pcv-drop-list,
+.pcv-dialog--lg .pcv-drop-list {
+  flex: 1 1 auto;
+  min-height: 90px;
+  max-height: none;
+  overflow-y: auto;
+}
+.pcv-drop-f {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  margin-top: 8px;
+  padding-bottom: 2px;
+  background: #fafbfc;
+}

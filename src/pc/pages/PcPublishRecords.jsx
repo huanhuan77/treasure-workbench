@@ -313,7 +313,9 @@ export function PcPublishRecords() {
                     </td>
                     {/* 发布数量 = 该「产品 × 账号」下**视频条数总和**（qty 累加），
                         不是记录条数 —— 一条记录可以记 2 条发布（qty=2）。 */}
-                    <td className="pcv-num">{g.qty}</td>
+                    {/* 发布数量加色（用户要求）：品牌粉 + 常规字重，
+                        与「日期/产品/账号」的灰黑文字拉开层次，扫一列数字更醒目 */}
+                    <td className="pcv-num" style={{ color: '#b8517f', fontWeight: 400 }}>{g.qty}</td>
                     <td />{/* 吸收列 */}
                   </tr>
                   </Fragment>
