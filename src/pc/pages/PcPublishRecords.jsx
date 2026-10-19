@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
@@ -221,12 +221,12 @@ export function PcPublishRecords() {
               <tr>
                 {/* 排序入口统一为「点表头」（与样品页、出单页、收支页一致）：
                     「发布日期」点一下切升/降序，「发布次数」点一下按次数排。 */}
-                <th style={{ width: 260 }}>产品</th>
-                <th style={{ width: 150 }}>账号</th>
-                <th style={{ width: 420 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
+                <th style={{ width: 220 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
                   发布日期{sortDirOf('date') ? (sortDirOf('date') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th className="pcv-th-sort" onClick={() => toggleSort('count')}>
+                <th>产品</th>
+                <th style={{ width: 150 }}>账号</th>
+                <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleSort('count')}>
                   发布数量{sortDirOf('count') ? (sortDirOf('count') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
               </tr>
@@ -243,76 +243,84 @@ export function PcPublishRecords() {
                 </tr>
               ) : groups.map((g) => {
                 const open = expanded === g.key
-                const dates = open ? g.dates : g.dates.slice(0, 1)
+                // 折叠时只显示最新一个日期；展开后其余日期各占一行（图一的样式：无胶囊、无边框）
+                const rest = open ? g.dates.slice(1) : []
                 return (
-                  <tr key={g.key}>
-                    <td>
-                      <span className="pcv-namecell">
-                        {/* 展开箭头放在产品名**前面**（与出单页一致，用户要求）：
-                            有多个日期时才显示三角，只有一个日期时占位保持各列对齐。
-                            三角用 SVG，不用 ▾ 字符（部分字体缺字形会渲染成小点）。 */}
-                        {g.dates.length > 1 ? (
-                          <button
-                            className="pcv-caret"
-                            title={open ? `收起（共 ${g.dates.length} 个日期）` : `展开另外 ${g.dates.length - 1} 个日期`}
-                            onClick={() => setExpanded(open ? '' : g.key)}
-                          >
-                            <svg
-                              width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
-                              style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease' }}
-                            >
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
-                          </button>
-                        ) : (
-                          <span style={{ width: 16, flexShrink: 0 }} aria-hidden="true" />
-                        )}
-                        {/* 产品名后不再挂「×N」徽标：右侧「发布次数」列已经显示同一条数，
-                            两个数字并排反而让人以为口径不同（用户反馈「为什么不一样」） */}
-                        <span className="pcv-nametext" title={g.name}>{g.name}</span>
-                      </span>
-                    </td>
-                    <td>
-                      {g.account ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                          {/* 账号名不标账号主题色 —— 与样品页同样的偏好（用户要求「账号不要标记颜色」） */}
-                          <span style={{ color: '#333a45' }}>{g.account}</span>
-                        </span>
-                      ) : (
-                        <span style={{ color: '#9aa0a9' }}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        {dates.map((d) => (
-                          <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            {/* 日期可点：点开「修改发布日期」。透明底 + 细描边（.pcv-datechip），
-                                hover 才浮出浅底作为「可点」提示；字号 13、不加粗 */}
+                  <Fragment key={g.key}>
+                    <tr className="pcv-pr-row">
+                      <td>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          {g.dates.length > 1 ? (
                             <button
-                              className="pcv-datechip"
+                              className="pcv-caret"
+                              title={open ? `收起（共 ${g.dates.length} 个日期）` : `展开另外 ${g.dates.length - 1} 个日期`}
+                              onClick={() => setExpanded(open ? '' : g.key)}
+                            >
+                              <svg
+                                width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+                                style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease' }}
+                              >
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span style={{ width: 16, flexShrink: 0 }} aria-hidden="true" />
+                          )}
+                          {/* 日期是纯文本（不再是灰底胶囊）：点击可改发布日期 */}
+                          <button
+                            className="pcv-date-plain"
+                            title="点击修改发布日期"
+                            onClick={() => openDateEdit(g, g.dates[0])}
+                          >{g.dates[0]}</button>
+                          <button
+                            className="pcv-x pcv-x--soft"
+                            title={`删除 ${g.dates[0]} 的发布记录`}
+                            onClick={() => setDelTarget({ group: g, date: g.dates[0] })}
+                          >×</button>
+                        </span>
+                      </td>
+                      <td>
+                        <span className="pcv-nametext" title={g.name}>{g.name}</span>
+                      </td>
+                      <td style={{ color: g.account ? '#6b7280' : '#c9cdd4' }}>{g.account || '—'}</td>
+                      <td className="pcv-num" style={{ color: '#6b7280', fontWeight: 400 }}>{g.qty}</td>
+                    </tr>
+
+                    {/* 其余日期：每行一个，样式与主行一致（左缩进对齐日期文字） */}
+                    {rest.map((d) => (
+                      <tr key={d} className="pcv-pr-subrow">
+                        <td colSpan={4}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ width: 16, flexShrink: 0 }} aria-hidden="true" />
+                            <button
+                              className="pcv-date-plain"
                               title="点击修改发布日期"
                               onClick={() => openDateEdit(g, d)}
                             >{d}</button>
                             <button
-                              className="pcv-x"
+                              className="pcv-x pcv-x--soft"
                               title={`删除 ${d} 的发布记录`}
                               onClick={() => setDelTarget({ group: g, date: d })}
                             >×</button>
                           </span>
-                        ))}
-                        {/* 展开箭头已移到产品名前（见上方），这里不再重复放一个 */}
-                        {g.dates.length > 1 && !open && (
-                          <span style={{ fontSize: 11, color: '#9aa0a9', fontWeight: 600 }}>
-                            还有 {g.dates.length - 1} 个日期
-                          </span>
-                        )}
-                      </span>
-                    </td>
-                    {/* 发布次数 = 该「产品 × 账号」下**视频条数总和**（qty 累加），
-                        不是记录条数 —— 一条记录可以记 2 条发布（qty=2），
-                        之前这里显示 records.length，才会出现「×2 但发布次数 1」的矛盾。 */}
-                    <td className="pcv-num">{g.qty}</td>
-                  </tr>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {/* 展开后的明细：图一那种「标签：值」的纯文本块 */}
+                    {open && (
+                      <tr className="pcv-pr-detailrow">
+                        <td colSpan={4}>
+                          <div className="pcv-detailblock">
+                            <div>产品：<b>{g.name}</b></div>
+                            <div>账号：<b>{g.account || '—'}</b></div>
+                            <div>发布数量：<b>{g.qty}</b></div>
+                            <div>发布日期：<b>{g.dates.length} 天</b></div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 )
               })}
             </tbody>

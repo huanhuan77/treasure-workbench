@@ -79,6 +79,7 @@ function SortableProductRow({ p, isActive, onClick, children }) {
     opacity: isDragging ? 0.5 : 1,
     background: isDragging ? '#fdf2f8' : undefined,
   }
+  // 拖动把手：六点手柄（drag_indicator），比原来那对细箭头更明显、也更像「可抓」
   const dragHandle = (
     <button
       {...attributes}
@@ -86,14 +87,10 @@ function SortableProductRow({ p, isActive, onClick, children }) {
       onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
       onClick={(e) => e.stopPropagation()}
       title="按住拖动排序"
-      style={{
-        cursor: 'grab', border: 'none', background: 'transparent', borderRadius: 6,
-        padding: '4px 4px', color: '#9ca3af', touchAction: 'none',
-        display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle',
-      }}
+      className="pcv-draghandle"
     >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M12 4l-4 4h3v4h2V8h3l-4-4zm0 16l4-4h-3v-4h-2v4H8l4 4z" />
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M11 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm-2-8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0-8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 4a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
       </svg>
     </button>
   )
@@ -363,16 +360,9 @@ export function PcProducts() {
                             {(dragHandle) => (
                               <>
                             <td>
+                              {/* 产品名前的置顶图钉已去掉（用户要求）：置顶状态由操作列按钮的高亮表达，
+                                  行首只留「分类图标 + 名称」，更干净 */}
                               <span className="pcv-namecell">
-                                <span
-                                  className="pcv-pin"
-                                  style={{ color: '#b8517f', visibility: p.pinned ? 'visible' : 'hidden' }}
-                                  title={p.pinned ? '已置顶' : undefined}
-                                >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                    <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
-                                  </svg>
-                                </span>
                                 <span className="pcv-caticon" style={{ background: icon.bg, color: icon.color }}>{icon.text}</span>
                                 <span className="pcv-nametext" title={displayTitle(p)}>{displayTitle(p)}</span>
                               </span>

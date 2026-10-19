@@ -897,6 +897,31 @@ select.pcv-input {
   flex-wrap: wrap;
   min-width: 0;
 }
+/* 文案库产品行的拖动把手（六点手柄）：常驻淡灰，hover 变粉底粉点，
+   明确「这里是拖动区」。放在操作列最前面。 */
+.pcv-draghandle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-right: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #b0b6bf;
+  cursor: grab;
+  touch-action: none;
+  vertical-align: middle;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pcv-draghandle:hover {
+  background: #fdf1f6;
+  color: #b8517f;
+}
+.pcv-draghandle:active {
+  cursor: grabbing;
+}
+
 /* 出单表产品名前的展开箭头：默认中灰，hover 转粉；展开时由 JSX 旋转 180° */
 .pcv-caret {
   display: inline-flex;
@@ -1682,4 +1707,59 @@ select.pcv-input {
   border-color: #f2cbdd;
   color: #b8517f;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+/* ── 发布记录：手风琴式行（无胶囊、无边框，纯文本 + 淡分隔线）─────
+   参考的样式是「一行一个日期 + 右侧灰色小字，展开是 label:value 文本块」。
+   这里把原来的灰底日期胶囊、红色 × 方块全部去掉，只留文字。 */
+.pcv-date-plain {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #333a45;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.pcv-date-plain:hover {
+  color: #b8517f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+/* 行高放宽一点，行之间只留 0.5px 分隔线（图一的呼吸感） */
+.pcv-pr-row > td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+/* 展开出来的其它日期：贴着上一行、不再画分隔线 */
+.pcv-pr-subrow > td {
+  border-top: none !important;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+/* 展开后的明细块：label:value 纯文本，左缩进对齐日期文字 */
+.pcv-pr-detailrow > td {
+  border-top: none !important;
+  padding-top: 4px;
+  padding-bottom: 16px;
+}
+.pcv-detailblock {
+  padding-left: 20px;
+  font-size: 13px;
+  color: #8a8f98;
+  line-height: 2.1;
+}
+.pcv-detailblock b {
+  margin-left: 2px;
+  font-weight: 500;
+  color: #333a45;
+}
+/* 淡版 ×：默认几乎隐形，悬停该行才显出来 */
+.pcv-x--soft {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+tr:hover .pcv-x--soft {
+  opacity: 1;
 }

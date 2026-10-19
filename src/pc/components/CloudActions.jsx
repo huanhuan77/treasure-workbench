@@ -5,6 +5,7 @@ import { ConfirmModal } from '../../components/Modal'
 import { getStoredToken } from '../../utils/cloudBackup'
 import { syncAll } from '../../utils/sync'
 import { useStore } from '../../store'
+import { SyncStatusDialog } from './SyncStatusDialog'
 
 // PC 全站的云备份条（数据备份 / 同步 / 恢复）
 //
@@ -23,6 +24,7 @@ export function CloudActions() {
   const [syncing, setSyncing] = useState(false)
   const [restoring, setRestoring] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
+  const [showStatus, setShowStatus] = useState(false)   // 同步诊断弹窗
   // 上次同步时间（用于按钮 tooltip，让「有没有同步过」可见）
   const [lastSyncAt, setLastSyncAt] = useState(() => {
     const t = Number(localStorage.getItem(LAST_AUTO_KEY) || 0)
@@ -113,7 +115,11 @@ export function CloudActions() {
   return (
     <>
       <div className="pcv-globalactions">
-        <button className="pcv-btn pcv-btn-ghost" onClick={() => navigate('/backup')}>数据备份</button>
+        {/* 「备份与同步」= 同步诊断弹窗：云端/本机各模块条数对照 +
+            上次同步时间，弹窗里可跳去备份页。取代原来直接跳手机版备份页的「数据备份」。 */}
+        <button className="pcv-btn pcv-btn-ghost" onClick={() => setShowStatus(true)} title="查看本机与云端的差异">
+          备份与同步
+        </button>
         <button className="pcv-btn pcv-btn-ghost" disabled={syncing} onClick={handleSync} title={syncTitle}>
           {syncing ? '同步中…' : '🔄 同步'}
         </button>
@@ -121,6 +127,8 @@ export function CloudActions() {
           {restoring ? '恢复中…' : '📥 恢复'}
         </button>
       </div>
+
+      {showStatus && <SyncStatusDialog onClose={() => setShowStatus(false)} />}
 
       <ConfirmModal
         open={confirmRestore}

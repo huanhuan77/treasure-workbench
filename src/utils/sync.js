@@ -404,6 +404,34 @@ function findRecord(modData, id) {
 
 // ── 同步主流程 ────────────────────────────────────────────
 // 返回 { merged, meta, gistId, hasChanges }
+// 只读云端备份（不改任何东西），用于「同步诊断」面板：
+// 返回 { data, meta, gistId, updatedAt }；云端还没有备份时 data 为 null。
+export async function readRemoteBackup(token, gistId) {
+  if (!token) throw new Error('未配置 Token')
+  let id = gistId || localStorage.getItem(GIST_ID_KEY) || null
+  if (!id) {
+    const existing = await findBackupGist(token)
+    if (existing) id = existing.id
+  }
+  if (!id) return { data: null, meta: null, gistId: null, updatedAt: null }
+  const gist = await fetchGist(token, id)
+  if (!gist) return { data: null, meta: null, gistId: id, updatedAt: null }
+  const content = gist?.files?.[GIST_FILENAME]?.content
+  if (!content) return { data: null, meta: null, gistId: id, updatedAt: gist.updated_at || null }
+  try {
+    const parsed = JSON.parse(content)
+    const isNew = parsed && parsed.data && parsed.meta
+    return {
+      data: isNew ? parsed.data : parsed,
+      meta: isNew ? parsed.meta : {},
+      gistId: id,
+      updatedAt: parsed?.syncedAt || gist.updated_at || null,
+    }
+  } catch (e) {
+    return { data: null, meta: null, gistId: id, updatedAt: gist.updated_at || null }
+  }
+}
+
 export async function syncAll(token, gistId, { forcePush = false } = {}) {
   if (!token) throw new Error('未配置 Token')
   // 1. 拉取云端
