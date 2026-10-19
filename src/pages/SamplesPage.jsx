@@ -251,6 +251,24 @@ export function SamplesPage() {
           共 {Object.values(statusStats).reduce((a,b) => a + b, 0) - (statusStats['abandoned'] || 0)} 个样品
           {' · '}{SAMPLE_STATUS_LIST.filter((s) => statusStats[s.key] > 0).map((s) => `${s.icon}${statusStats[s.key]}`).join('  ')}
         </p>
+        {/* 查重：名称归一化后分组，>1条的组提示重复 */}
+        {(() => {
+          const norm = (s) => (s.name || '').replace(/[\s　()（）·\-—_\/\\]/g, '').toLowerCase()
+          const groups = {}
+          for (const s of (samples || [])) {
+            if (s.archived || s.status === 'abandoned') continue
+            const k = norm(s)
+            if (!k) continue
+            ;(groups[k] = groups[k] || []).push(s)
+          }
+          const dups = Object.values(groups).filter((g) => g.length > 1)
+          if (!dups.length) return null
+          return (
+            <div style={{ margin: '8px 0 0', padding: '8px 10px', background: '#fef3c7', borderRadius: '8px', fontSize: '12px', color: '#92400e' }}>
+              ⚠️ 发现 {dups.length} 组重复样品：{dups.map((g) => g[0].name).join('、')}
+            </div>
+          )
+        })()}
       </header>
 
       {/* 状态分组卡：一排横滚，每张显示该状态汇总（点选切换 filter） */}
