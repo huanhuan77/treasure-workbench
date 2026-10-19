@@ -1755,6 +1755,20 @@ select.pcv-input {
   font-weight: 500;
   color: #333a45;
 }
+/* 明细里的发布日期：横向自动换行（每行 4~6 个），十几个日期也只是一两行 */
+.pcv-detaildates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  padding-left: 12px;
+  margin-top: 2px;
+}
+.pcv-detaildate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 104px;
+}
 /* 淡版 ×：默认几乎隐形，悬停该行才显出来 */
 .pcv-x--soft {
   opacity: 0;

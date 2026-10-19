@@ -315,9 +315,11 @@ export function PcPublishRecords() {
                           <div>账号：<b>{g.account || '—'}</b></div>
                           <div>发布数量：<b>{g.qty}</b></div>
                           <div style={{ marginTop: 2 }}>发布日期：</div>
-                          <div style={{ paddingLeft: 12 }}>
+                          {/* 日期**横向排列**（一行放 4~6 个，自动换行）：
+                              竖着一行一个，十几个日期会把弹窗撑得很长 */}
+                          <div className="pcv-detaildates">
                             {g.dates.map((d) => (
-                              <div key={d} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span key={d} className="pcv-detaildate">
                                 <button
                                   className="pcv-date-plain"
                                   title="点击修改发布日期"
@@ -328,7 +330,7 @@ export function PcPublishRecords() {
                                   title={`删除 ${d} 的发布记录`}
                                   onClick={() => setDelTarget({ group: g, date: d })}
                                 >×</button>
-                              </div>
+                              </span>
                             ))}
                           </div>
                         </div>

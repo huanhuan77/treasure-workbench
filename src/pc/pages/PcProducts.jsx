@@ -79,7 +79,8 @@ function SortableProductRow({ p, isActive, onClick, children }) {
     opacity: isDragging ? 0.5 : 1,
     background: isDragging ? '#fdf2f8' : undefined,
   }
-  // 拖动把手：六点手柄（drag_indicator），比原来那对细箭头更明显、也更像「可抓」
+  // 拖动把手：四向移动箭头（上下左右），语义就是「拖动」，
+  // 用描边风格（fill:none + stroke）与侧边栏那套图标同一种笔画语言
   const dragHandle = (
     <button
       {...attributes}
@@ -89,8 +90,17 @@ function SortableProductRow({ p, isActive, onClick, children }) {
       title="按住拖动排序"
       className="pcv-draghandle"
     >
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M11 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm-2-8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0-8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm6 4a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
+      <svg
+        width="15" height="15" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 9l-3 3 3 3" />
+        <path d="M9 5l3-3 3 3" />
+        <path d="M15 19l-3 3-3-3" />
+        <path d="M19 9l3 3-3 3" />
+        <path d="M2 12h20" />
+        <path d="M12 2v20" />
       </svg>
     </button>
   )
