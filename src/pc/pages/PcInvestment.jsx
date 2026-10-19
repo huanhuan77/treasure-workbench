@@ -104,6 +104,8 @@ export function PcInvestment() {
 
   const openNew = () => {
     setForm({ code: '', name: '', direction: 'buy', shares: '', price: '', date: '', assetType: activeTab })
+    setFetchedPrice(null)
+    setNameFail(false)
     setEditing('new')
   }
   // 「编辑最新」按钮：不是改旧记录，而是**基于这一行再记一笔**（用户要求弹窗要清空）。
@@ -121,6 +123,8 @@ export function PcInvestment() {
       date: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       assetType: getAssetType(inv),
     })
+    setFetchedPrice(null)
+    setNameFail(false)
     setEditing('new')
   }
 
@@ -137,39 +141,60 @@ export function PcInvestment() {
       date: inv.sellDate || `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       assetType: getAssetType(inv),
     })
+    setFetchedPrice(inv.currentPrice ?? null)
+    setNameFail(false)
     setEditing(inv)
   }
 
-  // 按代码自动带出名称（用户问「输入代码能带出名称吗」）：
-  // 填满 6 位数字后 500ms 自动查一次；名称已手填过就不覆盖。
+  // 按代码自动带出名称：填满 6 位数字后自动查（500ms 防抖），
+  // 光标离开代码框也会立刻补查一次；名称已手填过就不覆盖。
   const lookupTimer = useRef(null)
   const [nameBusy, setNameBusy] = useState(false)
+  const [nameFail, setNameFail] = useState(false)   // 查不到时给个明确提示，而不是默默没反应
+  const [fetchedPrice, setFetchedPrice] = useState(null)   // 「获取行情」拿到的当前价，保存时写入 currentPrice
 
-  const lookupName = async (rawCode, assetType) => {
+  // 获取行情：与**手机端「🔍 获取行情」按钮**完全同一套逻辑 ——
+  // 基金走 sdk.quotes.fund（拿 name + nav），股票走 sdk.quotes.cn（拿 name + price），
+  // 名称与当前价一起回填。PC 端额外做了：名称已有则不覆盖，失败给红字提示。
+  const lookupName = async (rawCode, assetType, { quiet = false } = {}) => {
     const code = String(rawCode || '').replace(/\D/g, '')
-    if (code.length !== 6) return
+    if (code.length < 6) return
     setNameBusy(true)
+    setNameFail(false)
     try {
       const { StockSDK } = await import('stock-sdk')
       const sdk = new StockSDK()
       let name = ''
+      let price = null
       if (assetType === 'fund') {
-        try { name = (await sdk.fund.profile(code))?.name || '' } catch (e) { /* 基金资料拿不到时退回行情 */ }
-        if (!name) {
-          try { name = (await sdk.quotes.fund([code]))?.[0]?.name || '' } catch (e) { /* 忽略 */ }
-        }
+        const q = await sdk.quotes.fund([code])
+        if (q?.[0]) { name = q[0].name || ''; price = q[0].nav ?? null }
       } else {
-        name = (await sdk.quotes.cn([code]))?.[0]?.name || ''
+        const q = await sdk.quotes.cn([code])
+        if (q?.[0]) { name = q[0].name || ''; price = q[0].price ?? null }
       }
+      if (!name) {
+        // 兜底：股票接口查空的代码，多半是基金（如 110022 在 fund 接口才有）
+        try {
+          const p = await sdk.fund.profile(code)
+          name = p?.name || ''
+        } catch (e) { /* 忽略 */ }
+      }
+      if (price != null && Number.isFinite(Number(price))) setFetchedPrice(Number(price))
       if (name) {
         setForm((f) => (
-          f && f.code.replace(/\D/g, '') === code && !String(f.name || '').trim()
+          f && String(f.code || '').replace(/\D/g, '') === code && !String(f.name || '').trim()
             ? { ...f, name }
             : f
         ))
+        if (!quiet) show(`已获取：${name}`, 'success')
+      } else {
+        setNameFail(true)
       }
     } catch (e) {
-      // 查不到就让用户手填，不打断
+      console.warn('[投资] 获取行情失败：', e?.message || e)
+      setNameFail(true)
+      if (!quiet) show('获取行情失败，请检查网络', 'error')
     } finally {
       setNameBusy(false)
     }
@@ -177,10 +202,12 @@ export function PcInvestment() {
 
   const onCodeChange = (v) => {
     setForm((f) => ({ ...f, code: v }))
+    setNameFail(false)
     if (lookupTimer.current) clearTimeout(lookupTimer.current)
     const code = String(v || '').replace(/\D/g, '')
-    if (code.length === 6) {
-      lookupTimer.current = setTimeout(() => lookupName(code, form.assetType), 500)
+    // 粘进来的代码可能带空格/前后缀，取前 6 位数字判断
+    if (code.length >= 6) {
+      lookupTimer.current = setTimeout(() => lookupName(code.slice(0, 6), form.assetType), 400)
     }
   }
 
@@ -192,7 +219,8 @@ export function PcInvestment() {
     if (!code) { show('请填写代码', 'error'); return }
     if (!name) { show('请填写名称', 'error'); return }
     if (!(price > 0)) { show('请填写有效的成交价', 'error'); return }
-    const currentPrice = (editing && editing !== 'new') ? editing.currentPrice : null
+    // 新增时用「获取行情」拿到的当前价；编辑旧记录沿用原记录的当前价
+    const currentPrice = (editing && editing !== 'new') ? editing.currentPrice : (fetchedPrice ?? null)
     const change = currentPrice && price ? ((currentPrice - price) / price * 100) : null
     const item = {
       id: (editing && editing !== 'new') ? editing.id : uid(),
@@ -451,6 +479,11 @@ export function PcInvestment() {
                     placeholder="如 600519 / 110022"
                     value={form.code}
                     onChange={(e) => onCodeChange(e.target.value)}
+                    // 光标离开时立刻补查一次（防抖没触发、或粘贴后直接点别处都能兜住）
+                    onBlur={(e) => {
+                      if (lookupTimer.current) clearTimeout(lookupTimer.current)
+                      lookupName(e.target.value, form.assetType)
+                    }}
                     autoFocus
                   />
                 </div>
@@ -466,6 +499,15 @@ export function PcInvestment() {
                     <option value="fund">基金</option>
                   </select>
                 </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                  {/* 与手机端一致的「🔍 获取行情」：点一下按代码取名称 + 当前价 */}
+                  <button
+                    className="pcv-btn pcv-btn-ghost"
+                    style={{ height: 34, whiteSpace: 'nowrap' }}
+                    disabled={nameBusy || String(form.code).replace(/\D/g, '').length < 6}
+                    onClick={() => lookupName(form.code, form.assetType)}
+                  >{nameBusy ? '获取中…' : '🔍 获取行情'}</button>
+                </div>
               </div>
 
               <div className="pcv-field-label" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -473,6 +515,8 @@ export function PcInvestment() {
                 {/* 名称旁的查询状态 / 手动重查：代码填满 6 位会自动查一次 */}
                 {nameBusy ? (
                   <span style={{ fontWeight: 400, color: '#8a8f98' }}>正在按代码查询名称…</span>
+                ) : nameFail ? (
+                  <span style={{ fontWeight: 400, color: '#b96a66' }}>没查到，请手动填写</span>
                 ) : (
                   <button
                     type="button"
@@ -489,6 +533,18 @@ export function PcInvestment() {
                 value={form.name}
                 onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               />
+              {/* 当前价卡片：与手机端「获取行情」后显示的那块一致，保存时会写进记录 */}
+              {fetchedPrice != null && (
+                <div style={{
+                  marginTop: 8, padding: '8px 10px', borderRadius: 8,
+                  background: '#f8fafc', border: '0.5px solid rgba(15,23,42,0.10)',
+                  fontSize: 13, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <span>当前价</span>
+                  <b style={{ color: '#b8517f', fontVariantNumeric: 'tabular-nums' }}>{fetchedPrice}</b>
+                  <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9aa0a9' }}>保存时会一并记录</span>
+                </div>
+              )}
 
               <div className="pcv-field-label" style={{ marginTop: 16 }}>方向</div>
               <div className="pcv-catpick">
