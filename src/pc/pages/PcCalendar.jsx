@@ -186,7 +186,7 @@ export function PcCalendar() {
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: on ? '#b8517f' : '#333a45' }}>
+                        <span style={{ fontSize: 14, fontWeight: 600, color: on ? '#b8517f' : '#333a45' }}>
                           {shortDate(key)}
                         </span>
                         <span style={{ fontSize: 11, color: '#9aa0a9' }}>{weekdayOf(key)}</span>

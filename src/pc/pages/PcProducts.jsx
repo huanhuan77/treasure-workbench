@@ -509,7 +509,7 @@ export function PcProducts() {
                           {/* 复制放最前（用户要求）：最常用的动作固定在行首，眼睛不用来回找 */}
                           <button
                             className="pcv-btn"
-                            style={{ padding: '7px 16px', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 5 }}
+                            style={{ padding: '7px 16px', fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 5 }}
                             onClick={() => copyOne(c)}
                           >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

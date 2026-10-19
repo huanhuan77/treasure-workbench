@@ -407,7 +407,7 @@ export function PcPublishRecords() {
             </div>
             <div className="pcv-dialog-b">
               <div className="pcv-field-label">产品 / 账号</div>
-              <div style={{ fontSize: 13, color: '#333a45', marginBottom: 14 }}>
+              <div style={{ fontSize: 14, color: '#333a45', marginBottom: 14 }}>
                 {dateEdit.group.name}{dateEdit.group.account ? ` · ${dateEdit.group.account}` : ''}
               </div>
 

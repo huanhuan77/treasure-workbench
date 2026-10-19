@@ -269,7 +269,7 @@ export function PcDaily() {
                           }}
                         >{t.done ? '✓' : ''}</button>
                         <span style={{
-                          flex: 1, minWidth: 0, fontSize: 13,
+                          flex: 1, minWidth: 0, fontSize: 14,
                           color: t.done ? '#9aa0a9' : '#333a45',
                           textDecoration: t.done ? 'line-through' : 'none',
                         }}>{t.title}</span>
@@ -294,7 +294,7 @@ export function PcDaily() {
                           style={{ cursor: 'pointer' }}
                           onClick={() => setHistoryDate(d)}
                         >
-                          <span style={{ width: 110, fontWeight: 600, color: '#333a45', fontSize: 13 }}>{dateLabel(d, today)}</span>
+                          <span style={{ width: 110, fontWeight: 600, color: '#333a45', fontSize: 14 }}>{dateLabel(d, today)}</span>
                           <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ flex: 1, height: 6, borderRadius: 3, background: 'rgba(15,23,42,0.07)', overflow: 'hidden' }}>
                               <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: pct === 100 ? '#5f8a74' : '#ee8fb6' }} />

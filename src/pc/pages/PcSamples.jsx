@@ -366,7 +366,7 @@ export function PcSamples() {
                           各账号明细放 title，鼠标悬停可看「账号 发N」。 */}
                       <span
                         style={{
-                          fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+                          fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums',
                           color: publishTotal > 0 ? '#5f8a74' : '#9aa0a9',
                         }}
                         title={accounts.map((a) => `${a} 发${getCounts(s, a).publishCount}`).join(' / ') || '无账号'}

@@ -7,6 +7,7 @@
    ══════════════════════════════════════════════════════════════════ */
 
 .pcv-root {
+  font-size: 14px;
   display: flex;
   height: 100dvh;
   overflow: hidden;
@@ -55,7 +56,7 @@
   margin-bottom: 2px;
   border-radius: 10px;
   color: #334155;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   text-decoration: none;
 }
@@ -150,7 +151,7 @@
   border: none;
   background: transparent;
   color: #3f6fa8;
-  font-size: 13px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   text-decoration: none;
@@ -319,7 +320,7 @@
   align-items: center;
   gap: 8px;
   padding: 14px;
-  font-size: 13px;
+  font-size: 14px;
   color: #94a3b8;
 }
 
@@ -371,7 +372,7 @@
   gap: 10px;
   padding: 12px 14px;
   border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -413,20 +414,20 @@
 .pcv-table td {
   padding: 9px 14px;
   border-top: 0.5px solid rgba(15, 23, 42, 0.05);
-  font-size: 13px;
+  font-size: 14px;
   vertical-align: middle;
 }
 
 /* 大字号表（投资跟踪）：数据密、数字多，13px 在 2K 屏上偏小（用户反馈）。
    只给需要的那张表加 --lg，其它表仍按 13px，避免窄列（样品/收支）被撑到换行。 */
 .pcv-table--lg th {
-  font-size: 13px;
+  font-size: 14px;
 }
 .pcv-table--lg td {
   font-size: 14px;
 }
 .pcv-table--lg .pcv-chip {
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .pcv-table tbody tr:hover td {
@@ -507,7 +508,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 14px 6px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
 }
 .pcv-grouphead span:last-child {
@@ -589,7 +590,7 @@
   padding: 7px 12px;
   border: 0.5px solid rgba(15, 23, 42, 0.14);
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 14px;
   background: #fff;
   outline: none;
 }
@@ -643,7 +644,7 @@ select.pcv-input {
   border-radius: 8px;
   background: transparent;
   color: #64748b;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -986,7 +987,7 @@ select.pcv-input {
   gap: 8px;
 }
 .pcv-detailacct {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   color: #333a45;
   min-width: 78px;
@@ -1008,7 +1009,7 @@ select.pcv-input {
 .pcv-empty {
   padding: 36px 14px;
   text-align: center;
-  font-size: 13px;
+  font-size: 14px;
   color: #94a3b8;
 }
 
@@ -1179,7 +1180,7 @@ select.pcv-input {
   border: 0.5px solid rgba(15, 23, 42, 0.10);
   background: transparent;
   color: #4b5563;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
@@ -1234,11 +1235,11 @@ select.pcv-input {
 .pcv-dialog-f .pcv-btn {
   padding: 6px 16px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 14px;
 }
 .pcv-dialog-f .pcv-btn-text {
   padding: 6px 6px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* ── 表单（PC 版产品表单）────────────────────────────────── */
@@ -1421,7 +1422,7 @@ select.pcv-input {
   border: none;
   background: transparent;
   color: #333a45;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1483,7 +1484,7 @@ select.pcv-input {
   border-radius: 7px;
   background: #fff;
   color: #333a45;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   box-sizing: border-box;
   font-variant-numeric: tabular-nums;
@@ -1514,7 +1515,7 @@ select.pcv-input {
   border-radius: 7px;
   background: transparent;
   color: #333a45;
-  font-size: 13px;
+  font-size: 14px;
   text-align: left;
   cursor: pointer;
   white-space: nowrap;
@@ -1673,7 +1674,7 @@ select.pcv-input {
 }
 
 .pcv-copytext {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   white-space: pre-wrap;
   color: #334155;
@@ -1790,7 +1791,7 @@ select.pcv-input {
 }
 .pcv-detailblock {
   padding-left: 20px;
-  font-size: 13px;
+  font-size: 14px;
   color: #8a8f98;
   line-height: 2.1;
 }

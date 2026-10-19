@@ -133,7 +133,7 @@ export function PcTodos() {
                   }}
                 >{t.done ? '✓' : ''}</button>
                 <span style={{
-                  flex: 1, minWidth: 0, fontSize: 13,
+                  flex: 1, minWidth: 0, fontSize: 14,
                   color: t.done ? '#9aa0a9' : '#333a45',
                   textDecoration: t.done ? 'line-through' : 'none',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',

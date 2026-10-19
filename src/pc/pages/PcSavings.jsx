@@ -104,10 +104,10 @@ export function PcSavings() {
         <div className="pcv-card" style={{ marginBottom: 14 }}>
           <div className="pcv-card-b">
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#78350f' }}>{monthLabel(curMonth)} 进度</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#78350f' }}>{monthLabel(curMonth)} 进度</span>
               <span style={{ fontSize: 12, color: '#9aa0a9' }}>（取今年最后一个有存入数据的月份）</span>
               <div className="pcv-spacer" />
-              <span style={{ fontSize: 13, fontWeight: 700, color: curDiff >= 0 ? '#5f8a74' : '#b96a66' }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: curDiff >= 0 ? '#5f8a74' : '#b96a66' }}>
                 {curDiff >= 0 ? `+${fmt(curDiff)}` : fmt(curDiff)}
               </span>
             </div>
@@ -236,7 +236,7 @@ export function PcSavings() {
                         key={acct}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '8px 2px', borderBottom: '0.5px solid rgba(15,23,42,0.06)', fontSize: 13,
+                          padding: '8px 2px', borderBottom: '0.5px solid rgba(15,23,42,0.06)', fontSize: 14,
                         }}
                       >
                         <span style={{ color: '#333a45' }}>{acct}</span>
@@ -333,7 +333,7 @@ export function PcSavings() {
                 display: 'flex', alignItems: 'center', marginTop: 14, paddingTop: 10,
                 borderTop: '0.5px solid rgba(251,191,36,0.3)',
               }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>合计</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#92400e' }}>合计</span>
                 <div className="pcv-spacer" />
                 <span style={{ fontSize: 18, fontWeight: 800, color: '#92400e', fontVariantNumeric: 'tabular-nums' }}>
                   {draftTotal.toLocaleString()}

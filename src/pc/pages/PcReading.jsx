@@ -234,7 +234,7 @@ export function PcReading() {
                   <tr key={it.id}>
                     <td>
                       <span className="pcv-namecell">
-                        <span style={{ fontSize: 13, flexShrink: 0 }}>{it.type === '综艺' ? '🎬' : '📖'}</span>
+                        <span style={{ fontSize: 14, flexShrink: 0 }}>{it.type === '综艺' ? '🎬' : '📖'}</span>
                         <span className="pcv-nametext" title={it.title}>{it.title}</span>
                         {it.mynotes && (
                           <span className="pcv-chip" style={{ background: '#fef3c7', color: '#a16207', flexShrink: 0 }}>有笔记</span>

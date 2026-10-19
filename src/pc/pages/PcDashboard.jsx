@@ -114,7 +114,7 @@ export function PcDashboard() {
           ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
           : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
         const color = overdue ? '#b96a66' : du <= 3 ? '#b07d4a' : '#a99154'
-        return <span style={{ fontSize: 13, fontWeight: 600, color }}>{text}</span>
+        return <span style={{ fontSize: 14, fontWeight: 600, color }}>{text}</span>
       },
       actions: (s) => (
         <button className="pcv-btn pcv-btn-ghost" onClick={() => setSampleDialog(s)}>打开样品</button>
@@ -257,7 +257,7 @@ export function PcDashboard() {
                   {todoList.map((t) => (
                     <div key={t.id} className="pcv-copyitem" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #c4b5fd', flexShrink: 0 }} />
-                      <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+                      <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
                       <DueTag due={t.due} />
                     </div>
                   ))}

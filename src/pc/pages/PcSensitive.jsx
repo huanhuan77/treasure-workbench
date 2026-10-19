@@ -73,7 +73,7 @@ export function PcSensitive() {
         {tab === 'lib' ? (
           <>
             <div className="pcv-card" style={{ marginBottom: 14 }}>
-              <div className="pcv-card-b" style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>
+              <div className="pcv-card-b" style={{ fontSize: 14, color: '#6b7280', lineHeight: 1.7 }}>
                 平台会审核贬低、歧视、违规类词汇，命中后可能被扣分 / 罚没佣金 / 封号。
                 下面词库在生成话题和文案时会自动检测并替换。
               </div>
@@ -109,7 +109,7 @@ export function PcSensitive() {
               <div className="pcv-card">
                 <div className="pcv-card-b" style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                   {shownWords.map((w) => (
-                    <span key={w} className="pcv-chip" style={{ background: '#f5f6f8', color: '#4b5563', display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 8px 5px 12px', fontSize: 13 }}>
+                    <span key={w} className="pcv-chip" style={{ background: '#f5f6f8', color: '#4b5563', display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 8px 5px 12px', fontSize: 14 }}>
                       {w}
                       <button className="pcv-x" title="删除该词" onClick={() => setDelWord(w)}>×</button>
                     </span>
