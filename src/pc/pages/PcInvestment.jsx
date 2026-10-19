@@ -106,14 +106,35 @@ export function PcInvestment() {
     setForm({ code: '', name: '', direction: 'buy', shares: '', price: '', date: '', assetType: activeTab })
     setEditing('new')
   }
+  // 「编辑最新」按钮：不是改旧记录，而是**基于这一行再记一笔**（用户要求弹窗要清空）。
+  // 只带过 代码 / 名称 / 资产类型，份额、成交价、日期全空 —— 否则会沿用上一笔的数字，
+  // 一不留神就把新买入存成旧价格。
+  const openNewFrom = (inv) => {
+    const today = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
+    setForm({
+      code: inv.code || '',
+      name: inv.name || '',
+      direction: 'buy',
+      shares: '',
+      price: '',
+      date: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
+      assetType: getAssetType(inv),
+    })
+    setEditing('new')
+  }
+
   const openEdit = (inv) => {
+    // 编辑旧记录：保留它原本的日期；只有历史脏数据没填日期时才兜底成今天
+    const today = new Date()
+    const pad = (n) => String(n).padStart(2, '0')
     setForm({
       code: inv.code || '',
       name: inv.name || '',
       direction: inv.type || 'buy',
       shares: String(inv.shares ?? ''),
       price: String(inv.sellPrice ?? ''),
-      date: inv.sellDate || '',
+      date: inv.sellDate || `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
       assetType: getAssetType(inv),
     })
     setEditing(inv)
@@ -303,7 +324,13 @@ export function PcInvestment() {
                       </td>
                       <td style={{ color: '#333a45', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{g.latest.sellDate || '—'}</td>
                       <td onClick={(e) => e.stopPropagation()} style={{ whiteSpace: 'nowrap' }}>
-                        <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => openEdit(g.latest)}>编辑最新</button>
+                        {/* 打开的是**空白表单**（只认代码/名称），不再带入上一笔的份额与价格 */}
+                        <button
+                          className="pcv-btn pcv-btn-ghost"
+                          style={{ padding: '5px 10px' }}
+                          title="按这只基金再记一笔（份额/价格清空）"
+                          onClick={() => openNewFrom(g.latest)}
+                        >记一笔</button>
                       </td>
                     </tr>
 
