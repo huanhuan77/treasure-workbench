@@ -258,14 +258,14 @@ export function PcPublishRecords() {
                             onClick={() => setExpanded(open ? '' : g.key)}
                           >
                             <svg
-                              width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+                              width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
                               style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease' }}
                             >
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </button>
                         ) : (
-                          <span style={{ width: 13, flexShrink: 0 }} aria-hidden="true" />
+                          <span style={{ width: 16, flexShrink: 0 }} aria-hidden="true" />
                         )}
                         {/* 产品名后不再挂「×N」徽标：右侧「发布次数」列已经显示同一条数，
                             两个数字并排反而让人以为口径不同（用户反馈「为什么不一样」） */}

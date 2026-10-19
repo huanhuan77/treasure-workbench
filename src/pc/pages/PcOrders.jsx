@@ -262,7 +262,7 @@ export function PcOrders() {
                           >
                             {/* 实心三角（不用 chevron 折线）：收起时朝右、展开时旋转 90° 朝下 */}
                             <svg
-                              width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+                              width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
                               style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease' }}
                             >
                               <path d="M8 5v14l11-7z" />
