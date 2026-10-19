@@ -131,6 +131,15 @@ export function PcDashboard() {
     [cur, account],
   )
 
+  // Tab 上的数字要跟着账号筛选变（与手机端一致）：
+  // 原来直接取 spec[t.id].items.length，选了账号后列表变了、数字却纹丝不动，
+  // 看起来像「点了没反应」。
+  const tabCount = (id) => {
+    const sp = spec[id]
+    if (!account) return sp.items.length
+    return sp.items.filter((it) => sp.accountsOf(it).includes(account)).length
+  }
+
   // 当前 Tab 涉及到的账号（供筛选条）
   const accountOptions = useMemo(() => {
     const set = new Set()
@@ -295,7 +304,7 @@ export function PcDashboard() {
               <div className="pcv-rtabs">
                 {REMINDER_TABS.map((t) => {
                   const on = tab === t.id
-                  const n = spec[t.id].items.length
+                  const n = tabCount(t.id)
                   return (
                     <button
                       key={t.id}

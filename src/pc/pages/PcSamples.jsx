@@ -11,7 +11,6 @@ import { deadlineDesc } from '../../utils/helpers'
 import { CATEGORY_STYLE } from '../../utils/productDisplay'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
 import { SampleDialog } from '../components/SampleDialog'
-import { PublishDialog } from '../components/PublishDialog'
 import { ResetButton } from '../components/ResetButton'
 
 // 状态色调只用三档 + 一档淡出：
@@ -55,8 +54,7 @@ export function PcSamples() {
   const [sortDir, setSortDir] = useState('desc')
   // 样品新增/编辑走弹窗：undefined=关闭、null=新增、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
-  // 补记发布弹窗：undefined=关闭、{ sampleId, accounts }=打开
-  const [publishDialog, setPublishDialog] = useState(undefined)
+  // 「补记发布」入口已从样品页移除（用户要求），弹窗状态与组件一并删掉
   // 行内改名字：nameEditId = 正在改的样品 id，nameDraft = 输入中的文本
   const [nameEditId, setNameEditId] = useState('')
   const [nameDraft, setNameDraft] = useState('')
@@ -446,13 +444,18 @@ export function PcSamples() {
                       )}
                     </td>
                     <td>
+                      {/* 「补记发布」从这一行去掉（用户要求）：样品页只负责维护样品本身，
+                          补发布统一到「视频发布记录」页或用总览的提醒表 */}
                       {!shot && !archived && (
                         <button className="pcv-btn pcv-btn-ghost" onClick={() => markShot(s)}>标记已拍</button>
                       )}
-                      <button className="pcv-btn" style={{ marginLeft: 8 }} onClick={() => setPublishDialog({ sampleId: s.id, accounts })}>补记发布</button>
                       {/* 「编辑」原来是文字链接（pcv-btn-text），按用户要求统一成按钮，
                           样式取 ghost（白底 + 细描边），与「标记已拍」同款。 */}
-                      <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>编辑</button>
+                      <button
+                        className="pcv-btn pcv-btn-ghost"
+                        style={{ marginLeft: shot || archived ? 0 : 8 }}
+                        onClick={() => setSampleDialog(s)}
+                      >编辑</button>
                     </td>
                   </tr>
                 )
@@ -467,14 +470,6 @@ export function PcSamples() {
         <SampleDialog sample={sampleDialog} onClose={() => setSampleDialog(undefined)} />
       )}
 
-      {/* 补记发布：弹窗，不跳页面 */}
-      {publishDialog !== undefined && (
-        <PublishDialog
-          sampleId={publishDialog.sampleId}
-          accounts={publishDialog.accounts}
-          onClose={() => setPublishDialog(undefined)}
-        />
-      )}
     </>
   )
 }
