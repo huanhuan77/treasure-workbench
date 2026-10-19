@@ -50,7 +50,9 @@ export function PcPublishRecords() {
     setDateEdit(null)
   }
   const [account, setAccount] = useState('')
-  const [dateRange, setDateRange] = useState('today') // 与手机版同默认值
+  // 默认「全部」：原来默认「今天」，而发布记录多数是隔天才补记的，
+  // 一进页面就是「当前筛选下暂无记录」，看着像数据丢了（用户反馈「手机有 PC 没有」）
+  const [dateRange, setDateRange] = useState('')
   const [keyword, setKeyword] = useState('')
   const [sortKey, setSortKey] = useState('dateDesc')
   const [expanded, setExpanded] = useState('')
@@ -81,12 +83,12 @@ export function PcPublishRecords() {
     else setSortKey(dir === 'desc' ? 'countAsc' : 'countDesc')
   }
 
-  // 重置：搜索 + 账号 + 时间范围 + 排序，回到进页面时的默认（时间范围默认「今天」）
-  const hasFilter = account !== '' || keyword !== '' || dateRange !== 'today' || sortKey !== 'dateDesc'
+  // 重置：搜索 + 账号 + 时间范围 + 排序，回到进页面时的默认（时间范围默认「全部」）
+  const hasFilter = account !== '' || keyword !== '' || dateRange !== '' || sortKey !== 'dateDesc'
   const resetFilters = () => {
     setAccount('')
     setKeyword('')
-    setDateRange('today')
+    setDateRange('')
     setSortKey('dateDesc')
   }
 
@@ -173,7 +175,11 @@ export function PcPublishRecords() {
       <div className="pcv-bar">
         <div>
           <div className="pcv-title">视频发布记录</div>
-          <div className="pcv-sub">{filteredCount} 条记录 · {groups.length} 个「产品 × 账号」分组</div>
+          {/* 同时给出「本机总条数」和「筛选后条数」：筛出来是 0 时，
+              能一眼分清是「没数据」还是「筛选太窄」（用户反馈过手机有、PC 没有） */}
+          <div className="pcv-sub">
+            {filteredCount} / {records.length} 条记录 · {groups.length} 个「产品 × 账号」分组
+          </div>
         </div>
         <div className="pcv-spacer" />
         <input
@@ -228,7 +234,12 @@ export function PcPublishRecords() {
             <tbody>
               {groups.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="pcv-empty">当前筛选下暂无记录</td>
+                  {/* 区分两种空：本机根本没有记录（要去同步）vs 被筛选挡掉了 */}
+                  <td colSpan={4} className="pcv-empty">
+                    {records.length === 0
+                      ? '本机还没有发布记录 —— 点右上角「同步」从云端拉取一次'
+                      : '当前筛选下暂无记录，试试把日期切到「全部」'}
+                  </td>
                 </tr>
               ) : groups.map((g) => {
                 const open = expanded === g.key
@@ -237,6 +248,25 @@ export function PcPublishRecords() {
                   <tr key={g.key}>
                     <td>
                       <span className="pcv-namecell">
+                        {/* 展开箭头放在产品名**前面**（与出单页一致，用户要求）：
+                            有多个日期时才显示三角，只有一个日期时占位保持各列对齐。
+                            三角用 SVG，不用 ▾ 字符（部分字体缺字形会渲染成小点）。 */}
+                        {g.dates.length > 1 ? (
+                          <button
+                            className="pcv-caret"
+                            title={open ? `收起（共 ${g.dates.length} 个日期）` : `展开另外 ${g.dates.length - 1} 个日期`}
+                            onClick={() => setExpanded(open ? '' : g.key)}
+                          >
+                            <svg
+                              width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+                              style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease' }}
+                            >
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </button>
+                        ) : (
+                          <span style={{ width: 13, flexShrink: 0 }} aria-hidden="true" />
+                        )}
                         {/* 产品名后不再挂「×N」徽标：右侧「发布次数」列已经显示同一条数，
                             两个数字并排反而让人以为口径不同（用户反馈「为什么不一样」） */}
                         <span className="pcv-nametext" title={g.name}>{g.name}</span>
@@ -270,25 +300,11 @@ export function PcPublishRecords() {
                             >×</button>
                           </span>
                         ))}
-                        {g.dates.length > 1 && (
-                          // 折叠时只显示第一个日期，后面用一个**箭头**展开其余日期
-                          // （用户要求「点击箭头查看更多」；原来是一段「还有 N 个日期」的文字按钮）
-                          // ⚠️ 箭头用 SVG 不用 ▾/▴ 字符：字符在不同字体环境下可能缺字形（无头环境实测渲染成小点）
-                          <button
-                            className="pcv-btn-text"
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontWeight: 700 }}
-                            title={open ? '收起' : `展开另外 ${g.dates.length - 1} 个日期`}
-                            onClick={() => setExpanded(open ? '' : g.key)}
-                          >
-                            <svg
-                              width="12" height="12" viewBox="0 0 24 24" fill="none"
-                              stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"
-                              style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .15s ease' }}
-                            >
-                              <path d="M6 9l6 6 6-6" />
-                            </svg>
-                            <span style={{ fontSize: 11 }}>{g.dates.length - 1}</span>
-                          </button>
+                        {/* 展开箭头已移到产品名前（见上方），这里不再重复放一个 */}
+                        {g.dates.length > 1 && !open && (
+                          <span style={{ fontSize: 11, color: '#9aa0a9', fontWeight: 600 }}>
+                            还有 {g.dates.length - 1} 个日期
+                          </span>
                         )}
                       </span>
                     </td>

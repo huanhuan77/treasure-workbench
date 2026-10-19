@@ -68,7 +68,9 @@ function usedAgo(dateStr) {
   return `${-diff}天后`
 }
 
-// 可拖拽排序的产品行
+// 可拖拽排序的产品行。
+// 拖动把手不再单独占一列（用户要求去掉最左边那列），改成把把手交给 children 渲染，
+// 由调用方放进「操作」列 —— 行首因此不再有一条突兀的拖动列。
 function SortableProductRow({ p, isActive, onClick, children }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id })
   const style = {
@@ -77,30 +79,45 @@ function SortableProductRow({ p, isActive, onClick, children }) {
     opacity: isDragging ? 0.5 : 1,
     background: isDragging ? '#fdf2f8' : undefined,
   }
+  const dragHandle = (
+    <button
+      {...attributes}
+      {...listeners}
+      onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
+      onClick={(e) => e.stopPropagation()}
+      title="按住拖动排序"
+      style={{
+        cursor: 'grab', border: 'none', background: 'transparent', borderRadius: 6,
+        padding: '4px 4px', color: '#9ca3af', touchAction: 'none',
+        display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle',
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M12 4l-4 4h3v4h2V8h3l-4-4zm0 16l4-4h-3v-4h-2v4H8l4 4z" />
+      </svg>
+    </button>
+  )
   return (
     <tr ref={setNodeRef} style={style} className={isActive ? 'on' : ''} onClick={onClick}>
-      <td style={{ width: 32, padding: '4px 4px', verticalAlign: 'middle' }}>
-        <button
-          {...attributes}
-          {...listeners}
-          onPointerDown={(e) => { e.stopPropagation(); listeners?.onPointerDown?.(e) }}
-          onClick={(e) => e.stopPropagation()}
-          title="拖动排序"
-          style={{
-            cursor: 'grab', border: 'none', background: '#fce7f3', borderRadius: 6,
-            padding: '3px 5px', color: '#9ca3af', touchAction: 'none',
-            display: 'flex', alignItems: 'center',
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 4l-4 4h3v4h2V8h3l-4-4zm0 16l4-4h-3v-4h-2v4H8l4 4z"/>
-          </svg>
-        </button>
-      </td>
-      {children}
+      {children(dragHandle)}
     </tr>
   )
 }
+
+// 操作列按钮里的小图标（12px，实心，跟随 currentColor —— 置顶/置底变粉变蓝时图标一起变色）
+function ActIcon({ d, rotate }) {
+  return (
+    <svg
+      width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+      style={{ transform: rotate ? 'rotate(180deg)' : undefined, flexShrink: 0 }}
+    >
+      <path d={d} />
+    </svg>
+  )
+}
+const ICON_PIN = 'M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z'
+const ICON_EDIT = 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'
+const ICON_TRASH = 'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'
 
 // PC 版文案库：左表右详情。
 // 数据全部来自同一个 store（与手机版完全一致），这里只重排展示。
@@ -319,16 +336,16 @@ export function PcProducts() {
             <table className="pcv-table">
               <thead>
                 <tr>
-                  <th style={{ width: '3%' }}></th>
-                  <th style={{ width: '44%' }}>产品</th>
-                  <th style={{ width: '19%' }}>分类</th>
-                  <th style={{ width: '34%' }}>操作</th>
+                  {/* 操作列 46% → 50%：按钮加了图标后每个宽约 60px，四个 + 拖动把手约需 270px */}
+                  <th style={{ width: '36%' }}>产品</th>
+                  <th style={{ width: '14%' }}>分类</th>
+                  <th style={{ width: '50%' }}>操作</th>
                 </tr>
               </thead>
               <tbody>
                 {list.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="pcv-empty">没有匹配的产品</td>
+                    <td colSpan={3} className="pcv-empty">没有匹配的产品</td>
                   </tr>
                 ) : (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
@@ -343,6 +360,8 @@ export function PcProducts() {
                             isActive={active && p.id === active.id}
                             onClick={() => setActiveId(p.id)}
                           >
+                            {(dragHandle) => (
+                              <>
                             <td>
                               <span className="pcv-namecell">
                                 <span
@@ -367,29 +386,33 @@ export function PcProducts() {
                               )}
                             </td>
                             <td style={{ whiteSpace: 'nowrap' }}>
+                              {/* 拖动把手放在最前面（原来单独占一列，已被去掉） */}
+                              {dragHandle}
                               <button
                                 className="pcv-btn pcv-btn-ghost"
-                                style={{ padding: '5px 10px', ...(p.pinned ? { color: '#b8517f', borderColor: 'rgba(184,81,127,0.45)' } : null) }}
+                                style={{ padding: '4px 8px', fontSize: 12, marginLeft: 2, display: 'inline-flex', alignItems: 'center', gap: 3, ...(p.pinned ? { color: '#b8517f', borderColor: 'rgba(184,81,127,0.45)' } : null) }}
                                 title={p.pinned ? '取消置顶' : '置顶'}
                                 onClick={(e) => { e.stopPropagation(); togglePin(p) }}
-                              >置顶</button>
+                              ><ActIcon d={ICON_PIN} />置顶</button>
                               <button
                                 className="pcv-btn pcv-btn-ghost"
-                                style={{ padding: '5px 10px', marginLeft: 6, ...(p.pinnedBottom ? { color: '#2563eb', borderColor: 'rgba(37,99,235,0.45)' } : null) }}
+                                style={{ padding: '4px 8px', fontSize: 12, marginLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 3, ...(p.pinnedBottom ? { color: '#2563eb', borderColor: 'rgba(37,99,235,0.45)' } : null) }}
                                 title={p.pinnedBottom ? '取消置底' : '置底'}
                                 onClick={(e) => { e.stopPropagation(); togglePinBottom(p) }}
-                              >置底</button>
+                              ><ActIcon d={ICON_PIN} rotate />置底</button>
                               <button
                                 className="pcv-btn pcv-btn-ghost"
-                                style={{ padding: '5px 10px', marginLeft: 6 }}
+                                style={{ padding: '4px 8px', fontSize: 12, marginLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}
                                 onClick={(e) => { e.stopPropagation(); setEditing(p) }}
-                              >编辑</button>
+                              ><ActIcon d={ICON_EDIT} />编辑</button>
                               <button
                                 className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
-                                style={{ padding: '5px 10px', marginLeft: 6 }}
+                                style={{ padding: '4px 8px', fontSize: 12, marginLeft: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}
                                 onClick={(e) => { e.stopPropagation(); setDelProduct(p) }}
-                              >删除</button>
+                              ><ActIcon d={ICON_TRASH} />删除</button>
                             </td>
+                              </>
+                            )}
                           </SortableProductRow>
                         )
                       })}

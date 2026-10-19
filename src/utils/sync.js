@@ -317,8 +317,8 @@ function mergeModule(key, localVal, remoteVal, tombstones, wordTimes, lastSync) 
   if (remoteVal == null) return localVal
   const t = (tombstones && tombstones[key]) || {}
   switch (key) {
-    case 'blogger_workbench_data_v1':
-      return {
+    case 'blogger_workbench_data_v1': {
+      const merged = {
         products: mergeProducts(localVal.products, remoteVal.products, t),
         samples: mergeArrayById(localVal.samples, remoteVal.samples, t),
         orders: mergeArrayById(localVal.orders, remoteVal.orders, t),
@@ -326,7 +326,21 @@ function mergeModule(key, localVal, remoteVal, tombstones, wordTimes, lastSync) 
         savingsData: mergeSavings(localVal.savingsData, remoteVal.savingsData, t),
         sensitiveWords: mergeWords(localVal.sensitiveWords, remoteVal.sensitiveWords, t, wordTimes, lastSync),
         todos: mergeArrayById(localVal.todos, remoteVal.todos, t),
+        // ⚠️ 这两项以前漏了：合并结果里没有它们，写回 gist 时整个字段就被抹掉，
+        // 于是「手机记了发布记录 → PC 点同步也看不到」（用户反馈「我点了同步啊」）。
+        // 而且每次同步还会把云端备份里的这两项删掉，属于静默数据丢失。
+        publishRecords: mergeArrayById(localVal.publishRecords, remoteVal.publishRecords, t),
+        dramas: mergeArrayById(localVal.dramas, remoteVal.dramas, t),
       }
+      // 兜底：本次没显式处理的字段（以后新增的）也一并保留，
+      // 原则是「远端有就用远端，否则用本地」—— 绝不再静默丢弃任何字段。
+      const extraKeys = new Set([...Object.keys(localVal || {}), ...Object.keys(remoteVal || {})])
+      for (const k of extraKeys) {
+        if (k in merged) continue
+        merged[k] = (remoteVal && remoteVal[k] !== undefined) ? remoteVal[k] : localVal[k]
+      }
+      return merged
+    }
     case 'blogger_investments_v1':
       return mergeArrayById(localVal, remoteVal, t)
     case 'blogger_calendar_v1':
