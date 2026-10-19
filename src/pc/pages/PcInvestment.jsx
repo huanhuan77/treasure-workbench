@@ -140,6 +140,50 @@ export function PcInvestment() {
     setEditing(inv)
   }
 
+  // 按代码自动带出名称（用户问「输入代码能带出名称吗」）：
+  // 填满 6 位数字后 500ms 自动查一次；名称已手填过就不覆盖。
+  const lookupTimer = useRef(null)
+  const [nameBusy, setNameBusy] = useState(false)
+
+  const lookupName = async (rawCode, assetType) => {
+    const code = String(rawCode || '').replace(/\D/g, '')
+    if (code.length !== 6) return
+    setNameBusy(true)
+    try {
+      const { StockSDK } = await import('stock-sdk')
+      const sdk = new StockSDK()
+      let name = ''
+      if (assetType === 'fund') {
+        try { name = (await sdk.fund.profile(code))?.name || '' } catch (e) { /* 基金资料拿不到时退回行情 */ }
+        if (!name) {
+          try { name = (await sdk.quotes.fund([code]))?.[0]?.name || '' } catch (e) { /* 忽略 */ }
+        }
+      } else {
+        name = (await sdk.quotes.cn([code]))?.[0]?.name || ''
+      }
+      if (name) {
+        setForm((f) => (
+          f && f.code.replace(/\D/g, '') === code && !String(f.name || '').trim()
+            ? { ...f, name }
+            : f
+        ))
+      }
+    } catch (e) {
+      // 查不到就让用户手填，不打断
+    } finally {
+      setNameBusy(false)
+    }
+  }
+
+  const onCodeChange = (v) => {
+    setForm((f) => ({ ...f, code: v }))
+    if (lookupTimer.current) clearTimeout(lookupTimer.current)
+    const code = String(v || '').replace(/\D/g, '')
+    if (code.length === 6) {
+      lookupTimer.current = setTimeout(() => lookupName(code, form.assetType), 500)
+    }
+  }
+
   const saveForm = () => {
     const code = form.code.trim()
     const name = form.name.trim()
@@ -406,7 +450,7 @@ export function PcInvestment() {
                     style={{ width: '100%' }}
                     placeholder="如 600519 / 110022"
                     value={form.code}
-                    onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))}
+                    onChange={(e) => onCodeChange(e.target.value)}
                     autoFocus
                   />
                 </div>
@@ -424,7 +468,20 @@ export function PcInvestment() {
                 </div>
               </div>
 
-              <div className="pcv-field-label" style={{ marginTop: 16 }}>名称 <span style={{ color: '#b96a66' }}>*</span></div>
+              <div className="pcv-field-label" style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                名称 <span style={{ color: '#b96a66' }}>*</span>
+                {/* 名称旁的查询状态 / 手动重查：代码填满 6 位会自动查一次 */}
+                {nameBusy ? (
+                  <span style={{ fontWeight: 400, color: '#8a8f98' }}>正在按代码查询名称…</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="pcv-btn-text"
+                    style={{ padding: 0, fontWeight: 400 }}
+                    onClick={() => lookupName(form.code, form.assetType)}
+                  >按代码查名称</button>
+                )}
+              </div>
               <input
                 className="pcv-input"
                 style={{ width: '100%' }}
