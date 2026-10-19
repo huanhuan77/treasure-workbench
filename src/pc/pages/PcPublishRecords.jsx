@@ -235,9 +235,7 @@ export function PcPublishRecords() {
             style={{ padding: '4px 8px' }}
             onChange={(e) => setDateRange(e.target.value ? `day:${e.target.value}` : '')}
           />
-          {/* 「重置」放这一行最右（用户要求）：紧跟日期选择器之后，账号那行只留账号胶囊，
-              不会再把重置读成第 4 个账号 */}
-          <div className="pcv-spacer" />
+          {/* 「重置」靠左：紧跟日期选择器之后（去掉 spacer，不再顶到行尾） */}
           <ResetButton active={hasFilter} onClick={resetFilters} />
         </div>
 
