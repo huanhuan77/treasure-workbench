@@ -312,13 +312,14 @@ export function PcDashboard() {
               {/* 账号胶囊也照手机端：用账号主题色描边，选中填充同色白字
                   （原来是统一的灰色胶囊，和手机端的账号色对不上） */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap', overflow: 'hidden' }}>
+                {/* 「全部账号」选中态用品牌粉填充（原来是深黑底，与其他账号胶囊的彩色不搭，用户要求不要黑色） */}
                 <button
                   onClick={() => setAccount('')}
                   style={{
                     padding: '5px 11px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
                     fontSize: 12, fontWeight: 600,
                     border: account === '' ? 'none' : '1px solid rgba(15,23,42,0.14)',
-                    background: account === '' ? '#333a45' : '#fff',
+                    background: account === '' ? '#b8517f' : '#fff',
                     color: account === '' ? '#fff' : '#4b5563',
                   }}
                 >全部账号</button>
