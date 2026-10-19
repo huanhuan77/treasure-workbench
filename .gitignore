@@ -20,6 +20,8 @@ npm-debug.log*
 .deploy_token
 
 # 开发临时脚本（不入库）
+tmp_*.js
+.playwright-cli/
 gen_*.mjs
 fix_merge.py
 merge_jiebitudu.py

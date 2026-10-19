@@ -220,13 +220,14 @@ export function PcPublishRecords() {
             <thead>
               <tr>
                 {/* 排序入口统一为「点表头」（与样品页、出单页、收支页一致）：
-                    「发布日期」点一下切升/降序，「发布次数」点一下按次数排。 */}
-                <th style={{ width: 260 }}>产品</th>
-                <th style={{ width: 150 }}>账号</th>
-                <th style={{ width: 420 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
+                    「发布日期」点一下切升/降序，「发布数量」点一下按次数排。
+                    发布日期放第一列（用户要求）：日期是这条记录的主键，展开箭头也跟着它。 */}
+                <th style={{ width: 260 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
                   发布日期{sortDirOf('date') ? (sortDirOf('date') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th className="pcv-th-sort" onClick={() => toggleSort('count')}>
+                <th>产品</th>
+                <th style={{ width: 150 }}>账号</th>
+                <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleSort('count')}>
                   发布数量{sortDirOf('count') ? (sortDirOf('count') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
               </tr>
@@ -248,11 +249,10 @@ export function PcPublishRecords() {
                 return (
                   <Fragment key={g.key}>
                   <tr>
+                    {/* 第一列：三角（15px）+ 最新日期胶囊。三角只在有多个日期时出现，
+                        单个日期时留 19px 占位，保证各行日期左对齐。 */}
                     <td>
-                      <span className="pcv-namecell">
-                        {/* 展开箭头放在产品名**前面**（与出单页一致，用户要求）：
-                            有多个日期时才显示三角，只有一个日期时占位保持各列对齐。
-                            三角用 SVG，不用 ▾ 字符（部分字体缺字形会渲染成小点）。 */}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         {g.dates.length > 1 ? (
                           <button
                             className="pcv-caret"
@@ -260,36 +260,18 @@ export function PcPublishRecords() {
                             onClick={() => setExpanded(open ? '' : g.key)}
                           >
                             <svg
-                              width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+                              width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
                               style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s ease' }}
                             >
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </button>
                         ) : (
-                          <span style={{ width: 16, flexShrink: 0 }} aria-hidden="true" />
+                          <span style={{ width: 19, flexShrink: 0 }} aria-hidden="true" />
                         )}
-                        {/* 产品名后不再挂「×N」徽标：右侧「发布次数」列已经显示同一条数，
-                            两个数字并排反而让人以为口径不同（用户反馈「为什么不一样」） */}
-                        <span className="pcv-nametext" title={g.name}>{g.name}</span>
-                      </span>
-                    </td>
-                    <td>
-                      {g.account ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                          {/* 账号名不标账号主题色 —— 与样品页同样的偏好（用户要求「账号不要标记颜色」） */}
-                          <span style={{ color: '#333a45' }}>{g.account}</span>
-                        </span>
-                      ) : (
-                        <span style={{ color: '#9aa0a9' }}>—</span>
-                      )}
-                    </td>
-                    <td>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                         {dates.map((d) => (
                           <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            {/* 日期可点：点开「修改发布日期」。透明底 + 细描边（.pcv-datechip），
-                                hover 才浮出浅底作为「可点」提示；字号 13、不加粗 */}
+                            {/* 日期可点：点开「修改发布日期」 */}
                             <button
                               className="pcv-datechip"
                               title="点击修改发布日期"
@@ -303,6 +285,19 @@ export function PcPublishRecords() {
                           </span>
                         ))}
                       </span>
+                    </td>
+                    <td>
+                      <span className="pcv-nametext" title={g.name}>{g.name}</span>
+                    </td>
+                    <td>
+                      {g.account ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                          {/* 账号名不标账号主题色 —— 与样品页同样的偏好（用户要求「账号不要标记颜色」） */}
+                          <span style={{ color: '#333a45' }}>{g.account}</span>
+                        </span>
+                      ) : (
+                        <span style={{ color: '#9aa0a9' }}>—</span>
+                      )}
                     </td>
                     {/* 发布次数 = 该「产品 × 账号」下**视频条数总和**（qty 累加），
                         不是记录条数 —— 一条记录可以记 2 条发布（qty=2），
