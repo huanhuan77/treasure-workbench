@@ -33,13 +33,13 @@ export function DueTag({ due, style }) {
     const days = Math.round((dueMs - todayMs) / 86400000)
     if (days < 0) {
       return {
-        text: days === -1 ? '昨天已过期' : `已过期 ${Math.abs(days)} 天`,
+        text: `${mo}月${d}日`,
         color: '#dc2626', bg: '#fee2e2',
       }
     }
-    if (days === 0) return { text: '今天截止', color: '#ea580c', bg: '#ffedd5' }
-    if (days <= 3) return { text: `剩 ${days} 天`, color: '#ea580c', bg: '#ffedd5' }
-    return { text: `${mo}月${d}日截止`, color: '#6b7280', bg: '#f3f4f6' }
+    if (days === 0) return { text: `${mo}月${d}日`, color: '#ea580c', bg: '#ffedd5' }
+    if (days <= 3) return { text: `${mo}月${d}日`, color: '#ea580c', bg: '#ffedd5' }
+    return { text: `${mo}月${d}日`, color: '#6b7280', bg: '#f3f4f6' }
   }, [due])
 
   if (!calc) return null
