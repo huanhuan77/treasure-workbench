@@ -233,6 +233,7 @@ export function PcPublishRecords() {
                 <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleSort('count')}>
                   发布数量{sortDirOf('count') ? (sortDirOf('count') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
+                <th style={{ width: 140 }}>操作</th>
                 <th />{/* 吸收剩余宽度，避免被某一列独占 */}
               </tr>
             </thead>
@@ -240,7 +241,7 @@ export function PcPublishRecords() {
               {groups.length === 0 ? (
                 <tr>
                   {/* 区分两种空：本机根本没有记录（要去同步）vs 被筛选挡掉了 */}
-                  <td colSpan={5} className="pcv-empty">
+                  <td colSpan={6} className="pcv-empty">
                     {records.length === 0
                       ? '本机还没有发布记录 —— 点右上角「同步」从云端拉取一次'
                       : '当前筛选下暂无记录，试试把日期切到「全部」'}
@@ -252,23 +253,9 @@ export function PcPublishRecords() {
                 return (
                   <Fragment key={g.key}>
                   <tr>
-                    {/* 第一列：三角（15px）+ 最新日期胶囊。点三角打开「发布详情」弹窗
-                        （原来是行内展开，十几个日期会把表格撑得很长）。 */}
+                    {/* 第一列：只有最新日期胶囊（行首三角已去掉，改由操作列的「查看明细」打开弹窗） */}
                     <td>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        {g.dates.length > 1 ? (
-                          <button
-                            className="pcv-caret"
-                            title={`查看详情（共 ${g.dates.length} 个日期）`}
-                            onClick={() => setDetailKey(g.key)}
-                          >
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
-                          </button>
-                        ) : (
-                          <span style={{ width: 19, flexShrink: 0 }} aria-hidden="true" />
-                        )}
                         {dates.map((d) => (
                           <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                             {/* 日期可点：点开「修改发布日期」 */}
@@ -302,6 +289,14 @@ export function PcPublishRecords() {
                     {/* 发布数量 = 该「产品 × 账号」下**视频条数总和**（qty 累加），
                         不是记录条数 —— 一条记录可以记 2 条发布（qty=2）。 */}
                     <td className="pcv-num">{g.qty}</td>
+                    <td>
+                      {/* 明细入口（原先是行首三角）：弹出「发布详情」，看该组的全部发布日期 */}
+                      <button
+                        className="pcv-btn pcv-btn-ghost"
+                        style={{ padding: '4px 10px', fontSize: 12 }}
+                        onClick={() => setDetailKey(g.key)}
+                      >查看明细</button>
+                    </td>
                     <td />{/* 吸收列 */}
                   </tr>
                   </Fragment>
