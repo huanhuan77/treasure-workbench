@@ -143,6 +143,21 @@
   align-items: center;
   gap: 8px;
 }
+/* 淡彩按钮（次要操作用）：粉底 + 粉边 + 粉字，比白底 ghost 更有存在感，
+   又不像主按钮那样抢眼。用于「查看明细」这类行内查看入口。 */
+/* 用 .pcv-btn.pcv-btn--tint 提高优先级：本规则写在 .pcv-btn-ghost（第 514 行）之前，
+   同优先级会被它覆盖，按钮又会变回白底。 */
+.pcv-btn.pcv-btn--tint {
+  background: #fdf1f6;
+  border-color: #f2cbdd;
+  color: #b8517f;
+}
+.pcv-btn.pcv-btn--tint:hover:not(:disabled) {
+  background: #fbe4ef;
+  border-color: #eeb6cf;
+  color: #a8416f;
+}
+
 /* 侧边栏底部版本：竖排、等宽，按钮靠左对齐文字 */
 .pcv-globalactions--side {
   flex-direction: column;
@@ -1762,19 +1777,39 @@ select.pcv-input {
   font-weight: 500;
   color: #333a45;
 }
-/* 明细里的发布日期：横向自动换行（每行 4~6 个），十几个日期也只是一两行 */
+/* 明细里的发布日期：4 列网格，每个日期是一枚小胶囊（悬停变粉、× 才明显） */
 .pcv-detaildates {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 18px;
-  padding-left: 12px;
-  margin-top: 2px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding-left: 0;
+  margin-top: 6px;
 }
 .pcv-detaildate {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
-  min-width: 104px;
+  min-width: 0;
+  padding: 4px 4px 4px 9px;
+  border: 0.5px solid rgba(15, 23, 42, 0.08);
+  border-radius: 7px;
+  background: #fafbfc;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.pcv-detaildate:hover {
+  background: #fdf1f6;
+  border-color: #f2cbdd;
+}
+/* 胶囊里的 × 平时淡一点，悬停整枚胶囊才变清晰，避免一排红叉抢视线 */
+.pcv-detaildate .pcv-x {
+  width: 18px;
+  height: 18px;
+  opacity: 0.35;
+  transition: opacity 0.15s ease;
+}
+.pcv-detaildate:hover .pcv-x {
+  opacity: 1;
 }
 /* 淡版 ×：默认几乎隐形，悬停该行才显出来 */
 .pcv-x--soft {

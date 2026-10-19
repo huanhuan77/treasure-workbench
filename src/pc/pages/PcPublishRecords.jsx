@@ -233,7 +233,6 @@ export function PcPublishRecords() {
                 <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleSort('count')}>
                   发布数量{sortDirOf('count') ? (sortDirOf('count') === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 140 }}>操作</th>
                 <th />{/* 吸收剩余宽度，避免被某一列独占 */}
               </tr>
             </thead>
@@ -241,7 +240,7 @@ export function PcPublishRecords() {
               {groups.length === 0 ? (
                 <tr>
                   {/* 区分两种空：本机根本没有记录（要去同步）vs 被筛选挡掉了 */}
-                  <td colSpan={6} className="pcv-empty">
+                  <td colSpan={5} className="pcv-empty">
                     {records.length === 0
                       ? '本机还没有发布记录 —— 点右上角「同步」从云端拉取一次'
                       : '当前筛选下暂无记录，试试把日期切到「全部」'}
@@ -253,23 +252,17 @@ export function PcPublishRecords() {
                 return (
                   <Fragment key={g.key}>
                   <tr>
-                    {/* 第一列：只有最新日期胶囊（行首三角已去掉，改由操作列的「查看明细」打开弹窗） */}
+                    {/* 第一列：只有日期胶囊。点它打开「发布详情」弹窗
+                        （× 已去掉，删除统一在弹窗里做） */}
                     <td>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                         {dates.map((d) => (
-                          <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                            {/* 日期可点：点开「修改发布日期」 */}
-                            <button
-                              className="pcv-datechip"
-                              title="点击修改发布日期"
-                              onClick={() => openDateEdit(g, d)}
-                            >{d}</button>
-                            <button
-                              className="pcv-x"
-                              title={`删除 ${d} 的发布记录`}
-                              onClick={() => setDelTarget({ group: g, date: d })}
-                            >×</button>
-                          </span>
+                          <button
+                            key={d}
+                            className="pcv-datechip"
+                            title={`查看详情（共 ${g.dates.length} 个日期）`}
+                            onClick={() => setDetailKey(g.key)}
+                          >{d}</button>
                         ))}
                       </span>
                     </td>
@@ -289,14 +282,6 @@ export function PcPublishRecords() {
                     {/* 发布数量 = 该「产品 × 账号」下**视频条数总和**（qty 累加），
                         不是记录条数 —— 一条记录可以记 2 条发布（qty=2）。 */}
                     <td className="pcv-num">{g.qty}</td>
-                    <td>
-                      {/* 明细入口（原先是行首三角）：弹出「发布详情」，看该组的全部发布日期 */}
-                      <button
-                        className="pcv-btn pcv-btn-ghost"
-                        style={{ padding: '4px 10px', fontSize: 12 }}
-                        onClick={() => setDetailKey(g.key)}
-                      >查看明细</button>
-                    </td>
                     <td />{/* 吸收列 */}
                   </tr>
                   </Fragment>
@@ -330,27 +315,42 @@ export function PcPublishRecords() {
               </div>
 
               <div className="pcv-dialog-b">
-                <div className="pcv-detailblock" style={{ paddingLeft: 0 }}>
-                  <div>产品：<b>{g.name}</b></div>
-                  <div>账号：<b>{g.account || '—'}</b></div>
-                  <div>发布数量：<b>{g.qty}</b></div>
-                  <div style={{ marginTop: 4 }}>发布日期：</div>
-                  <div className="pcv-detaildates" style={{ paddingLeft: 0 }}>
-                    {g.dates.map((d) => (
-                      <span key={d} className="pcv-detaildate">
-                        <button
-                          className="pcv-date-plain"
-                          title="点击修改发布日期"
-                          onClick={() => { setDetailKey(''); openDateEdit(g, d) }}
-                        >{d}</button>
-                        <button
-                          className="pcv-x"
-                          title={`删除 ${d} 的发布记录`}
-                          onClick={() => setDelTarget({ group: g, date: d })}
-                        >×</button>
-                      </span>
-                    ))}
-                  </div>
+                {/* 三块概览：产品 / 账号 / 发布数量 */}
+                <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+                  {[
+                    { label: '产品', value: g.name, color: '#333a45' },
+                    { label: '账号', value: g.account || '—', color: '#333a45' },
+                    { label: '发布数量', value: g.qty, color: '#b8517f' },
+                  ].map((m) => (
+                    <div key={m.label} style={{ flex: 1, minWidth: 0, background: '#fafbfc', borderRadius: 10, padding: '9px 12px' }}>
+                      <div style={{ fontSize: 11, color: '#8a8f98', marginBottom: 3 }}>{m.label}</div>
+                      <div style={{
+                        fontSize: 15, fontWeight: 600, color: m.color,
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }} title={String(m.value)}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pcv-field-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  发布日期
+                  <span style={{ fontSize: 11, fontWeight: 400, color: '#9aa0a9' }}>共 {g.dates.length} 个</span>
+                </div>
+                <div className="pcv-detaildates">
+                  {g.dates.map((d) => (
+                    <span key={d} className="pcv-detaildate">
+                      <button
+                        className="pcv-date-plain"
+                        title="点击修改发布日期"
+                        onClick={() => { setDetailKey(''); openDateEdit(g, d) }}
+                      >{d}</button>
+                      <button
+                        className="pcv-x"
+                        title={`删除 ${d} 的发布记录`}
+                        onClick={() => setDelTarget({ group: g, date: d })}
+                      >×</button>
+                    </span>
+                  ))}
                 </div>
               </div>
 
