@@ -6,7 +6,7 @@ import { dedupeCopies, dedupeProducts } from './utils/dedupe'
 import { ACCOUNT_MAP, mapAccount } from './utils/accounts'
 import {
   getAccounts, getExecStatus, getAggregateCounts, recomputeTopStatus,
-  normalizeSample, EXEC_STATUS,
+  normalizeSample, getLogistics, EXEC_STATUS,
 } from './utils/sampleStatus'
 
 const StoreContext = createContext(null)

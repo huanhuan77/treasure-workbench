@@ -57,6 +57,21 @@ export function PcSamples() {
   const [sampleDialog, setSampleDialog] = useState(undefined)
   // 补记发布弹窗：undefined=关闭、{ sampleId, accounts }=打开
   const [publishDialog, setPublishDialog] = useState(undefined)
+  // 行内改名字：nameEditId = 正在改的样品 id，nameDraft = 输入中的文本
+  const [nameEditId, setNameEditId] = useState('')
+  const [nameDraft, setNameDraft] = useState('')
+
+  const startRename = (s) => { setNameEditId(s.id); setNameDraft(s.name || '') }
+  const cancelRename = () => { setNameEditId(''); setNameDraft('') }
+  const commitRename = (s) => {
+    const name = nameDraft.trim()
+    if (!name) { show('名称不能为空', 'error'); return }
+    if (name !== (s.name || '')) {
+      updateSample(s.id, { name })
+      show('名称已修改', 'success')
+    }
+    cancelRename()
+  }
 
   // 从总览指标卡的「新增」跳过来（/pc/samples?add=1）时自动打开新增弹窗；
   // 打开后把 add 参数清掉，免得刷新或关掉弹窗后又弹一次。
@@ -314,8 +329,32 @@ export function PcSamples() {
                 return (
                   <tr key={s.id}>
                     <td>
-                      {/* 分类已单独成列，产品格只留名字（原来是名字后面跟一个分类小标签） */}
-                      <span className="pcv-nametext" title={s.name}>{s.name}</span>
+                      {/* 分类已单独成列，产品格只留名字。
+                          名字可**行内编辑**（用户要求「可以编辑名字」）：点一下变输入框，
+                          回车 / 失焦保存，Esc 取消 —— 改个错别字不用开整个编辑弹窗。 */}
+                      {nameEditId === s.id ? (
+                        <input
+                          className="pcv-input"
+                          style={{ width: '100%', padding: '3px 8px', fontSize: 14 }}
+                          value={nameDraft}
+                          autoFocus
+                          onChange={(e) => setNameDraft(e.target.value)}
+                          onBlur={() => commitRename(s)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); commitRename(s) }
+                            if (e.key === 'Escape') { e.preventDefault(); cancelRename() }
+                          }}
+                        />
+                      ) : (
+                        <span
+                          className="pcv-nametext"
+                          title={`${s.name}（点击修改名称）`}
+                          style={{ cursor: 'text', borderBottom: '1px dashed transparent' }}
+                          onClick={() => startRename(s)}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderBottomColor = '#d8b3c4' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderBottomColor = 'transparent' }}
+                        >{s.name}</span>
+                      )}
                     </td>
                     <td>
                       {/* 分类：与文案库那列统一 —— 浅灰底 chip + 6px 分类色圆点（原来只有灰 chip，两页不一致） */}
