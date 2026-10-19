@@ -34,19 +34,48 @@ export function PcPublishRecords() {
   const navigate = useNavigate()
   const { show } = useToast()
   const { publishRecords, samples, deletePublishRecord, updatePublishRecord } = useStore()
-  // 修改发布日期：{ group, date } —— 点日期胶囊打开，保存时改这一组里同一天的全部记录
+  // 修改发布日期 / 发布数量：{ group, date } —— 点日期胶囊打开，
+  // 保存时改这一组里同一天的全部记录（日期），数量写进第一条。
   const [dateEdit, setDateEdit] = useState(null)
   const [dateDraft, setDateDraft] = useState('')
+  const [qtyDraft, setQtyDraft] = useState('')
 
-  const openDateEdit = (group, date) => { setDateDraft(date || ''); setDateEdit({ group, date }) }
+  const qtyOfDate = (group, date) => {
+    const list = group.records.filter((r) => r.publishDate === date)
+    return list.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
+  }
+
+  const openDateEdit = (group, date) => {
+    setDateDraft(date || '')
+    setQtyDraft(String(qtyOfDate(group, date) || 1))
+    setDateEdit({ group, date })
+  }
+
   const saveDateEdit = () => {
     if (!dateEdit || !dateDraft) return
     const { group, date } = dateEdit
-    // 同一天可能挂着多条记录（多账号 / 多次录入），一起改
-    const ids = [...new Set(group.records.filter((r) => r.publishDate === date).map((r) => r.id))]
-    if (ids.length === 0 || dateDraft === date) { setDateEdit(null); return }
-    ids.forEach((id) => updatePublishRecord(id, { publishDate: dateDraft }))
-    show(ids.length > 1 ? `已把 ${ids.length} 条记录改到 ${dateDraft}` : `发布日期已改为 ${dateDraft}`, 'success')
+    // 同一天可能挂着多条记录（多账号 / 多次录入），日期一起改
+    const list = group.records.filter((r) => r.publishDate === date)
+    const ids = [...new Set(list.map((r) => r.id))]
+    if (ids.length === 0) { setDateEdit(null); return }
+
+    const nq = parseInt(String(qtyDraft).replace(/[^\d]/g, ''), 10)
+    const newQty = Number.isFinite(nq) && nq > 0 ? nq : qtyOfDate(group, date)
+    const oldQty = qtyOfDate(group, date)
+    const qtyChanged = newQty !== oldQty
+
+    if (dateDraft === date && !qtyChanged) { setDateEdit(null); return }
+
+    if (dateDraft !== date) ids.forEach((id) => updatePublishRecord(id, { publishDate: dateDraft }))
+    if (qtyChanged) {
+      // 数量记到这一天第一条记录上（同一天多条时其余保留原值，避免一次改乱多条）
+      updatePublishRecord(list[0].id, { qty: String(newQty) })
+    }
+
+    const parts = []
+    if (dateDraft !== date) parts.push(`日期改为 ${dateDraft}`)
+    if (qtyChanged) parts.push(`数量改为 ${newQty}`)
+    show(`已修改：${parts.join('，')}`, 'success')
     setDateEdit(null)
   }
   const [account, setAccount] = useState('')
@@ -367,12 +396,12 @@ export function PcPublishRecords() {
         )
       })()}
 
-      {/* 修改发布日期：点日期胶囊打开 */}
+      {/* 修改发布日期 / 发布数量：点日期胶囊打开 */}
       {dateEdit && (
         <div className="pcv-overlay" onClick={() => setDateEdit(null)}>
           <div className="pcv-dialog" style={{ maxWidth: 380 }} onClick={(e) => e.stopPropagation()}>
             <div className="pcv-dialog-h">
-              <span>修改发布日期</span>
+              <span>修改发布记录</span>
               <div className="pcv-spacer" />
               <button className="pcv-dialog-x" title="关闭" onClick={() => setDateEdit(null)}>×</button>
             </div>
@@ -381,18 +410,42 @@ export function PcPublishRecords() {
               <div style={{ fontSize: 13, color: '#333a45', marginBottom: 14 }}>
                 {dateEdit.group.name}{dateEdit.group.account ? ` · ${dateEdit.group.account}` : ''}
               </div>
-              <div className="pcv-field-label">发布日期</div>
-              <input
-                className="pcv-input"
-                style={{ width: '100%' }}
-                type="date"
-                value={dateDraft}
-                onChange={(e) => setDateDraft(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter') saveDateEdit() }}
-              />
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="pcv-field-label">发布日期</div>
+                  <input
+                    className="pcv-input"
+                    style={{ width: '100%' }}
+                    type="date"
+                    value={dateDraft}
+                    onChange={(e) => setDateDraft(e.target.value)}
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter') saveDateEdit() }}
+                  />
+                </div>
+                <div style={{ width: 96 }}>
+                  <div className="pcv-field-label">发布数量</div>
+                  <input
+                    className="pcv-input"
+                    style={{ width: '100%' }}
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={qtyDraft}
+                    onChange={(e) => setQtyDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') saveDateEdit() }}
+                  />
+                </div>
+              </div>
+
               <div style={{ fontSize: 11, color: '#9aa0a9', marginTop: 8, lineHeight: 1.6 }}>
-                只改发布日期，发布数量与账号不变；同一天的多条记录会一起改。
+                日期改的是这一组里同一天的全部记录；数量记在当天第一条记录上。
+                {dateEdit.group.records.filter((r) => r.publishDate === dateEdit.date).length > 1 && (
+                  <span style={{ color: '#b1702c' }}>
+                    {' '}这一天有 {dateEdit.group.records.filter((r) => r.publishDate === dateEdit.date).length} 条记录，数量只改第一条。
+                  </span>
+                )}
               </div>
             </div>
             <div className="pcv-dialog-f">

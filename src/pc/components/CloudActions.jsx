@@ -6,7 +6,7 @@ import { ConfirmModal } from '../../components/Modal'
 import { getStoredToken } from '../../utils/cloudBackup'
 import { syncAll } from '../../utils/sync'
 import { useStore } from '../../store'
-import { SyncStatusDialog } from './SyncStatusDialog'
+
 
 // PC 全站的云备份条（数据备份 / 同步 / 恢复）
 //
@@ -25,7 +25,7 @@ export function CloudActions({ vertical = false }) {
   const [syncing, setSyncing] = useState(false)
   const [restoring, setRestoring] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
-  const [showStatus, setShowStatus] = useState(false)   // 同步诊断弹窗
+
   // 上次同步时间（用于按钮 tooltip，让「有没有同步过」可见）
   const [lastSyncAt, setLastSyncAt] = useState(() => {
     const t = Number(localStorage.getItem(LAST_AUTO_KEY) || 0)
@@ -118,13 +118,13 @@ export function CloudActions({ vertical = false }) {
       {/* vertical：放在左侧边栏底部，三个按钮竖排、等宽（用户要求「放侧边栏」）。
           默认横排（用于顶栏场景）。 */}
       <div className={`pcv-globalactions${vertical ? ' pcv-globalactions--side' : ''}`}>
-        {/* 「备份与同步」= 同步诊断弹窗：云端/本机各模块条数对照 +
-            上次同步时间，弹窗里可跳去备份页。 */}
+        {/* 「备份与同步」= 跳 PC 版备份页（用户要求：不再弹诊断弹窗，
+            也不再跳手机版 /backup）。诊断弹窗挪到那个页面上的「查看同步诊断」按钮。 */}
         <button
           className="pcv-btn pcv-btn-ghost"
           style={vertical ? { width: '100%', justifyContent: 'center' } : undefined}
-          onClick={() => setShowStatus(true)}
-          title="查看本机与云端的差异"
+          onClick={() => navigate('/pc/backup')}
+          title="打开数据备份页"
         >
           备份与同步
         </button>
@@ -152,7 +152,6 @@ export function CloudActions({ vertical = false }) {
           直接挂弹窗会被裁在侧栏内、且被主内容盖住（点「备份与同步」只看到页面变灰、弹窗不见）。 */}
       {createPortal(
         <>
-          {showStatus && <SyncStatusDialog onClose={() => setShowStatus(false)} />}
           <ConfirmModal
             open={confirmRestore}
             onClose={() => setConfirmRestore(false)}

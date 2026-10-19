@@ -152,7 +152,8 @@ export function SyncStatusDialog({ onClose }) {
             共 {SYNC_KEYS.length} 个同步模块
           </span>
           <div className="pcv-spacer" />
-          <button className="pcv-btn pcv-btn-ghost" onClick={() => { onClose(); navigate('/backup') }}>
+          {/* 跳 PC 版备份页（不是手机版 /backup） */}
+          <button className="pcv-btn pcv-btn-ghost" onClick={() => { onClose(); navigate('/pc/backup') }}>
             打开数据备份页
           </button>
           <button className="pcv-btn" style={{ marginLeft: 8 }} onClick={onClose}>关闭</button>

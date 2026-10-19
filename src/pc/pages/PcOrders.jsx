@@ -5,6 +5,7 @@ import { useToast } from '../../components/Toast'
 import { OrderFormModal } from '../../components/OrderFormModal'
 import { OrderDialog } from '../components/OrderDialog'
 import { ResetButton } from '../components/ResetButton'
+import { SearchSelect } from '../components/SearchSelect'
 import { dateBounds } from '../../components/DateFilterBar'
 import { ACCOUNT_COLOR } from '../../utils/accounts'
 
@@ -195,10 +196,16 @@ export function PcOrders() {
           <div className="pcv-sub">{filtered.length} 笔 · 共 {totalQty} 单 · {groups.length} 个产品</div>
         </div>
         <div className="pcv-spacer" />
-        <select className="pcv-input" value={productFilter} onChange={(e) => setProductFilter(e.target.value)}>
-          <option value="">全部产品</option>
-          {productOptions.map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
+        {/* 产品筛选改成可搜索下拉（用户要求「可以搜索」）：几十个产品靠滚动太难找 */}
+        <SearchSelect
+          value={productFilter}
+          options={productOptions}
+          onChange={setProductFilter}
+          allLabel="全部产品"
+          placeholder="搜索产品名…"
+          width={180}
+          title="按产品筛选"
+        />
         {/* 主操作紧跟产品下拉（与发布记录页一致，不再贴最右） */}
         <button className="pcv-btn" onClick={() => { setPrefill(null); setOrderOpen(true) }}>记出单</button>
       </div>

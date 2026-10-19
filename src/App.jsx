@@ -49,6 +49,7 @@ import { PcSensitive } from './pc/pages/PcSensitive'
 import { PcTodos } from './pc/pages/PcTodos'
 import { PcSavings } from './pc/pages/PcSavings'
 import { PcCalendar } from './pc/pages/PcCalendar'
+import { PcBackup } from './pc/pages/PcBackup'
 import { PcBrands } from './pc/pages/PcBrands'
 import { PcDramas } from './pc/pages/PcDramas'
 import { PcReading } from './pc/pages/PcReading'
@@ -79,6 +80,7 @@ const routes = [
       { path: 'finance', element: <PcFinance /> },
       { path: 'daily', element: <PcDaily /> },
       { path: 'investment', element: <PcInvestment /> },
+      { path: 'backup', element: <PcBackup /> },
     ],
   },
   { path: '/', element: <DashboardPage /> },
