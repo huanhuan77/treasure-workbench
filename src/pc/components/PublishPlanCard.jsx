@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
+import { SearchSelect } from './SearchSelect'
 
 // 总览「发布计划」卡片（用户要求）：
 //   字段 = 发布产品 / 发布账号 / 发布数量 / 发布时间
@@ -147,20 +148,18 @@ export function PublishPlanCard() {
             </div>
             <div className="pcv-dialog-b">
               <div className="pcv-field-label">发布产品 <span style={{ color: '#b96a66' }}>*</span></div>
-              <input
-                className="pcv-input"
-                style={{ width: '100%' }}
-                placeholder="例如：维特健灵月舒补（可从产品库选）"
+              {/* 换成站内统一的可搜索下拉（原来是浏览器原生 datalist，灰色菜单和整体风格不搭）：
+                  可以在产品库里搜，也可以直接打一个新名字（回车 / 点「使用「xxx」」） */}
+              <SearchSelect
                 value={form.name}
-                autoFocus
-                list="pcv-plan-products"
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                onKeyDown={(e) => { if (e.key === 'Enter') save() }}
+                options={productNames}
+                onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+                allLabel=""
+                placeholder="搜索或输入产品名…"
+                width="100%"
+                allowCustom
+                title="发布产品"
               />
-              {/* datalist：输入时给产品库候选，也允许完全手填 */}
-              <datalist id="pcv-plan-products">
-                {productNames.map((n) => <option key={n} value={n} />)}
-              </datalist>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 14 }}>
                 <div style={{ flex: 1 }}>

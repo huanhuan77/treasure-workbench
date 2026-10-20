@@ -16,6 +16,10 @@ export function SearchSelect({
   width = 180,
   placeholder = '搜索…',
   title,
+  // 允许输入列表里没有的值（如「发布产品」既能从产品库选、也能手填新名字）：
+  // 输入框回车或点「使用「xxx」」采用自定义值；allLabel 传空字符串则不显示「全部」项
+  allowCustom = false,
+  customLabel = '使用',
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -102,17 +106,31 @@ export function SearchSelect({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && filtered.length > 0) pick(filtered[0].value)
+              if (e.key !== 'Enter') return
+              if (filtered.length > 0) pick(filtered[0].value)
+              else if (allowCustom && query.trim()) pick(query.trim())
             }}
           />
           <div className="pcv-drop-list" style={{ maxHeight: 260 }}>
-            <button
-              type="button"
-              className={`pcv-drop-row${value === '' ? ' on' : ''}`}
-              onClick={() => pick('')}
-            >{allLabel}</button>
+            {allLabel && (
+              <button
+                type="button"
+                className={`pcv-drop-row${value === '' ? ' on' : ''}`}
+                onClick={() => pick('')}
+              >{allLabel}</button>
+            )}
+            {/* 自定义值入口：输入了列表里没有的名字时，第一行就是「使用『xxx』」 */}
+            {allowCustom && query.trim() && !items.some((i) => i.label === query.trim()) && (
+              <button
+                type="button"
+                className="pcv-drop-row"
+                onClick={() => pick(query.trim())}
+              >
+                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{customLabel}「{query.trim()}」</span>
+              </button>
+            )}
             {filtered.length === 0 ? (
-              <div style={{ padding: '10px 8px', fontSize: 12, color: '#9aa0a9' }}>没有匹配项</div>
+              !allowCustom && <div style={{ padding: '10px 8px', fontSize: 12, color: '#9aa0a9' }}>没有匹配项</div>
             ) : filtered.map((i) => (
               <button
                 key={i.value}
