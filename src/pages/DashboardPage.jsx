@@ -250,6 +250,42 @@ export function DashboardPage() {
     }
     return [...set]
   }, [products])
+
+  // 产品选择面板（用户要求：要能搜索、能按账号筛选 —— 原生 datalist 在手机上根本弹不出来）
+  const [planPicker, setPlanPicker] = useState(false)
+  const [planQuery, setPlanQuery] = useState('')
+  const [planAcc, setPlanAcc] = useState('')
+
+  // 候选：该账号做过的样品名 +（未筛选时）产品库里的名字
+  const planCandidates = useMemo(() => {
+    const set = new Set()
+    for (const s of samples || []) {
+      const accs = Array.isArray(s.accounts) && s.accounts.length
+        ? s.accounts
+        : (s.account ? [s.account] : [])
+      if (planAcc && !accs.includes(planAcc)) continue
+      const n = String((s && s.name) || '').trim()
+      if (n) set.add(n)
+    }
+    if (!planAcc) for (const n of planProductNames) set.add(n)
+    return [...set]
+  }, [samples, planProductNames, planAcc])
+
+  const planFiltered = useMemo(() => {
+    const q = planQuery.trim().toLowerCase()
+    if (!q) return planCandidates
+    return planCandidates.filter((n) => n.toLowerCase().includes(q))
+  }, [planCandidates, planQuery])
+
+  const openPlanPicker = () => {
+    setPlanQuery('')
+    setPlanAcc(planForm.account || '')
+    setPlanPicker(true)
+  }
+  const pickPlanName = (v) => {
+    setPlanForm((f) => ({ ...f, name: v }))
+    setPlanPicker(false)
+  }
   const openPlanNew = () => {
     setPlanForm({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: todayPlan })
     setPlanEdit('new')
@@ -649,7 +685,9 @@ export function DashboardPage() {
         }}>
           <div onClick={(e) => e.stopPropagation()} style={{
             width: '100%', maxWidth: '420px', background: '#fff', borderRadius: '14px',
-            padding: '16px', maxHeight: '86vh', overflowY: 'auto',
+            padding: '16px', maxHeight: '86dvh', overflowY: 'auto',
+            // dvh 会随键盘弹出一起收缩（vh 不会），否则键盘一弹按钮就被顶出屏幕（用户反馈「超出了」）
+            boxSizing: 'border-box',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
               <span style={{ fontSize: '15px', fontWeight: 700, color: '#111' }}>{planEdit === 'new' ? '新增发布计划' : '编辑发布计划'}</span>
@@ -657,17 +695,25 @@ export function DashboardPage() {
             </div>
 
             <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布产品 *</div>
-            <input
-              className="pcv-input"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px' }}
-              placeholder="例如：维特健灵月舒补"
-              value={planForm.name}
-              list="m-plan-products"
-              onChange={(e) => setPlanForm((f) => ({ ...f, name: e.target.value }))}
-            />
-            <datalist id="m-plan-products">
-              {planProductNames.map((n) => <option key={n} value={n} />)}
-            </datalist>
+            {/* 点开「产品选择面板」：可搜索、可按账号筛选、也可直接输入新名字。
+                原来用原生 datalist，手机端键盘一弹就没了，等于没有下拉。 */}
+            <button
+              onClick={openPlanPicker}
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px',
+                border: '1px solid #e5e7eb', background: '#fff', fontSize: '13px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
+                color: planForm.name ? '#111' : '#9aa0a9',
+              }}
+            >
+              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {planForm.name || '搜索或选择产品'}
+              </span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9aa0a9" strokeWidth="2.2"
+                strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
 
             <div style={{ fontSize: '12px', color: '#8a8f98', margin: '12px 0 4px' }}>发布账号</div>
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -719,6 +765,95 @@ export function DashboardPage() {
                 flex: 1, padding: '11px', borderRadius: '11px', border: 'none',
                 background: '#ec4899', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
               }}>保存</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 发布产品选择面板：搜索 + 按账号筛选（用户要求） */}
+      {planPicker && (
+        <div onClick={() => setPlanPicker(false)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 950,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+        }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            width: '100%', maxWidth: '420px', background: '#fff', borderRadius: '14px',
+            padding: '14px', maxHeight: '76dvh', boxSizing: 'border-box',
+            display: 'flex', flexDirection: 'column',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: '#111' }}>选择发布产品</span>
+              <button onClick={() => setPlanPicker(false)} style={{
+                marginLeft: 'auto', border: 'none', background: 'transparent',
+                fontSize: '18px', color: '#9aa0a9', cursor: 'pointer',
+              }}>×</button>
+            </div>
+
+            <input
+              autoFocus
+              placeholder="搜索产品名…"
+              value={planQuery}
+              onChange={(e) => setPlanQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return
+                const v = planQuery.trim()
+                if (!v) return
+                pickPlanName(planFiltered[0] || v)
+              }}
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px',
+                border: '1px solid #e5e7eb', fontSize: '13px', marginBottom: '10px',
+              }}
+            />
+
+            {/* 账号筛选：只看这个账号做过的品 */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
+              {['', ...ACCOUNTS].map((a) => {
+                const on = planAcc === a
+                const col = a ? ((ACCOUNT_COLOR[a] || {}).c || '#b8517f') : '#b8517f'
+                return (
+                  <button
+                    key={a || 'all'}
+                    onClick={() => setPlanAcc(a)}
+                    style={{
+                      padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                      border: on ? 'none' : `1px solid ${col}`,
+                      background: on ? col : '#fff',
+                      color: on ? '#fff' : col,
+                    }}
+                  >{a || '全部账号'}</button>
+                )
+              })}
+            </div>
+
+            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              {/* 输入了不存在的名字 → 第一行给「使用自定义」 */}
+              {planQuery.trim() && !planFiltered.includes(planQuery.trim()) && (
+                <button
+                  onClick={() => pickPlanName(planQuery.trim())}
+                  style={{
+                    width: '100%', textAlign: 'left', padding: '11px 10px', border: 'none',
+                    borderBottom: '0.5px solid #f1eef0', background: '#fdf7fa', borderRadius: '8px',
+                    fontSize: '13px', color: '#b8517f', fontWeight: 600, cursor: 'pointer', marginBottom: '4px',
+                  }}
+                >使用「{planQuery.trim()}」</button>
+              )}
+              {planFiltered.length === 0 && !planQuery.trim() && (
+                <div style={{ padding: '18px 4px', fontSize: '12px', color: '#9aa0a9', textAlign: 'center' }}>
+                  这个账号还没有做过的产品，直接在上面输入名字也行
+                </div>
+              )}
+              {planFiltered.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => pickPlanName(n)}
+                  style={{
+                    width: '100%', textAlign: 'left', padding: '11px 10px', border: 'none',
+                    borderBottom: '0.5px solid #f4f1f2', background: 'transparent',
+                    fontSize: '13px', color: '#111', cursor: 'pointer',
+                  }}
+                >{n}</button>
+              ))}
             </div>
           </div>
         </div>
