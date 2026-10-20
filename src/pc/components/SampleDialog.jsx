@@ -182,32 +182,34 @@ export function SampleDialog({ sample, onClose, onSaved }) {
                 注意 form.productId 仍然在 state 里、保存时原样带出去 ——
                 只是不给编辑入口，这样已有样品里存过的关联不会被清掉。 */}
 
-            <div className="pcv-field-label" style={{ marginTop: 18 }}>佣金（%）</div>
-            <input
-              className="pcv-input"
-              type="number"
-              // 180 = 弹窗里其他单行输入（日期等）的统一宽度。
-              // 原来 120px 太窄，placeholder「5（默认不显示）」会被数字上下箭头挤掉尾巴。
-              style={{ width: 180 }}
-              // 5 是「不显示」的默认值，界面上要显示成空，否则用户以为填了 5
-              value={form.commission === 5 ? '' : form.commission}
-              placeholder="5（默认不显示）"
-              onChange={(e) => {
-                const v = e.target.value === '' ? 5 : parseInt(e.target.value, 10)
-                setForm((f) => ({ ...f, commission: isNaN(v) ? 5 : v }))
-              }}
-            />
-
-            <div className="pcv-field-label" style={{ marginTop: 18 }}>多少天没发才提醒（留空用默认7天）</div>
-            <input
-              className="pcv-input"
-              type="number"
-              min={1}
-              style={{ width: 180 }}
-              placeholder="如 14"
-              value={form.reminderDays}
-              onChange={(e) => setForm((f) => ({ ...f, reminderDays: e.target.value }))}
-            />
+            <div style={{ display: 'flex', gap: 16, marginTop: 18 }}>
+              <div style={{ flex: 1 }}>
+                <div className="pcv-field-label">佣金（%）</div>
+                <input
+                  className="pcv-input"
+                  type="number"
+                  style={{ width: '100%' }}
+                  value={form.commission === 5 ? '' : form.commission}
+                  placeholder="5（默认不显示）"
+                  onChange={(e) => {
+                    const v = e.target.value === '' ? 5 : parseInt(e.target.value, 10)
+                    setForm((f) => ({ ...f, commission: isNaN(v) ? 5 : v }))
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div className="pcv-field-label">多少天没发才提醒（留空默认7天）</div>
+                <input
+                  className="pcv-input"
+                  type="number"
+                  min={1}
+                  style={{ width: '100%' }}
+                  placeholder="如 14"
+                  value={form.reminderDays}
+                  onChange={(e) => setForm((f) => ({ ...f, reminderDays: e.target.value }))}
+                />
+              </div>
+            </div>
 
             <div className="pcv-field-label" style={{ marginTop: 18 }}>状态</div>
             <div className="pcv-seg" style={{ display: 'flex', width: '100%' }}>
