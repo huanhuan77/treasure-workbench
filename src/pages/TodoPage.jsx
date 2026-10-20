@@ -18,6 +18,9 @@ export function TodoPage() {
   const [due, setDue] = useState('')       // 空 = 不设截止日期
   const [filter, setFilter] = useState('undone')  // undone / all / done
   const [delId, setDelId] = useState(null)
+  const [editId, setEditId] = useState(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDue, setEditDue] = useState('')
 
   // 数据自愈：过滤掉数组里的空项/非对象，避免脏数据(如某条为 null)在渲染时崩溃
   const list = (todos || []).filter((t) => t && typeof t === 'object')
@@ -67,6 +70,20 @@ export function TodoPage() {
     deleteTodo(delId)
     setDelId(null)
     show('已删除', 'success')
+  }
+
+  const openEdit = (t) => {
+    setEditId(t.id)
+    setEditTitle(typeof t.title === 'string' ? t.title : '')
+    setEditDue(typeof t.due === 'string' ? t.due : '')
+  }
+
+  const handleSaveEdit = () => {
+    const v = editTitle.trim()
+    if (!v) { show('请输入待办内容', 'error'); return }
+    updateTodo(editId, { title: v, due: editDue || '' })
+    setEditId(null)
+    show('已保存', 'success')
   }
 
   const FILTERS = [
@@ -156,6 +173,10 @@ export function TodoPage() {
                   {/* 已完成的待办不再显示截止/过期时间 */}
                   {!t.done && <DueTag due={t.due} />}
                 </div>
+                <button onClick={() => openEdit(t)} style={{
+                  flexShrink: 0, border: 'none', background: 'rgba(236,72,153,0.10)', color: '#db2777',
+                  width: '26px', height: '26px', borderRadius: '50%', fontSize: '13px', lineHeight: 1, cursor: 'pointer',
+                }}>✎</button>
                 <button onClick={() => setDelId(t.id)} style={{
                   flexShrink: 0, border: 'none', background: 'rgba(244,63,94,0.10)', color: '#f43f5e',
                   width: '26px', height: '26px', borderRadius: '50%', fontSize: '14px', lineHeight: 1, cursor: 'pointer',
@@ -214,6 +235,45 @@ export function TodoPage() {
         confirmText="删除"
         danger
       />
+
+      {/* 编辑弹窗 */}
+      <Modal open={!!editId} onClose={() => setEditId(null)} title="编辑待办" center>
+        <Field label="要做的事">
+          <input
+            autoFocus
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit() }}
+            placeholder="如：联系品牌方寄样"
+            style={inputStyle}
+          />
+        </Field>
+        <Field label="截止日期（可不填）">
+          <input
+            type="date"
+            value={editDue}
+            onChange={(e) => setEditDue(e.target.value)}
+            style={inputStyle}
+          />
+        </Field>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <button
+            style={{
+              flex: 1, padding: '12px', borderRadius: '14px', border: 'none',
+              background: 'rgba(252,231,243,0.6)', color: 'var(--text-sub)', fontSize: '15px', fontWeight: 500, cursor: 'pointer',
+            }}
+            onClick={() => setEditId(null)}
+          >取消</button>
+          <button
+            style={{
+              flex: 1, padding: '12px', borderRadius: '14px', border: 'none', cursor: 'pointer',
+              background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
+              fontSize: '15px', fontWeight: 600, boxShadow: '0 4px 14px rgba(244,114,182,0.3)',
+            }}
+            onClick={handleSaveEdit}
+          >保存</button>
+        </div>
+      </Modal>
 
       <DraggableFab storageKey="todo" onClick={openAdd} round hidden={addOpen}>
         {/* 用 SVG 而非文字「＋」：文字受字体基线影响会偏上，SVG 才是真正的几何居中 */}
