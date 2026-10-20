@@ -94,17 +94,30 @@ export function compareUrgent(a, b) {
 //
 // 用户口径（2026-10-20）：「已发布 + 已过截止日 也要提醒，按之前的来」——
 // 这里不再对「执行状态已发布但没记条数」的账号做特殊豁免，Keep it simple。
-// 每个样品可单独设提醒天数（sample.reminderDays）；没设就用全局默认
-function sampleDays(sample) {
+// 提醒天数优先级：账号单独设(accountReminderDays[a]) > 产品设(reminderDays) > 默认7天
+export function sampleDays(sample, account) {
+  const ard = sample?.accountReminderDays || {}
+  if (account != null && Number.isFinite(Number(ard[account]))) {
+    const v = Number(ard[account])
+    if (v >= 1) return Math.round(v)
+  }
   const v = Number(sample?.reminderDays)
   return Number.isFinite(v) && v >= 1 ? Math.round(v) : PUBLISH_DAYS
 }
 
+// 该账号的天数是不是「单独手动设过的」（用于高频出单 tab 判定）
+export function isHotAccount(sample, account) {
+  const ard = sample?.accountReminderDays || {}
+  const av = Number(ard[account])
+  if (Number.isFinite(av) && av >= 1) return av <= 5
+  const pv = Number(sample?.reminderDays)
+  return Number.isFinite(pv) && pv >= 1 && pv <= 5
+}
+
 export function pendingAccounts(sample) {
-  const th = sampleDays(sample)
   return getAccounts(sample).filter((a) => {
     const d = daysSincePublishByAccount(sample, a)
-    return d === Infinity || d > th
+    return d === Infinity || d > sampleDays(sample, a)
   })
 }
 
@@ -173,7 +186,7 @@ export function needPublishReminder(sample) {
       const anyNeed = accounts.some((a) => {
         if (execByAccount[a] === 'abandoned') return false
         const d = daysSincePublishByAccount(sample, a)
-        return d === Infinity || d > sampleDays(sample)
+        return d === Infinity || d > sampleDays(sample, a)
       })
       if (anyNeed) return true
     }

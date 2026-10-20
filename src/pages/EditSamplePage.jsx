@@ -38,6 +38,7 @@ export function EditSamplePage() {
   const [receiveDate, setReceiveDate] = useState(sample?.receiveDate || new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0, 10), 15))
   const [reminderDays, setReminderDays] = useState(sample?.reminderDays ?? '')
+  const [accountReminderDays, setARD] = useState(() => ({ ...(sample?.accountReminderDays || {}) }))
   const [remark, setRemark] = useState(sample?.remark || '')
   const [category, setCategory] = useState(sample?.category || '')   // 分类（选填）
   const [commission, setCommission] = useState(sample?.commission || 5)
@@ -83,6 +84,12 @@ export function EditSamplePage() {
       commission: Number(commission),
       // 留空 = 用默认天数；填了就单独覆盖该样品的提醒天数
       reminderDays: reminderDays === '' ? null : Math.max(1, Math.round(Number(reminderDays) || 0)),
+      accountReminderDays: Object.fromEntries(
+        accounts.map((a) => {
+          const v = Number(accountReminderDays[a])
+          return [a, Number.isFinite(v) && v >= 1 ? Math.round(v) : null]
+        }).filter(([, v]) => v !== null)
+      ),
       links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), platform: (l.platform || '').trim(), note: (l.note || '').trim() })),
     })
     show('已更新', 'success')
@@ -198,6 +205,23 @@ export function EditSamplePage() {
             </Field>
           </div>
         </div>
+        {accounts.length > 1 && (
+          <div style={{ marginTop: 4, padding: '10px 12px', background: '#faf5f8', borderRadius: 10 }}>
+            <div style={{ fontSize: 12, color: '#8a6a7a', marginBottom: 8 }}>按账号分别设提醒天数（留空跟随上面的默认）</div>
+            {accounts.map((a) => (
+              <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <span style={{ flex: 1, fontSize: 13, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a}</span>
+                <input
+                  type="number" min={1} placeholder="天数"
+                  style={{ width: 80, padding: '8px 10px', borderRadius: 8, border: '1px solid #e2d5dd', fontSize: 13 }}
+                  value={accountReminderDays[a] ?? ''}
+                  onChange={(e) => setARD((m) => ({ ...m, [a]: e.target.value }))}
+                />
+                <span style={{ fontSize: 12, color: '#999' }}>天</span>
+              </div>
+            ))}
+          </div>
+        )}
         <Field label="备注">
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={remark} onChange={(e) => setRemark(e.target.value)} />
         </Field>

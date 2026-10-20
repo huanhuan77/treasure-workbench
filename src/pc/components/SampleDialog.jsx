@@ -63,6 +63,7 @@ export function SampleDialog({ sample, onClose, onSaved }) {
     remark: sample?.remark || '',
     commission: sample?.commission || 5,
     reminderDays: sample?.reminderDays ?? '',
+    accountReminderDays: { ...(sample?.accountReminderDays || {}), },
     productId: sample?.productId || '',
     category: sample?.category || '',
     archived: sample?.archived || sample?.status === 'abandoned' || false,
@@ -100,6 +101,12 @@ export function SampleDialog({ sample, onClose, onSaved }) {
     const f = { ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] }
     const rd = Number(f.reminderDays)
     f.reminderDays = f.reminderDays === '' || !Number.isFinite(rd) || rd < 1 ? null : Math.round(rd)
+    f.accountReminderDays = Object.fromEntries(
+      (f.accounts || []).map((a) => {
+        const v = Number(f.accountReminderDays?.[a])
+        return [a, Number.isFinite(v) && v >= 1 ? Math.round(v) : null]
+      }).filter(([, v]) => v !== null)
+    )
     const newId = isNew ? addSample(f) : null
     if (isNew) show('样品已添加', 'success')
     else { updateSample(sample.id, f); show('已保存', 'success') }
@@ -205,6 +212,23 @@ export function SampleDialog({ sample, onClose, onSaved }) {
               value={form.reminderDays}
               onChange={(e) => setForm((f) => ({ ...f, reminderDays: e.target.value }))}
             />
+
+            {form.accounts.length > 1 && (
+              <>
+                <div className="pcv-field-label" style={{ marginTop: 14 }}>按账号分别设提醒天数（留空跟随默认）</div>
+                {form.accounts.map((a) => (
+                  <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                    <span style={{ flex: 1, fontSize: 13, color: '#555' }}>{a}</span>
+                    <input
+                      className="pcv-input"
+                      type="number" min={1} style={{ width: 120 }} placeholder="天数"
+                      value={form.accountReminderDays?.[a] ?? ''}
+                      onChange={(e) => setForm((f) => ({ ...f, accountReminderDays: { ...f.accountReminderDays, [a]: e.target.value } }))}
+                    />
+                  </div>
+                ))}
+              </>
+            )}
 
             <div className="pcv-field-label" style={{ marginTop: 18 }}>状态</div>
             <div className="pcv-seg" style={{ display: 'flex', width: '100%' }}>

@@ -34,18 +34,24 @@ export function daysUntilDeadline(deadline) {
 }
 
 // 1) 发布提醒：可发布状态但超阈值未发（含从未发布）。放弃的已被 needPublishReminder 排除
-//    「高频出单」（手动设了提醒天数且 ≤5 天）的产品单独成 tab，不再混在这里
+//    「高频出单」（手动设了提醒天数且 ≤5 天）的账号单独成 tab，不再混在这里
+import { isHotAccount, sampleDays, pendingAccounts } from './publish'
+
 export function isHotCadence(sample) {
-  const d = Number(sample?.reminderDays)
-  return Number.isFinite(d) && d >= 1 && d <= 5
+  // 有任意一个账号按 ≤5 天高频口径、且当前已到该发
+  return pendingAccounts(sample).some((a) => isHotAccount(sample, a))
 }
 export function selectPublishReminders(samples) {
-  return (samples || []).filter((s) => needPublishReminder(s) && !isHotCadence(s))
+  return (samples || []).filter((s) => {
+    if (!needPublishReminder(s)) return false
+    // 到该发的账号里，只要有一个不是高频账号，就留在普通发布提醒
+    return pendingAccounts(s).some((a) => !isHotAccount(s, a))
+  })
 }
 
-// 高频出单：手动设了提醒天数、且天数 ≤5 天，当前已到该发的产品
+// 高频出单：有账号按 ≤5 天高频口径、当前已到该发的产品
 export function selectHotCadence(samples) {
-  return (samples || []).filter((s) => isHotCadence(s) && !s.archived && needPublishReminder(s))
+  return (samples || []).filter((s) => !s.archived && needPublishReminder(s) && isHotCadence(s))
 }
 
 // 2) 发布不足5条：**按样品合计**判定，一个未达标样品占一条。
