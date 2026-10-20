@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
+import { isArchivedSample } from '../../utils/sampleStatus'
 import { SearchSelect } from './SearchSelect'
 
 // 总览「发布计划」卡片（用户要求）：
@@ -51,10 +52,12 @@ export function PublishPlanCard() {
   const upcoming = sorted.filter((p) => !p.planDate || p.planDate >= today).length
 
   // 产品名候选 = 当前账号名下做过的样品名（含多账号归属的样品）。
-  // 用户要求「先选账号再选产品，产品按账号筛选」：只列该账号的品，避免串号。
+  // 用户要求「先选账号再选产品，产品按账号筛选」：只列该账号的品，避免串号；
+  // 「已放弃」的样品不进候选（口径同待投流候选：isArchivedSample）。
   const productNames = useMemo(() => {
     const set = new Set()
     for (const s of samples || []) {
+      if (isArchivedSample(s)) continue
       if (!getAccounts(s).includes(form.account)) continue
       const n = String((s && s.name) || '').trim()
       if (n) set.add(n)

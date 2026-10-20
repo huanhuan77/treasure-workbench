@@ -259,9 +259,11 @@ export function DashboardPage() {
   const [planAcc, setPlanAcc] = useState('')
 
   // 候选：该账号做过的样品名 +（未筛选时）产品库里的名字
+  // 「已放弃」的样品不进候选（口径同 PC 待投流候选：isArchivedSample）
   const planCandidates = useMemo(() => {
     const set = new Set()
     for (const s of samples || []) {
+      if (isArchivedSample(s)) continue
       const accs = Array.isArray(s.accounts) && s.accounts.length
         ? s.accounts
         : (s.account ? [s.account] : [])
