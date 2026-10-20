@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store'
 import { getStoredToken } from '../../utils/cloudBackup'
 import { readRemoteBackup, SYNC_KEYS } from '../../utils/sync'
@@ -41,7 +40,6 @@ function localModule(key) {
 }
 
 export function SyncStatusDialog({ onClose }) {
-  const navigate = useNavigate()
   const { products, samples, orders, publishRecords, transactions, todos, dramas } = useStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -152,11 +150,9 @@ export function SyncStatusDialog({ onClose }) {
             共 {SYNC_KEYS.length} 个同步模块
           </span>
           <div className="pcv-spacer" />
-          {/* 跳 PC 版备份页（不是手机版 /backup） */}
-          <button className="pcv-btn pcv-btn-ghost" onClick={() => { onClose(); navigate('/pc/backup') }}>
-            打开数据备份页
-          </button>
-          <button className="pcv-btn" style={{ marginLeft: 8 }} onClick={onClose}>关闭</button>
+          {/* 「打开数据备份页」已去掉（用户要求）：诊断弹窗现在只在备份页里打开，
+              再放一个跳回本页的按钮是多余的 */}
+          <button className="pcv-btn" onClick={onClose}>关闭</button>
         </div>
       </div>
     </div>
