@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { DEFAULT_SENSITIVE_WORDS, generateTopics } from './utils/copyGenerator'
 import { todayStr } from './utils/helpers'
+import { isHotAccount, sampleDays, daysSincePublishByAccount } from './utils/publish'
 import { recordDelete, clearDelete, setWordTime, syncAll } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
 import { ACCOUNT_MAP, mapAccount } from './utils/accounts'
@@ -3856,6 +3857,47 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }, [data])
+
+  // 高频出单自动生成发布计划：某账号按 ≤N 天高频口径、当前已到该发，就自动补一条发布计划；
+  // 用户补记发布记录后，该账号「距上次发布」重置 → 不再到点 → 对应自动计划自动消失。
+  // 自动计划带 autoKey，可正常编辑数量/日期；手动完成(done)的保留不复活。
+  useEffect(() => {
+    const desired = new Map()
+    for (const s of data.samples || []) {
+      if (!s || s.archived || s.status === 'abandoned') continue
+      const exec = s.execByAccount || {}
+      for (const a of getAccounts(s)) {
+        if (exec[a] === 'abandoned') continue
+        if (!isHotAccount(s, a)) continue
+        const d = daysSincePublishByAccount(s, a)
+        if (d === Infinity || d > sampleDays(s, a)) {
+          desired.set(`${s.id}|${a}`, { name: s.name, account: a })
+        }
+      }
+    }
+    setData((prev) => {
+      const plans = prev.publishPlans || []
+      let changed = false
+      // 删除「未完成」但已不到点的自动计划；完成的保留
+      const kept = plans.filter((p) => {
+        if (p.autoKey && !p.done && !desired.has(p.autoKey)) { changed = true; return false }
+        return true
+      })
+      // 补缺失：只要该 key 还没有任何（含已完成）条目才新增
+      for (const [key, v] of desired) {
+        if (!kept.some((p) => p.autoKey === key)) {
+          kept.push({
+            id: 'auto_' + Math.random().toString(36).slice(2, 8),
+            autoKey: key, name: v.name, account: v.account, qty: 1,
+            planDate: todayStr(), auto: true, createdAt: Date.now(), updatedAt: Date.now(),
+          })
+          changed = true
+        }
+      }
+      if (!changed) return prev
+      return { ...prev, publishPlans: kept }
+    })
+  }, [data.samples, data.publishRecords])
 
   // 自动放弃规则（按账号粒度）：同一个样品的某个账号，发布满 AUTO_ABANDON_PUBLISH_COUNT 条视频
   // 却始终 0 出单 → 该账号自动置为「放弃」，并在总览页提醒。
