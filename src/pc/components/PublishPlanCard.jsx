@@ -312,14 +312,6 @@ export function PublishPlanCard() {
                     ...(flashId === p.id ? { background: '#fff7e6', transition: 'background .3s ease' } : null),
                   }}
                 >
-                  <button
-                    title="标记为已发，完成后自动隐藏"
-                    onClick={() => { updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
-                    style={{
-                      width: 16, height: 16, borderRadius: '50%', flexShrink: 0, padding: 0,
-                      border: '1.5px solid #d4a3c0', background: '#fff', cursor: 'pointer',
-                    }}
-                  />
                   {/* 单行显示（用户要求）：产品名可截断，其余信息压到同一行 */}
                   <span
                     title={p.name}
@@ -346,6 +338,11 @@ export function PublishPlanCard() {
                   }}>
                     {(p.planDate || '').slice(5) || '—'}
                   </span>
+                  <button
+                    title="标记为已发，完成后自动隐藏"
+                    style={{ flexShrink: 0, fontSize: 11, padding: '2px 8px', borderRadius: 6, border: '1px solid #16a34a', background: '#f0fdf4', color: '#16a34a', cursor: 'pointer' }}
+                    onClick={() => { updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
+                  >完成</button>
                   <button className="pcv-x" title="编辑" style={{ flexShrink: 0, color: '#8a8f98' }} onClick={() => openEdit(p)}>✎</button>
                   <button
                     className="pcv-x"
