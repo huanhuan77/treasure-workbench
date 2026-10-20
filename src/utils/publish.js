@@ -78,6 +78,27 @@ export function pendingAccounts(sample) {
   })
 }
 
+// 「发布提醒」这一行该显示哪些账号（以及按谁算未发布天数）。
+//
+// 口径（用户反馈「晚梨已经发过了，应该只提醒一个账号吧」）：
+//   ① 有账号**从未发过**这个品 → 只列这些账号。真正需要动手的就是它们；
+//      已经发过的账号（哪怕它自己 49 天没发）不该被挂在这一行里，
+//      否则看起来像「发过还要再发」，与手机端的展示也对不上。
+//   ② 都发过 → 退回「超 N 天没发」的账号（这是「已出单样品催更」的场景）；
+//   ③ 都不满足 → 退回全部账号，避免账号列空着。
+export function reminderAccounts(sample) {
+  const accs = getAccounts(sample)
+  if (!accs.length) return []
+  const counts = (sample && sample.countsByAccount) || {}
+  const exec = (sample && sample.execByAccount) || {}
+  const never = accs.filter((a) => (
+    exec[a] !== 'abandoned' && (Number(counts[a]?.publishCount) || 0) === 0
+  ))
+  if (never.length) return never
+  const stale = pendingAccounts(sample)
+  return stale.length ? stale : accs
+}
+
 // 是否逾期（有截止时间且已过今天）
 export function isOverdue(sample) {
   const d = daysDiff(sample?.deadline)

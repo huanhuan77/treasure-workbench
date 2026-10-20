@@ -4,7 +4,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
-import { daysSincePublishByAccount, pendingAccounts, isOverdue, compareUrgent } from '../../utils/publish'
+import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, compareUrgent } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
@@ -61,7 +61,9 @@ export function PcDashboard() {
   const spec = useMemo(() => ({
     reminders: {
       items: all.reminders,
-      accountsOf: (s) => { const p = pendingAccounts(s); return p.length ? p : getAccounts(s) },
+      // 只列「真正还需要发」的账号：有账号从未发过就只显示它们，
+      // 不会把已经发过的账号一起挂在这一行里（用户反馈：晚梨发过了，不该再提醒）
+      accountsOf: (s) => reminderAccounts(s),
       header: '未发布天数',
       mid: (s, a) => {
         const days = daysSincePublishByAccount(s, a)

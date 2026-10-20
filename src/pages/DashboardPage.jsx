@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES, compareUrgent } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, compareUrgent } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
@@ -900,7 +900,7 @@ export function DashboardPage() {
                 <ReminderTable
                   items={fReminders}
                   onlyAccount={remindAccount === 'all' ? '' : remindAccount}
-                  accountsOf={(s) => { const p = pendingAccounts(s); return p.length ? p : getAccounts(s) }}
+                  accountsOf={(s) => reminderAccounts(s)}
                   midHeader="未发布天数"
                   renderMid={(s, account) => {
                     const days = daysSincePublishByAccount(s, account)
@@ -924,11 +924,11 @@ export function DashboardPage() {
               ) : (
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fReminders.map((s) => {
-                    // 只显示还需要发视频的账号（从未发过 / 超 7 天没发）；都发过则显示全部
-                    const pending = pendingAccounts(s)
-                    const showAccounts = pending.length ? pending : getAccounts(s)
-                    const daysText = pending.length
-                      ? Math.max(...pending.map((a) => daysSincePublishByAccount(s, a)))
+                    // 只显示**真正还需要发**的账号（与 PC 总览、提醒页同一口径）：
+                    // 有账号从未发过就只列它们，已发过的账号不会再挂在这一行里
+                    const showAccounts = reminderAccounts(s)
+                    const daysText = showAccounts.length
+                      ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
                       : daysSincePublish(s)
                     return (
                       <div key={s.id} style={{ background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
