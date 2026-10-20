@@ -167,11 +167,10 @@ export function PcDashboard() {
         : accs[0]
       out.push({ it, accs, acc: worst })
     }
-    // 「发布提醒」排序（用户要求「逾期的排前面」）：
-    //   ① 已逾期的一律排最前 —— 判定必须与界面上的「已逾期」标签完全一致；
-    //   ② 其余按截止日期升序（最早到期的最急）；
-    //   ③ 截止日相同/缺失时用 compareUrgent 兜底（多久没发视频）；
-    //   ④ 最后按账号顺序，让同一账号的行尽量挨在一起。
+    // 「发布提醒」排序（与手机端总览同一口径）：
+    //   ① 已逾期的一律排最前；
+    //   ② 从未发布过视频的排第二梯队；
+    //   ③ 其余按最久没发天数降序（compareUrgent 统一处理 ②③）。
     if (tab === 'reminders') {
       const overdueOf = (r) => {
         const s = r.it.sample || r.it
@@ -181,14 +180,7 @@ export function PcDashboard() {
         const oa = overdueOf(x)
         const ob = overdueOf(y)
         if (oa !== ob) return oa - ob
-        const a = (x.it.sample || x.it).deadline || ''
-        const b = (y.it.sample || y.it).deadline || ''
-        if (!a && !b) return accRank(x.acc) - accRank(y.acc)
-        if (!a) return 1     // 没填截止日的排在最后
-        if (!b) return -1
-        return a.localeCompare(b)
-          || accRank(x.acc) - accRank(y.acc)
-          || compareUrgent(x.it.sample || x.it, y.it.sample || y.it)
+        return compareUrgent(x.it.sample || x.it, y.it.sample || y.it)
       })
     } else if (account === '') {
       // 其它 Tab 未筛选时按账号归拢，读起来是「一账号一段」而不是随机交错
