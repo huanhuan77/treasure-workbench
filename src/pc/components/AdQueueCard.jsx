@@ -27,6 +27,11 @@ export function AdQueueCard() {
 
   const list = adQueue || []
   const pendingCount = list.filter((a) => a.status === '未投流').length
+  const doneCount = list.filter((a) => a.status === '已投流').length
+  // 改成「已投流」的条目默认**从列表消失**（用户反馈「改成一投流他为什么还在列表」）：
+  // 数据仍保留，卡头留一个「已投流 N」入口，点开还能看到并把状态改回去/删除。
+  const [showDone, setShowDone] = useState(false)
+  const visible = showDone ? list : list.filter((a) => a.status !== '已投流')
 
   // 可作为待投流的候选：已发布（至少一条视频）的 样品 × 账号
   const options = useMemo(() => {
@@ -110,11 +115,24 @@ export function AdQueueCard() {
             title="从已发布视频里挑一条加入待投流"
             onClick={() => { setSearch(''); setPickAccount(''); setPickRange(''); setPickerOpen(true) }}
           >新增</button>
+          {/* 已投流的从主列表移走后，留这个开关把它们找回来 */}
+          {doneCount > 0 && (
+            <button
+              className="pcv-btn-text"
+              style={{ marginLeft: 2 }}
+              title={showDone ? '隐藏已投流的' : '查看已投流的（可改回未投流）'}
+              onClick={() => setShowDone((v) => !v)}
+            >{showDone ? '隐藏已投流' : `已投流 ${doneCount}`}</button>
+          )}
           <div className="pcv-spacer" />
         </div>
 
-        {list.length === 0 ? (
-          <div className="pcv-empty">还没有待投流，点右上角「＋ 添加」从已发布视频里挑</div>
+        {visible.length === 0 ? (
+          <div className="pcv-empty">
+            {list.length === 0
+              ? '还没有待投流，点右上角「新增」从已发布视频里挑'
+              : `待投流都已处理完（已投流 ${doneCount} 条）${doneCount > 0 ? '，点标题旁的「已投流」可查看' : ''}`}
+          </div>
         ) : (
           <table className="pcv-table pcv-table--inset">
             <thead>
@@ -127,7 +145,7 @@ export function AdQueueCard() {
               </tr>
             </thead>
             <tbody>
-              {list.map((a) => {
+              {visible.map((a) => {
                 const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
                 const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
                 return (

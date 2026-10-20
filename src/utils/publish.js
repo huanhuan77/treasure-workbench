@@ -70,11 +70,19 @@ export function compareUrgent(a, b) {
 }
 
 // 样品下「还需要发视频」的账号：从未发过 或 超过 N_PUBLISH_DAYS 天没发。
-// 都发过（且未超期）时返回空数组
+// 都发过（且未超期）时返回空数组。
+//
+// ⚠️ 特例（用户反馈「我改了状态它不是应该消失吗」）：
+//   账号的执行状态已经是 published、只是没记发布条数/日期（counts 为空）时，
+//   说明这个账号已经发过了（用户手动改的状态），不该再按「从未发过」催。
+//   所以 Infinity 分两种：exec 未发布 → 真没发；exec 已发布 → 已发但缺日期，不催。
 export function pendingAccounts(sample) {
+  const exec = (sample && sample.execByAccount) || {}
   return getAccounts(sample).filter((a) => {
+    if (exec[a] === 'abandoned') return false
     const d = daysSincePublishByAccount(sample, a)
-    return d === Infinity || d > N_PUBLISH_DAYS
+    if (d === Infinity) return exec[a] !== 'published'
+    return d > N_PUBLISH_DAYS
   })
 }
 
@@ -92,7 +100,9 @@ export function reminderAccounts(sample) {
   const counts = (sample && sample.countsByAccount) || {}
   const exec = (sample && sample.execByAccount) || {}
   const never = accs.filter((a) => (
-    exec[a] !== 'abandoned' && (Number(counts[a]?.publishCount) || 0) === 0
+    exec[a] !== 'abandoned'
+    && exec[a] !== 'published'   // 执行状态已是「已发布」→ 视作发过，不再当「从未发」
+    && (Number(counts[a]?.publishCount) || 0) === 0
   ))
   if (never.length) return never
   const stale = pendingAccounts(sample)
@@ -123,11 +133,17 @@ export function needPublishReminder(sample) {
     const accounts = getAccounts(sample)
     const anyUnpublished = accounts.some((a) => {
       if (execByAccount[a] === 'abandoned') return false
+      // 执行状态已是「已发布」→ 用户已确认这个账号发过（哪怕没记条数），不再按「从未发」提醒
+      if (execByAccount[a] === 'published') return false
       const pc = Number(counts[a]?.publishCount) || 0
       return pc === 0
     })
     if (anyUnpublished) return true
   }
+  // 已发布 + 已过截止日：不再按「N 天没发」催更（用户反馈「我改了状态它不是应该消失吗」）。
+  // 逾期该提醒的两种情况上面已经判完：待发状态逾期（规则 2）、某账号从未发（规则 4）。
+  // 剩下的「已发布但很久没发」再挂在逾期里催，用户会以为改状态没生效。
+  if (isOverdue(sample)) return false
   // 已发布的样品：某个账号超过 7 天没发，就提醒
   // 未拍/未到货的样品不走这个判断（它们由逾期逻辑管）
   {
@@ -139,7 +155,9 @@ export function needPublishReminder(sample) {
       const anyNeed = accounts.some((a) => {
         if (execByAccount[a] === 'abandoned') return false
         const d = daysSincePublishByAccount(sample, a)
-        return d === Infinity || d > N_PUBLISH_DAYS
+        // 已发布但没有日期记录 → 视为已发，不按「从未发」催（与 pendingAccounts 同口径）
+        if (d === Infinity) return execByAccount[a] !== 'published'
+        return d > N_PUBLISH_DAYS
       })
       if (anyNeed) return true
     }
