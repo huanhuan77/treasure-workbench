@@ -11,6 +11,8 @@ export const CATEGORIES = {
   sample: { label: '样品收入', type: 'income', color: '#0d9488', bg: 'rgba(204, 251, 241, 0.8)' },
   haitao: { label: '海淘', type: 'income', color: '#0284c7', bg: 'rgba(224, 242, 254, 0.8)' },
   xingchuan: { label: '星川', type: 'income', color: '#c2410c', bg: 'rgba(255, 237, 213, 0.8)' },
+  // 视频号收入：微信视频号的流量分成 / 带货佣金，与「星川」这类品牌合作区分开
+  channels: { label: '视频号收入', type: 'income', color: '#16a34a', bg: 'rgba(220, 252, 231, 0.8)' },
   withdraw: { label: '钱包提现', type: 'income', color: '#7c3aed', bg: 'rgba(237, 233, 254, 0.8)' },
   // 其他收入：用户要求补的兜底项，中性灰，不参与任何统计口径
   other_income: { label: '其他收入', type: 'income', color: '#6b7280', bg: 'rgba(243, 244, 246, 0.9)' },
@@ -20,7 +22,7 @@ export const CATEGORIES = {
   ad: { label: '投流推广', type: 'expense', color: '#be123c', bg: 'rgba(255, 228, 230, 0.8)' },
 }
 
-export const INCOME_TYPES = ['sample', 'haitao', 'xingchuan', 'withdraw', 'other_income']
+export const INCOME_TYPES = ['sample', 'haitao', 'xingchuan', 'channels', 'withdraw', 'other_income']
 export const EXPENSE_TYPES = ['prop', 'other_expense', 'ad']
 
 // 未知分类（历史数据里的旧 key）显示成中性的「其他」

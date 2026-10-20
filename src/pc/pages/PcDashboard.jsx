@@ -9,6 +9,7 @@ import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
 import { PublishDialog } from '../components/PublishDialog'
+import { AdQueueCard } from '../components/AdQueueCard'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -295,6 +296,9 @@ export function PcDashboard() {
               </>
             )}
           </div>
+
+          {/* 待投流：与手机端同一份数据（store.adQueue），从已发布视频里挑，状态行内可改 */}
+          <AdQueueCard />
 
           {/* 提醒中心：Tab 与账号筛选合并到卡头同一行（原来分两行，白占一层高度） */}
           <div className="pcv-card">

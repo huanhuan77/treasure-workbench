@@ -18,6 +18,24 @@ export function PcTodos() {
   const [filter, setFilter] = useState('undone')
   const [delId, setDelId] = useState(null)
   const titleRef = useRef(null)
+  // 编辑某条待办（内容 + 截止日期），与手机端 TodoPage 的编辑一致
+  const [editing, setEditing] = useState(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDue, setEditDue] = useState('')
+
+  const openEdit = (t) => {
+    setEditing(t)
+    setEditTitle(typeof t.title === 'string' || typeof t.title === 'number' ? String(t.title) : '')
+    setEditDue(typeof t.due === 'string' ? t.due : '')
+  }
+  const saveEdit = () => {
+    if (!editing) return
+    const next = editTitle.trim()
+    if (!next) { show('内容不能为空', 'error'); return }
+    updateTodo(editing.id, { title: next, due: editDue })
+    setEditing(null)
+    show('已保存', 'success')
+  }
 
   // 从总览待办卡的「新增」跳过来（/pc/todos?add=1）：自动聚焦顶部输入框，直接开打；
   // 用完清掉参数，刷新不会再抢焦点。
@@ -139,12 +157,55 @@ export function PcTodos() {
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>{typeof t.title === 'string' || typeof t.title === 'number' ? t.title : ''}</span>
                 {!t.done && <DueTag due={t.due} />}
+                <button className="pcv-btn-text" title="编辑内容与截止日期" onClick={() => openEdit(t)}>编辑</button>
                 <button className="pcv-x" title="删除" onClick={() => setDelId(t.id)}>×</button>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* 编辑待办：内容 + 截止日期 */}
+      {editing && (
+        <div className="pcv-overlay" onClick={() => setEditing(null)}>
+          <div className="pcv-dialog" style={{ maxWidth: 460 }} onClick={(e) => e.stopPropagation()}>
+            <div className="pcv-dialog-h">
+              <span>编辑待办</span>
+              <div className="pcv-spacer" />
+              <button className="pcv-dialog-x" title="关闭" onClick={() => setEditing(null)}>×</button>
+            </div>
+            <div className="pcv-dialog-b">
+              <div className="pcv-field-label">内容</div>
+              <input
+                className="pcv-input"
+                style={{ width: '100%' }}
+                value={editTitle}
+                autoFocus
+                onChange={(e) => setEditTitle(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') saveEdit() }}
+              />
+              <div className="pcv-field-label" style={{ marginTop: 14 }}>截止日期</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  className="pcv-input"
+                  type="date"
+                  style={{ width: 170 }}
+                  value={editDue}
+                  onChange={(e) => setEditDue(e.target.value)}
+                />
+                {editDue && (
+                  <button className="pcv-btn-text" onClick={() => setEditDue('')}>清除日期</button>
+                )}
+              </div>
+            </div>
+            <div className="pcv-dialog-f">
+              <div className="pcv-spacer" />
+              <button className="pcv-btn pcv-btn-ghost" onClick={() => setEditing(null)}>取消</button>
+              <button className="pcv-btn" style={{ marginLeft: 8 }} onClick={saveEdit}>保存</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         open={!!delId}
