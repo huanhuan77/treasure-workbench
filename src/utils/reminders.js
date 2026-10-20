@@ -18,6 +18,7 @@ export const EXPIRING_DAYS = 7
 // 所以 short 档改用「不足」「待发」这类不带尾随数字的写法。
 export const REMINDER_TABS = [
   { id: 'reminders', label: '发布提醒', mid: '待发布', short: '待发', accent: '#ec4899', to: '/publish-reminders' },
+  { id: 'hot', label: '高频出单', mid: '高频', short: '高频', accent: '#f43f5e', to: '/publish-reminders' },
   { id: 'low', label: '发布不足5条', mid: '不足5条', short: '不足', accent: '#8b5cf6', to: '/samples/low-publish' },
   { id: 'expiring', label: '即将到期', mid: '将到期', short: '将到期', accent: '#f97316', to: '/samples/expiring' },
 ]
@@ -33,8 +34,18 @@ export function daysUntilDeadline(deadline) {
 }
 
 // 1) 发布提醒：可发布状态但超阈值未发（含从未发布）。放弃的已被 needPublishReminder 排除
+//    「高频出单」（手动设了提醒天数且 ≤5 天）的产品单独成 tab，不再混在这里
+export function isHotCadence(sample) {
+  const d = Number(sample?.reminderDays)
+  return Number.isFinite(d) && d >= 1 && d <= 5
+}
 export function selectPublishReminders(samples) {
-  return (samples || []).filter((s) => needPublishReminder(s))
+  return (samples || []).filter((s) => needPublishReminder(s) && !isHotCadence(s))
+}
+
+// 高频出单：手动设了提醒天数、且天数 ≤5 天，当前已到该发的产品
+export function selectHotCadence(samples) {
+  return (samples || []).filter((s) => isHotCadence(s) && !s.archived && needPublishReminder(s))
 }
 
 // 2) 发布不足5条：**按样品合计**判定，一个未达标样品占一条。

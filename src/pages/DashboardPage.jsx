@@ -4,7 +4,7 @@ import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, compareUrgent, setPublishDays } from '../utils/publish'
-import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
+import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
@@ -214,7 +214,7 @@ export function DashboardPage() {
   // 用 lazy init 从 sessionStorage 恢复，刷新 / keep-alive 回场时保留上次选中
   const [remindTab, setRemindTab] = useState(() => {
     const v = sessionStorage.getItem('dash_remind_tab')
-    return v === 'low' || v === 'expiring' ? v : 'reminders'
+    return v === 'low' || v === 'expiring' || v === 'hot' ? v : 'reminders'
   })
   const pickTab = (id) => {
     setRemindTab(id)
@@ -538,6 +538,9 @@ export function DashboardPage() {
   // 即将到期：有截止日期、且未发布/未放弃、7 天内到期（含已逾期），按截止日期升序
   const expiringSoon = useMemo(() => selectExpiringSoon(samples), [samples])
 
+  // 高频出单：手动设了提醒天数且 ≤5 天、当前已到该发的产品
+  const hotCadence = useMemo(() => selectHotCadence(samples), [samples])
+
   // ── 提醒中心的账号筛选（三个 Tab 共用一排胶囊）
   // 'all' = 全部账号。筛选只作用于下方列表与 Tab 气泡计数，
   // 不影响上方「出单 / 待办」两张卡。
@@ -578,6 +581,10 @@ export function DashboardPage() {
     () => expiringSoon.filter((s) => matchAcct(s, remindAccount)),
     [expiringSoon, remindAccount],
   )
+  const fHot = useMemo(
+    () => hotCadence.filter((s) => matchAcct(s, remindAccount)).sort(compareUrgent),
+    [hotCadence, remindAccount],
+  )
   // 近 7 天发布条数（按 qty 累加）
   const last7Count = useMemo(() => {
     const from = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10)
@@ -594,20 +601,21 @@ export function DashboardPage() {
     // 否则「气泡 57」点进去只有 20 条，又是「卡片数字 ≠ 点进去的条数」那个老问题。
     const counts = {
       reminders: fReminders.length,
+      hot: fHot.length,
       low: fLowPublish.length,
       expiring: fExpiring.length,
     }
     return REMINDER_TABS.map((t) => ({ ...t, count: counts[t.id] }))
-  }, [fReminders.length, fLowPublish.length, fExpiring.length])
+  }, [fReminders.length, fHot.length, fLowPublish.length, fExpiring.length])
   // 合并后的总数：不同区块可能命中同一产品，这里按 id 去重后再计
   const remindTotal = useMemo(() => {
     // 用筛选后的数据：筛选后三个 Tab 可能都空了，此时自动切换 Tab 的兜底逻辑
     // 应当基于「当前筛选下还剩什么」，否则筛到没数据的账号会停在空 Tab。
     // 三个列表现在都是样品粒度，直接按样品 id 去重。
     const map = new Map()
-    ;[...fReminders, ...fExpiring, ...fLowPublish].forEach((s) => map.set(s.id, s))
+    ;[...fReminders, ...fHot, ...fExpiring, ...fLowPublish].forEach((s) => map.set(s.id, s))
     return map.size
-  }, [fReminders, fLowPublish, fExpiring])
+  }, [fReminders, fHot, fLowPublish, fExpiring])
 
   // 当前 Tab 若因数据变化而「暂时为空」，自动切到第一个非空 Tab（仅切一次，避免切走用户选择）
   // 注意：仍然允许用户手动切到空 Tab 去看空状态文案，所以只在数据驱动下兜底
@@ -1444,6 +1452,78 @@ export function DashboardPage() {
                         <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
                           <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
                             padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
+                            fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
+                          }}>补记发布</button>
+                          <button onClick={() => setEditingSample(s)} style={{
+                            padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
+                            color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
+                          }}>调整状态</button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {remindTab === 'hot' && (
+            <>
+              {fHot.length === 0 ? (
+                <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
+                  {remindAccount === 'all' ? '暂无高频出单待发的样品' : `${remindAccount} 暂无高频出单待发的样品`}
+                </div>
+              ) : isDesktop ? (
+                <ReminderTable
+                  items={fHot}
+                  onlyAccount={remindAccount === 'all' ? '' : remindAccount}
+                  accountsOf={(s) => reminderAccounts(s)}
+                  midHeader="未发布天数"
+                  renderMid={(s, account) => {
+                    const days = daysSincePublishByAccount(s, account)
+                    return (
+                      <span style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ ...pcChip, background: '#f43f5e' }}>每{Number(s.reminderDays)}天提醒</span>
+                        <span style={{ ...pcChip, background: '#f59e0b' }}>
+                          {days === Infinity ? '从未发布过视频' : `已 ${days} 天没发`}
+                        </span>
+                      </span>
+                    )
+                  }}
+                  renderActions={(s) => (
+                    <>
+                      <button style={pcPrimaryBtn} onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })}>补记发布</button>
+                      <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
+                    </>
+                  )}
+                />
+              ) : (
+                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
+                  {fHot.map((s) => {
+                    const showAccounts = reminderAccounts(s)
+                    const daysText = showAccounts.length
+                      ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
+                      : daysSincePublish(s)
+                    return (
+                      <div key={s.id} style={{ background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                            {showAccounts.map((a) => (
+                              <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
+                            ))}
+                          </div>
+                          <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#f43f5e', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>每{Number(s.reminderDays)}天提醒</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>{daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}</span>
+                          </div>
+                        </div>
+                        <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
+                          <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
+                            padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#f43f5e', color: '#fff',
                             fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
                           }}>补记发布</button>
                           <button onClick={() => setEditingSample(s)} style={{
