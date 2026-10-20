@@ -214,7 +214,7 @@ export function DashboardPage() {
   // 用 lazy init 从 sessionStorage 恢复，刷新 / keep-alive 回场时保留上次选中
   const [remindTab, setRemindTab] = useState(() => {
     const v = sessionStorage.getItem('dash_remind_tab')
-    return v === 'low' || v === 'expiring' || v === 'hot' ? v : 'reminders'
+    return v === 'low' || v === 'expiring' || v === 'reminders' ? v : 'hot'
   })
   const pickTab = (id) => {
     setRemindTab(id)
