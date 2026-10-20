@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
-import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import {
   SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter,
-  getAccounts, getCounts, getTopStatus, isShotSample, isArchivedSample,
+  getAccounts, getCounts, getTopStatus,
 } from '../../utils/sampleStatus'
 import { deadlineDesc } from '../../utils/helpers'
 import { CATEGORY_STYLE } from '../../utils/productDisplay'
@@ -42,8 +41,7 @@ const SORT_DEFAULT_DIR = { receiveDate: 'desc', deadline: 'asc' }
 // 这里只把「卡片 + 一堆彩色标签」重排成「筛选条 + 紧凑表格」。
 export function PcSamples() {
   const navigate = useNavigate()
-  const { show } = useToast()
-  const { samples, orders, updateSample } = useStore()
+  const { samples, orders } = useStore()
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('all')
@@ -55,21 +53,7 @@ export function PcSamples() {
   // 样品新增/编辑走弹窗：undefined=关闭、null=新增、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
   // 「补记发布」入口已从样品页移除（用户要求），弹窗状态与组件一并删掉
-  // 行内改名字：nameEditId = 正在改的样品 id，nameDraft = 输入中的文本
-  const [nameEditId, setNameEditId] = useState('')
-  const [nameDraft, setNameDraft] = useState('')
-
-  const startRename = (s) => { setNameEditId(s.id); setNameDraft(s.name || '') }
-  const cancelRename = () => { setNameEditId(''); setNameDraft('') }
-  const commitRename = (s) => {
-    const name = nameDraft.trim()
-    if (!name) { show('名称不能为空', 'error'); return }
-    if (name !== (s.name || '')) {
-      updateSample(s.id, { name })
-      show('名称已修改', 'success')
-    }
-    cancelRename()
-  }
+  // 改名、改状态一律走「编辑」弹窗（用户要求：列表里不再有任何行内修改）
 
   // 保存后「重新请求列表」：清掉可能挡住新样品的筛选（状态/账号/是否出单/搜索），
   // 并 +1 一个 refreshKey 强制重算，保证新加的那条一定出现在当前视图里
@@ -195,12 +179,6 @@ export function PcSamples() {
     setAccountsHidden(next)
   }
 
-  // 与手机版一致：标记已拍 / 补记发布跳同一页 / 编辑跳同一页
-  const markShot = (s) => {
-    updateSample(s.id, { isShot: true })
-    show('已标记为已拍', 'success')
-  }
-
   // 表头排序：sortKey 为 'custom' 表示未排序（默认顺序，即 store 里的排列）。
   // 箭头只在当前排序列上显示，避免每列表头都挂一个箭头。
   const sortDirOf = (field) => (sortKey === field ? sortDir : null)
@@ -324,9 +302,8 @@ export function PcSamples() {
                     原来一个格子里塞「账号名 + 发N · 出N」，多账号样品会溢出格子、压到截止日期列上。
                     排序入口去掉了右上那排按钮，改为点「收货日期」「截止日期」表头
                     （收货日期本来没有列，为保住这个排序维度才补的这一列）。
-                    ⚠️ 加列必须给操作列留够：三个按钮「标记已拍/补记发布/编辑」实测要约 216px，
-                    第一版剩下 210px 时「编辑」被挤到第二行（按钮 top 不一致）。
-                    130+65+75+260+70+70+107+155 = 932，1440 视口下操作列约 220px，仍够三个按钮。
+                    操作列现在只放「编辑」一个按钮（标记已拍/改名都收进弹窗），宽度余量充足：
+                    130+65+75+260+70+70+107+155 = 932，1440 视口下操作列约 220px。
                     账号列 260px 是为了让「3 个账号」也能一行排完（3×(6+4+65) + 2×8 ≈ 240 < 260-28）。
                     两个日期列加宽到 107 / 155：日期本身 78px，截止日期后面还要跟「剩 N 天」约 42px，
                     原来 90 / 95 装不下，会被折成两行（用户反馈「不要换行」）。 */}
@@ -355,8 +332,6 @@ export function PcSamples() {
                 const st = SAMPLE_STATUS_LIST.find((x) => x.key === top) || {}
                 const accounts = getAccounts(s)
                 const dl = deadlineDesc(s.deadline)
-                const shot = isShotSample(s)
-                const archived = isArchivedSample(s)
                 // 「发布」列取样品合计（各账号 publishCount 相加），与「发布不足 5 条」提醒同一口径；
                 // 各账号的明细留在 title 里，不占版面（多账号样品原来挤在一格里会溢出到隔壁列）。
                 const publishTotal = accounts.reduce((n, a) => n + (getCounts(s, a).publishCount || 0), 0)
@@ -374,31 +349,8 @@ export function PcSamples() {
                   >
                     <td style={overdue ? { boxShadow: 'inset 3px 0 0 #e6a19c' } : undefined}>
                       {/* 分类已单独成列，产品格只留名字。
-                          名字可**行内编辑**（用户要求「可以编辑名字」）：点一下变输入框，
-                          回车 / 失焦保存，Esc 取消 —— 改个错别字不用开整个编辑弹窗。 */}
-                      {nameEditId === s.id ? (
-                        <input
-                          className="pcv-input"
-                          style={{ width: '100%', padding: '3px 8px', fontSize: 14 }}
-                          value={nameDraft}
-                          autoFocus
-                          onChange={(e) => setNameDraft(e.target.value)}
-                          onBlur={() => commitRename(s)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') { e.preventDefault(); commitRename(s) }
-                            if (e.key === 'Escape') { e.preventDefault(); cancelRename() }
-                          }}
-                        />
-                      ) : (
-                        <span
-                          className="pcv-nametext"
-                          title={`${s.name}（点击修改名称）`}
-                          style={{ cursor: 'text', borderBottom: '1px dashed transparent' }}
-                          onClick={() => startRename(s)}
-                          onMouseEnter={(e) => { e.currentTarget.style.borderBottomColor = '#d8b3c4' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.borderBottomColor = 'transparent' }}
-                        >{s.name}</span>
-                      )}
+                          名字**只读**：改名统一走「操作 → 编辑」弹窗（用户要求「列表里不要改」） */}
+                      <span className="pcv-nametext" title={s.name}>{s.name}</span>
                     </td>
                     <td>
                       {/* 分类：与文案库那列统一 —— 浅灰底 chip + 6px 分类色圆点（原来只有灰 chip，两页不一致） */}
@@ -490,16 +442,10 @@ export function PcSamples() {
                       )}
                     </td>
                     <td>
-                      {/* 「补记发布」从这一行去掉（用户要求）：样品页只负责维护样品本身，
-                          补发布统一到「视频发布记录」页或用总览的提醒表 */}
-                      {!shot && !archived && (
-                        <button className="pcv-btn pcv-btn-ghost" onClick={() => markShot(s)}>标记已拍</button>
-                      )}
-                      {/* 「编辑」原来是文字链接（pcv-btn-text），按用户要求统一成按钮，
-                          样式取 ghost（白底 + 细描边），与「标记已拍」同款。 */}
+                      {/* 列表只留「编辑」一个按钮（用户要求）：标记已拍 / 改名 / 补发布
+                          全部收进编辑弹窗，列表不再提供任何行内修改入口。 */}
                       <button
                         className="pcv-btn pcv-btn-ghost"
-                        style={{ marginLeft: shot || archived ? 0 : 8 }}
                         onClick={() => setSampleDialog(s)}
                       >编辑</button>
                     </td>

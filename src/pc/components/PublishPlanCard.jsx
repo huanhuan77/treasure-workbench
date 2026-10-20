@@ -3,7 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
 import { isArchivedSample } from '../../utils/sampleStatus'
-import { SearchSelect } from './SearchSelect'
+import { AccountTabs } from './AccountTabs'
 
 // 总览「发布计划」卡片（用户要求）：
 //   字段 = 发布产品 / 发布账号 / 发布数量 / 发布时间
@@ -18,13 +18,27 @@ const todayStr = () => fmtDate(new Date())
 // 计划多数是「明天要发什么」，默认明天能省一次选择
 const tomorrowStr = () => fmtDate(new Date(Date.now() + 864e5))
 
-const emptyForm = () => ({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: tomorrowStr(), note: '' })
+// 弹窗交互照「记录发布」弹窗（用户要求「改成图一这种」）：
+//   切账号分别填 → 每个账号下可加多条「产品 + 数量」（加减步进器）→ 一次保存写成多条计划。
+// 编辑已有计划时只保留原有一条，不允许增删行。
+const emptyByAcc = () => {
+  const o = {}
+  for (const a of ACCOUNTS) o[a] = []
+  return o
+}
+const newEntry = () => ({ name: '', qty: '1' })
 
 export function PublishPlanCard() {
   const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan } = useStore()
   const { show } = useToast()
   const [editing, setEditing] = useState(null)   // null=关闭 / 'new' / 条目对象
-  const [form, setForm] = useState(emptyForm())
+  const [account, setAccount] = useState(ACCOUNTS[0] || '')
+  const [planDate, setPlanDate] = useState(tomorrowStr())
+  const [byAcc, setByAcc] = useState(emptyByAcc)  // 新增态：{ 账号: [{ name, qty }] }
+  const [editEntry, setEditEntry] = useState(newEntry())  // 编辑态：只有这一行
+  const [pickIdx, setPickIdx] = useState(-1)     // 正在为第几行选产品；-1 = 面板收起
+  const [query, setQuery] = useState('')
+  const [catFilter, setCatFilter] = useState('') // 选品面板里的分类筛选，'' = 全部
   const [flashId, setFlashId] = useState('')     // 刚保存的那条：滚动定位 + 高亮 4 秒
 
   const list = publishPlans || []
@@ -51,48 +65,139 @@ export function PublishPlanCard() {
   const today = todayStr()
   const upcoming = sorted.filter((p) => !p.planDate || p.planDate >= today).length
 
-  // 产品名候选 = 当前账号名下做过的样品名（含多账号归属的样品）。
-  // 用户要求「先选账号再选产品，产品按账号筛选」：只列该账号的品，避免串号；
+  const isEditing = !!editing && editing !== 'new'
+  // 新增态看当前账号自己的行；编辑态只有一行（用户要求「编辑态只保留一行」）
+  const entries = isEditing ? [editEntry] : (byAcc[account] || [])
+
+  // 产品候选 = 当前账号名下做过的样品名（含多账号归属的样品）。
+  // 先选账号再选产品（用户要求）：只列该账号的品，避免串号；
   // 「已放弃」的样品不进候选（口径同待投流候选：isArchivedSample）。
-  const productNames = useMemo(() => {
-    const set = new Set()
+  const candidates = useMemo(() => {
+    const map = new Map()
     for (const s of samples || []) {
       if (isArchivedSample(s)) continue
-      if (!getAccounts(s).includes(form.account)) continue
+      if (!getAccounts(s).includes(account)) continue
       const n = String((s && s.name) || '').trim()
-      if (n) set.add(n)
+      if (!n || map.has(n)) continue
+      map.set(n, s.category || '')
     }
-    // 按中文排序，搜同一前缀时相邻显示
-    return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
-  }, [samples, form.account])
+    return [...map.entries()]
+      .map(([name, category]) => ({ name, category }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'zh'))
+  }, [samples, account])
 
-  const openNew = () => { setForm(emptyForm()); setEditing('new') }
+  // 分类筛选只列候选里真实出现过的分类（按 CATEGORIES 顺序）
+  const catOptions = useMemo(() => {
+    const set = new Set()
+    for (const c of candidates) if (c.category) set.add(c.category)
+    return [...set]
+  }, [candidates])
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    // 同一账号下别的行已经选过的产品不重复列出（正在编辑的这行除外）
+    const used = new Set(entries.map((e, i) => (i === pickIdx ? null : e.name)).filter(Boolean))
+    return candidates
+      .filter((c) => !used.has(c.name))
+      .filter((c) => !catFilter || c.category === catFilter)
+      .filter((c) => !q || c.name.toLowerCase().includes(q))
+  }, [candidates, query, entries, pickIdx, catFilter])
+
+  const counts = useMemo(() => {
+    const o = {}
+    for (const a of ACCOUNTS) {
+      o[a] = isEditing
+        ? (a === account && editEntry.name && Number(editEntry.qty) >= 1 ? 1 : 0)
+        : (byAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length
+    }
+    return o
+  }, [byAcc, isEditing, editEntry, account])
+
+  const setEntries = (fn) => {
+    if (isEditing) setEditEntry((prev) => fn([prev])[0] || prev)
+    else setByAcc((prev) => ({ ...prev, [account]: fn(prev[account] || []) }))
+  }
+  const addEntry = () => {
+    setEntries((p) => [...p, newEntry()])
+    setQuery('')
+    setCatFilter('')
+    setPickIdx(entries.length)
+  }
+  const removeEntry = (i) => {
+    setEntries((p) => p.filter((_, k) => k !== i))
+    if (pickIdx === i) setPickIdx(-1)
+    else if (pickIdx > i) setPickIdx(pickIdx - 1)
+  }
+  // 点一条产品即选中：填进当前行并收起面板
+  const pickProduct = (name) => {
+    setEntries((p) => p.map((e, k) => (k === pickIdx ? { ...e, name } : e)))
+    setPickIdx(-1)
+    setQuery('')
+    setCatFilter('')
+  }
+  const setQty = (idx, v) => setEntries((p) => p.map((e, k) => (k === idx ? { ...e, qty: v } : e)))
+  // 加减用函数式更新：连点两下时第二次仍拿旧值算，只会 +1
+  const bumpQty = (idx, delta) => setEntries((p) => p.map((e, k) => (
+    k === idx ? { ...e, qty: String(Math.max(1, (Number(e.qty) || 1) + delta)) } : e
+  )))
+
+  const total = useMemo(() => {
+    if (isEditing) return editEntry.name && Number(editEntry.qty) >= 1 ? 1 : 0
+    return ACCOUNTS.reduce((n, a) => n + (byAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length, 0)
+  }, [byAcc, isEditing, editEntry])
+
+  // 打开弹窗时重置所有行的选择面板状态
+  const resetPicker = () => { setPickIdx(-1); setQuery(''); setCatFilter('') }
+  const openNew = () => {
+    setByAcc(emptyByAcc())
+    setAccount(ACCOUNTS[0] || '')
+    setPlanDate(tomorrowStr())
+    setEditEntry(newEntry())
+    resetPicker()
+    setEditing('new')
+  }
   const openEdit = (p) => {
-    setForm({ name: p.name || '', account: p.account || ACCOUNTS[0] || '', qty: String(p.qty || 1), planDate: p.planDate || '', note: p.note || '' })
+    setAccount(p.account || ACCOUNTS[0] || '')
+    setPlanDate(p.planDate || tomorrowStr())
+    setEditEntry({ name: p.name || '', qty: String(p.qty || 1) })
+    resetPicker()
     setEditing(p)
   }
 
   const save = () => {
-    const name = form.name.trim()
-    if (!name) { show('请先选择或输入发布产品', 'error'); return }
-    const payload = {
-      name,
-      account: form.account,
-      qty: Number(form.qty) > 0 ? Number(form.qty) : 1,
-      planDate: form.planDate || '',
-      note: form.note.trim(),
-    }
-    if (editing === 'new') {
-      const id = addPublishPlan(payload)
-      show(`已加入发布计划：${name}`, 'success')
-      // 新增后滚到这一行并高亮（用户反馈「新增了一条消失不见了」：
-      // 条目其实加进去了，但按时间排序可能落在卡片下方，一屏看不到）
-      setFlashId(id || '')
-    } else if (editing) {
-      updatePublishPlan(editing.id, payload)
+    if (isEditing) {
+      const name = editEntry.name.trim()
+      if (!name) { show('请选择发布产品', 'error'); return }
+      updatePublishPlan(editing.id, {
+        name,
+        account,
+        qty: Math.max(1, Number(editEntry.qty) || 1),
+        planDate: planDate || '',
+      })
       show('已保存', 'success')
       setFlashId(editing.id)
+      setEditing(null)
+      return
     }
+    let n = 0
+    let lastId = ''
+    for (const a of ACCOUNTS) {
+      for (const e of (byAcc[a] || []).filter((x) => x.name && Number(x.qty) >= 1)) {
+        const id = addPublishPlan({
+          name: e.name.trim(),
+          account: a,
+          qty: Math.max(1, Number(e.qty) || 1),
+          planDate: planDate || '',
+        })
+        if (id) lastId = id
+        n++
+      }
+    }
+    if (n === 0) { show('请先添加产品并填写数量', 'error'); return }
+    show(`已加入 ${n} 条发布计划`, 'success')
+    // 新增后滚到这一行并高亮（用户反馈「新增了一条消失不见了」：
+    // 条目其实加进去了，但按时间排序可能落在卡片下方，一屏看不到）
+    setFlashId(lastId)
     setEditing(null)
   }
 
@@ -183,84 +288,145 @@ export function PublishPlanCard() {
         )}
       </div>
 
-      {/* 新增 / 编辑弹窗 */}
+      {/* 新增 / 编辑弹窗：形态照「记录发布」（切账号 + 可多选行 + 数量加减） */}
       {editing && (
         <div className="pcv-overlay" onClick={() => setEditing(null)}>
-          <div className="pcv-dialog" style={{ maxWidth: 640 }} onClick={(e) => e.stopPropagation()}>
+          <div className="pcv-dialog pcv-dialog--lg" onClick={(e) => e.stopPropagation()}>
             <div className="pcv-dialog-h">
-              <span>{editing === 'new' ? '新增发布计划' : '编辑发布计划'}</span>
+              <span>{isEditing ? '编辑发布计划' : '新增发布计划'}</span>
+              {!isEditing && (
+                <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>切账号分别填，保存时一次记完</span>
+              )}
               <div className="pcv-spacer" />
               <button className="pcv-dialog-x" title="关闭" onClick={() => setEditing(null)}>×</button>
             </div>
             <div className="pcv-dialog-b">
-              {/* 先选账号、再选产品（用户要求）：产品候选按账号过滤，
-                  切账号时清空已选产品，避免出现「A 账号 + B 账号的品」 */}
-              <div className="pcv-field-label">发布账号</div>
-              <select
-                className="pcv-input"
-                style={{ width: '100%' }}
-                value={form.account}
-                onChange={(e) => setForm((f) => ({ ...f, account: e.target.value, name: '' }))}
-              >
-                {ACCOUNTS.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
-
-              <div className="pcv-field-label" style={{ marginTop: 14 }}>发布产品 <span style={{ color: '#b96a66' }}>*</span></div>
-              {/* 站内统一的可搜索下拉：**只能选已有的产品**（用户要求去掉「使用自定义」入口，
-                  避免手打的名字和产品库/样品名对不上，后面统计不到一块儿） */}
-              <SearchSelect
-                value={form.name}
-                options={productNames}
-                onChange={(v) => setForm((f) => ({ ...f, name: v }))}
-                allLabel=""
-                placeholder="搜索该账号的样品…"
-                width="100%"
-                inline
-                title="发布产品"
-              />
-              {productNames.length === 0 && (
-                <div style={{ fontSize: 12, color: '#b96a66', marginTop: 6 }}>该账号还没有样品，先去「样品」登记</div>
-              )}
-
-              {/* 加宽后把「数量 / 时间」摆成一行，视线不用来回跳 */}
-              <div style={{ display: 'flex', gap: 12, marginTop: 14 }}>
-                <div style={{ width: 110 }}>
-                  <div className="pcv-field-label">发布数量</div>
-                  <input
-                    className="pcv-input"
-                    style={{ width: '100%' }}
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={form.qty}
-                    onChange={(e) => setForm((f) => ({ ...f, qty: e.target.value }))}
-                  />
-                </div>
-                <div style={{ width: 190 }}>
-                  <div className="pcv-field-label">发布时间</div>
-                  <input
-                    className="pcv-input"
-                    style={{ width: '100%' }}
-                    type="date"
-                    value={form.planDate}
-                    onChange={(e) => setForm((f) => ({ ...f, planDate: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div className="pcv-field-label" style={{ marginTop: 14 }}>备注（选填）</div>
+              <div className="pcv-field-label">发布时间</div>
               <input
                 className="pcv-input"
-                style={{ width: '100%' }}
-                placeholder="例如：带货链接已到位"
-                value={form.note}
-                onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+                style={{ width: 180 }}
+                type="date"
+                value={planDate}
+                onChange={(e) => setPlanDate(e.target.value)}
               />
+
+              {/* 先选账号、再选产品（用户要求）：产品候选按账号过滤 */}
+              <div className="pcv-field-label" style={{ marginTop: 18 }}>账号</div>
+              <AccountTabs
+                value={account}
+                onChange={(a) => {
+                  setAccount(a)
+                  // 编辑态只有一行：换账号就把已选产品清掉，避免「A 账号 + B 账号的品」
+                  if (isEditing) setEditEntry((prev) => ({ ...prev, name: '' }))
+                  resetPicker()
+                }}
+                counts={counts}
+              />
+
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
+                <span className="pcv-field-label" style={{ margin: 0 }}>发布产品 &amp; 数量（可多选）</span>
+                <div className="pcv-spacer" />
+                {!isEditing && <button className="pcv-btn pcv-btn-ghost" onClick={addEntry}>＋ 添加</button>}
+              </div>
+              <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>
+                只能选「{account}」的样品（已放弃的不会出现）
+              </div>
+
+              <div className="pcv-entrylist">
+                {/* 空态本身可点：直接新增一行并展开选品面板 */}
+                {entries.length === 0 && !isEditing && (
+                  <button className="pcv-entry-empty" onClick={addEntry}>
+                    ＋ 点这里新增一条「产品 + 数量」
+                  </button>
+                )}
+                {entries.map((e, idx) => (
+                  <div key={idx}>
+                    <div className="pcv-entry">
+                      <button
+                        className={`pcv-entry-pick${e.name ? '' : ' empty'}`}
+                        onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery(''); setCatFilter('') }}
+                      >
+                        {e.name || '点击选择产品'}
+                      </button>
+                      <div className="pcv-qty">
+                        <button type="button" onClick={() => bumpQty(idx, -1)}>−</button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={e.qty}
+                          onChange={(ev) => {
+                            const n = parseInt(ev.target.value, 10)
+                            setQty(idx, Number.isNaN(n) || n < 1 ? '' : String(n))
+                          }}
+                          onBlur={() => { if (!(Number(e.qty) >= 1)) setQty(idx, '1') }}
+                        />
+                        <button type="button" onClick={() => bumpQty(idx, 1)}>＋</button>
+                      </div>
+                      {!isEditing && (
+                        <button className="pcv-x" title="删除该条" onClick={() => removeEntry(idx)}>×</button>
+                      )}
+                    </div>
+
+                    {/* 产品选择面板：内联展开在该行下面，点一行即选中 */}
+                    {pickIdx === idx && (
+                      <div className="pcv-drop">
+                        {catOptions.length > 1 && (
+                          <div className="pcv-catfilter">
+                            <button className={catFilter === '' ? 'on' : ''} onClick={() => setCatFilter('')}>全部</button>
+                            {catOptions.map((c) => (
+                              <button key={c} className={catFilter === c ? 'on' : ''} onClick={() => setCatFilter(c)}>{c}</button>
+                            ))}
+                          </div>
+                        )}
+                        <input
+                          className="pcv-input"
+                          style={{ width: '100%' }}
+                          placeholder="搜索产品名…"
+                          value={query}
+                          onChange={(ev) => setQuery(ev.target.value)}
+                          autoFocus
+                        />
+                        <div className="pcv-drop-list">
+                          {candidates.length === 0 ? (
+                            <div className="pcv-drop-hint">该账号下还没有样品（已放弃的不列出）</div>
+                          ) : filtered.length === 0 ? (
+                            <div className="pcv-drop-hint">没有匹配的产品</div>
+                          ) : filtered.map((c) => (
+                            <button
+                              key={c.name}
+                              className="pcv-drop-row"
+                              title="点一下即选中这条产品"
+                              onClick={() => pickProduct(c.name)}
+                            >
+                              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                        <div className="pcv-drop-f">
+                          <span style={{ fontSize: 12, color: '#9aa0a9' }}>点一条产品即选中</span>
+                          <div className="pcv-spacer" />
+                          <button className="pcv-btn pcv-btn-ghost" onClick={resetPicker}>取消</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="pcv-dialog-f">
+              <span style={{ fontSize: 12, color: '#9aa0a9' }}>
+                {total > 0
+                  ? `共 ${total} 条（${ACCOUNTS.filter((a) => counts[a] > 0).map((a) => `${a} ${counts[a]}`).join('、')}）`
+                  : '还没有条目'}
+              </span>
               <div className="pcv-spacer" />
               <button className="pcv-btn pcv-btn-ghost" onClick={() => setEditing(null)}>取消</button>
-              <button className="pcv-btn" style={{ marginLeft: 8 }} onClick={save}>保存</button>
+              <button
+                className="pcv-btn"
+                style={{ marginLeft: 10 }}
+                onClick={save}
+                disabled={total === 0}
+              >保存{total > 1 ? ` ${total} 条` : ''}</button>
             </div>
           </div>
         </div>

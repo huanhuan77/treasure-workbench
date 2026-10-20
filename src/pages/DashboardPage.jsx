@@ -137,7 +137,7 @@ export function DashboardPage() {
   const {
     samples, transactions, orders, publishRecords, todos, applySyncResult, updateSample,
     adQueue, addAdQueue, updateAdQueue, deleteAdQueue,
-    products, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan,
+    publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan,
   } = useStore()
   const { show } = useToast()
   // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
@@ -242,24 +242,24 @@ export function DashboardPage() {
   }, [publishPlans])
   const planUpcoming = planSorted.filter((p) => !p.planDate || p.planDate >= todayPlan).length
   // 新增/编辑弹层：null=关闭 / 'new' / 条目
+  // 形态与 PC 一致（照「记录发布」弹窗）：切账号分别填、每行「产品 + 数量」可加减，
+  // 一次保存写成多条计划；编辑已有计划时只保留一行。
   const [planEdit, setPlanEdit] = useState(null)
-  const [planForm, setPlanForm] = useState({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: tomorrowPlan })
-  const planProductNames = useMemo(() => {
-    const set = new Set()
-    for (const p of products || []) {
-      const n = String((p && p.name) || '').trim()
-      if (n) set.add(n)
-    }
-    return [...set]
-  }, [products])
-
-  // 产品选择面板（用户要求：要能搜索、能按账号筛选 —— 原生 datalist 在手机上根本弹不出来）
-  const [planPicker, setPlanPicker] = useState(false)
+  const [planAccount, setPlanAccount] = useState(ACCOUNTS[0] || '')
+  const [planDate, setPlanDate] = useState(tomorrowPlan)
+  const [planByAcc, setPlanByAcc] = useState(() => {
+    const o = {}
+    for (const a of ACCOUNTS) o[a] = []
+    return o
+  })
+  const [planEditEntry, setPlanEditEntry] = useState({ name: '', qty: '1' })
+  const [planPickIdx, setPlanPickIdx] = useState(-1)   // 正在为第几行选产品；-1 = 面板收起
   const [planQuery, setPlanQuery] = useState('')
-  const [planAcc, setPlanAcc] = useState('')
 
-  // 候选：该账号做过的样品名 +（未筛选时）产品库里的名字
-  // 「已放弃」的样品不进候选（口径同 PC 待投流候选：isArchivedSample）
+  const planIsEditing = !!planEdit && planEdit !== 'new'
+  const planEntries = planIsEditing ? [planEditEntry] : (planByAcc[planAccount] || [])
+
+  // 候选：该账号做过的样品名（「已放弃」的样品不进候选，口径同 PC）
   const planCandidates = useMemo(() => {
     const set = new Set()
     for (const s of samples || []) {
@@ -267,48 +267,96 @@ export function DashboardPage() {
       const accs = Array.isArray(s.accounts) && s.accounts.length
         ? s.accounts
         : (s.account ? [s.account] : [])
-      if (planAcc && !accs.includes(planAcc)) continue
+      if (!accs.includes(planAccount)) continue
       const n = String((s && s.name) || '').trim()
       if (n) set.add(n)
     }
-    if (!planAcc) for (const n of planProductNames) set.add(n)
-    return [...set]
-  }, [samples, planProductNames, planAcc])
+    return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
+  }, [samples, planAccount])
 
   const planFiltered = useMemo(() => {
     const q = planQuery.trim().toLowerCase()
-    if (!q) return planCandidates
-    return planCandidates.filter((n) => n.toLowerCase().includes(q))
-  }, [planCandidates, planQuery])
+    // 同一账号下别的行已经选过的产品不重复列出（正在编辑的这行除外）
+    const used = new Set(planEntries.map((e, i) => (i === planPickIdx ? null : e.name)).filter(Boolean))
+    return planCandidates
+      .filter((n) => !used.has(n))
+      .filter((n) => !q || n.toLowerCase().includes(q))
+  }, [planCandidates, planQuery, planEntries, planPickIdx])
 
-  const openPlanPicker = () => {
+  const planSetEntries = (fn) => {
+    if (planIsEditing) setPlanEditEntry((prev) => fn([prev])[0] || prev)
+    else setPlanByAcc((prev) => ({ ...prev, [planAccount]: fn(prev[planAccount] || []) }))
+  }
+  const planAddEntry = () => {
+    planSetEntries((p) => [...p, { name: '', qty: '1' }])
     setPlanQuery('')
-    setPlanAcc(planForm.account || '')
-    setPlanPicker(true)
+    setPlanPickIdx(planEntries.length)
   }
-  const pickPlanName = (v) => {
-    setPlanForm((f) => ({ ...f, name: v }))
-    setPlanPicker(false)
+  const planRemoveEntry = (i) => {
+    planSetEntries((p) => p.filter((_, k) => k !== i))
+    setPlanPickIdx((cur) => (cur === i ? -1 : cur > i ? cur - 1 : cur))
   }
+  // 点一条产品即选中：填进当前行并收起面板
+  const planPickName = (name) => {
+    planSetEntries((p) => p.map((e, k) => (k === planPickIdx ? { ...e, name } : e)))
+    setPlanPickIdx(-1)
+    setPlanQuery('')
+  }
+  const planSetQty = (idx, v) => planSetEntries((p) => p.map((e, k) => (k === idx ? { ...e, qty: v } : e)))
+  const planBumpQty = (idx, delta) => planSetEntries((p) => p.map((e, k) => (
+    k === idx ? { ...e, qty: String(Math.max(1, (Number(e.qty) || 1) + delta)) } : e
+  )))
+  const planTotal = planIsEditing
+    ? (planEditEntry.name && Number(planEditEntry.qty) >= 1 ? 1 : 0)
+    : ACCOUNTS.reduce((n, a) => n + (planByAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length, 0)
+
   const openPlanNew = () => {
-    setPlanForm({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: tomorrowPlan })
+    const o = {}
+    for (const a of ACCOUNTS) o[a] = []
+    setPlanByAcc(o)
+    setPlanAccount(ACCOUNTS[0] || '')
+    setPlanDate(tomorrowPlan)
+    setPlanEditEntry({ name: '', qty: '1' })
+    setPlanPickIdx(-1)
+    setPlanQuery('')
     setPlanEdit('new')
   }
   const openPlanEdit = (p) => {
-    setPlanForm({ name: p.name || '', account: p.account || ACCOUNTS[0] || '', qty: String(p.qty || 1), planDate: p.planDate || '' })
+    setPlanAccount(p.account || ACCOUNTS[0] || '')
+    setPlanDate(p.planDate || tomorrowPlan)
+    setPlanEditEntry({ name: p.name || '', qty: String(p.qty || 1) })
+    setPlanPickIdx(-1)
+    setPlanQuery('')
     setPlanEdit(p)
   }
   const savePlan = () => {
-    const name = planForm.name.trim()
-    if (!name) { show('请填写发布产品', 'error'); return }
-    const payload = {
-      name,
-      account: planForm.account,
-      qty: Number(planForm.qty) > 0 ? Number(planForm.qty) : 1,
-      planDate: planForm.planDate || '',
+    if (planIsEditing) {
+      const name = planEditEntry.name.trim()
+      if (!name) { show('请选择发布产品', 'error'); return }
+      updatePublishPlan(planEdit.id, {
+        name,
+        account: planAccount,
+        qty: Math.max(1, Number(planEditEntry.qty) || 1),
+        planDate: planDate || '',
+      })
+      show('已保存', 'success')
+      setPlanEdit(null)
+      return
     }
-    if (planEdit === 'new') { addPublishPlan(payload); show('已加入发布计划', 'success') }
-    else if (planEdit) { updatePublishPlan(planEdit.id, payload); show('已保存', 'success') }
+    let n = 0
+    for (const a of ACCOUNTS) {
+      for (const e of (planByAcc[a] || []).filter((x) => x.name && Number(x.qty) >= 1)) {
+        addPublishPlan({
+          name: e.name.trim(),
+          account: a,
+          qty: Math.max(1, Number(e.qty) || 1),
+          planDate: planDate || '',
+        })
+        n++
+      }
+    }
+    if (n === 0) { show('请先添加产品并填写数量', 'error'); return }
+    show(`已加入 ${n} 条发布计划`, 'success')
     setPlanEdit(null)
   }
 
@@ -698,156 +746,165 @@ export function DashboardPage() {
               <button onClick={() => setPlanEdit(null)} style={{ marginLeft: 'auto', border: 'none', background: 'transparent', fontSize: '18px', color: '#9aa0a9', cursor: 'pointer' }}>×</button>
             </div>
 
-            <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布账号</div>
-            {/* 先选账号再选产品（用户要求）：切换账号时清空已选产品，产品面板按账号筛选 */}
+            <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布时间</div>
+            <input
+              type="date"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px' }}
+              value={planDate}
+              onChange={(e) => setPlanDate(e.target.value)}
+            />
+
+            <div style={{ fontSize: '12px', color: '#8a8f98', margin: '12px 0 4px' }}>发布账号</div>
+            {/* 先选账号再选产品（用户要求）：切换账号看到的是该账号自己的行，产品按账号筛选 */}
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {ACCOUNTS.map((a) => {
-                const on = planForm.account === a
+                const on = planAccount === a
                 const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
+                const cnt = planIsEditing
+                  ? (a === planAccount && planEditEntry.name ? 1 : 0)
+                  : (planByAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length
                 return (
                   <button
                     key={a}
-                    onClick={() => setPlanForm((f) => ({ ...f, account: a, name: '' }))}
+                    onClick={() => {
+                      setPlanAccount(a)
+                      // 编辑态只有一行：换账号就清掉已选产品，避免串账号
+                      if (planIsEditing) setPlanEditEntry((prev) => ({ ...prev, name: '' }))
+                      setPlanPickIdx(-1)
+                      setPlanQuery('')
+                    }}
                     style={{
                       padding: '5px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                       border: on ? 'none' : `1px solid ${col}`,
                       background: on ? col : '#fff',
                       color: on ? '#fff' : col,
                     }}
-                  >{a}</button>
+                  >{a}{cnt > 0 ? ` ${cnt}` : ''}</button>
                 )
               })}
             </div>
 
-            <div style={{ fontSize: '12px', color: '#8a8f98', margin: '12px 0 4px' }}>发布产品 *</div>
-            {/* 点开「产品选择面板」：可搜索、按上面选中的账号筛选。
-                原来用原生 datalist，手机端键盘一弹就没了，等于没有下拉。 */}
-            <button
-              onClick={openPlanPicker}
-              style={{
-                width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px',
-                border: '1px solid #e5e7eb', background: '#fff', fontSize: '13px', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
-                color: planForm.name ? '#111' : '#9aa0a9',
-              }}
-            >
-              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {planForm.name || '搜索或选择产品'}
-              </span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9aa0a9" strokeWidth="2.2"
-                strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
-              <div style={{ width: '96px' }}>
-                <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布数量</div>
-                <input
-                  type="number" min="1" step="1"
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px' }}
-                  value={planForm.qty}
-                  onChange={(e) => setPlanForm((f) => ({ ...f, qty: e.target.value }))}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布时间</div>
-                <input
-                  type="date"
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px' }}
-                  value={planForm.planDate}
-                  onChange={(e) => setPlanForm((f) => ({ ...f, planDate: e.target.value }))}
-                />
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', margin: '12px 0 4px' }}>
+              <span style={{ fontSize: '12px', color: '#8a8f98' }}>发布产品 &amp; 数量（可多选）</span>
+              <div style={{ flex: 1 }} />
+              {!planIsEditing && (
+                <button onClick={planAddEntry} style={{
+                  border: '1px solid #e5e7eb', background: '#fff', color: '#64748b', fontSize: '12px',
+                  fontWeight: 600, padding: '4px 10px', borderRadius: '8px', cursor: 'pointer',
+                }}>＋ 添加</button>
+              )}
+            </div>
+            <div style={{ fontSize: '11px', color: '#9aa0a9', marginBottom: '6px' }}>
+              只能选「{planAccount}」的样品（已放弃的不会出现）
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '18px' }}>
+            {planEntries.length === 0 && !planIsEditing && (
+              <button onClick={planAddEntry} style={{
+                width: '100%', padding: '14px', border: '1px dashed #e5b7c8', borderRadius: '10px',
+                background: '#fffafc', color: '#b8517f', fontSize: '13px', cursor: 'pointer',
+              }}>＋ 点这里新增一条「产品 + 数量」</button>
+            )}
+
+            {planEntries.map((e, idx) => (
+              <div key={idx} style={{ marginBottom: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={() => { setPlanPickIdx(planPickIdx === idx ? -1 : idx); setPlanQuery('') }}
+                    style={{
+                      flex: 1, minWidth: 0, textAlign: 'left', padding: '9px 12px', borderRadius: '10px',
+                      border: '1px solid #e5e7eb', background: '#fff', fontSize: '13px', cursor: 'pointer',
+                      color: e.name ? '#111' : '#9aa0a9',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                  >{e.name || '点击选择产品'}</button>
+                  {/* 数量加减：与 PC「记录发布」同款步进器 */}
+                  <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e5e7eb', borderRadius: '10px', overflow: 'hidden', flexShrink: 0 }}>
+                    <button onClick={() => planBumpQty(idx, -1)} style={{
+                      width: '32px', height: '34px', border: 'none', background: '#faf7f8',
+                      fontSize: '16px', color: '#8a8f98', cursor: 'pointer',
+                    }}>−</button>
+                    <input
+                      type="number" min="1"
+                      value={e.qty}
+                      onChange={(ev) => {
+                        const n = parseInt(ev.target.value, 10)
+                        planSetQty(idx, Number.isNaN(n) || n < 1 ? '' : String(n))
+                      }}
+                      onBlur={() => { if (!(Number(e.qty) >= 1)) planSetQty(idx, '1') }}
+                      style={{
+                        width: '42px', border: 'none', textAlign: 'center', fontSize: '13px',
+                        padding: '8px 0', outline: 'none', background: '#fff',
+                      }}
+                    />
+                    <button onClick={() => planBumpQty(idx, 1)} style={{
+                      width: '32px', height: '34px', border: 'none', background: '#faf7f8',
+                      fontSize: '16px', color: '#8a8f98', cursor: 'pointer',
+                    }}>＋</button>
+                  </div>
+                  {!planIsEditing && (
+                    <button onClick={() => planRemoveEntry(idx)} style={{
+                      border: 'none', background: 'transparent', color: '#c9cdd4',
+                      fontSize: '18px', cursor: 'pointer', padding: '0 2px',
+                    }}>×</button>
+                  )}
+                </div>
+
+                {/* 产品选择面板：就地展开，点一行即选中 */}
+                {planPickIdx === idx && (
+                  <div style={{ marginTop: '8px', border: '1px solid #f0dfe6', borderRadius: '10px', padding: '8px', background: '#fffdfe' }}>
+                    <input
+                      autoFocus
+                      placeholder="搜索产品名…"
+                      value={planQuery}
+                      onChange={(ev) => setPlanQuery(ev.target.value)}
+                      onKeyDown={(ev) => {
+                        if (ev.key !== 'Enter') return
+                        if (planFiltered.length > 0) planPickName(planFiltered[0])
+                      }}
+                      style={{
+                        width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px',
+                        border: '1px solid #e5e7eb', fontSize: '13px', marginBottom: '6px',
+                      }}
+                    />
+                    <div style={{ maxHeight: '200px', overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                      {planCandidates.length === 0 ? (
+                        <div style={{ padding: '14px 4px', fontSize: '12px', color: '#9aa0a9', textAlign: 'center' }}>
+                          该账号下还没有样品（已放弃的不列出）
+                        </div>
+                      ) : planFiltered.length === 0 ? (
+                        <div style={{ padding: '14px 4px', fontSize: '12px', color: '#9aa0a9', textAlign: 'center' }}>
+                          没有匹配的产品，换个词试试
+                        </div>
+                      ) : planFiltered.map((n) => (
+                        <button
+                          key={n}
+                          onClick={() => planPickName(n)}
+                          style={{
+                            width: '100%', textAlign: 'left', padding: '11px 10px', border: 'none',
+                            borderBottom: '0.5px solid #f4f1f2', background: 'transparent',
+                            fontSize: '13px', color: '#111', cursor: 'pointer',
+                          }}
+                        >{n}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div style={{ marginTop: '12px', fontSize: '11px', color: '#9aa0a9' }}>
+              {planTotal > 0 ? `共 ${planTotal} 条` : '还没有条目'}
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
               <button onClick={() => setPlanEdit(null)} style={{
                 flex: 1, padding: '11px', borderRadius: '11px', border: '1px solid #e5e7eb',
                 background: '#fff', color: '#64748b', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
               }}>取消</button>
-              <button onClick={savePlan} style={{
+              <button onClick={savePlan} disabled={planTotal === 0} style={{
                 flex: 1, padding: '11px', borderRadius: '11px', border: 'none',
-                background: '#ec4899', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
-              }}>保存</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 发布产品选择面板：搜索 + 按账号筛选（用户要求） */}
-      {planPicker && (
-        <div onClick={() => setPlanPicker(false)} style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 950,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
-        }}>
-          <div onClick={(e) => e.stopPropagation()} style={{
-            width: '100%', maxWidth: '420px', background: '#fff', borderRadius: '14px',
-            padding: '14px', maxHeight: '76dvh', boxSizing: 'border-box',
-            display: 'flex', flexDirection: 'column',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: '15px', fontWeight: 700, color: '#111' }}>选择发布产品</span>
-              <button onClick={() => setPlanPicker(false)} style={{
-                marginLeft: 'auto', border: 'none', background: 'transparent',
-                fontSize: '18px', color: '#9aa0a9', cursor: 'pointer',
-              }}>×</button>
-            </div>
-
-            <input
-              autoFocus
-              placeholder="搜索产品名…"
-              value={planQuery}
-              onChange={(e) => setPlanQuery(e.target.value)}
-              onKeyDown={(e) => {
-                // 回车只取第一条匹配项 —— 不再接受「输入啥就是啥」（只能选已有产品）
-                if (e.key !== 'Enter') return
-                if (planFiltered.length > 0) pickPlanName(planFiltered[0])
-              }}
-              style={{
-                width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px',
-                border: '1px solid #e5e7eb', fontSize: '13px', marginBottom: '10px',
-              }}
-            />
-
-            {/* 账号筛选：只看这个账号做过的品（账号在弹层里已先选，这里切换会一并同步回弹层） */}
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-              {ACCOUNTS.map((a) => {
-                const on = planAcc === a
-                const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
-                return (
-                  <button
-                    key={a}
-                    onClick={() => { setPlanAcc(a); setPlanForm((f) => ({ ...f, account: a, name: '' })) }}
-                    style={{
-                      padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                      border: on ? 'none' : `1px solid ${col}`,
-                      background: on ? col : '#fff',
-                      color: on ? '#fff' : col,
-                    }}
-                  >{a || '全部账号'}</button>
-                )
-              })}
-            </div>
-
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              {/* 只能从已有产品里选（用户要求去掉「使用自定义」），没有匹配时给一句提示 */}
-              {planFiltered.length === 0 && (
-                <div style={{ padding: '18px 4px', fontSize: '12px', color: '#9aa0a9', textAlign: 'center' }}>
-                  {planQuery.trim() ? '没有匹配的产品，换个词试试' : '这个账号还没有做过的产品'}
-                </div>
-              )}
-              {planFiltered.map((n) => (
-                <button
-                  key={n}
-                  onClick={() => pickPlanName(n)}
-                  style={{
-                    width: '100%', textAlign: 'left', padding: '11px 10px', border: 'none',
-                    borderBottom: '0.5px solid #f4f1f2', background: 'transparent',
-                    fontSize: '13px', color: '#111', cursor: 'pointer',
-                  }}
-                >{n}</button>
-              ))}
+                background: planTotal === 0 ? '#f3c6d8' : '#ec4899', color: '#fff',
+                fontSize: '14px', fontWeight: 700, cursor: planTotal === 0 ? 'default' : 'pointer',
+              }}>保存{planTotal > 1 ? ` ${planTotal} 条` : ''}</button>
             </div>
           </div>
         </div>
