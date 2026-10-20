@@ -22,6 +22,49 @@ function greeting() {
   return '晚上好'
 }
 
+// 左滑露出「编辑 / 删除」的行容器（移动端手势，桌面端也可点右侧按钮）
+function SwipeRow({ onEdit, onDelete, children }) {
+  const [open, setOpen] = useState(false)
+  const startX = useRef(0)
+  const startY = useRef(0)
+  const BTN_W = onEdit ? 128 : 64
+  return (
+    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+      {/* 右侧操作区（常驻于背后，左滑露出） */}
+      <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: BTN_W, display: 'flex' }}>
+        {onEdit && (
+          <button
+            onClick={() => { setOpen(false); onEdit && onEdit() }}
+            style={{ flex: 1, border: 'none', background: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+          >编辑</button>
+        )}
+        <button
+          onClick={() => { setOpen(false); onDelete && onDelete() }}
+          style={{ flex: 1, border: 'none', background: '#ef4444', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+        >删除</button>
+      </div>
+      {/* 前景内容 */}
+      <div
+        onClick={() => { if (open) setOpen(false) }}
+        onTouchStart={(e) => { startX.current = e.touches[0].clientX; startY.current = e.touches[0].clientY }}
+        onTouchEnd={(e) => {
+          const dx = e.changedTouches[0].clientX - startX.current
+          const dy = e.changedTouches[0].clientY - startY.current
+          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.4) setOpen(dx < 0)
+        }}
+        style={{
+          position: 'relative', background: '#fafafa', padding: '8px 10px',
+          display: 'flex', alignItems: 'center', gap: '8px',
+          transition: 'transform 0.2s ease', transform: open ? `translateX(-${BTN_W}px)` : 'translateX(0)',
+          touchAction: 'pan-y',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 // 把样本的截止日期换算成"距今天数"（负=过期）
 function daysUntil(deadline) {
   if (!deadline) return null
@@ -704,7 +747,7 @@ export function DashboardPage() {
                 const overdue = p.planDate && p.planDate < todayPlan
                 const isToday = p.planDate === todayPlan
                 return (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: '#fafafa', borderRadius: '10px' }}>
+                  <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
@@ -719,9 +762,7 @@ export function DashboardPage() {
                         </span>
                       </div>
                     </div>
-                    <button onClick={() => openPlanEdit(p)} style={{ border: 'none', background: 'transparent', color: '#8a8f98', fontSize: '11px', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>编辑</button>
-                    <button onClick={() => { deletePublishPlan(p.id); show('已删除', 'success') }} style={{ border: 'none', background: 'transparent', color: '#c9cdd4', fontSize: '15px', cursor: 'pointer', flexShrink: 0, padding: '2px 4px' }}>×</button>
-                  </div>
+                  </SwipeRow>
                 )
               })}
             </div>
@@ -939,8 +980,12 @@ export function DashboardPage() {
               {adVisible.map((a) => {
                 const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
                 const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+                const cycleStatus = () => {
+                  const i = AD_STATUSES.indexOf(a.status)
+                  updateAdQueue(a.id, { status: AD_STATUSES[(i + 1) % AD_STATUSES.length] })
+                }
                 return (
-                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: '#fafafa', borderRadius: '10px' }}>
+                  <SwipeRow key={a.id} onDelete={() => { deleteAdQueue(a.id); show('已删除', 'success') }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
@@ -948,20 +993,15 @@ export function DashboardPage() {
                         {a.publishDate && <span style={{ fontSize: '10px', color: '#94a3b8' }}>发布于 {a.publishDate}</span>}
                       </div>
                     </div>
-                    <select
-                      value={a.status}
-                      onChange={(e) => updateAdQueue(a.id, { status: e.target.value })}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); cycleStatus() }}
+                      title="点一下切换状态"
                       style={{
-                        fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: '8px',
+                        fontSize: '11px', fontWeight: 600, padding: '4px 9px', borderRadius: '8px',
                         border: `1px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer', flexShrink: 0,
                       }}
-                    >
-                      {AD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                    <button onClick={() => { deleteAdQueue(a.id); show('已删除', 'success') }} style={{
-                      background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: '15px', cursor: 'pointer', flexShrink: 0, padding: '2px 4px',
-                    }}>×</button>
-                  </div>
+                    >{a.status}</button>
+                  </SwipeRow>
                 )
               })}
             </div>
