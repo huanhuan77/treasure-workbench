@@ -201,6 +201,10 @@ export function DashboardPage() {
   // 待投流：选择已发布样品→账号 的弹窗开关
   const [adPickerOpen, setAdPickerOpen] = useState(false)
   const [adSearch, setAdSearch] = useState('')
+  // 列表默认只显示前 3 条，点「展开全部」才显示其余
+  const [planExpanded, setPlanExpanded] = useState(false)
+  const [adExpanded, setAdExpanded] = useState(false)
+  const PREVIEW_COUNT = 3
   // 「已投流」的从列表隐藏（与 PC 一致）：数据保留，不提供查看入口
   // 提醒中心 Tab：reminders（发布提醒）| low（发布不足5条）| expiring（即将到期）
   // 用 lazy init 从 sessionStorage 恢复，刷新 / keep-alive 回场时保留上次选中
@@ -742,29 +746,31 @@ export function DashboardPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
-              {planSorted.map((p) => {
+              {(planExpanded ? planSorted : planSorted.slice(0, PREVIEW_COUNT)).map((p) => {
                 const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
                 const overdue = p.planDate && p.planDate < todayPlan
                 const isToday = p.planDate === todayPlan
                 return (
                   <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0 }}>
-                          ×{p.qty || 1}
-                        </span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600 }}>{p.account || '未选账号'}</span>
-                        <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8' }}>
-                          {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
-                        </span>
-                      </div>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{p.name}</span>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0 }}>
+                        ×{p.qty || 1}
+                      </span>
+                      <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600, flexShrink: 0 }}>{p.account || '未选账号'}</span>
+                      <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0 }}>
+                        {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
+                      </span>
                     </div>
                   </SwipeRow>
                 )
               })}
+              {planSorted.length > PREVIEW_COUNT && (
+                <button onClick={() => setPlanExpanded((v) => !v)} style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  fontSize: '12px', color: '#db2777', fontWeight: 600, padding: '4px 0 0',
+                }}>{planExpanded ? '收起 ▴' : `展开全部（${planSorted.length}）▾`}</button>
+              )}
             </div>
           )}
         </div>
@@ -977,7 +983,7 @@ export function DashboardPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
-              {adVisible.map((a) => {
+              {(adExpanded ? adVisible : adVisible.slice(0, PREVIEW_COUNT)).map((a) => {
                 const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
                 const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
                 const cycleStatus = () => {
@@ -986,24 +992,28 @@ export function DashboardPage() {
                 }
                 return (
                   <SwipeRow key={a.id} onDelete={() => { deleteAdQueue(a.id); show('已删除', 'success') }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600 }}>{a.account}</span>
-                        {a.publishDate && <span style={{ fontSize: '10px', color: '#94a3b8' }}>发布于 {a.publishDate}</span>}
-                      </div>
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{a.name}</span>
+                      <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600, flexShrink: 0 }}>{a.account}</span>
+                      {a.publishDate && <span style={{ fontSize: '10px', color: '#94a3b8', flexShrink: 0 }}>{a.publishDate}</span>}
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); cycleStatus() }}
                       title="点一下切换状态"
                       style={{
-                        fontSize: '11px', fontWeight: 600, padding: '4px 9px', borderRadius: '8px',
+                        fontSize: '11px', fontWeight: 600, padding: '3px 8px', borderRadius: '8px',
                         border: `1px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer', flexShrink: 0,
                       }}
                     >{a.status}</button>
                   </SwipeRow>
                 )
               })}
+              {adVisible.length > PREVIEW_COUNT && (
+                <button onClick={() => setAdExpanded((v) => !v)} style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  fontSize: '12px', color: '#db2777', fontWeight: 600, padding: '4px 0 0',
+                }}>{adExpanded ? '收起 ▴' : `展开全部（${adVisible.length}）▾`}</button>
+              )}
             </div>
           )}
         </div>
