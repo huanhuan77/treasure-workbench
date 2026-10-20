@@ -3308,6 +3308,10 @@ function loadData() {
       sensitiveWords: old.sensitiveWords || DEFAULT_SENSITIVE_WORDS,  // 版本升级不再替换用户自定义词库
       dramas: Array.isArray(old.dramas) ? old.dramas : [],
       todos: Array.isArray(old.todos) ? old.todos : [],
+      // ⚠️ 这里的返回对象是**白名单式重建**：没列出来的字段会在每次加载时被丢掉，
+      // 随后 useEffect 又把「缺字段的 data」写回 localStorage → 数据永久消失。
+      // 待投流（adQueue）就是这样丢的（用户反馈「刚加的怎么不见了」）。
+      adQueue: Array.isArray(old.adQueue) ? old.adQueue : [],
     })
   } catch (e) {
     console.warn('[loadData] 加载数据异常，使用默认值:', e)
