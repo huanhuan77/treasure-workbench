@@ -28,7 +28,6 @@ const sideTabs = [
   { to: '/sensitive', label: '违禁词', icon: '🚫' },
   // 与 PC 侧边栏同名：这页里有同步/恢复/诊断，叫「备份与同步」更贴合
   { to: '/backup', label: '备份与同步', icon: '💾' },
-  { to: '/settings', label: '设置', icon: '⚙️' },
 ]
 
 // 桌面端断点判断已抽到 utils/useIsDesktop（总览页的提醒表格也要用同一份判断）

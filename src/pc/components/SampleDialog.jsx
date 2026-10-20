@@ -62,6 +62,7 @@ export function SampleDialog({ sample, onClose, onSaved }) {
     deadline: sample?.deadline || (sample ? '' : addDays(todayStr(), 15)),
     remark: sample?.remark || '',
     commission: sample?.commission || 5,
+    reminderDays: sample?.reminderDays ?? '',
     productId: sample?.productId || '',
     category: sample?.category || '',
     archived: sample?.archived || sample?.status === 'abandoned' || false,
@@ -97,6 +98,8 @@ export function SampleDialog({ sample, onClose, onSaved }) {
     // 口径来自手机版 NewSamplePage（SampleForm 那条老路径不校验，但那条路已经不走新增了）。
     if (isNew && form.accounts.length === 0) { show('请选择归属账号', 'error'); return }
     const f = { ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] }
+    const rd = Number(f.reminderDays)
+    f.reminderDays = f.reminderDays === '' || !Number.isFinite(rd) || rd < 1 ? null : Math.round(rd)
     const newId = isNew ? addSample(f) : null
     if (isNew) show('样品已添加', 'success')
     else { updateSample(sample.id, f); show('已保存', 'success') }
@@ -193,6 +196,17 @@ export function SampleDialog({ sample, onClose, onSaved }) {
                 const v = e.target.value === '' ? 5 : parseInt(e.target.value, 10)
                 setForm((f) => ({ ...f, commission: isNaN(v) ? 5 : v }))
               }}
+            />
+
+            <div className="pcv-field-label" style={{ marginTop: 18 }}>多少天没发才提醒（留空用默认7天）</div>
+            <input
+              className="pcv-input"
+              type="number"
+              min={1}
+              style={{ width: 180 }}
+              placeholder="如 14"
+              value={form.reminderDays}
+              onChange={(e) => setForm((f) => ({ ...f, reminderDays: e.target.value }))}
             />
 
             <div className="pcv-field-label" style={{ marginTop: 18 }}>状态</div>
