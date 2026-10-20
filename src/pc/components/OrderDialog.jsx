@@ -86,20 +86,13 @@ export function OrderDialog({ prefill, onClose }) {
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
-  // 面板里点一行 = 勾/取消勾（多选）；按「确定」后一次性落进条目列表
-  const togglePick = (sid) => setPicked((p) => (p.includes(sid) ? p.filter((x) => x !== sid) : [...p, sid]))
-
-  const applyPicks = () => {
-    const ids = picked.filter(Boolean)
-    if (ids.length > 0) {
-      setEntries((p) => {
-        const next = [...p]
-        // 第一个填进当前行，其余每个再起一行（qty 由 save 时统一按 1 记）
-        next[pickIdx] = { ...(next[pickIdx] || {}), sampleId: ids[0] }
-        for (const id of ids.slice(1)) next.push({ sampleId: id })
-        return next
-      })
-    }
+  // 选样品：**点一行就是确定**（与「记录发布」一致，用户要求不用再点确定）
+  const pickSample = (sid) => {
+    setEntries((p) => {
+      const next = [...p]
+      next[pickIdx] = { ...(next[pickIdx] || {}), sampleId: sid }
+      return next
+    })
     setPicked([])
     setPickIdx(-1)
     setQuery('')
@@ -217,7 +210,8 @@ export function OrderDialog({ prefill, onClose }) {
                           <button
                             key={s.id}
                             className={`pcv-drop-row${on ? ' on' : ''}`}
-                            onClick={() => togglePick(s.id)}
+                            title="点一下即选中这条样品"
+                            onClick={() => pickSample(s.id)}
                           >
                             <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
                             {on && <span className="pcv-drop-check">✓</span>}
@@ -225,17 +219,14 @@ export function OrderDialog({ prefill, onClose }) {
                         )
                       })}
                     </div>
-                    {/* 多选确认条：勾完一次性落地（第一个填当前行，其余各起一行） */}
+                    {/* 底部只留「取消」：点样品行即确定 */}
                     <div className="pcv-drop-f">
-                      <span>已选 <b>{picked.length}</b> 个，可多选</span>
+                      <span style={{ fontSize: 12, color: '#9aa0a9' }}>点一条样品即选中</span>
                       <div className="pcv-spacer" />
                       <button
                         className="pcv-btn pcv-btn-ghost"
                         onClick={() => { setPicked([]); setPickIdx(-1); setQuery(''); setCatFilter('') }}
                       >取消</button>
-                      <button className="pcv-btn" disabled={picked.length === 0} onClick={applyPicks}>
-                        确定{picked.length > 1 ? `（${picked.length}）` : ''}
-                      </button>
                     </div>
                   </div>
                 )}

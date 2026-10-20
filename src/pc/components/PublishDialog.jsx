@@ -86,24 +86,20 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
-  // 多选：面板里点一行 = 勾/取消勾，按「确定」后一次性落地
-  // （第一个填当前行，其余每个再起一行，数量默认 1）
-  const togglePick = (sid) => setPicked((p) => (p.includes(sid) ? p.filter((x) => x !== sid) : [...p, sid]))
-  const applyPicks = () => {
-    const ids = picked.filter(Boolean)
-    if (ids.length > 0) {
-      setEntries((p) => {
-        const next = [...p]
-        next[pickIdx] = { ...(next[pickIdx] || { qty: '1' }), sampleId: ids[0] }
-        for (const id of ids.slice(1)) next.push({ sampleId: id, qty: '1' })
-        return next
-      })
-    }
+  // 选样品：**点一行就是确定**（用户要求「不用点确定了，选择就是确定」）——
+  // 点中即填进当前行并收起面板；不再需要「确定」按钮，也不用先勾选。
+  const pickSample = (sid) => {
+    setEntries((p) => {
+      const next = [...p]
+      next[pickIdx] = { ...(next[pickIdx] || { qty: '1' }), sampleId: sid }
+      return next
+    })
     setPicked([])
     setPickIdx(-1)
     setQuery('')
     setCatFilter('')
   }
+
   const setQty = (idx, v) => setEntries((p) => p.map((e, k) => (k === idx ? { ...e, qty: v } : e)))
   // 加减必须用函数式更新：否则连点两下时，第二次仍拿渲染闭包里的旧 qty 计算，只加得动 1
   const bumpQty = (idx, delta) => setEntries((p) => p.map((e, k) => (
@@ -240,7 +236,8 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
                           <button
                             key={s.id}
                             className={`pcv-drop-row${on ? ' on' : ''}`}
-                            onClick={() => togglePick(s.id)}
+                            title="点一下即选中这条样品"
+                            onClick={() => pickSample(s.id)}
                           >
                             <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
                             {on && <span className="pcv-drop-check">✓</span>}
@@ -248,17 +245,14 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
                         )
                       })}
                     </div>
-                    {/* 多选确认条：勾完一次性落地（第一个填当前行，其余各起一行） */}
+                    {/* 底部只留「取消」：点样品行即确定（用户要求），不需要再点确定 */}
                     <div className="pcv-drop-f">
-                      <span>已选 <b>{picked.length}</b> 个，可多选</span>
+                      <span style={{ fontSize: 12, color: '#9aa0a9' }}>点一条样品即选中</span>
                       <div className="pcv-spacer" />
                       <button
                         className="pcv-btn pcv-btn-ghost"
                         onClick={() => { setPicked([]); setPickIdx(-1); setQuery(''); setCatFilter('') }}
                       >取消</button>
-                      <button className="pcv-btn" disabled={picked.length === 0} onClick={applyPicks}>
-                        确定{picked.length > 1 ? `（${picked.length}）` : ''}
-                      </button>
                     </div>
                   </div>
                 )}
