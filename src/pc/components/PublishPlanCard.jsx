@@ -50,7 +50,7 @@ export function PublishPlanCard() {
       const i = ACCOUNTS.indexOf(acc)
       return i === -1 ? 999 : i
     }
-    return [...list].sort((a, b) => {
+    return [...list].filter((p) => !p.done).sort((a, b) => {
       // 日期优先：同一天的排在一起（升序）；同一天内按账号归组
       const ad = a.planDate || ''
       const bd = b.planDate || ''
@@ -312,6 +312,14 @@ export function PublishPlanCard() {
                     ...(flashId === p.id ? { background: '#fff7e6', transition: 'background .3s ease' } : null),
                   }}
                 >
+                  <button
+                    title="标记为已发，完成后自动隐藏"
+                    onClick={() => { updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
+                    style={{
+                      width: 16, height: 16, borderRadius: '50%', flexShrink: 0, padding: 0,
+                      border: '1.5px solid #d4a3c0', background: '#fff', cursor: 'pointer',
+                    }}
+                  />
                   {/* 单行显示（用户要求）：产品名可截断，其余信息压到同一行 */}
                   <span
                     title={p.name}
