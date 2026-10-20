@@ -1239,7 +1239,7 @@ export function DashboardPage() {
           background: 'rgba(255, 245, 249, 0.62)',
           backdropFilter: 'blur(12px) saturate(150%)',
           WebkitBackdropFilter: 'blur(12px) saturate(150%)',
-          padding: '7px 16px 8px',
+          padding: '7px 8px 8px',
           boxShadow: '0 1px 8px rgba(120,90,100,0.05)',
         }}>
           {/* 内层不再画白色胶囊底（原来是 rgba(255,255,255,0.6) + 白色描边），
@@ -1249,7 +1249,7 @@ export function DashboardPage() {
               同时 padding 0 6px 让最外侧标签与吸顶条左右边留出内缩量。 */}
           <div style={{
             display: 'flex', flex: 1, minWidth: 0, height: '34px',
-            padding: '0 6px',
+            padding: '0 2px',
           }}>
           {REMIND_TABS.map((t) => {
             const active = remindTab === t.id
@@ -1259,7 +1259,7 @@ export function DashboardPage() {
                 onClick={() => pickTab(t.id)}
                 style={{
                   flex: '1 1 0', minWidth: 0, position: 'relative',
-                  padding: '0 4px', border: 'none', background: 'transparent',
+                  padding: '0 2px', border: 'none', background: 'transparent',
                   cursor: 'pointer', display: 'flex',
                   alignItems: 'center', justifyContent: 'center',
                 }}
@@ -1270,7 +1270,7 @@ export function DashboardPage() {
                     baseline 对齐在这种「两块尺寸差很多」的组合下必然错位，
                     改成 flex + alignItems:center 让两者按几何中线对齐，才真正「数字相对文字居中」。 */}
                 <div style={{
-                  fontSize: '12.5px', fontWeight: 700,
+                  fontSize: '12px', fontWeight: 700,
                   color: active ? t.accent : 'var(--text-sub)',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   display: 'flex', alignItems: 'center',
@@ -1310,7 +1310,7 @@ export function DashboardPage() {
                     fontSize: '10.5px', fontWeight: 800,
                     fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
-                    borderRadius: '999px', padding: '1px 6px 0', marginLeft: '4px',
+                    borderRadius: '999px', padding: '1px 4px 0', marginLeft: '3px',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     height: '15px', boxSizing: 'border-box',
                   }}>{t.count}</span>
