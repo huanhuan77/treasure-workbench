@@ -193,9 +193,6 @@ export function EditSamplePage() {
             </Field>
           </div>
         </div>
-        <Field label="佣金 %">
-          <input type="number" style={inputStyle} value={commission} onChange={(e) => setCommission(e.target.value)} />
-        </Field>
         <div style={{ marginTop: 4, padding: '10px 12px', background: '#faf5f8', borderRadius: 10 }}>
           <div style={{ fontSize: 12, color: '#8a6a7a', marginBottom: 8 }}>几天没发提醒（按账号，留空=7天）</div>
           {accounts.map((a) => (
@@ -203,7 +200,7 @@ export function EditSamplePage() {
               <span style={{ flex: 1, fontSize: 13, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a}</span>
               <input
                 type="number" min={1} placeholder="天数"
-                style={{ width: 80, padding: '8px 10px', borderRadius: 8, border: '1px solid #e2d5dd', fontSize: 13 }}
+                style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #e2d5dd', fontSize: 14 }}
                 value={accountReminderDays[a] ?? ''}
                 onChange={(e) => setARD((m) => ({ ...m, [a]: e.target.value }))}
               />
