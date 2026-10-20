@@ -159,9 +159,11 @@ export function PcTodos() {
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>{typeof t.title === 'string' || typeof t.title === 'number' ? t.title : ''}</span>
                 {!t.done && <DueTag due={t.due} />}
-                <div style={{ flex: 1 }} />
+                {/* 「编辑 / 删除」紧跟日期靠左（用户反馈：原来被 spacer 顶到整行最右端，
+                    一屏宽下要横跨半屏去点）。剩余空白留在按钮后面 */}
                 <button className="pcv-btn-text" title="编辑内容与截止日期" onClick={() => openEdit(t)}>编辑</button>
                 <button className="pcv-x" title="删除" onClick={() => setDelId(t.id)}>×</button>
+                <div style={{ flex: 1 }} />
               </div>
             ))}
           </div>
