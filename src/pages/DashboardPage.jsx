@@ -696,8 +696,29 @@ export function DashboardPage() {
               <button onClick={() => setPlanEdit(null)} style={{ marginLeft: 'auto', border: 'none', background: 'transparent', fontSize: '18px', color: '#9aa0a9', cursor: 'pointer' }}>×</button>
             </div>
 
-            <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布产品 *</div>
-            {/* 点开「产品选择面板」：可搜索、可按账号筛选、也可直接输入新名字。
+            <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布账号</div>
+            {/* 先选账号再选产品（用户要求）：切换账号时清空已选产品，产品面板按账号筛选 */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {ACCOUNTS.map((a) => {
+                const on = planForm.account === a
+                const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
+                return (
+                  <button
+                    key={a}
+                    onClick={() => setPlanForm((f) => ({ ...f, account: a, name: '' }))}
+                    style={{
+                      padding: '5px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                      border: on ? 'none' : `1px solid ${col}`,
+                      background: on ? col : '#fff',
+                      color: on ? '#fff' : col,
+                    }}
+                  >{a}</button>
+                )
+              })}
+            </div>
+
+            <div style={{ fontSize: '12px', color: '#8a8f98', margin: '12px 0 4px' }}>发布产品 *</div>
+            {/* 点开「产品选择面板」：可搜索、按上面选中的账号筛选。
                 原来用原生 datalist，手机端键盘一弹就没了，等于没有下拉。 */}
             <button
               onClick={openPlanPicker}
@@ -716,26 +737,6 @@ export function DashboardPage() {
                 <path d="M6 9l6 6 6-6" />
               </svg>
             </button>
-
-            <div style={{ fontSize: '12px', color: '#8a8f98', margin: '12px 0 4px' }}>发布账号</div>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {ACCOUNTS.map((a) => {
-                const on = planForm.account === a
-                const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
-                return (
-                  <button
-                    key={a}
-                    onClick={() => setPlanForm((f) => ({ ...f, account: a }))}
-                    style={{
-                      padding: '5px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                      border: on ? 'none' : `1px solid ${col}`,
-                      background: on ? col : '#fff',
-                      color: on ? '#fff' : col,
-                    }}
-                  >{a}</button>
-                )
-              })}
-            </div>
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
               <div style={{ width: '96px' }}>
@@ -807,15 +808,15 @@ export function DashboardPage() {
               }}
             />
 
-            {/* 账号筛选：只看这个账号做过的品 */}
+            {/* 账号筛选：只看这个账号做过的品（账号在弹层里已先选，这里切换会一并同步回弹层） */}
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '10px' }}>
-              {['', ...ACCOUNTS].map((a) => {
+              {ACCOUNTS.map((a) => {
                 const on = planAcc === a
-                const col = a ? ((ACCOUNT_COLOR[a] || {}).c || '#b8517f') : '#b8517f'
+                const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
                 return (
                   <button
-                    key={a || 'all'}
-                    onClick={() => setPlanAcc(a)}
+                    key={a}
+                    onClick={() => { setPlanAcc(a); setPlanForm((f) => ({ ...f, account: a, name: '' })) }}
                     style={{
                       padding: '4px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                       border: on ? 'none' : `1px solid ${col}`,

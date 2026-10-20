@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
 import { SearchSelect } from './SearchSelect'
 
 // 总览「发布计划」卡片（用户要求）：
@@ -20,7 +20,7 @@ const tomorrowStr = () => fmtDate(new Date(Date.now() + 864e5))
 const emptyForm = () => ({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: tomorrowStr(), note: '' })
 
 export function PublishPlanCard() {
-  const { products, samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan } = useStore()
+  const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan } = useStore()
   const { show } = useToast()
   const [editing, setEditing] = useState(null)   // null=关闭 / 'new' / 条目对象
   const [form, setForm] = useState(emptyForm())
@@ -50,21 +50,18 @@ export function PublishPlanCard() {
   const today = todayStr()
   const upcoming = sorted.filter((p) => !p.planDate || p.planDate >= today).length
 
-  // 产品名候选 = 产品库 ∪ 样品名（用户反馈「搜出来的产品不全」：
-  // 很多人是先建样品、产品库并没同步建，只取 products 会漏掉一大半）
+  // 产品名候选 = 当前账号名下做过的样品名（含多账号归属的样品）。
+  // 用户要求「先选账号再选产品，产品按账号筛选」：只列该账号的品，避免串号。
   const productNames = useMemo(() => {
     const set = new Set()
-    for (const p of products || []) {
-      const n = String((p && p.name) || '').trim()
-      if (n) set.add(n)
-    }
     for (const s of samples || []) {
+      if (!getAccounts(s).includes(form.account)) continue
       const n = String((s && s.name) || '').trim()
       if (n) set.add(n)
     }
     // 按中文排序，搜同一前缀时相邻显示
     return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
-  }, [products, samples])
+  }, [samples, form.account])
 
   const openNew = () => { setForm(emptyForm()); setEditing('new') }
   const openEdit = (p) => {
@@ -193,7 +190,19 @@ export function PublishPlanCard() {
               <button className="pcv-dialog-x" title="关闭" onClick={() => setEditing(null)}>×</button>
             </div>
             <div className="pcv-dialog-b">
-              <div className="pcv-field-label">发布产品 <span style={{ color: '#b96a66' }}>*</span></div>
+              {/* 先选账号、再选产品（用户要求）：产品候选按账号过滤，
+                  切账号时清空已选产品，避免出现「A 账号 + B 账号的品」 */}
+              <div className="pcv-field-label">发布账号</div>
+              <select
+                className="pcv-input"
+                style={{ width: '100%' }}
+                value={form.account}
+                onChange={(e) => setForm((f) => ({ ...f, account: e.target.value, name: '' }))}
+              >
+                {ACCOUNTS.map((a) => <option key={a} value={a}>{a}</option>)}
+              </select>
+
+              <div className="pcv-field-label" style={{ marginTop: 14 }}>发布产品 <span style={{ color: '#b96a66' }}>*</span></div>
               {/* 站内统一的可搜索下拉：**只能选已有的产品**（用户要求去掉「使用自定义」入口，
                   避免手打的名字和产品库/样品名对不上，后面统计不到一块儿） */}
               <SearchSelect
@@ -201,25 +210,17 @@ export function PublishPlanCard() {
                 options={productNames}
                 onChange={(v) => setForm((f) => ({ ...f, name: v }))}
                 allLabel=""
-                placeholder="搜索产品名…"
+                placeholder="搜索该账号的样品…"
                 width="100%"
                 inline
                 title="发布产品"
               />
+              {productNames.length === 0 && (
+                <div style={{ fontSize: 12, color: '#b96a66', marginTop: 6 }}>该账号还没有样品，先去「样品」登记</div>
+              )}
 
-              {/* 加宽后把「账号 / 数量 / 时间」摆成一行，视线不用来回跳 */}
+              {/* 加宽后把「数量 / 时间」摆成一行，视线不用来回跳 */}
               <div style={{ display: 'flex', gap: 12, marginTop: 14 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="pcv-field-label">发布账号</div>
-                  <select
-                    className="pcv-input"
-                    style={{ width: '100%' }}
-                    value={form.account}
-                    onChange={(e) => setForm((f) => ({ ...f, account: e.target.value }))}
-                  >
-                    {ACCOUNTS.map((a) => <option key={a} value={a}>{a}</option>)}
-                  </select>
-                </div>
                 <div style={{ width: 110 }}>
                   <div className="pcv-field-label">发布数量</div>
                   <input
