@@ -203,6 +203,7 @@ export function DashboardPage() {
   const [adSearch, setAdSearch] = useState('')
   // 列表默认只显示前 3 条，点「展开全部」才显示其余
   const [planExpanded, setPlanExpanded] = useState(false)
+  const [planAcct, setPlanAcct] = useState('all')
   const [adExpanded, setAdExpanded] = useState(false)
   const PREVIEW_COUNT = 3
   // 「已投流」的从列表隐藏（与 PC 一致）：数据保留，不提供查看入口
@@ -756,38 +757,63 @@ export function DashboardPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
-              {(planExpanded ? planSorted : planSorted.slice(0, PREVIEW_COUNT)).map((p) => {
-                const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
-                const overdue = p.planDate && p.planDate < todayPlan
-                const isToday = p.planDate === todayPlan
-                return (
-                  <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
-                    <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
-                        title="点一下标记为已发，自动隐藏"
-                        style={{ width: 18, height: 18, borderRadius: '50%', border: '1.5px solid #d4a3c0', background: '#fff', cursor: 'pointer', flexShrink: 0, padding: 0 }}
-                      />
-                      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '13px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{p.name}</span>
-                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, flexShrink: 0 }}>{p.account || '未选账号'}</span>
-                      </div>
-                      <span style={{ fontSize: '10px', color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0 }}>
-                        ×{p.qty || 1}
-                      </span>
-                      <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0 }}>
-                        {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
-                      </span>
-                    </div>
-                  </SwipeRow>
-                )
-              })}
-              {planSorted.length > PREVIEW_COUNT && (
-                <button onClick={() => setPlanExpanded((v) => !v)} style={{
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  fontSize: '12px', color: '#db2777', fontWeight: 600, padding: '4px 0 0',
-                }}>{planExpanded ? '收起 ▴' : `展开全部（${planSorted.length}）▾`}</button>
+              {planExpanded && (
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
+                  {['all', ...ACCOUNTS].map((a) => {
+                    const on = planAcct === a
+                    const c = a === 'all' ? null : (ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' })
+                    return (
+                      <button key={a} onClick={() => setPlanAcct(a)} style={{
+                        fontSize: '11px', padding: '3px 10px', borderRadius: '999px', cursor: 'pointer',
+                        border: on ? `1.5px solid ${a==='all' ? '#ec4899' : c.c}` : '1.5px solid transparent',
+                        background: on ? (a==='all' ? '#fdf2f8' : c.bg) : '#f4f4f8',
+                        color: on ? (a==='all' ? '#ec4899' : c.c) : '#94a3b8',
+                        fontWeight: on ? 600 : 400,
+                      }}>{a === 'all' ? '全部账号' : a}</button>
+                    )
+                  })}
+                </div>
               )}
+              {(() => {
+                const planFiltered = planSorted.filter((p) => planAcct === 'all' || p.account === planAcct)
+                const visible = planExpanded ? planFiltered : planFiltered.slice(0, PREVIEW_COUNT)
+                return (
+                  <>
+                    {visible.map((p) => {
+                      const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+                      const overdue = p.planDate && p.planDate < todayPlan
+                      const isToday = p.planDate === todayPlan
+                      return (
+                        <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
+                              title="点一下标记为已发，自动隐藏"
+                              style={{ width: 18, height: 18, borderRadius: '50%', border: '1.5px solid #d4a3c0', background: '#fff', cursor: 'pointer', flexShrink: 0, padding: 0 }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '13px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{p.name}</span>
+                              <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, flexShrink: 0 }}>{p.account || '未选账号'}</span>
+                            </div>
+                            <span style={{ fontSize: '10px', color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0 }}>
+                              ×{p.qty || 1}
+                            </span>
+                            <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0 }}>
+                              {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
+                            </span>
+                          </div>
+                        </SwipeRow>
+                      )
+                    })}
+                    {planFiltered.length > PREVIEW_COUNT && (
+                      <button onClick={() => setPlanExpanded((v) => !v)} style={{
+                        background: 'transparent', border: 'none', cursor: 'pointer',
+                        fontSize: '12px', color: '#db2777', fontWeight: 600, padding: '4px 0 0',
+                      }}>{planExpanded ? '收起 ▴' : `展开全部（${planFiltered.length}）▾`}</button>
+                    )}
+                  </>
+                )
+              })()}
             </div>
           )}
         </div>
