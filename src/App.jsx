@@ -22,6 +22,7 @@ import { EditCopyPage } from './pages/EditCopyPage'
 import { ReadingPage } from './pages/ReadingPage'
 import { NotePage } from './pages/NotePage'
 import { BrandContactsPage } from './pages/BrandContactsPage'
+import SettingsPage from './pages/SettingsPage'
 import { InvestmentPage } from './pages/InvestmentPage'
 import { NewTransactionPage } from './pages/NewTransactionPage'
 import { EditTransactionPage } from './pages/EditTransactionPage'
@@ -98,6 +99,7 @@ const routes = [
   { path: '/reading', element: <ReadingPage /> },
   { path: '/reading/:id/notes', element: <NotePage /> },
   { path: '/brands', element: <BrandContactsPage /> },
+  { path: '/settings', element: <SettingsPage /> },
   { path: '/daily', element: <DailyPlanPage /> },
   { path: '/todos', element: <TodoPage /> },
   { path: '/publish-records', element: <PublishRecordsPage /> },

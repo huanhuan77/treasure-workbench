@@ -2879,6 +2879,8 @@ const defaultData = {
   adQueue: [],  // 待投流：{ id, sampleId, name, account, publishDate, status(未投流/已投流/暂停), note, createdAt, updatedAt }
   // 发布计划：{ id, name(发布产品), account(发布账号), qty(发布数量), planDate(发布时间 YYYY-MM-DD), note, createdAt, updatedAt }
   publishPlans: [],
+  // 个人设置：发布提醒多少天没发才提醒（默认 7 天）
+  settings: { publishReminderDays: 7 },
 }
 
 // 清理文案末尾 👍/ 标注（用户用于标记「用 / 出单」），转 used / hasOrder
@@ -4610,6 +4612,10 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, publishPlans: (d.publishPlans || []).filter((p) => p.id !== id) }))
   }, [])
 
+  const updateSettings = useCallback((patch) => {
+    setData((d) => ({ ...d, settings: { ...(d.settings || {}), ...patch } }))
+  }, [])
+
   // 同步引擎合并结果应用到本机（主数据模块）
   const applySyncResult = useCallback((mergedMain) => {
     if (!mergedMain) return
@@ -4650,7 +4656,7 @@ export function StoreProvider({ children }) {
     addTodo, updateTodo, deleteTodo,
     addAdQueue, updateAdQueue, deleteAdQueue,
     addPublishPlan, updatePublishPlan, deletePublishPlan,
-    getSavings, updateSavings, setSavings,
+    getSavings, updateSavings, setSavings, updateSettings,
     applySyncResult,
   }
 

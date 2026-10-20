@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, compareUrgent } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, compareUrgent, setPublishDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
@@ -181,8 +181,11 @@ export function DashboardPage() {
     samples, transactions, orders, publishRecords, todos, applySyncResult, updateSample,
     adQueue, addAdQueue, updateAdQueue, deleteAdQueue,
     publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan,
+    settings,
   } = useStore()
   const { show } = useToast()
+  // 把用户设置的「多少天没发才提醒」同步到提醒计算口径
+  useEffect(() => { setPublishDays(settings?.publishReminderDays || 7) }, [settings?.publishReminderDays])
   // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
   const isDesktop = useIsDesktop()
 

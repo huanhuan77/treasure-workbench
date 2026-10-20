@@ -3,8 +3,14 @@ import { todayStr, daysDiff } from './helpers'
 import { getAccounts } from './accounts'
 import { getAggregateCounts } from './sampleStatus'
 
-// 提醒阈值：超过该天数未发视频即提醒
+// 提醒阈值：超过该天数未发视频即提醒（用户可在「设置」里改）
 export const N_PUBLISH_DAYS = 7
+let PUBLISH_DAYS = N_PUBLISH_DAYS
+export function setPublishDays(n) {
+  const v = Number(n)
+  if (Number.isFinite(v) && v >= 1 && v <= 365) PUBLISH_DAYS = Math.round(v)
+}
+export function getPublishDays() { return PUBLISH_DAYS }
 
 // 已发布状态（用于「出单」只能关联已发布样品）
 export const PUBLISHED_STATES = ['published']
@@ -91,7 +97,7 @@ export function compareUrgent(a, b) {
 export function pendingAccounts(sample) {
   return getAccounts(sample).filter((a) => {
     const d = daysSincePublishByAccount(sample, a)
-    return d === Infinity || d > N_PUBLISH_DAYS
+    return d === Infinity || d > PUBLISH_DAYS
   })
 }
 
@@ -160,7 +166,7 @@ export function needPublishReminder(sample) {
       const anyNeed = accounts.some((a) => {
         if (execByAccount[a] === 'abandoned') return false
         const d = daysSincePublishByAccount(sample, a)
-        return d === Infinity || d > N_PUBLISH_DAYS
+        return d === Infinity || d > PUBLISH_DAYS
       })
       if (anyNeed) return true
     }
