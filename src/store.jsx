@@ -2876,6 +2876,7 @@ const defaultData = {
   sensitiveWords: DEFAULT_SENSITIVE_WORDS,
   dramas: [],  // 追剧：{ id, name, year, cast, status(在追/已看完/弃剧), remark, createdAt }
   todos: [],  // 待办事项：{ id, title, done, due('YYYY-MM-DD' 可为空=无截止日), createdAt, updatedAt }
+  adQueue: [],  // 待投流：{ id, sampleId, name, account, publishDate, status(未投流/已投流/暂停), note, createdAt, updatedAt }
 }
 
 // 清理文案末尾 👍/ 标注（用户用于标记「用 / 出单」），转 used / hasOrder
@@ -3041,6 +3042,7 @@ function normalizeDates(d) {
     publishRecords: (d.publishRecords || []).map((r) => (r ? { ...r, publishDate: normDate(r.publishDate) } : r)),
     transactions: (d.transactions || []).map((t) => (t ? { ...t, date: normDate(t.date) } : t)),
     todos: (d.todos || []).map((t) => (t ? { ...t, due: normDate(t.due) } : t)),
+    adQueue: (d.adQueue || []).map((a) => (a ? { ...a, publishDate: normDate(a.publishDate) } : a)),
   }
 }
 
@@ -4537,6 +4539,38 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, todos: (d.todos || []).filter((t) => t.id !== id) }))
   }, [])
 
+  // ── 待投流 ──────────────────────────────────────────────
+  const addAdQueue = useCallback((entry) => {
+    const now = Date.now()
+    const newEntry = {
+      id: uid(),
+      sampleId: entry.sampleId || '',
+      name: String(entry.name || '').trim(),
+      account: entry.account || '',
+      publishDate: entry.publishDate || '',
+      status: entry.status || '未投流',
+      note: entry.note || '',
+      createdAt: now,
+      updatedAt: now,
+    }
+    setData((d) => ({ ...d, adQueue: [newEntry, ...(d.adQueue || [])] }))
+    return newEntry.id
+  }, [])
+
+  const updateAdQueue = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      adQueue: (d.adQueue || []).map((a) =>
+        a.id === id ? { ...a, ...patch, updatedAt: Date.now() } : a
+      ),
+    }))
+  }, [])
+
+  const deleteAdQueue = useCallback((id) => {
+    recordDelete('blogger_workbench_data_v1', id)
+    setData((d) => ({ ...d, adQueue: (d.adQueue || []).filter((a) => a.id !== id) }))
+  }, [])
+
   // 同步引擎合并结果应用到本机（主数据模块）
   const applySyncResult = useCallback((mergedMain) => {
     if (!mergedMain) return
@@ -4551,6 +4585,7 @@ export function StoreProvider({ children }) {
         publishRecords: mergedMain.publishRecords ?? d.publishRecords,
         dramas: mergedMain.dramas ?? d.dramas,
         todos: mergedMain.todos ?? d.todos,
+        adQueue: mergedMain.adQueue ?? d.adQueue,
       }
       // 同步是「按 id 取并集」，云端残留的重复条目会把本地已删掉的再拉回来。
       // 这里在写入本地前再兜一次底，保证合并结果里同一产品下不出现重复内容。
@@ -4573,6 +4608,7 @@ export function StoreProvider({ children }) {
     addSensitiveWord, deleteSensitiveWord,
     addDrama, updateDrama, deleteDrama,
     addTodo, updateTodo, deleteTodo,
+    addAdQueue, updateAdQueue, deleteAdQueue,
     getSavings, updateSavings, setSavings,
     applySyncResult,
   }

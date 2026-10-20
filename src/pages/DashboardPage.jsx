@@ -6,7 +6,7 @@ import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, OVERDUE_STATES, compareUrgent } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
-import { SAMPLE_STATUS, getAutoAbandonedAccounts } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 import { SampleForm } from '../components/SampleForm'
 import { useIsDesktop } from '../utils/useIsDesktop'
@@ -134,7 +134,7 @@ function ReminderTable({ items, accountsOf, midHeader, renderMid, renderActions,
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders, publishRecords, todos, updateSample, applySyncResult } = useStore()
+  const { samples, transactions, orders, publishRecords, todos, adQueue, addAdQueue, updateAdQueue, deleteAdQueue, updateSample, applySyncResult } = useStore()
   const { show } = useToast()
   // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
   const isDesktop = useIsDesktop()
@@ -151,6 +151,9 @@ export function DashboardPage() {
   const [checking, setChecking] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [editingSample, setEditingSample] = useState(null)
+  // 待投流：选择已发布样品→账号 的弹窗开关
+  const [adPickerOpen, setAdPickerOpen] = useState(false)
+  const [adSearch, setAdSearch] = useState('')
   // 提醒中心 Tab：reminders（发布提醒）| low（发布不足5条）| expiring（即将到期）
   // 用 lazy init 从 sessionStorage 恢复，刷新 / keep-alive 回场时保留上次选中
   const [remindTab, setRemindTab] = useState(() => {
@@ -207,6 +210,53 @@ export function DashboardPage() {
     })
   }, [todos])
   const todoUndone = (todos || []).filter((t) => !t.done).length
+
+  // ── 待投流：从「已发布」样品里挑（样品 × 账号），带出该账号最新发布时间
+  const AD_STATUSES = ['未投流', '已投流', '暂停']
+  const AD_STATUS_COLOR = {
+    '未投流': { c: '#b45309', bg: '#fef3c7' },
+    '已投流': { c: '#059669', bg: '#d1fae5' },
+    '暂停': { c: '#6b7280', bg: '#f3f4f6' },
+  }
+  const publishedOptions = useMemo(() => {
+    const out = []
+    for (const s of (samples || [])) {
+      if (!s || isArchivedSample(s) || !hasPublished(s)) continue
+      for (const a of getAccounts(s)) {
+        const c = getCounts(s, a)
+        if (!(c.publishCount > 0)) continue
+        out.push({
+          sampleId: s.id,
+          name: s.name,
+          account: a,
+          publishDate: c.lastPublishAt || '',
+          publishCount: c.publishCount,
+        })
+      }
+    }
+    out.sort((x, y) => (y.publishDate || '').localeCompare(x.publishDate || ''))
+    return out
+  }, [samples])
+
+  const filteredAdOptions = useMemo(() => {
+    const kw = adSearch.trim()
+    if (!kw) return publishedOptions
+    return publishedOptions.filter((o) =>
+      o.name.includes(kw) || o.account.includes(kw))
+  }, [publishedOptions, adSearch])
+
+  const handleAddAd = (opt) => {
+    addAdQueue({
+      sampleId: opt.sampleId,
+      name: opt.name,
+      account: opt.account,
+      publishDate: opt.publishDate,
+      status: '未投流',
+    })
+    setAdPickerOpen(false)
+    setAdSearch('')
+    show('已加入待投流', 'success')
+  }
 
   // ── 统计计算
   const stat = useMemo(() => {
@@ -475,6 +525,110 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* 待投流：从已发布样品挑选，带出账号与发布时间，状态可改 */}
+      <div style={{ padding: '12px 16px 4px' }}>
+        <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>待投流</span>
+              {adQueue?.length > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#b45309', padding: '1px 7px', borderRadius: '8px', background: '#fef3c7' }}>
+                  {(adQueue || []).filter((a) => a.status === '未投流').length} 待投
+                </span>
+              )}
+            </div>
+            <button onClick={() => { setAdSearch(''); setAdPickerOpen(true) }} style={{
+              background: '#ec4899', border: 'none', color: '#fff', fontSize: '12px',
+              fontWeight: 600, padding: '6px 12px', borderRadius: '9px', cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>＋ 添加</button>
+          </div>
+
+          {(adQueue || []).length === 0 ? (
+            <div style={{ padding: '14px 2px 2px', fontSize: '12px', color: '#94a3b8' }}>
+              还没有待投流，点「添加」从已发布视频里挑
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
+              {(adQueue || []).map((a) => {
+                const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
+                const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+                return (
+                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: '#fafafa', borderRadius: '10px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600 }}>{a.account}</span>
+                        {a.publishDate && <span style={{ fontSize: '10px', color: '#94a3b8' }}>发布于 {a.publishDate}</span>}
+                      </div>
+                    </div>
+                    <select
+                      value={a.status}
+                      onChange={(e) => updateAdQueue(a.id, { status: e.target.value })}
+                      style={{
+                        fontSize: '11px', fontWeight: 600, padding: '4px 8px', borderRadius: '8px',
+                        border: `1px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer', flexShrink: 0,
+                      }}
+                    >
+                      {AD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <button onClick={() => { deleteAdQueue(a.id); show('已删除', 'success') }} style={{
+                      background: 'transparent', border: 'none', color: '#cbd5e1', fontSize: '15px', cursor: 'pointer', flexShrink: 0, padding: '2px 4px',
+                    }}>×</button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 待投流选择弹窗：列出已发布样品 × 账号 */}
+      {adPickerOpen && (
+        <div onClick={() => setAdPickerOpen(false)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 900,
+          display: 'flex', alignItems: 'flex-end',
+        }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            width: '100%', maxHeight: '72vh', background: '#fff', borderRadius: '18px 18px 0 0',
+            padding: '16px 16px 24px', display: 'flex', flexDirection: 'column',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <span style={{ fontSize: '15px', fontWeight: 700 }}>选择已发布视频</span>
+              <button onClick={() => setAdPickerOpen(false)} style={{ background: 'transparent', border: 'none', fontSize: '18px', color: '#94a3b8', cursor: 'pointer' }}>×</button>
+            </div>
+            <input
+              value={adSearch}
+              onChange={(e) => setAdSearch(e.target.value)}
+              placeholder="搜索产品名或账号…"
+              style={{ padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px', marginBottom: '10px' }}
+            />
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {filteredAdOptions.length === 0 && (
+                <div style={{ padding: '20px', textAlign: 'center', fontSize: '12px', color: '#94a3b8' }}>没有匹配的已发布视频</div>
+              )}
+              {filteredAdOptions.map((o, i) => {
+                const col = ACCOUNT_COLOR[o.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+                return (
+                  <div key={`${o.sampleId}_${o.account}_${i}`} onClick={() => handleAddAd(o)} style={{
+                    display: 'flex', alignItems: 'center', gap: '8px', padding: '11px 8px',
+                    borderBottom: '1px solid #f1f1f1', cursor: 'pointer',
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600 }}>{o.account}</span>
+                        <span style={{ fontSize: '10px', color: '#94a3b8' }}>{o.publishDate || '未填日期'} · 共{o.publishCount}条</span>
+                      </div>
+                    </div>
+                    <span style={{ color: '#ec4899', fontSize: '18px', flexShrink: 0 }}>＋</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 自动放弃提醒：发布满 10 条仍 0 出单，已自动置为「放弃」 */}
       {autoAbandoned.length > 0 && (
