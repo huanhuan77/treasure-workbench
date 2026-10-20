@@ -193,35 +193,24 @@ export function EditSamplePage() {
             </Field>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <Field label="佣金 %">
-              <input type="number" style={inputStyle} value={commission} onChange={(e) => setCommission(e.target.value)} />
-            </Field>
-          </div>
-          <div style={{ flex: 1 }}>
-            <Field label="几天没发提醒（留空=7天）">
-              <input type="number" min={1} placeholder="如 14" style={inputStyle} value={reminderDays} onChange={(e) => setReminderDays(e.target.value)} />
-            </Field>
-          </div>
+        <Field label="佣金 %">
+          <input type="number" style={inputStyle} value={commission} onChange={(e) => setCommission(e.target.value)} />
+        </Field>
+        <div style={{ marginTop: 4, padding: '10px 12px', background: '#faf5f8', borderRadius: 10 }}>
+          <div style={{ fontSize: 12, color: '#8a6a7a', marginBottom: 8 }}>几天没发提醒（按账号，留空=7天）</div>
+          {accounts.map((a) => (
+            <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+              <span style={{ flex: 1, fontSize: 13, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a}</span>
+              <input
+                type="number" min={1} placeholder="天数"
+                style={{ width: 80, padding: '8px 10px', borderRadius: 8, border: '1px solid #e2d5dd', fontSize: 13 }}
+                value={accountReminderDays[a] ?? ''}
+                onChange={(e) => setARD((m) => ({ ...m, [a]: e.target.value }))}
+              />
+              <span style={{ fontSize: 12, color: '#999' }}>天</span>
+            </div>
+          ))}
         </div>
-        {accounts.length > 1 && (
-          <div style={{ marginTop: 4, padding: '10px 12px', background: '#faf5f8', borderRadius: 10 }}>
-            <div style={{ fontSize: 12, color: '#8a6a7a', marginBottom: 8 }}>按账号分别设提醒天数（留空跟随上面的默认）</div>
-            {accounts.map((a) => (
-              <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <span style={{ flex: 1, fontSize: 13, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a}</span>
-                <input
-                  type="number" min={1} placeholder="天数"
-                  style={{ width: 80, padding: '8px 10px', borderRadius: 8, border: '1px solid #e2d5dd', fontSize: 13 }}
-                  value={accountReminderDays[a] ?? ''}
-                  onChange={(e) => setARD((m) => ({ ...m, [a]: e.target.value }))}
-                />
-                <span style={{ fontSize: 12, color: '#999' }}>天</span>
-              </div>
-            ))}
-          </div>
-        )}
         <Field label="备注">
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={remark} onChange={(e) => setRemark(e.target.value)} />
         </Field>

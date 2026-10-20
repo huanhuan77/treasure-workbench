@@ -202,33 +202,18 @@ export function SampleDialog({ sample, onClose, onSaved }) {
               }}
             />
 
-            <div className="pcv-field-label" style={{ marginTop: 18 }}>多少天没发才提醒（留空用默认7天）</div>
-            <input
-              className="pcv-input"
-              type="number"
-              min={1}
-              style={{ width: 180 }}
-              placeholder="如 14"
-              value={form.reminderDays}
-              onChange={(e) => setForm((f) => ({ ...f, reminderDays: e.target.value }))}
-            />
-
-            {form.accounts.length > 1 && (
-              <>
-                <div className="pcv-field-label" style={{ marginTop: 14 }}>按账号分别设提醒天数（留空跟随默认）</div>
-                {form.accounts.map((a) => (
-                  <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <span style={{ flex: 1, fontSize: 13, color: '#555' }}>{a}</span>
-                    <input
-                      className="pcv-input"
-                      type="number" min={1} style={{ width: 120 }} placeholder="天数"
-                      value={form.accountReminderDays?.[a] ?? ''}
-                      onChange={(e) => setForm((f) => ({ ...f, accountReminderDays: { ...f.accountReminderDays, [a]: e.target.value } }))}
-                    />
-                  </div>
-                ))}
-              </>
-            )}
+            <div className="pcv-field-label" style={{ marginTop: 18 }}>几天没发提醒（按账号，留空=7天）</div>
+            {form.accounts.map((a) => (
+              <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <span style={{ flex: 1, fontSize: 13, color: '#555' }}>{a}</span>
+                <input
+                  className="pcv-input"
+                  type="number" min={1} style={{ width: 120 }} placeholder="天数"
+                  value={form.accountReminderDays?.[a] ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, accountReminderDays: { ...f.accountReminderDays, [a]: e.target.value } }))}
+                />
+              </div>
+            ))}
 
             <div className="pcv-field-label" style={{ marginTop: 18 }}>状态</div>
             <div className="pcv-seg" style={{ display: 'flex', width: '100%' }}>
