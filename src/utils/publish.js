@@ -58,12 +58,26 @@ function isOverdueRow(sample) {
   return !!sample && sample.status !== 'published' && isOverdue(sample)
 }
 
+// 样品下「最久没发」的天数：跨所有账号取最大；任一账号从没发过就是 Infinity
+function worstDays(sample) {
+  const accs = getAccounts(sample)
+  if (!accs.length) return daysSincePublish(sample)
+  let max = -1
+  for (const a of accs) {
+    const d = daysSincePublishByAccount(sample, a)
+    if (d === Infinity) return Infinity
+    if (d > max) max = d
+  }
+  return max < 0 ? daysSincePublish(sample) : max
+}
+
 export function compareUrgent(a, b) {
   const oa = isOverdueRow(a) ? 1 : 0
   const ob = isOverdueRow(b) ? 1 : 0
   if (oa !== ob) return ob - oa
-  const da = daysSincePublish(a)
-  const db = daysSincePublish(b)
+  // 非逾期：任一账号从没发过（Infinity）排在第二梯队；其余按最久没发天数降序
+  const da = worstDays(a)
+  const db = worstDays(b)
   const na = da === Infinity ? Number.MAX_SAFE_INTEGER : da
   const nb = db === Infinity ? Number.MAX_SAFE_INTEGER : db
   return nb - na
