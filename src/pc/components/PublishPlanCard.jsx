@@ -51,13 +51,14 @@ export function PublishPlanCard() {
       return i === -1 ? 999 : i
     }
     return [...list].sort((a, b) => {
-      const d = rank(a.account) - rank(b.account)
-      if (d !== 0) return d
+      // 日期优先：同一天的排在一起（升序）；同一天内按账号归组
       const ad = a.planDate || ''
       const bd = b.planDate || ''
       if (ad && bd && ad !== bd) return ad < bd ? -1 : 1
       if (!ad && bd) return 1
       if (ad && !bd) return -1
+      const d = rank(a.account) - rank(b.account)
+      if (d !== 0) return d
       return (b.createdAt || 0) - (a.createdAt || 0)
     })
   }, [list])

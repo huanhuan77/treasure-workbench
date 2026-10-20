@@ -278,20 +278,20 @@ export function DashboardPage() {
   // 新增时默认「明天」（与 PC 一致，用户要求）
   const tomorrowPlan = planFmt(new Date(Date.now() + 864e5))
   const planSorted = useMemo(() => {
-    // 先按账号归组（按 ACCOUNTS 顺序），同账号内按日期升序，同一天的排在一起；无日期的排最后
+    // 按时间排：同一天的排在一起（日期升序）；同一天内再按账号顺序归组，无日期排最后
     const accIdx = (a) => {
       const i = ACCOUNTS.indexOf(a)
       return i < 0 ? 99 : i
     }
     return [...(publishPlans || [])].sort((a, b) => {
-      const ca = accIdx(a.account)
-      const cb = accIdx(b.account)
-      if (ca !== cb) return ca - cb
       const ad = a.planDate || ''
       const bd = b.planDate || ''
       if (ad && bd && ad !== bd) return ad < bd ? -1 : 1
       if (!ad && bd) return 1
       if (ad && !bd) return -1
+      const ca = accIdx(a.account)
+      const cb = accIdx(b.account)
+      if (ca !== cb) return ca - cb
       return (a.createdAt || 0) - (b.createdAt || 0)
     })
   }, [publishPlans])
