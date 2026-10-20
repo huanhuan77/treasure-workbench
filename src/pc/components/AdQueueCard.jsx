@@ -133,9 +133,13 @@ export function AdQueueCard() {
         </div>
 
         {visible.length === 0 ? (
-          <div className="pcv-empty">
+          // 空态只占一行，与发布计划卡片一致，不把卡片撑高
+          <div
+            className="pcv-empty"
+            style={{ padding: '13px 14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >
             {list.length === 0
-              ? '还没有待投流，点右上角「新增」从已发布视频里挑'
+              ? '还没有待投流，点「新增」从已发布视频里挑'
               : `待投流都已投完（已投流 ${doneCount} 条）`}
           </div>
         ) : (

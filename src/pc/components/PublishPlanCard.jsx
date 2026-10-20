@@ -104,7 +104,11 @@ export function PublishPlanCard() {
         </div>
 
         {list.length === 0 ? (
-          <div className="pcv-empty">还没有发布计划，点「新增」记一条：产品、账号、数量、发布时间</div>
+          // 空态只占一行（用户要求）：文案缩短 + 单行省略，卡片高度不再被撑开
+          <div
+            className="pcv-empty"
+            style={{ padding: '13px 14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >还没有发布计划，点「新增」记一条</div>
         ) : (
           <table className="pcv-table pcv-table--inset">
             <thead>
