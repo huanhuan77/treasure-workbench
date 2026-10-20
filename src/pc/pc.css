@@ -326,6 +326,24 @@
   gap: 16px;
 }
 
+/* 总览三块并排：待办清单 / 发布计划 / 待投流，各占 1/3（用户要求）。
+   窄屏（<1280）退回单列，避免列太窄把文字挤成一团。 */
+.pcv-3col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+/* 三列里卡片要等高好看：让 grid 项自身撑满，内容多的卡不会被拉长邻居 */
+.pcv-3col > .pcv-card {
+  min-width: 0;
+}
+@media (max-width: 1280px) {
+  .pcv-3col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* 待办为空时的一行提示，不要撑成一个大空块 */
 .pcv-inline-empty {
   display: flex;

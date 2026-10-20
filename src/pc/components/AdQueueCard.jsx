@@ -143,60 +143,56 @@ export function AdQueueCard() {
               : `待投流都已投完（已投流 ${doneCount} 条）`}
           </div>
         ) : (
-          <table className="pcv-table pcv-table--inset">
-            <thead>
-              <tr>
-                <th style={{ width: 240 }}>产品</th>
-                <th style={{ width: 170 }}>账号</th>
-                <th style={{ width: 140 }}>发布日期</th>
-                <th style={{ width: 130 }}>状态</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((a) => {
-                const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
-                const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
-                return (
-                  <tr
-                    key={a.id}
-                    data-ad-id={a.id}
-                    style={flashId === a.id ? { background: '#fff7e6', transition: 'background .3s ease' } : undefined}
+          // 与「待办清单 / 发布计划」并排（各 1/3 宽），表格五列放不下 → 紧凑两行式：
+          // 第一行 产品名 + 状态下拉，第二行 账号 · 发布日期 + 删除
+          <div>
+            {visible.map((a) => {
+              const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+              const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
+              return (
+                <div
+                  key={a.id}
+                  data-ad-id={a.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
+                    borderTop: '0.5px solid rgba(15,23,42,0.05)',
+                    ...(flashId === a.id ? { background: '#fff7e6', transition: 'background .3s ease' } : null),
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      title={a.name}
+                      style={{ fontSize: 14, color: '#333a45', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                    >{a.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, fontSize: 12, color: '#94a3b8' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.account}</span>
+                      <span style={{ whiteSpace: 'nowrap' }}>· {a.publishDate || '—'}</span>
+                    </div>
+                  </div>
+                  {/* 行内下拉即改状态：选完立刻写库 */}
+                  <select
+                    className="pcv-input"
+                    value={a.status}
+                    onChange={(e) => updateAdQueue(a.id, { status: e.target.value })}
+                    title="修改状态（改成「已投流」后从列表消失）"
+                    style={{
+                      padding: '3px 6px', fontSize: 12, fontWeight: 600, flexShrink: 0,
+                      border: `0.5px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer',
+                    }}
                   >
-                    <td className="pcv-name" title={a.name}>{a.name}</td>
-                    <td>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
-                        <span style={{ color: '#333a45' }}>{a.account}</span>
-                      </span>
-                    </td>
-                    <td style={{ color: '#475569', fontVariantNumeric: 'tabular-nums' }}>{a.publishDate || '—'}</td>
-                    <td>
-                      {/* 行内下拉即改状态：选完立刻写库，不用另开弹窗 */}
-                      <select
-                        className="pcv-input"
-                        value={a.status}
-                        onChange={(e) => updateAdQueue(a.id, { status: e.target.value })}
-                        style={{
-                          padding: '3px 8px', fontSize: 12, fontWeight: 600,
-                          border: `0.5px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer',
-                        }}
-                      >
-                        {AD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </td>
-                    <td>
-                      <button
-                        className="pcv-btn-text"
-                        style={{ color: '#b96a66' }}
-                        onClick={() => { deleteAdQueue(a.id); show('已删除', 'success') }}
-                      >删除</button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                    {AD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <button
+                    className="pcv-x"
+                    title="删除"
+                    style={{ flexShrink: 0 }}
+                    onClick={() => { deleteAdQueue(a.id); show('已删除', 'success') }}
+                  >×</button>
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
 

@@ -256,7 +256,9 @@ export function PcDashboard() {
         </div>
 
         <div className="pcv-stack">
-          {/* 待办清单：全宽。空的时候只占一行，不留大块空白 */}
+          {/* 待办清单 / 发布计划 / 待投流：三块并排（用户要求），各占 1/3 宽 */}
+          <div className="pcv-3col">
+          {/* 待办清单：空的时候只占一行，不留大块空白 */}
           <div className="pcv-card">
             <div className="pcv-card-h">
               <span>待办清单</span>
@@ -314,6 +316,7 @@ export function PcDashboard() {
 
           {/* 待投流：与手机端同一份数据（store.adQueue），从已发布视频里挑，状态行内可改 */}
           <AdQueueCard />
+          </div>{/* /pcv-3col */}
 
           {/* 提醒中心：Tab 与账号筛选合并到卡头同一行（原来分两行，白占一层高度） */}
           <div className="pcv-card">

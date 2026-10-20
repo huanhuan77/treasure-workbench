@@ -110,53 +110,53 @@ export function PublishPlanCard() {
             style={{ padding: '13px 14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
           >还没有发布计划，点「新增」记一条</div>
         ) : (
-          <table className="pcv-table pcv-table--inset">
-            <thead>
-              <tr>
-                <th style={{ width: 260 }}>发布产品</th>
-                <th style={{ width: 160 }}>发布账号</th>
-                <th style={{ width: 100 }}>发布数量</th>
-                <th style={{ width: 170 }}>发布时间</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((p) => {
-                const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
-                const overdue = p.planDate && p.planDate < today
-                const isToday = p.planDate === today
-                return (
-                  <tr
-                    key={p.id}
-                    data-plan-id={p.id}
-                    style={flashId === p.id ? { background: '#fff7e6', transition: 'background .3s ease' } : undefined}
-                  >
-                    <td className="pcv-name" title={p.name}>{p.name}</td>
-                    <td>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
-                        <span style={{ color: '#333a45' }}>{p.account || '—'}</span>
+          // 卡片与「待办清单 / 待投流」并排（各占 1/3），表格五列放不下，
+          // 改成紧凑两行式：第一行 产品 + ×数量，第二行 账号 · 时间 + 状态标签
+          <div>
+            {sorted.map((p) => {
+              const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+              const overdue = p.planDate && p.planDate < today
+              const isToday = p.planDate === today
+              return (
+                <div
+                  key={p.id}
+                  data-plan-id={p.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
+                    borderTop: '0.5px solid rgba(15,23,42,0.05)',
+                    ...(flashId === p.id ? { background: '#fff7e6', transition: 'background .3s ease' } : null),
+                  }}
+                >
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span
+                        title={p.name}
+                        style={{ fontSize: 14, color: '#333a45', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      >{p.name}</span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, color: '#b8517f', background: '#fdf1f6',
+                        padding: '1px 6px', borderRadius: 6, flexShrink: 0,
+                      }}>×{p.qty || 1}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, fontSize: 12, color: '#94a3b8' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.account || '未选账号'}</span>
+                      <span style={{ color: overdue ? '#b96a66' : '#94a3b8', whiteSpace: 'nowrap' }}>
+                        · {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
                       </span>
-                    </td>
-                    <td style={{ color: '#b8517f', fontVariantNumeric: 'tabular-nums' }}>{p.qty || 1}</td>
-                    <td style={{ color: overdue ? '#b96a66' : '#475569', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                      {p.planDate || '—'}
-                      {isToday && <span className="pcv-chip" style={{ marginLeft: 6, background: '#eef2ff', color: '#4f5fbb' }}>今天</span>}
-                      {overdue && <span className="pcv-chip" style={{ marginLeft: 6, background: '#fdeaea', color: '#b96a66' }}>已过期</span>}
-                    </td>
-                    <td>
-                      <button className="pcv-btn-text" onClick={() => openEdit(p)}>编辑</button>
-                      <button
-                        className="pcv-btn-text"
-                        style={{ marginLeft: 8, color: '#b96a66' }}
-                        onClick={() => { deletePublishPlan(p.id); show('已删除', 'success') }}
-                      >删除</button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                  <button className="pcv-btn-text" style={{ flexShrink: 0 }} onClick={() => openEdit(p)}>编辑</button>
+                  <button
+                    className="pcv-x"
+                    title="删除"
+                    style={{ flexShrink: 0 }}
+                    onClick={() => { deletePublishPlan(p.id); show('已删除', 'success') }}
+                  >×</button>
+                </div>
+              )
+            })}
+          </div>
         )}
       </div>
 
