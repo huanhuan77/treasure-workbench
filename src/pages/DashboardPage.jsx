@@ -1239,7 +1239,7 @@ export function DashboardPage() {
           background: 'rgba(255, 245, 249, 0.62)',
           backdropFilter: 'blur(12px) saturate(150%)',
           WebkitBackdropFilter: 'blur(12px) saturate(150%)',
-          padding: '7px 8px 8px',
+          padding: '7px 2px 8px',
           boxShadow: '0 1px 8px rgba(120,90,100,0.05)',
         }}>
           {/* 内层不再画白色胶囊底（原来是 rgba(255,255,255,0.6) + 白色描边），
@@ -1311,6 +1311,7 @@ export function DashboardPage() {
                     fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
                     borderRadius: '999px', padding: '1px 4px 0', marginLeft: '3px',
+                    alignSelf: 'flex-start', marginTop: '-3px',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     height: '15px', boxSizing: 'border-box',
                   }}>{t.count}</span>
