@@ -186,12 +186,18 @@ export function EditSamplePage() {
             </Field>
           </div>
         </div>
-        <Field label="佣金 %">
-          <input type="number" style={inputStyle} value={commission} onChange={(e) => setCommission(e.target.value)} />
-        </Field>
-        <Field label="多少天没发才提醒（留空用默认7天）">
-          <input type="number" min={1} placeholder="如 14" style={inputStyle} value={reminderDays} onChange={(e) => setReminderDays(e.target.value)} />
-        </Field>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <Field label="佣金 %">
+              <input type="number" style={inputStyle} value={commission} onChange={(e) => setCommission(e.target.value)} />
+            </Field>
+          </div>
+          <div style={{ flex: 1 }}>
+            <Field label="几天没发提醒（留空=7天）">
+              <input type="number" min={1} placeholder="如 14" style={inputStyle} value={reminderDays} onChange={(e) => setReminderDays(e.target.value)} />
+            </Field>
+          </div>
+        </div>
         <Field label="备注">
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={remark} onChange={(e) => setRemark(e.target.value)} />
         </Field>
