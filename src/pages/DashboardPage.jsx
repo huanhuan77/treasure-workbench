@@ -283,7 +283,7 @@ export function DashboardPage() {
       const i = ACCOUNTS.indexOf(a)
       return i < 0 ? 99 : i
     }
-    return [...(publishPlans || [])].sort((a, b) => {
+    return [...(publishPlans || [])].filter((p) => !p.done).sort((a, b) => {
       const ad = a.planDate || ''
       const bd = b.planDate || ''
       if (ad && bd && ad !== bd) return ad < bd ? -1 : 1
@@ -773,6 +773,11 @@ export function DashboardPage() {
                       <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0 }}>
                         {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
                       </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
+                        title="点一下标记为已发，自动隐藏"
+                        style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #16a34a', background: '#f0fdf4', color: '#16a34a', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}
+                      >✓ 已发</button>
                     </div>
                   </SwipeRow>
                 )
