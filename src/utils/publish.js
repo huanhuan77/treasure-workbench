@@ -94,10 +94,17 @@ export function compareUrgent(a, b) {
 //
 // 用户口径（2026-10-20）：「已发布 + 已过截止日 也要提醒，按之前的来」——
 // 这里不再对「执行状态已发布但没记条数」的账号做特殊豁免，Keep it simple。
+// 每个样品可单独设提醒天数（sample.reminderDays）；没设就用全局默认
+function sampleDays(sample) {
+  const v = Number(sample?.reminderDays)
+  return Number.isFinite(v) && v >= 1 ? Math.round(v) : PUBLISH_DAYS
+}
+
 export function pendingAccounts(sample) {
+  const th = sampleDays(sample)
   return getAccounts(sample).filter((a) => {
     const d = daysSincePublishByAccount(sample, a)
-    return d === Infinity || d > PUBLISH_DAYS
+    return d === Infinity || d > th
   })
 }
 
@@ -166,7 +173,7 @@ export function needPublishReminder(sample) {
       const anyNeed = accounts.some((a) => {
         if (execByAccount[a] === 'abandoned') return false
         const d = daysSincePublishByAccount(sample, a)
-        return d === Infinity || d > PUBLISH_DAYS
+        return d === Infinity || d > sampleDays(sample)
       })
       if (anyNeed) return true
     }

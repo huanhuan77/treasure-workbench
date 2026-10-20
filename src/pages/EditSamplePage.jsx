@@ -37,6 +37,7 @@ export function EditSamplePage() {
   const [archived, setArchived] = useState(!!sample?.archived)                    // 归档（放弃）
   const [receiveDate, setReceiveDate] = useState(sample?.receiveDate || new Date().toISOString().slice(0, 10))
   const [deadline, setDeadline] = useState(sample?.deadline || addDays(sample?.receiveDate || new Date().toISOString().slice(0, 10), 15))
+  const [reminderDays, setReminderDays] = useState(sample?.reminderDays ?? '')
   const [remark, setRemark] = useState(sample?.remark || '')
   const [category, setCategory] = useState(sample?.category || '')   // 分类（选填）
   const [commission, setCommission] = useState(sample?.commission || 5)
@@ -80,6 +81,8 @@ export function EditSamplePage() {
       remark,
       category,
       commission: Number(commission),
+      // 留空 = 用默认天数；填了就单独覆盖该样品的提醒天数
+      reminderDays: reminderDays === '' ? null : Math.max(1, Math.round(Number(reminderDays) || 0)),
       links: (links || []).filter((l) => l.url && l.url.trim()).map((l) => ({ id: l.id, url: l.url.trim(), platform: (l.platform || '').trim(), note: (l.note || '').trim() })),
     })
     show('已更新', 'success')
@@ -185,6 +188,9 @@ export function EditSamplePage() {
         </div>
         <Field label="佣金 %">
           <input type="number" style={inputStyle} value={commission} onChange={(e) => setCommission(e.target.value)} />
+        </Field>
+        <Field label="多少天没发才提醒（留空用默认7天）">
+          <input type="number" min={1} placeholder="如 14" style={inputStyle} value={reminderDays} onChange={(e) => setReminderDays(e.target.value)} />
         </Field>
         <Field label="备注">
           <textarea style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} value={remark} onChange={(e) => setRemark(e.target.value)} />
