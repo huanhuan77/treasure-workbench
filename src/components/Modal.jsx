@@ -34,15 +34,9 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
     )
   }
 
-  // 聚焦时滚动输入框到可见区（键盘弹出后、或切换输入框时）
-  const scrollActiveIntoView = useCallback(() => {
-    setTimeout(() => {
-      const active = document.activeElement
-      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) {
-        try { active.scrollIntoView({ block: 'center', behavior: 'smooth' }) } catch {}
-      }
-    }, 350)  // 等待 iOS 键盘动画完成
-  }, [])
+  // 聚焦时不再 scrollIntoView —— iOS 上它会把固定定位的弹窗一起滚走，
+  // 导致标题/输入框被顶出可视区。键盘弹起时弹窗自己 top 对齐即可。
+  const scrollActiveIntoView = useCallback(() => {}, [])
 
   // 键盘弹起时真实可见区（iOS 上 window.innerHeight 不会缩，visualViewport 才是真相）
   // kbBox: { top, height }  弹窗要落在 [kbBox.top, kbBox.top+kbBox.height] 这块矩形内
@@ -144,6 +138,8 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
             ? 'calc(11px + env(safe-area-inset-top, 0px)) 14px 7px'
             : compact
             ? 'calc(14px + env(safe-area-inset-top, 0px)) 18px 10px'
+            : kbActive
+            ? '18px 22px 14px'
             : 'calc(18px + max(env(safe-area-inset-top, 0px), 44px)) 22px 14px',
           borderBottom: '1px solid rgba(244, 114, 182, 0.12)',
           display: 'flex',
