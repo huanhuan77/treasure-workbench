@@ -63,7 +63,27 @@ export function PublishPlanCard() {
   }, [list])
 
   const today = todayStr()
-  const upcoming = sorted.filter((p) => !p.planDate || p.planDate >= today).length
+
+  // 卡片内的账号筛选（用户要求）：胶囊行，与「提醒中心」同款；
+  // '' = 全部账号。默认只列 5 条，底部「查看全部 N 条」展开（与「待办清单」一致）。
+  const [accFilter, setAccFilter] = useState('')
+  const [expanded, setExpanded] = useState(false)
+  // 只列卡里真实出现过的账号（按 ACCOUNTS 固定顺序，未在册的排后面）
+  const accOptions = useMemo(() => {
+    const set = new Set(list.map((p) => p.account).filter(Boolean))
+    return [...set].sort((x, y) => {
+      const ix = ACCOUNTS.indexOf(x)
+      const iy = ACCOUNTS.indexOf(y)
+      return (ix === -1 ? 999 : ix) - (iy === -1 ? 999 : iy) || x.localeCompare(y, 'zh')
+    })
+  }, [list])
+  // 列表 / 待发 / 共 N 条 都按筛选后的账号计算
+  const accFiltered = useMemo(
+    () => (accFilter ? sorted.filter((p) => p.account === accFilter) : sorted),
+    [sorted, accFilter],
+  )
+  const visible = expanded ? accFiltered : accFiltered.slice(0, 5)
+  const upcoming = accFiltered.filter((p) => !p.planDate || p.planDate >= today).length
 
   const isEditing = !!editing && editing !== 'new'
   // 新增态看当前账号自己的行；编辑态只有一行（用户要求「编辑态只保留一行」）
@@ -176,6 +196,7 @@ export function PublishPlanCard() {
       })
       show('已保存', 'success')
       setFlashId(editing.id)
+      setExpanded(true)   // 展开，保证刚改的那条不被折叠隐藏
       setEditing(null)
       return
     }
@@ -198,6 +219,7 @@ export function PublishPlanCard() {
     // 新增后滚到这一行并高亮（用户反馈「新增了一条消失不见了」：
     // 条目其实加进去了，但按时间排序可能落在卡片下方，一屏看不到）
     setFlashId(lastId)
+    setExpanded(true)
     setEditing(null)
   }
 
@@ -219,10 +241,46 @@ export function PublishPlanCard() {
           {list.length > 0 && (
             <span className="pcv-chip" style={{ background: '#eef2ff', color: '#4f5fbb' }}>{upcoming} 待发</span>
           )}
-          <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {list.length} 条</span>
+          <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {accFiltered.length} 条</span>
           <button className="pcv-metric-add" style={{ marginLeft: 2 }} title="新增一条发布计划" onClick={openNew}>新增</button>
           <div className="pcv-spacer" />
         </div>
+
+        {/* 账号筛选（用户要求，与「提醒中心」同款胶囊）：只列卡里出现过的账号 */}
+        {accOptions.length > 1 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap',
+            overflowX: 'auto', padding: '0 12px 8px',
+          }}>
+            <button
+              onClick={() => { setAccFilter(''); setExpanded(false) }}
+              style={{
+                padding: '3px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontSize: 12, fontWeight: 600,
+                border: accFilter === '' ? 'none' : '1px solid rgba(15,23,42,0.14)',
+                background: accFilter === '' ? '#b8517f' : '#fff',
+                color: accFilter === '' ? '#fff' : '#6b7280',
+              }}
+            >全部账号</button>
+            {accOptions.map((a) => {
+              const col = (ACCOUNT_COLOR[a] || {}).c || '#6b7280'
+              const on = accFilter === a
+              return (
+                <button
+                  key={a}
+                  onClick={() => { setAccFilter(on ? '' : a); setExpanded(false) }}
+                  style={{
+                    padding: '3px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                    fontSize: 12, fontWeight: 600,
+                    border: on ? 'none' : `1px solid ${col}`,
+                    background: on ? col : '#fff',
+                    color: on ? '#fff' : col,
+                  }}
+                >{a}</button>
+              )
+            })}
+          </div>
+        )}
 
         {list.length === 0 ? (
           // 空态只占一行（用户要求）：文案缩短 + 单行省略，卡片高度不再被撑开
@@ -230,11 +288,16 @@ export function PublishPlanCard() {
             className="pcv-empty"
             style={{ padding: '13px 14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
           >还没有发布计划，点「新增」记一条</div>
+        ) : accFiltered.length === 0 ? (
+          <div
+            className="pcv-empty"
+            style={{ padding: '13px 14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >该账号下还没有发布计划</div>
         ) : (
           // 卡片与「待办清单 / 待投流」并排（各占 1/3），表格五列放不下，
           // 改成紧凑两行式：第一行 产品 + ×数量，第二行 账号 · 时间 + 状态标签
           <div>
-            {sorted.map((p) => {
+            {visible.map((p) => {
               const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
               const overdue = p.planDate && p.planDate < today
               const isToday = p.planDate === today
@@ -257,8 +320,8 @@ export function PublishPlanCard() {
                     }}
                   >{p.name}</span>
                   <span style={{
-                    fontSize: 11, fontWeight: 700, color: '#b8517f', background: '#fdf1f6',
-                    padding: '1px 5px', borderRadius: 6, flexShrink: 0,
+                    fontSize: 13, fontWeight: 700, color: '#b8517f', background: '#fdf1f6',
+                    padding: '2px 6px', borderRadius: 6, flexShrink: 0,
                   }}>×{p.qty || 1}</span>
                   <span
                     title={p.account}
@@ -284,6 +347,19 @@ export function PublishPlanCard() {
                 </div>
               )
             })}
+            {/* 超过 5 条才出现展开入口（与「待办清单」一致）：展开后随卡片自然增高 */}
+            {accFiltered.length > 5 && (
+              <button
+                className="pcv-btn-text"
+                onClick={() => setExpanded((v) => !v)}
+                style={{
+                  display: 'block', width: '100%', padding: '10px 14px', textAlign: 'center',
+                  borderTop: '0.5px solid rgba(15, 23, 42, 0.05)', color: '#b8517f', fontWeight: 600,
+                }}
+              >
+                {expanded ? '收起' : `查看全部 ${accFiltered.length} 条`}
+              </button>
+            )}
           </div>
         )}
       </div>

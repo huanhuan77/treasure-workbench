@@ -24,8 +24,10 @@ export function AdQueueCard() {
   const [pickAccount, setPickAccount] = useState('')
 
   const list = adQueue || []
-  const pendingCount = list.filter((a) => a.status === '未投流').length
   const doneCount = list.filter((a) => a.status === '已投流').length
+  // 卡片内的账号筛选 + 默认只列 5 条（用户要求，与「待办清单 / 发布计划」一致）
+  const [accFilter, setAccFilter] = useState('')
+  const [expanded, setExpanded] = useState(false)
   // 改成「已投流」= 从列表消失（用户要求「就像删除了一样，不需要了」）：
   // 不再提供「已投流 N」查看入口，也不需要找回来。底层数据保留（不会真删，
   // 免得误点后不可恢复），只是不再参与展示。
@@ -45,6 +47,24 @@ export function AdQueueCard() {
           || (y.createdAt || 0) - (x.createdAt || 0)
       })
   }, [list])
+
+  // 只列卡里真实出现过的账号（按 ACCOUNTS 固定顺序，未在册的排后面）
+  const accOptions = useMemo(() => {
+    const set = new Set(visible.map((a) => a.account).filter(Boolean))
+    return [...set].sort((x, y) => {
+      const ix = ACCOUNTS.indexOf(x)
+      const iy = ACCOUNTS.indexOf(y)
+      return (ix === -1 ? 999 : ix) - (iy === -1 ? 999 : iy) || x.localeCompare(y, 'zh')
+    })
+  }, [visible])
+  // 列表 / 待投数 / 共 N 条 都按筛选后的账号计算
+  const accFiltered = useMemo(
+    () => (accFilter ? visible.filter((a) => a.account === accFilter) : visible),
+    [visible, accFilter],
+  )
+  const shown = expanded ? accFiltered : accFiltered.slice(0, 5)
+  const pendingCount = accFiltered.filter((a) => a.status === '未投流').length
+
   const [flashId, setFlashId] = useState('')   // 刚加入的那条：滚动定位 + 高亮 4 秒
 
   // 可作为待投流的候选：已发布（至少一条视频）的 样品 × 账号
@@ -98,7 +118,9 @@ export function AdQueueCard() {
     setPickerOpen(false)
     setSearch('')
     show(`已加入待投流：${o.name}`, 'success')
-    // 新增后高亮并滚动到该行（避免「加了却看不到」）
+    // 新增后高亮并滚动到该行（避免「加了却看不到」）；
+    // 同时展开，保证新条目不在前 5 条时也能看到
+    setExpanded(true)
     setFlashId(id || '')
   }
 
@@ -121,7 +143,7 @@ export function AdQueueCard() {
             <span className="pcv-chip" style={{ background: '#fef3c7', color: '#b45309' }}>{pendingCount} 待投</span>
           )}
           {/* 条数只算列表里看得到的（已投流的不算，否则「共 3 条」但只显示 2 行） */}
-          <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {visible.length} 条</span>
+          <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {accFiltered.length} 条</span>
           {/* 「＋ 添加」紧跟标题（用户要求）：与上面「待办清单」卡头的「新增」同一位置，
               原来用 spacer 顶到最右端，中间空出一大片 */}
           <button
@@ -133,6 +155,42 @@ export function AdQueueCard() {
           <div className="pcv-spacer" />
         </div>
 
+        {/* 账号筛选（用户要求，与「发布计划 / 提醒中心」同款胶囊）：只列卡里出现过的账号 */}
+        {accOptions.length > 1 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap',
+            overflowX: 'auto', padding: '0 12px 8px',
+          }}>
+            <button
+              onClick={() => { setAccFilter(''); setExpanded(false) }}
+              style={{
+                padding: '3px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontSize: 12, fontWeight: 600,
+                border: accFilter === '' ? 'none' : '1px solid rgba(15,23,42,0.14)',
+                background: accFilter === '' ? '#b8517f' : '#fff',
+                color: accFilter === '' ? '#fff' : '#6b7280',
+              }}
+            >全部账号</button>
+            {accOptions.map((a) => {
+              const col = (ACCOUNT_COLOR[a] || {}).c || '#6b7280'
+              const on = accFilter === a
+              return (
+                <button
+                  key={a}
+                  onClick={() => { setAccFilter(on ? '' : a); setExpanded(false) }}
+                  style={{
+                    padding: '3px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                    fontSize: 12, fontWeight: 600,
+                    border: on ? 'none' : `1px solid ${col}`,
+                    background: on ? col : '#fff',
+                    color: on ? '#fff' : col,
+                  }}
+                >{a}</button>
+              )
+            })}
+          </div>
+        )}
+
         {visible.length === 0 ? (
           // 空态只占一行，与发布计划卡片一致，不把卡片撑高
           <div
@@ -143,11 +201,16 @@ export function AdQueueCard() {
               ? '还没有待投流，点「新增」从已发布视频里挑'
               : `待投流都已投完（已投流 ${doneCount} 条）`}
           </div>
+        ) : accFiltered.length === 0 ? (
+          <div
+            className="pcv-empty"
+            style={{ padding: '13px 14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          >该账号下没有待投流</div>
         ) : (
           // 与「待办清单 / 发布计划」并排（各 1/3 宽），表格五列放不下 → 紧凑两行式：
           // 第一行 产品名 + 状态下拉，第二行 账号 · 发布日期 + 删除
           <div>
-            {visible.map((a) => {
+            {shown.map((a) => {
               const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
               const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
               return (
@@ -200,6 +263,19 @@ export function AdQueueCard() {
                 </div>
               )
             })}
+            {/* 超过 5 条才出现展开入口（与「待办清单 / 发布计划」一致） */}
+            {accFiltered.length > 5 && (
+              <button
+                className="pcv-btn-text"
+                onClick={() => setExpanded((v) => !v)}
+                style={{
+                  display: 'block', width: '100%', padding: '10px 14px', textAlign: 'center',
+                  borderTop: '0.5px solid rgba(15, 23, 42, 0.05)', color: '#b8517f', fontWeight: 600,
+                }}
+              >
+                {expanded ? '收起' : `查看全部 ${accFiltered.length} 条`}
+              </button>
+            )}
           </div>
         )}
       </div>
