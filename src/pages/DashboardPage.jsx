@@ -763,6 +763,11 @@ export function DashboardPage() {
                 return (
                   <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
+                        title="点一下标记为已发，自动隐藏"
+                        style={{ width: 18, height: 18, borderRadius: '50%', border: '1.5px solid #d4a3c0', background: '#fff', cursor: 'pointer', flexShrink: 0, padding: 0 }}
+                      />
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '13px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{p.name}</span>
                         <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, flexShrink: 0 }}>{p.account || '未选账号'}</span>
@@ -773,11 +778,6 @@ export function DashboardPage() {
                       <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0 }}>
                         {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
                       </span>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
-                        title="点一下标记为已发，自动隐藏"
-                        style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '8px', border: '1px solid #16a34a', background: '#f0fdf4', color: '#16a34a', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap' }}
-                      >✓ 已发</button>
                     </div>
                   </SwipeRow>
                 )
