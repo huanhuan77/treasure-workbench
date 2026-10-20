@@ -795,10 +795,10 @@ export function DashboardPage() {
                               <span style={{ fontSize: '13px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{p.name}</span>
                               <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, flexShrink: 0 }}>{p.account || '未选账号'}</span>
                             </div>
-                            <span style={{ fontSize: '10px', color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0 }}>
+                            <span style={{ fontSize: '10px', color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0, fontWeight: 700 }}>
                               ×{p.qty || 1}
                             </span>
-                            <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0 }}>
+                            <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0, fontWeight: 700 }}>
                               {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
                             </span>
                           </div>
