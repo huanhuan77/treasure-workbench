@@ -2877,6 +2877,8 @@ const defaultData = {
   dramas: [],  // 追剧：{ id, name, year, cast, status(在追/已看完/弃剧), remark, createdAt }
   todos: [],  // 待办事项：{ id, title, done, due('YYYY-MM-DD' 可为空=无截止日), createdAt, updatedAt }
   adQueue: [],  // 待投流：{ id, sampleId, name, account, publishDate, status(未投流/已投流/暂停), note, createdAt, updatedAt }
+  // 发布计划：{ id, name(发布产品), account(发布账号), qty(发布数量), planDate(发布时间 YYYY-MM-DD), note, createdAt, updatedAt }
+  publishPlans: [],
 }
 
 // 清理文案末尾 👍/ 标注（用户用于标记「用 / 出单」），转 used / hasOrder
@@ -3043,6 +3045,7 @@ function normalizeDates(d) {
     transactions: (d.transactions || []).map((t) => (t ? { ...t, date: normDate(t.date) } : t)),
     todos: (d.todos || []).map((t) => (t ? { ...t, due: normDate(t.due) } : t)),
     adQueue: (d.adQueue || []).map((a) => (a ? { ...a, publishDate: normDate(a.publishDate) } : a)),
+    publishPlans: (d.publishPlans || []).map((p) => (p ? { ...p, planDate: normDate(p.planDate) } : p)),
   }
 }
 
@@ -3312,6 +3315,7 @@ function loadData() {
       // 随后 useEffect 又把「缺字段的 data」写回 localStorage → 数据永久消失。
       // 待投流（adQueue）就是这样丢的（用户反馈「刚加的怎么不见了」）。
       adQueue: Array.isArray(old.adQueue) ? old.adQueue : [],
+      publishPlans: Array.isArray(old.publishPlans) ? old.publishPlans : [],
     })
   } catch (e) {
     console.warn('[loadData] 加载数据异常，使用默认值:', e)
@@ -4575,6 +4579,37 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, adQueue: (d.adQueue || []).filter((a) => a.id !== id) }))
   }, [])
 
+  // ── 发布计划（总览卡片：产品 / 账号 / 数量 / 时间）──────────
+  const addPublishPlan = useCallback((entry) => {
+    const now = Date.now()
+    const newEntry = {
+      id: uid(),
+      name: String(entry.name || '').trim(),
+      account: entry.account || '',
+      qty: Number(entry.qty) > 0 ? Number(entry.qty) : 1,
+      planDate: entry.planDate || '',
+      note: entry.note || '',
+      createdAt: now,
+      updatedAt: now,
+    }
+    setData((d) => ({ ...d, publishPlans: [newEntry, ...(d.publishPlans || [])] }))
+    return newEntry.id
+  }, [])
+
+  const updatePublishPlan = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      publishPlans: (d.publishPlans || []).map((p) =>
+        p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p
+      ),
+    }))
+  }, [])
+
+  const deletePublishPlan = useCallback((id) => {
+    recordDelete('blogger_workbench_data_v1', id)
+    setData((d) => ({ ...d, publishPlans: (d.publishPlans || []).filter((p) => p.id !== id) }))
+  }, [])
+
   // 同步引擎合并结果应用到本机（主数据模块）
   const applySyncResult = useCallback((mergedMain) => {
     if (!mergedMain) return
@@ -4590,6 +4625,7 @@ export function StoreProvider({ children }) {
         dramas: mergedMain.dramas ?? d.dramas,
         todos: mergedMain.todos ?? d.todos,
         adQueue: mergedMain.adQueue ?? d.adQueue,
+        publishPlans: mergedMain.publishPlans ?? d.publishPlans,
       }
       // 同步是「按 id 取并集」，云端残留的重复条目会把本地已删掉的再拉回来。
       // 这里在写入本地前再兜一次底，保证合并结果里同一产品下不出现重复内容。
@@ -4613,6 +4649,7 @@ export function StoreProvider({ children }) {
     addDrama, updateDrama, deleteDrama,
     addTodo, updateTodo, deleteTodo,
     addAdQueue, updateAdQueue, deleteAdQueue,
+    addPublishPlan, updatePublishPlan, deletePublishPlan,
     getSavings, updateSavings, setSavings,
     applySyncResult,
   }

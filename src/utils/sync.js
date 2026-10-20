@@ -332,6 +332,7 @@ function mergeModule(key, localVal, remoteVal, tombstones, wordTimes, lastSync) 
         publishRecords: mergeArrayById(localVal.publishRecords, remoteVal.publishRecords, t),
         dramas: mergeArrayById(localVal.dramas, remoteVal.dramas, t),
         adQueue: mergeArrayById(localVal.adQueue, remoteVal.adQueue, t),
+        publishPlans: mergeArrayById(localVal.publishPlans, remoteVal.publishPlans, t),
       }
       // 兜底：本次没显式处理的字段（以后新增的）也一并保留，
       // 原则是「远端有就用远端，否则用本地」—— 绝不再静默丢弃任何字段。

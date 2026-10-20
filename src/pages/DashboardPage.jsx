@@ -134,7 +134,11 @@ function ReminderTable({ items, accountsOf, midHeader, renderMid, renderActions,
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { samples, transactions, orders, publishRecords, todos, adQueue, addAdQueue, updateAdQueue, deleteAdQueue, updateSample, applySyncResult } = useStore()
+  const {
+    samples, transactions, orders, publishRecords, todos, applySyncResult, updateSample,
+    adQueue, addAdQueue, updateAdQueue, deleteAdQueue,
+    products, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan,
+  } = useStore()
   const { show } = useToast()
   // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
   const isDesktop = useIsDesktop()
@@ -217,6 +221,56 @@ export function DashboardPage() {
   const adList = adQueue || []
   const adDoneCount = adList.filter((a) => a.status === '已投流').length
   const adVisible = adList.filter((a) => a.status !== '已投流')
+
+  // ── 发布计划（与 PC 总览同一份 store.publishPlans）────────────────
+  const todayPlan = (() => {
+    const d = new Date()
+    const p = (n) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+  })()
+  const planSorted = useMemo(() => {
+    return [...(publishPlans || [])].sort((a, b) => {
+      const ad = a.planDate || ''
+      const bd = b.planDate || ''
+      if (ad && bd && ad !== bd) return ad < bd ? -1 : 1
+      if (!ad && bd) return 1
+      if (ad && !bd) return -1
+      return (b.createdAt || 0) - (a.createdAt || 0)
+    })
+  }, [publishPlans])
+  const planUpcoming = planSorted.filter((p) => !p.planDate || p.planDate >= todayPlan).length
+  // 新增/编辑弹层：null=关闭 / 'new' / 条目
+  const [planEdit, setPlanEdit] = useState(null)
+  const [planForm, setPlanForm] = useState({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: todayPlan })
+  const planProductNames = useMemo(() => {
+    const set = new Set()
+    for (const p of products || []) {
+      const n = String((p && p.name) || '').trim()
+      if (n) set.add(n)
+    }
+    return [...set]
+  }, [products])
+  const openPlanNew = () => {
+    setPlanForm({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: todayPlan })
+    setPlanEdit('new')
+  }
+  const openPlanEdit = (p) => {
+    setPlanForm({ name: p.name || '', account: p.account || ACCOUNTS[0] || '', qty: String(p.qty || 1), planDate: p.planDate || '' })
+    setPlanEdit(p)
+  }
+  const savePlan = () => {
+    const name = planForm.name.trim()
+    if (!name) { show('请填写发布产品', 'error'); return }
+    const payload = {
+      name,
+      account: planForm.account,
+      qty: Number(planForm.qty) > 0 ? Number(planForm.qty) : 1,
+      planDate: planForm.planDate || '',
+    }
+    if (planEdit === 'new') { addPublishPlan(payload); show('已加入发布计划', 'success') }
+    else if (planEdit) { updatePublishPlan(planEdit.id, payload); show('已保存', 'success') }
+    setPlanEdit(null)
+  }
 
   // ── 待投流：从「已发布」样品里挑（样品 × 账号），带出该账号最新发布时间
   const AD_STATUSES = ['未投流', '已投流', '暂停']
@@ -532,6 +586,143 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* 发布计划：产品 / 账号 / 数量 / 时间（与 PC 同一份数据） */}
+      <div style={{ padding: '12px 16px 4px' }}>
+        <div className="pc-card" style={{ background: '#fff', border: '1px solid #e6e6ef', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>发布计划</span>
+              {planSorted.length > 0 && (
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#4f5fbb', padding: '1px 7px', borderRadius: '8px', background: '#eef2ff' }}>
+                  {planUpcoming} 待发
+                </span>
+              )}
+            </div>
+            <button onClick={openPlanNew} style={{
+              background: '#ec4899', border: 'none', color: '#fff', fontSize: '12px',
+              fontWeight: 600, padding: '6px 12px', borderRadius: '9px', cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>＋ 新增</button>
+          </div>
+
+          {planSorted.length === 0 ? (
+            <div style={{ padding: '14px 2px 2px', fontSize: '12px', color: '#94a3b8' }}>
+              还没有发布计划，点「新增」记一条：产品、账号、数量、发布时间
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
+              {planSorted.map((p) => {
+                const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+                const overdue = p.planDate && p.planDate < todayPlan
+                const isToday = p.planDate === todayPlan
+                return (
+                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: '#fafafa', borderRadius: '10px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                        <span style={{ fontSize: '10px', fontWeight: 700, color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0 }}>
+                          ×{p.qty || 1}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600 }}>{p.account || '未选账号'}</span>
+                        <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8' }}>
+                          {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <button onClick={() => openPlanEdit(p)} style={{ border: 'none', background: 'transparent', color: '#8a8f98', fontSize: '11px', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>编辑</button>
+                    <button onClick={() => { deletePublishPlan(p.id); show('已删除', 'success') }} style={{ border: 'none', background: 'transparent', color: '#c9cdd4', fontSize: '15px', cursor: 'pointer', flexShrink: 0, padding: '2px 4px' }}>×</button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 发布计划 新增/编辑 弹层 */}
+      {planEdit && (
+        <div onClick={() => setPlanEdit(null)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 900,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
+        }}>
+          <div onClick={(e) => e.stopPropagation()} style={{
+            width: '100%', maxWidth: '420px', background: '#fff', borderRadius: '14px',
+            padding: '16px', maxHeight: '86vh', overflowY: 'auto',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: '#111' }}>{planEdit === 'new' ? '新增发布计划' : '编辑发布计划'}</span>
+              <button onClick={() => setPlanEdit(null)} style={{ marginLeft: 'auto', border: 'none', background: 'transparent', fontSize: '18px', color: '#9aa0a9', cursor: 'pointer' }}>×</button>
+            </div>
+
+            <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布产品 *</div>
+            <input
+              className="pcv-input"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px' }}
+              placeholder="例如：维特健灵月舒补"
+              value={planForm.name}
+              list="m-plan-products"
+              onChange={(e) => setPlanForm((f) => ({ ...f, name: e.target.value }))}
+            />
+            <datalist id="m-plan-products">
+              {planProductNames.map((n) => <option key={n} value={n} />)}
+            </datalist>
+
+            <div style={{ fontSize: '12px', color: '#8a8f98', margin: '12px 0 4px' }}>发布账号</div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {ACCOUNTS.map((a) => {
+                const on = planForm.account === a
+                const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
+                return (
+                  <button
+                    key={a}
+                    onClick={() => setPlanForm((f) => ({ ...f, account: a }))}
+                    style={{
+                      padding: '5px 11px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                      border: on ? 'none' : `1px solid ${col}`,
+                      background: on ? col : '#fff',
+                      color: on ? '#fff' : col,
+                    }}
+                  >{a}</button>
+                )
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+              <div style={{ width: '96px' }}>
+                <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布数量</div>
+                <input
+                  type="number" min="1" step="1"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px' }}
+                  value={planForm.qty}
+                  onChange={(e) => setPlanForm((f) => ({ ...f, qty: e.target.value }))}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布时间</div>
+                <input
+                  type="date"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px' }}
+                  value={planForm.planDate}
+                  onChange={(e) => setPlanForm((f) => ({ ...f, planDate: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: '18px' }}>
+              <button onClick={() => setPlanEdit(null)} style={{
+                flex: 1, padding: '11px', borderRadius: '11px', border: '1px solid #e5e7eb',
+                background: '#fff', color: '#64748b', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              }}>取消</button>
+              <button onClick={savePlan} style={{
+                flex: 1, padding: '11px', borderRadius: '11px', border: 'none',
+                background: '#ec4899', color: '#fff', fontSize: '14px', fontWeight: 700, cursor: 'pointer',
+              }}>保存</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 待投流：从已发布样品挑选，带出账号与发布时间，状态可改 */}
       <div style={{ padding: '12px 16px 4px' }}>
