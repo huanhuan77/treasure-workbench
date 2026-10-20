@@ -154,8 +154,7 @@ export function DashboardPage() {
   // 待投流：选择已发布样品→账号 的弹窗开关
   const [adPickerOpen, setAdPickerOpen] = useState(false)
   const [adSearch, setAdSearch] = useState('')
-  // 「已投流」的默认从列表隐藏（与 PC 一致）：数据保留，点标题旁的「已投流 N」可查看
-  const [adShowDone, setAdShowDone] = useState(false)
+  // 「已投流」的从列表隐藏（与 PC 一致）：数据保留，不提供查看入口
   // 提醒中心 Tab：reminders（发布提醒）| low（发布不足5条）| expiring（即将到期）
   // 用 lazy init 从 sessionStorage 恢复，刷新 / keep-alive 回场时保留上次选中
   const [remindTab, setRemindTab] = useState(() => {
@@ -213,10 +212,11 @@ export function DashboardPage() {
   }, [todos])
   const todoUndone = (todos || []).filter((t) => !t.done).length
 
-  // 待投流列表：已投流的默认不显示
+  // 待投流列表：改成「已投流」就从列表消失（用户要求「像删除了一样，不需要了」），
+  // 不再提供查看入口；底层数据保留，只是不展示
   const adList = adQueue || []
   const adDoneCount = adList.filter((a) => a.status === '已投流').length
-  const adVisible = adShowDone ? adList : adList.filter((a) => a.status !== '已投流')
+  const adVisible = adList.filter((a) => a.status !== '已投流')
 
   // ── 待投流：从「已发布」样品里挑（样品 × 账号），带出该账号最新发布时间
   const AD_STATUSES = ['未投流', '已投流', '暂停']
@@ -544,16 +544,6 @@ export function DashboardPage() {
                   {adList.filter((a) => a.status === '未投流').length} 待投
                 </span>
               )}
-              {/* 已投流的默认隐藏，这里留入口：点一下展开/收起 */}
-              {adDoneCount > 0 && (
-                <button
-                  onClick={() => setAdShowDone((v) => !v)}
-                  style={{
-                    fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '8px',
-                    border: '1px solid #d1fae5', background: '#f0fdf4', color: '#059669', cursor: 'pointer',
-                  }}
-                >{adShowDone ? '隐藏已投流' : `已投流 ${adDoneCount}`}</button>
-              )}
             </div>
             <button onClick={() => { setAdSearch(''); setAdPickerOpen(true) }} style={{
               background: '#ec4899', border: 'none', color: '#fff', fontSize: '12px',
@@ -565,7 +555,7 @@ export function DashboardPage() {
             <div style={{ padding: '14px 2px 2px', fontSize: '12px', color: '#94a3b8' }}>
               {adList.length === 0
                 ? '还没有待投流，点「添加」从已发布视频里挑'
-                : `待投流都已处理完（已投流 ${adDoneCount} 条），点标题旁的「已投流」可查看`}
+                : `待投流都已投完（已投流 ${adDoneCount} 条）`}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>

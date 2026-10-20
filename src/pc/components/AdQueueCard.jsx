@@ -28,10 +28,10 @@ export function AdQueueCard() {
   const list = adQueue || []
   const pendingCount = list.filter((a) => a.status === '未投流').length
   const doneCount = list.filter((a) => a.status === '已投流').length
-  // 改成「已投流」的条目默认**从列表消失**（用户反馈「改成一投流他为什么还在列表」）：
-  // 数据仍保留，卡头留一个「已投流 N」入口，点开还能看到并把状态改回去/删除。
-  const [showDone, setShowDone] = useState(false)
-  const visible = showDone ? list : list.filter((a) => a.status !== '已投流')
+  // 改成「已投流」= 从列表消失（用户要求「就像删除了一样，不需要了」）：
+  // 不再提供「已投流 N」查看入口，也不需要找回来。底层数据保留（不会真删，
+  // 免得误点后不可恢复），只是不再参与展示。
+  const visible = list.filter((a) => a.status !== '已投流')
 
   // 可作为待投流的候选：已发布（至少一条视频）的 样品 × 账号
   const options = useMemo(() => {
@@ -106,7 +106,8 @@ export function AdQueueCard() {
           {list.length > 0 && (
             <span className="pcv-chip" style={{ background: '#fef3c7', color: '#b45309' }}>{pendingCount} 待投</span>
           )}
-          <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {list.length} 条</span>
+          {/* 条数只算列表里看得到的（已投流的不算，否则「共 3 条」但只显示 2 行） */}
+          <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {visible.length} 条</span>
           {/* 「＋ 添加」紧跟标题（用户要求）：与上面「待办清单」卡头的「新增」同一位置，
               原来用 spacer 顶到最右端，中间空出一大片 */}
           <button
@@ -115,15 +116,6 @@ export function AdQueueCard() {
             title="从已发布视频里挑一条加入待投流"
             onClick={() => { setSearch(''); setPickAccount(''); setPickRange(''); setPickerOpen(true) }}
           >新增</button>
-          {/* 已投流的从主列表移走后，留这个开关把它们找回来 */}
-          {doneCount > 0 && (
-            <button
-              className="pcv-btn-text"
-              style={{ marginLeft: 2 }}
-              title={showDone ? '隐藏已投流的' : '查看已投流的（可改回未投流）'}
-              onClick={() => setShowDone((v) => !v)}
-            >{showDone ? '隐藏已投流' : `已投流 ${doneCount}`}</button>
-          )}
           <div className="pcv-spacer" />
         </div>
 
@@ -131,7 +123,7 @@ export function AdQueueCard() {
           <div className="pcv-empty">
             {list.length === 0
               ? '还没有待投流，点右上角「新增」从已发布视频里挑'
-              : `待投流都已处理完（已投流 ${doneCount} 条）${doneCount > 0 ? '，点标题旁的「已投流」可查看' : ''}`}
+              : `待投流都已投完（已投流 ${doneCount} 条）`}
           </div>
         ) : (
           <table className="pcv-table pcv-table--inset">
