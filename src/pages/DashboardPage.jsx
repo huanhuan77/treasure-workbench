@@ -586,12 +586,13 @@ export function DashboardPage() {
       {/* 待投流选择弹窗：列出已发布样品 × 账号 */}
       {adPickerOpen && (
         <div onClick={() => setAdPickerOpen(false)} style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 900,
-          display: 'flex', alignItems: 'flex-end',
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 900,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px',
         }}>
           <div onClick={(e) => e.stopPropagation()} style={{
-            width: '100%', maxHeight: '72vh', background: '#fff', borderRadius: '18px 18px 0 0',
-            padding: '16px 16px 24px', display: 'flex', flexDirection: 'column',
+            width: '100%', maxWidth: '640px', height: '86vh', background: '#fff', borderRadius: '18px',
+            padding: '18px 18px 20px', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
               <span style={{ fontSize: '15px', fontWeight: 700 }}>选择已发布视频</span>
