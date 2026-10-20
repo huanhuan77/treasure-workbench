@@ -430,6 +430,20 @@
   vertical-align: middle;
 }
 
+/* 卡片内嵌小表（目前是总览的「待投流」）：表头改成比卡片白底只深一点的浅灰，
+   与卡头（白底 + 细线）连成一块；原来沿用全局的深灰表头带（#e7eaef），
+   在只有一两行的小卡里像是「另一张表浮在卡片上」（用户反馈「像不是一块」）。 */
+.pcv-table--inset th {
+  background: #f7f8fa;
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
+  color: #6b7280;
+  font-weight: 600;
+}
+.pcv-table--inset td:first-child,
+.pcv-table--inset th:first-child {
+  padding-left: 14px;
+}
+
 /* 大字号表（投资跟踪）：数据密、数字多，13px 在 2K 屏上偏小（用户反馈）。
    只给需要的那张表加 --lg，其它表仍按 13px，避免窄列（样品/收支）被撑到换行。 */
 .pcv-table--lg th {

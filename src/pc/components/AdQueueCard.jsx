@@ -86,7 +86,7 @@ export function AdQueueCard() {
         {list.length === 0 ? (
           <div className="pcv-empty">还没有待投流，点右上角「＋ 添加」从已发布视频里挑</div>
         ) : (
-          <table className="pcv-table">
+          <table className="pcv-table pcv-table--inset">
             <thead>
               <tr>
                 <th style={{ width: 240 }}>产品</th>

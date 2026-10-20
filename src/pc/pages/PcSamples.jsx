@@ -360,14 +360,19 @@ export function PcSamples() {
                 // 「发布」列取样品合计（各账号 publishCount 相加），与「发布不足 5 条」提醒同一口径；
                 // 各账号的明细留在 title 里，不占版面（多账号样品原来挤在一格里会溢出到隔壁列）。
                 const publishTotal = accounts.reduce((n, a) => n + (getCounts(s, a).publishCount || 0), 0)
+                // 已过期：整行淡红底 + 首格左侧 3px 红竖条（用户要求「加个明显的背景色」）。
+                // 判定与「已过期 N 天」红字同一口径（isExpired），不会出现底色和文案打架。
+                const overdue = isExpired(s)
                 return (
                   <tr
                     key={s.id}
                     data-sample-id={s.id}
-                    // 刚新增的样品短暂高亮，配合 scrollIntoView 让用户一眼看到加在哪
-                    style={flashId === s.id ? { background: '#fff7e6', transition: 'background .3s ease' } : undefined}
+                    // 刚新增的样品短暂高亮（优先于过期底色），配合 scrollIntoView 让用户一眼看到加在哪
+                    style={flashId === s.id
+                      ? { background: '#fff7e6', transition: 'background .3s ease' }
+                      : (overdue ? { background: '#fff4f3', transition: 'background .2s ease' } : undefined)}
                   >
-                    <td>
+                    <td style={overdue ? { boxShadow: 'inset 3px 0 0 #e6a19c' } : undefined}>
                       {/* 分类已单独成列，产品格只留名字。
                           名字可**行内编辑**（用户要求「可以编辑名字」）：点一下变输入框，
                           回车 / 失焦保存，Esc 取消 —— 改个错别字不用开整个编辑弹窗。 */}
