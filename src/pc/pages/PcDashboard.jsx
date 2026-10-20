@@ -197,8 +197,12 @@ export function PcDashboard() {
   // 待办清单默认只列 5 条，卡片底部「查看全部 N 条」再展开剩余（用户要求）。
   // 不再用卡内滚动：滚动条在小卡片里不好点，展开/收起更直观。
   const [todoExpanded, setTodoExpanded] = useState(false)
+  // 未完成的待办，**新加的排最前**（用户要求）：按创建时间倒序，
+  // 刚记的一条立刻出现在卡片顶部，不用滚到底去找
   const todoAll = useMemo(
-    () => [...(todos || [])].filter((t) => !t.done),
+    () => [...(todos || [])]
+      .filter((t) => !t.done)
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
     [todos],
   )
   const todoList = todoExpanded ? todoAll : todoAll.slice(0, 5)
@@ -275,8 +279,13 @@ export function PcDashboard() {
                   {todoList.map((t) => (
                     <div key={t.id} className="pcv-copyitem" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #c4b5fd', flexShrink: 0 }} />
-                      <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span>
+                      {/* 标题不再 flex:1，截止日期紧跟标题靠左（原来被推到整行最右，离标题很远） */}
+                      <span style={{
+                        flex: '0 1 auto', minWidth: 0, maxWidth: '72%', fontSize: 14, color: '#334155',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{t.title}</span>
                       <DueTag due={t.due} />
+                      <div style={{ flex: 1 }} />
                     </div>
                   ))}
                 </div>

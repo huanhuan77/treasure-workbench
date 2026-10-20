@@ -125,17 +125,14 @@ export function SampleDialog({ sample, onClose }) {
           </div>
 
           <div className="pcv-dialog-b">
-            {/* 名称：编辑时只读（名称来自样品本身，手机版 SampleForm 就是只读的）；
-                新增时必须可填 —— 手机版新增走的是整页的 NewSamplePage（名称输入框可编辑），
-                SampleForm 只服务编辑。这里两种态共用一个弹窗，所以按 isNew 区分，
-                否则新增时名称恒为空、save() 的「请输入样品名称」会把人锁死。 */}
-            <div className="pcv-field-label">产品名称 {isNew && <span style={{ color: '#b96a66' }}>*</span>}</div>
+            {/* 名称：**新增与编辑都可改**（用户要求，之前编辑态是只读灰底）。
+                改完保存即可；与样品列表里「点名字直接改」写的是同一个字段 name。 */}
+            <div className="pcv-field-label">产品名称 <span style={{ color: '#b96a66' }}>*</span></div>
             <input
               className="pcv-input"
-              style={{ width: '100%', ...(isNew ? {} : { background: '#f7f8fa', color: '#6b7280' }) }}
-              placeholder={isNew ? '例如：补水喷雾' : undefined}
+              style={{ width: '100%' }}
+              placeholder="例如：补水喷雾"
               value={form.name}
-              readOnly={!isNew}
               autoFocus={isNew}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               onKeyDown={(e) => { if (e.key === 'Enter') save() }}
@@ -155,15 +152,21 @@ export function SampleDialog({ sample, onClose }) {
             <div className="pcv-field-label" style={{ marginTop: 18 }}>
               {isNew ? '归属账号（可多选，选几个账号就是几条样品）' : '归属账号（可多选）'}
             </div>
+            {/* 选中态改成**账号主题色实底 + 白字**（用户反馈「选中和未选中分不清」）：
+                原来未选中反而用了深色描边+深色字，看起来比选中的淡粉底更重。
+                现在未选中一律中性灰（白底细灰边），只有选中才上色，对比一眼可辨。 */}
             <div className="pcv-catpick">
               {ACCOUNTS.map((a) => {
                 const on = form.accounts.includes(a)
+                const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
                 return (
                   <button
                     key={a}
                     className={on ? 'on' : ''}
                     onClick={() => toggleAccount(a)}
-                    style={on ? undefined : { borderColor: (ACCOUNT_COLOR[a] || {}).c || undefined, color: (ACCOUNT_COLOR[a] || {}).c || undefined }}
+                    style={on
+                      ? { background: col, borderColor: col, color: '#fff', fontWeight: 700 }
+                      : { background: '#fff', borderColor: 'rgba(15,23,42,0.16)', color: '#6b7280' }}
                   >
                     {a}{on ? ' ✓' : ''}
                   </button>
