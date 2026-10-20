@@ -20,6 +20,9 @@ export function SearchSelect({
   // 输入框回车或点「使用「xxx」」采用自定义值；allLabel 传空字符串则不显示「全部」项
   allowCustom = false,
   customLabel = '使用',
+  // 在弹窗里用 inline：面板改成「就地展开」而不是绝对定位浮层，
+  // 避免被 .pcv-dialog 的 overflow:hidden 裁掉（表现为列表看不到底部、也滚不动）
+  inline = false,
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -99,8 +102,12 @@ export function SearchSelect({
       {open && (
         <div
           style={{
-            position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 60,
-            width: '100%', minWidth: 180, background: '#fff', borderRadius: 10,
+            // inline 模式：面板**在按钮下方就地展开**，把后面的内容往下推（弹窗自己滚），
+            // 不用绝对定位 —— 否则面板会顶出弹窗边界被 overflow:hidden 裁掉，列表看着「滚不动」。
+            ...(inline
+              ? { position: 'static', marginTop: 4, width: '100%' }
+              : { position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 60, width: '100%', minWidth: 180 }),
+            background: '#fff', borderRadius: 10,
             border: '0.5px solid rgba(15,23,42,0.10)',
             boxShadow: '0 10px 28px rgba(15,23,42,0.14)', padding: 6,
           }}

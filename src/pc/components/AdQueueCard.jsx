@@ -22,8 +22,6 @@ export function AdQueueCard() {
   const [search, setSearch] = useState('')
   // 弹窗里按账号切换（用户要求）：'' = 全部账号
   const [pickAccount, setPickAccount] = useState('')
-  // 弹窗里按**发布日期**筛候选：'' 全部 / today 今天 / yesterday 昨天 / week 近七天
-  const [pickRange, setPickRange] = useState('')
 
   const list = adQueue || []
   const pendingCount = list.filter((a) => a.status === '未投流').length
@@ -31,7 +29,22 @@ export function AdQueueCard() {
   // 改成「已投流」= 从列表消失（用户要求「就像删除了一样，不需要了」）：
   // 不再提供「已投流 N」查看入口，也不需要找回来。底层数据保留（不会真删，
   // 免得误点后不可恢复），只是不再参与展示。
-  const visible = list.filter((a) => a.status !== '已投流')
+  // 按账号排列（用户要求）：同一账号的排在一起，账号之间按 ACCOUNTS 固定顺序；
+  // 组内仍按发布日期倒序（新的在上面）
+  const visible = useMemo(() => {
+    const rank = (acc) => {
+      const i = ACCOUNTS.indexOf(acc)
+      return i === -1 ? 999 : i
+    }
+    return list
+      .filter((a) => a.status !== '已投流')
+      .sort((x, y) => {
+        const d = rank(x.account) - rank(y.account)
+        if (d !== 0) return d
+        return String(y.publishDate || '').localeCompare(String(x.publishDate || ''))
+          || (y.createdAt || 0) - (x.createdAt || 0)
+      })
+  }, [list])
   const [flashId, setFlashId] = useState('')   // 刚加入的那条：滚动定位 + 高亮 4 秒
 
   // 可作为待投流的候选：已发布（至少一条视频）的 样品 × 账号
@@ -64,27 +77,15 @@ export function AdQueueCard() {
     })
   }, [options])
 
+  // 筛选用搜索关键字 + 账号（时间筛选已按用户要求去掉：候选本来就是按发布时间倒序，
+  // 「今天/昨天/近七天」这排按钮只是把列表切碎，用得少还占一行）
   const filtered = useMemo(() => {
     const kw = search.trim()
     let arr = options
     if (pickAccount) arr = arr.filter((o) => o.account === pickAccount)
-    if (pickRange) {
-      const p = (n) => String(n).padStart(2, '0')
-      const fmt = (d) => `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
-      const today = fmt(new Date())
-      const yesterday = fmt(new Date(Date.now() - 864e5))
-      const weekFrom = fmt(new Date(Date.now() - 6 * 864e5))
-      arr = arr.filter((o) => {
-        const d = o.publishDate || ''
-        if (!d) return false
-        if (pickRange === 'today') return d === today
-        if (pickRange === 'yesterday') return d === yesterday
-        return d >= weekFrom   // 近七天（含今天）
-      })
-    }
     if (!kw) return arr
     return arr.filter((o) => o.name.includes(kw) || o.account.includes(kw))
-  }, [options, search, pickAccount, pickRange])
+  }, [options, search, pickAccount])
 
   const add = (o) => {
     const id = addAdQueue({
@@ -127,7 +128,7 @@ export function AdQueueCard() {
             className="pcv-metric-add"
             style={{ marginLeft: 2 }}
             title="从已发布视频里挑一条加入待投流"
-            onClick={() => { setSearch(''); setPickAccount(''); setPickRange(''); setPickerOpen(true) }}
+            onClick={() => { setSearch(''); setPickAccount(''); setPickerOpen(true) }}
           >新增</button>
           <div className="pcv-spacer" />
         </div>
@@ -154,22 +155,29 @@ export function AdQueueCard() {
                   key={a.id}
                   data-ad-id={a.id}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
+                    display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
                     borderTop: '0.5px solid rgba(15,23,42,0.05)',
                     ...(flashId === a.id ? { background: '#fff7e6', transition: 'background .3s ease' } : null),
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      title={a.name}
-                      style={{ fontSize: 14, color: '#333a45', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                    >{a.name}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, fontSize: 12, color: '#94a3b8' }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.account}</span>
-                      <span style={{ whiteSpace: 'nowrap' }}>· {a.publishDate || '—'}</span>
-                    </div>
-                  </div>
+                  {/* 单行显示（用户要求）：产品名可截断，账号/日期/状态/删除都压到同一行 */}
+                  <span
+                    title={a.name}
+                    style={{
+                      flex: 1, minWidth: 40, fontSize: 14, color: '#333a45',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                  >{a.name}</span>
+                  <span
+                    title={a.account}
+                    style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#8a8f98', maxWidth: 76 }}
+                  >
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.account}</span>
+                  </span>
+                  <span style={{ flexShrink: 0, fontSize: 11, color: '#b0b6bf', fontVariantNumeric: 'tabular-nums' }}>
+                    {(a.publishDate || '').slice(5) || '—'}
+                  </span>
                   {/* 行内下拉即改状态：选完立刻写库 */}
                   <select
                     className="pcv-input"
@@ -177,7 +185,7 @@ export function AdQueueCard() {
                     onChange={(e) => updateAdQueue(a.id, { status: e.target.value })}
                     title="修改状态（改成「已投流」后从列表消失）"
                     style={{
-                      padding: '3px 6px', fontSize: 12, fontWeight: 600, flexShrink: 0,
+                      padding: '2px 3px', fontSize: 11, fontWeight: 600, flexShrink: 0,
                       border: `0.5px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer',
                     }}
                   >
@@ -186,7 +194,7 @@ export function AdQueueCard() {
                   <button
                     className="pcv-x"
                     title="删除"
-                    style={{ flexShrink: 0 }}
+                    style={{ flexShrink: 0, marginLeft: -2 }}
                     onClick={() => { deleteAdQueue(a.id); show('已删除', 'success') }}
                   >×</button>
                 </div>
@@ -249,31 +257,8 @@ export function AdQueueCard() {
                 </span>
               </div>
 
-              {/* 发布日期筛选（用户要求）：今天 / 昨天 / 近七天，只看这段时间发过的视频 */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                {[
-                  { k: '', l: '全部日期' },
-                  { k: 'today', l: '今天' },
-                  { k: 'yesterday', l: '昨天' },
-                  { k: 'week', l: '近七天' },
-                ].map((r) => {
-                  const on = pickRange === r.k
-                  return (
-                    <button
-                      key={r.k || 'all'}
-                      onClick={() => setPickRange(r.k)}
-                      style={{
-                        padding: '4px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
-                        fontSize: 12, fontWeight: 600,
-                        border: on ? 'none' : '1px solid rgba(15,23,42,0.14)',
-                        background: on ? '#b8517f' : '#fff',
-                        color: on ? '#fff' : '#6b7280',
-                      }}
-                    >{r.l}</button>
-                  )
-                })}
-              </div>
-              <div style={{ maxHeight: 380, overflowY: 'auto' }}>
+              {/* 时间筛选已去掉（用户要求）：只剩搜索 + 账号两重筛选，列表依旧按发布时间倒序 */}
+              <div style={{ maxHeight: 420, overflowY: 'auto' }}>
                 {filtered.length === 0 ? (
                   <div className="pcv-empty" style={{ padding: '26px 0' }}>没有匹配的已发布视频</div>
                 ) : filtered.map((o, i) => {

@@ -223,11 +223,13 @@ export function DashboardPage() {
   const adVisible = adList.filter((a) => a.status !== '已投流')
 
   // ── 发布计划（与 PC 总览同一份 store.publishPlans）────────────────
-  const todayPlan = (() => {
-    const d = new Date()
+  const planFmt = (d) => {
     const p = (n) => String(n).padStart(2, '0')
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
-  })()
+  }
+  const todayPlan = planFmt(new Date())
+  // 新增时默认「明天」（与 PC 一致，用户要求）
+  const tomorrowPlan = planFmt(new Date(Date.now() + 864e5))
   const planSorted = useMemo(() => {
     return [...(publishPlans || [])].sort((a, b) => {
       const ad = a.planDate || ''
@@ -241,7 +243,7 @@ export function DashboardPage() {
   const planUpcoming = planSorted.filter((p) => !p.planDate || p.planDate >= todayPlan).length
   // 新增/编辑弹层：null=关闭 / 'new' / 条目
   const [planEdit, setPlanEdit] = useState(null)
-  const [planForm, setPlanForm] = useState({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: todayPlan })
+  const [planForm, setPlanForm] = useState({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: tomorrowPlan })
   const planProductNames = useMemo(() => {
     const set = new Set()
     for (const p of products || []) {
@@ -287,7 +289,7 @@ export function DashboardPage() {
     setPlanPicker(false)
   }
   const openPlanNew = () => {
-    setPlanForm({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: todayPlan })
+    setPlanForm({ name: '', account: ACCOUNTS[0] || '', qty: '1', planDate: tomorrowPlan })
     setPlanEdit('new')
   }
   const openPlanEdit = (p) => {
@@ -795,10 +797,9 @@ export function DashboardPage() {
               value={planQuery}
               onChange={(e) => setPlanQuery(e.target.value)}
               onKeyDown={(e) => {
+                // 回车只取第一条匹配项 —— 不再接受「输入啥就是啥」（只能选已有产品）
                 if (e.key !== 'Enter') return
-                const v = planQuery.trim()
-                if (!v) return
-                pickPlanName(planFiltered[0] || v)
+                if (planFiltered.length > 0) pickPlanName(planFiltered[0])
               }}
               style={{
                 width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px',
@@ -827,20 +828,10 @@ export function DashboardPage() {
             </div>
 
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
-              {/* 输入了不存在的名字 → 第一行给「使用自定义」 */}
-              {planQuery.trim() && !planFiltered.includes(planQuery.trim()) && (
-                <button
-                  onClick={() => pickPlanName(planQuery.trim())}
-                  style={{
-                    width: '100%', textAlign: 'left', padding: '11px 10px', border: 'none',
-                    borderBottom: '0.5px solid #f1eef0', background: '#fdf7fa', borderRadius: '8px',
-                    fontSize: '13px', color: '#b8517f', fontWeight: 600, cursor: 'pointer', marginBottom: '4px',
-                  }}
-                >使用「{planQuery.trim()}」</button>
-              )}
-              {planFiltered.length === 0 && !planQuery.trim() && (
+              {/* 只能从已有产品里选（用户要求去掉「使用自定义」），没有匹配时给一句提示 */}
+              {planFiltered.length === 0 && (
                 <div style={{ padding: '18px 4px', fontSize: '12px', color: '#9aa0a9', textAlign: 'center' }}>
-                  这个账号还没有做过的产品，直接在上面输入名字也行
+                  {planQuery.trim() ? '没有匹配的产品，换个词试试' : '这个账号还没有做过的产品'}
                 </div>
               )}
               {planFiltered.map((n) => (

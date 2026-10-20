@@ -205,7 +205,11 @@ export function PcDashboard() {
   const todoAll = useMemo(
     () => [...(todos || [])]
       .filter((t) => !t.done)
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)),
+      // 置顶的排最前（与待办页同一规则），其余按新建倒序
+      .sort((a, b) => {
+        if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
+        return (b.createdAt || 0) - (a.createdAt || 0)
+      }),
     [todos],
   )
   const todoList = todoExpanded ? todoAll : todoAll.slice(0, 5)
@@ -256,8 +260,15 @@ export function PcDashboard() {
         </div>
 
         <div className="pcv-stack">
-          {/* 待办清单 / 发布计划 / 待投流：三块并排（用户要求），各占 1/3 宽 */}
+          {/* 发布计划 / 待投流 / 待办清单：三块并排（用户要求），各占 1/3 宽；
+              顺序按用户要求把「发布计划、待投流」放在最前面 */}
           <div className="pcv-3col">
+          {/* 发布计划：产品 / 账号 / 数量 / 时间（store.publishPlans，随云同步） */}
+          <PublishPlanCard />
+
+          {/* 待投流：与手机端同一份数据（store.adQueue），从已发布视频里挑，状态行内可改 */}
+          <AdQueueCard />
+
           {/* 待办清单：空的时候只占一行，不留大块空白 */}
           <div className="pcv-card">
             <div className="pcv-card-h">
@@ -311,11 +322,6 @@ export function PcDashboard() {
             )}
           </div>
 
-          {/* 发布计划：产品 / 账号 / 数量 / 时间（store.publishPlans，随云同步） */}
-          <PublishPlanCard />
-
-          {/* 待投流：与手机端同一份数据（store.adQueue），从已发布视频里挑，状态行内可改 */}
-          <AdQueueCard />
           </div>{/* /pcv-3col */}
 
           {/* 提醒中心：Tab 与账号筛选合并到卡头同一行（原来分两行，白占一层高度） */}

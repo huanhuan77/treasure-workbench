@@ -56,8 +56,9 @@ export function PcTodos() {
     // 数据自愈：过滤掉空项/非对象，避免脏数据在渲染时崩溃（与手机版一致）
     const arr = (todos || []).filter((t) => t && typeof t === 'object')
     const picked = filter === 'all' ? arr : arr.filter((t) => (filter === 'done' ? t.done : !t.done))
-    // 排序与手机版一致：未完成在前 → 有截止日的按日期升序 → 其余按新建倒序
+    // 排序：**置顶的最前**（用户新增）→ 未完成在前 → 有截止日的按日期升序 → 其余按新建倒序
     return [...picked].sort((a, b) => {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
       if (!!a.done !== !!b.done) return a.done ? 1 : -1
       const ad = typeof a.due === 'string' ? a.due : ''
       const bd = typeof b.due === 'string' ? b.due : ''
@@ -67,6 +68,12 @@ export function PcTodos() {
       return (b.createdAt || 0) - (a.createdAt || 0)
     })
   }, [todos, filter])
+
+  // 置顶：写 todos[].pinned（随本地存储 + 云同步），置顶的排最前
+  const togglePin = (t) => {
+    updateTodo(t.id, { pinned: !t.pinned })
+    show(!t.pinned ? '已置顶这条待办' : '已取消置顶', 'success')
+  }
 
   const add = () => {
     if (!title.trim()) { show('请输入待办内容', 'error'); return }
@@ -138,7 +145,15 @@ export function PcTodos() {
         ) : (
           <div className="pcv-card">
             {list.map((t) => (
-              <div key={t.id} className="pcv-copyitem" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div
+                key={t.id}
+                className="pcv-copyitem"
+                // 置顶的左侧加一条粉色竖条 + 淡粉底，长期可见（与文案置顶同一套视觉）
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  ...(t.pinned ? { boxShadow: 'inset 3px 0 0 #b8517f', background: '#fdf9fb' } : null),
+                }}
+              >
                 <button
                   onClick={() => updateTodo(t.id, { done: !t.done })}
                   title={t.done ? '标记为未完成' : '标记为已完成'}
@@ -160,8 +175,27 @@ export function PcTodos() {
                 }}>{typeof t.title === 'string' || typeof t.title === 'number' ? t.title : ''}</span>
                 {!t.done && <DueTag due={t.due} />}
                 {/* 「编辑 / 删除」紧跟日期靠左（用户反馈：原来被 spacer 顶到整行最右端，
-                    一屏宽下要横跨半屏去点）。剩余空白留在按钮后面 */}
-                <button className="pcv-btn-text" title="编辑内容与截止日期" onClick={() => openEdit(t)}>编辑</button>
+                    一屏宽下要横跨半屏去点）。剩余空白留在按钮后面。
+                    再右移 30px（用户要求）：和日期之间留出一点呼吸，不再紧贴着 */}
+                {/* 置顶：钉在最前（用户新增功能），已置顶时图标变实心粉色 */}
+                <button
+                  onClick={() => togglePin(t)}
+                  title={t.pinned ? '取消置顶' : '置顶这条待办'}
+                  style={{
+                    marginLeft: 30, flexShrink: 0, padding: '2px 4px', border: 'none', background: 'transparent',
+                    cursor: 'pointer', lineHeight: 0, color: t.pinned ? '#b8517f' : '#c9cdd4',
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block' }}>
+                    <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                  </svg>
+                </button>
+                <button
+                  className="pcv-btn-text"
+                  style={{ marginLeft: 8, flexShrink: 0 }}
+                  title="编辑内容与截止日期"
+                  onClick={() => openEdit(t)}
+                >编辑</button>
                 <button className="pcv-x" title="删除" onClick={() => setDelId(t.id)}>×</button>
                 <div style={{ flex: 1 }} />
               </div>
