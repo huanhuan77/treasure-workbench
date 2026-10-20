@@ -21,7 +21,9 @@ const LAST_AUTO_KEY = 'pc_auto_sync_at'
 export function CloudActions({ vertical = false }) {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { applySyncResult } = useStore()
+  // 取几个高频模块的本机条数：同步后用于提示「哪一块变了 / 什么都没变」，
+  // 便于一眼分辨「没拉到」和「拉到了但页面被筛选挡住」
+  const { applySyncResult, todos, publishRecords, samples, orders, transactions } = useStore()
   const [syncing, setSyncing] = useState(false)
   const [restoring, setRestoring] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
@@ -46,19 +48,44 @@ export function CloudActions({ vertical = false }) {
   // silent=true 时不弹成功 toast（自动同步不该每次都打断视线），失败也只在控制台记一笔
   const runSync = useCallback(async ({ silent }) => {
     const tk = getStoredToken()
-    if (!tk || syncingRef.current) return
+    // 原来没 Token 时静默 return —— 用户点了「同步」什么都不发生，很容易误判成
+    // 「同步了但数据没过来」。手动点的时候必须明确说清楚。
+    if (!tk) {
+      if (!silent) {
+        show('还没填 GitHub Token，无法同步（去「备份与同步」页填写）', 'error')
+        navigate('/pc/backup')
+      }
+      return
+    }
+    if (syncingRef.current) return
     syncingRef.current = true
     setSyncing(true)
     try {
       const gistId = localStorage.getItem('backup_gist_id')
+      const before = {
+        todos: (todos || []).length,
+        publishRecords: (publishRecords || []).length,
+        samples: (samples || []).length,
+        orders: (orders || []).length,
+        transactions: (transactions || []).length,
+      }
       const result = await syncAll(tk, gistId)
       if (result.gistId) localStorage.setItem('backup_gist_id', result.gistId)
-      applySyncResult(result.merged['blogger_workbench_data_v1'])
+      const merged = result.merged?.['blogger_workbench_data_v1'] || {}
+      applySyncResult(merged)
       const now = Date.now()
       localStorage.setItem(LAST_AUTO_KEY, String(now))
       setLastSyncAt(new Date(now))
+
       if (!silent) {
-        show(result.hasChanges ? '✅ 同步完成：本机与云端已合并' : '✅ 已是最新', 'success')
+        // 摘要：哪几块条数变了（手机刚记的待办、发布记录等会体现在这里）
+        const names = { todos: '待办', publishRecords: '发布记录', samples: '样品', orders: '出单', transactions: '收支' }
+        const diffs = Object.keys(names)
+          .filter((k) => (merged[k] || []).length !== before[k])
+          .map((k) => `${names[k]} ${before[k]}→${(merged[k] || []).length}`)
+        if (diffs.length) show(`✅ 同步完成：${diffs.join('、')}`, 'success')
+        else if (result.hasChanges) show('✅ 同步完成：云端有更新，但待办/发布记录等条数未变', 'success')
+        else show('✅ 已是最新：云端与本机条数一致（若手机刚记的没过来，说明手机那次同步没上传成功）', 'error')
       }
     } catch (e) {
       if (!silent) show('同步失败：' + e.message, 'error')
@@ -66,7 +93,7 @@ export function CloudActions({ vertical = false }) {
       syncingRef.current = false
       setSyncing(false)
     }
-  }, [applySyncResult, show])
+  }, [applySyncResult, show, navigate, todos, publishRecords, samples, orders, transactions])
 
   const handleSync = () => runSync({ silent: false })
 

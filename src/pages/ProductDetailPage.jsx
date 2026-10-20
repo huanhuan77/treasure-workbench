@@ -142,6 +142,8 @@ export function ProductDetailPage() {
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
     else if (copyFilter === '爆单') list = list.filter((c) => c.hasHot)
     return [...list].sort((a, b) => {
+      // 置顶的最前（与 PC 文案库同一字段 pinned）
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
       if (!sortPending) {
         if (a.hasHot !== b.hasHot) return b.hasHot ? 1 : -1  // 爆单优先
         if (a.hasOrder !== b.hasOrder) return b.hasOrder ? 1 : -1  // 其次出单
@@ -243,6 +245,13 @@ export function ProductDetailPage() {
   }
 
   // 标记/取消「用过」（不影响出单状态）
+  // 文案置顶（用户要求手机端也支持）：写 copies[].pinned，与 PC 文案库同一字段，
+  // 置顶的一律排最前，取消后回落原来的爆单/出单排序
+  const togglePinCopy = (copyId, current) => {
+    updateCopy(id, copyId, { pinned: !current })
+    show(!current ? '已置顶这条文案' : '已取消置顶', 'success')
+  }
+
   const toggleUsed = (copyId, current) => {
     if (current) {
       updateCopy(id, copyId, { used: false, usedDate: null })
@@ -420,6 +429,7 @@ export function ProductDetailPage() {
                 onToggleOrder={() => toggleOrder(copy.id, copy.hasOrder, copy.usedDate, (copy.content || '').replace(/\n/g, ' ').slice(0, 12))}
                 onToggleHot={() => toggleHot(copy.id, copy.hasHot)}
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
+                onTogglePin={() => togglePinCopy(copy.id, copy.pinned)}
                 onDelete={() => setDelCopyId(copy.id)}
               />
             ))}
@@ -755,16 +765,18 @@ export function ProductDetailPage() {
 function CopyCard({
   copy,
   onCopyContent,
-  onEdit, onToggleOrder, onToggleHot, onToggleUsed, onDelete,
+  onEdit, onToggleOrder, onToggleHot, onToggleUsed, onTogglePin, onDelete,
 }) {
-  // 左侧强调条配色与 PC 文案库统一（用户指定）：出单=绿 / 爆单=红 / 用过=黄
-  const cardAccent = copy.hasOrder
-    ? { borderLeft: '4px solid #10b981', borderTop: '3px solid #34d399' }
-    : copy.hasHot
-      ? { borderLeft: '4px solid #ef4444', borderTop: '3px solid #f87171' }
-      : copy.used
-        ? { borderLeft: '4px solid #f59e0b' }
-        : {}
+  // 左侧强调条配色与 PC 文案库统一（用户指定）：置顶=粉 / 出单=绿 / 爆单=红 / 用过=黄
+  const cardAccent = copy.pinned
+    ? { borderLeft: '4px solid #b8517f', borderTop: '3px solid #f2cbdd', background: '#fdf9fb' }
+    : copy.hasOrder
+      ? { borderLeft: '4px solid #10b981', borderTop: '3px solid #34d399' }
+      : copy.hasHot
+        ? { borderLeft: '4px solid #ef4444', borderTop: '3px solid #f87171' }
+        : copy.used
+          ? { borderLeft: '4px solid #f59e0b' }
+          : {}
 
   return (
     <div style={{
@@ -775,6 +787,25 @@ function CopyCard({
     }}>
       {/* 右上角操作按钮：编辑 / 删除（按你要求放右上角，编辑 ✏️、删除 ❌） */}
       <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px', zIndex: 2 }}>
+        {/* 置顶：已置顶时粉底白图标，未置顶为淡灰（与 PC 文案库同一字段 pinned） */}
+        <button
+          onClick={onTogglePin}
+          aria-label={copy.pinned ? '取消置顶' : '置顶文案'}
+          title={copy.pinned ? '取消置顶' : '置顶这条文案'}
+          style={{
+            width: '30px', height: '30px', borderRadius: '50%',
+            border: copy.pinned ? 'none' : '1px solid rgba(184,81,127,0.18)',
+            background: copy.pinned ? '#b8517f' : 'rgba(253,241,246,0.9)',
+            color: copy.pinned ? '#fff' : '#b8517f',
+            cursor: 'pointer', padding: 0,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block' }}>
+            <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+          </svg>
+        </button>
         <button
           onClick={onEdit}
           aria-label="编辑文案"

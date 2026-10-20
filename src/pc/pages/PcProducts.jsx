@@ -234,10 +234,13 @@ export function PcProducts() {
       const key = copyFilter === 'order' ? 'hasOrder' : copyFilter === 'hot' ? 'hasHot' : 'used'
       base = activeCopies.filter((c) => c[key])
     }
-    // 有标记的排前面，顺序与手机版产品详情页一致：爆单 → 出单 → 用过 → 未标记。
+    // 置顶的最前（用户新增），其余按标记排：爆单 → 出单 → 用过 → 未标记。
     // 组内保持原有顺序（Array.sort 稳定），不会把同状态的文案打乱。
     const rank = (c) => (c.hasHot ? 0 : c.hasOrder ? 1 : c.used ? 2 : 3)
-    return [...base].sort((a, b) => rank(a) - rank(b))
+    return [...base].sort((a, b) => {
+      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
+      return rank(a) - rank(b)
+    })
   }, [activeCopies, copyFilter])
 
   // 话题（产品级 ∪ 所有文案自带，去重、按 # 拆分），与手机版 ProductDetailPage 同口径
@@ -249,6 +252,14 @@ export function PcProducts() {
     writeClipboard(topics.map((t) => '#' + t).join(' ')).then((ok) => {
       show(ok ? `已复制 ${topics.length} 个话题` : '复制失败', ok ? 'success' : 'error')
     })
+  }
+
+  // 文案置顶：写在文案记录上（copies[].pinned），随产品一起落本地 + 云同步，换设备也在。
+  // 排序见 copyList：置顶的一律排最前，再按爆单/出单/用过排。
+  const togglePinCopy = (c) => {
+    if (!active) return
+    updateCopy(active.id, c.id, { pinned: !c.pinned })
+    show(!c.pinned ? '已置顶这条文案' : '已取消置顶', 'success')
   }
 
   // 复制：与手机版一致 —— 复制成功即视为「用过」，顺带写 usedDate
@@ -466,7 +477,9 @@ export function PcProducts() {
                   </div>
                 )}
 
-                {/* 文案筛选：按标记过滤，数字是当前的条数（0 的项不显示，避免一排空选项） */}
+                {/* 文案筛选：按标记过滤。0 条的项一般不显示（避免一排空选项），
+                    但「未用过」常显（用户要求）：它是最常用的反向筛选，
+                    为 0 时也要能点进去看（显示「没有未用过的文案」的空态） */}
                 {activeCopies.length > 0 && (
                   <div className="pcv-copyfilter">
                     {[
@@ -475,7 +488,7 @@ export function PcProducts() {
                       { key: 'hot', label: '已爆单', n: copyCounts.hot, color: '#c0392b' },
                       { key: 'used', label: '已用过', n: copyCounts.used, color: '#b7791f' },
                       { key: 'unused', label: '未用过', n: copyCounts.unused, color: '#8a8f98' },
-                    ].filter((f) => f.key === 'all' || f.n > 0).map((f) => (
+                    ].filter((f) => f.key === 'all' || f.key === 'unused' || f.n > 0).map((f) => (
                       <button
                         key={f.key}
                         className={copyFilter === f.key ? 'on' : ''}
@@ -501,8 +514,10 @@ export function PcProducts() {
                       <div
                         key={c.id}
                         className="pcv-copyitem"
-                        // 左侧 3px 竖条标状态，与手机版 CopyCard 的 cardAccent 同口径（出单 > 爆单 > 用过）
-                        style={bar ? { boxShadow: `inset 3px 0 0 ${bar}` } : undefined}
+                        // 左侧 3px 竖条标状态：已置顶优先显示粉色，其余与手机版 CopyCard 同口径（出单 > 爆单 > 用过）
+                        style={c.pinned
+                          ? { boxShadow: 'inset 3px 0 0 #b8517f', background: '#fdf9fb' }
+                          : (bar ? { boxShadow: `inset 3px 0 0 ${bar}` } : undefined)}
                       >
                         <div className="pcv-copytext">{c.content}</div>
                         <div className="pcv-copyfoot">
@@ -541,6 +556,19 @@ export function PcProducts() {
                               {usedAgo(c.usedDate)}
                             </span>
                           )}
+                          {/* 置顶：钉在最前（用户新增功能）。已置顶时按钮变粉底粉边，
+                              文案项左侧也加一条粉色竖条作为长期标识 */}
+                          <button
+                            className={`pcv-btn pcv-btn-ghost${c.pinned ? ' pcv-pin-btn--on' : ''}`}
+                            style={{ padding: '5px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            title={c.pinned ? '取消置顶' : '置顶这条文案'}
+                            onClick={() => togglePinCopy(c)}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                              <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                            </svg>
+                            {c.pinned ? '已置顶' : '置顶'}
+                          </button>
                           {/* 编辑 / 删除：次要操作，保持描边样式，紧跟标记与用过时间之后 */}
                           <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => setCopyDialog(c)}>编辑</button>
                           <button

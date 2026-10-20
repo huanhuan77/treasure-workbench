@@ -150,13 +150,16 @@ export function PcTodos() {
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   }}
                 >{t.done ? '✓' : ''}</button>
+                {/* 标题不再 flex:1：否则截止日期被推到整行最右端，一屏宽下要横跨半屏才看得到
+                    （用户反馈）。改成「标题 + 日期」紧挨着，剩余空白放到它们后面 */}
                 <span style={{
-                  flex: 1, minWidth: 0, fontSize: 14,
+                  flex: '0 1 auto', minWidth: 0, maxWidth: '70%', fontSize: 14,
                   color: t.done ? '#9aa0a9' : '#333a45',
                   textDecoration: t.done ? 'line-through' : 'none',
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>{typeof t.title === 'string' || typeof t.title === 'number' ? t.title : ''}</span>
                 {!t.done && <DueTag due={t.due} />}
+                <div style={{ flex: 1 }} />
                 <button className="pcv-btn-text" title="编辑内容与截止日期" onClick={() => openEdit(t)}>编辑</button>
                 <button className="pcv-x" title="删除" onClick={() => setDelId(t.id)}>×</button>
               </div>

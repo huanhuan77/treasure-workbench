@@ -72,8 +72,15 @@ export function AdQueueCard() {
             <span className="pcv-chip" style={{ background: '#fef3c7', color: '#b45309' }}>{pendingCount} 待投</span>
           )}
           <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {list.length} 条</span>
+          {/* 「＋ 添加」紧跟标题（用户要求）：与上面「待办清单」卡头的「新增」同一位置，
+              原来用 spacer 顶到最右端，中间空出一大片 */}
+          <button
+            className="pcv-metric-add"
+            style={{ marginLeft: 2 }}
+            title="从已发布视频里挑一条加入待投流"
+            onClick={() => { setSearch(''); setPickerOpen(true) }}
+          >新增</button>
           <div className="pcv-spacer" />
-          <button className="pcv-btn" onClick={() => { setSearch(''); setPickerOpen(true) }}>＋ 添加</button>
         </div>
 
         {list.length === 0 ? (
