@@ -1311,7 +1311,6 @@ export function DashboardPage() {
                     fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
                     borderRadius: '999px', padding: '1px 4px 0', marginLeft: '3px',
-                    alignSelf: 'flex-start', marginTop: '-3px',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     height: '15px', boxSizing: 'border-box',
                   }}>{t.count}</span>
