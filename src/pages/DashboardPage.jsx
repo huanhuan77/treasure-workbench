@@ -947,7 +947,7 @@ export function DashboardPage() {
                             <div style={{ marginTop: '4px' }}>
                               <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>⚠ 已逾期（截止 {s.deadline}）</span>
                             </div>
-                          ) : pending.length > 0 ? (
+                          ) : showAccounts.length > 0 ? (
                             <div style={{ marginTop: '4px' }}>
                               <span style={{
                                 fontSize: '10px', fontWeight: 700, color: '#fff',
