@@ -40,11 +40,18 @@ export function SearchSelect({
     return items.filter((i) => String(i.label).toLowerCase().includes(q))
   }, [items, query])
 
+  // 关闭面板。allowCustom 时把「已输入但未提交」的文字一并采用 ——
+  // 否则用户打完产品名直接点保存，值还是空的，看起来像「新增没生效」。
+  const close = () => {
+    if (allowCustom && query.trim() && query.trim() !== value) onChange(query.trim())
+    setOpen(false)
+  }
+
   // 点外面 / 按 Esc 关闭
   useEffect(() => {
     if (!open) return
-    const onDown = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false) }
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    const onDown = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) close() }
+    const onKey = (e) => { if (e.key === 'Escape') close() }
     document.addEventListener('pointerdown', onDown, true)
     document.addEventListener('keydown', onKey)
     return () => {
@@ -72,7 +79,7 @@ export function SearchSelect({
         type="button"
         className="pcv-input"
         title={title || label}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => (open ? close() : setOpen(true))}
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           gap: 6, cursor: 'pointer', background: '#fff', color: value ? '#333a45' : '#8a8f98',
@@ -104,7 +111,11 @@ export function SearchSelect({
             style={{ width: '100%', marginBottom: 4 }}
             placeholder={placeholder}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              // allowCustom（自由文本场景）：边输入边回传，这样用户打完名字直接点保存也能生效
+              if (allowCustom) onChange(e.target.value)
+            }}
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return
               if (filtered.length > 0) pick(filtered[0].value)

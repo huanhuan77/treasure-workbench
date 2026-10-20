@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
@@ -21,6 +21,7 @@ export function PublishPlanCard() {
   const { show } = useToast()
   const [editing, setEditing] = useState(null)   // null=关闭 / 'new' / 条目对象
   const [form, setForm] = useState(emptyForm())
+  const [flashId, setFlashId] = useState('')     // 刚保存的那条：滚动定位 + 高亮 4 秒
 
   const list = publishPlans || []
 
@@ -57,7 +58,7 @@ export function PublishPlanCard() {
 
   const save = () => {
     const name = form.name.trim()
-    if (!name) { show('请填写发布产品', 'error'); return }
+    if (!name) { show('请先选择或输入发布产品', 'error'); return }
     const payload = {
       name,
       account: form.account,
@@ -66,14 +67,28 @@ export function PublishPlanCard() {
       note: form.note.trim(),
     }
     if (editing === 'new') {
-      addPublishPlan(payload)
-      show('已加入发布计划', 'success')
+      const id = addPublishPlan(payload)
+      show(`已加入发布计划：${name}`, 'success')
+      // 新增后滚到这一行并高亮（用户反馈「新增了一条消失不见了」：
+      // 条目其实加进去了，但按时间排序可能落在卡片下方，一屏看不到）
+      setFlashId(id || '')
     } else if (editing) {
       updatePublishPlan(editing.id, payload)
       show('已保存', 'success')
+      setFlashId(editing.id)
     }
     setEditing(null)
   }
+
+  useEffect(() => {
+    if (!flashId) return
+    const t = setTimeout(() => {
+      const row = document.querySelector(`tr[data-plan-id="${flashId}"]`)
+      if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }, 80)
+    const t2 = setTimeout(() => setFlashId(''), 4000)
+    return () => { clearTimeout(t); clearTimeout(t2) }
+  }, [flashId])
 
   return (
     <>
@@ -107,7 +122,11 @@ export function PublishPlanCard() {
                 const overdue = p.planDate && p.planDate < today
                 const isToday = p.planDate === today
                 return (
-                  <tr key={p.id}>
+                  <tr
+                    key={p.id}
+                    data-plan-id={p.id}
+                    style={flashId === p.id ? { background: '#fff7e6', transition: 'background .3s ease' } : undefined}
+                  >
                     <td className="pcv-name" title={p.name}>{p.name}</td>
                     <td>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>

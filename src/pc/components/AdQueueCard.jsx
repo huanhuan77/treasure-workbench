@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
@@ -32,6 +32,7 @@ export function AdQueueCard() {
   // 不再提供「已投流 N」查看入口，也不需要找回来。底层数据保留（不会真删，
   // 免得误点后不可恢复），只是不再参与展示。
   const visible = list.filter((a) => a.status !== '已投流')
+  const [flashId, setFlashId] = useState('')   // 刚加入的那条：滚动定位 + 高亮 4 秒
 
   // 可作为待投流的候选：已发布（至少一条视频）的 样品 × 账号
   const options = useMemo(() => {
@@ -86,7 +87,7 @@ export function AdQueueCard() {
   }, [options, search, pickAccount, pickRange])
 
   const add = (o) => {
-    addAdQueue({
+    const id = addAdQueue({
       sampleId: o.sampleId,
       name: o.name,
       account: o.account,
@@ -95,8 +96,20 @@ export function AdQueueCard() {
     })
     setPickerOpen(false)
     setSearch('')
-    show('已加入待投流', 'success')
+    show(`已加入待投流：${o.name}`, 'success')
+    // 新增后高亮并滚动到该行（避免「加了却看不到」）
+    setFlashId(id || '')
   }
+
+  useEffect(() => {
+    if (!flashId) return
+    const t = setTimeout(() => {
+      const row = document.querySelector(`tr[data-ad-id="${flashId}"]`)
+      if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }, 80)
+    const t2 = setTimeout(() => setFlashId(''), 4000)
+    return () => { clearTimeout(t); clearTimeout(t2) }
+  }, [flashId])
 
   return (
     <>
@@ -141,7 +154,11 @@ export function AdQueueCard() {
                 const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
                 const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
                 return (
-                  <tr key={a.id}>
+                  <tr
+                    key={a.id}
+                    data-ad-id={a.id}
+                    style={flashId === a.id ? { background: '#fff7e6', transition: 'background .3s ease' } : undefined}
+                  >
                     <td className="pcv-name" title={a.name}>{a.name}</td>
                     <td>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
