@@ -44,7 +44,7 @@ const STATUS_OPTS = [
   { v: 'archived', label: '已放弃' },
 ]
 
-export function SampleDialog({ sample, onClose }) {
+export function SampleDialog({ sample, onClose, onSaved }) {
   const { addSample, updateSample, deleteSample } = useStore()
   const { show } = useToast()
 
@@ -97,14 +97,13 @@ export function SampleDialog({ sample, onClose }) {
     // 口径来自手机版 NewSamplePage（SampleForm 那条老路径不校验，但那条路已经不走新增了）。
     if (isNew && form.accounts.length === 0) { show('请选择归属账号', 'error'); return }
     const f = { ...form, name: form.name.trim(), account: form.accounts[0] || '', accounts: [...form.accounts] }
-    if (isNew) {
-      addSample(f)
-      show('样品已添加', 'success')
-    } else {
-      updateSample(sample.id, f)
-      show('已保存', 'success')
-    }
+    const newId = isNew ? addSample(f) : null
+    if (isNew) show('样品已添加', 'success')
+    else { updateSample(sample.id, f); show('已保存', 'success') }
     onClose()
+    // 保存成功后让列表「重新请求一次」：清掉可能把这条挡住的筛选 + 强制重算 + 定位高亮。
+    // （addSample 会返回新 id，部分实现没有返回值，这里只在拿到 id 时透传）
+    if (typeof onSaved === 'function') onSaved(newId || sample?.id || '')
   }
 
   const doDelete = () => {

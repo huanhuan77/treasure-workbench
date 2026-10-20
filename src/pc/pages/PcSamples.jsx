@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
@@ -71,6 +71,42 @@ export function PcSamples() {
     cancelRename()
   }
 
+  // 保存后「重新请求列表」：清掉可能挡住新样品的筛选（状态/账号/是否出单/搜索），
+  // 并 +1 一个 refreshKey 强制重算，保证新加的那条一定出现在当前视图里
+  const [refreshKey, setRefreshKey] = useState(0)
+  const handleSaved = (id) => {
+    setFilter('all')
+    setAccountFilter('all')
+    setOrderFilter('all')
+    setKeyword('')
+    setRefreshKey((k) => k + 1)
+    if (id) setFlashId(id)
+  }
+
+  // 新增样品后**定位并高亮**那一行（用户反馈「新增样品没刷新列表」）：
+  // 其实数据已经加进去了，但默认排序把新样品排在长列表最后面，一屏看不到，
+  // 看起来就像没刷新。这里记住「上一批 id」，发现新出现的 id 就滚到它并短暂高亮。
+  const [flashId, setFlashId] = useState('')
+  const prevIdsRef = useRef(new Set())
+  useEffect(() => {
+    const ids = new Set((samples || []).map((s) => s && s.id).filter(Boolean))
+    const prev = prevIdsRef.current
+    // 首帧只做基线，不触发高亮
+    if (prev.size > 0) {
+      const added = [...ids].filter((id) => !prev.has(id))
+      if (added.length) {
+        const id = added[0]
+        setFlashId(id)
+        setTimeout(() => {
+          const row = document.querySelector(`tr[data-sample-id="${id}"]`)
+          if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        }, 60)
+        setTimeout(() => setFlashId(''), 4000)
+      }
+    }
+    prevIdsRef.current = ids
+  }, [samples])
+
   // 从总览指标卡的「新增」跳过来（/pc/samples?add=1）时自动打开新增弹窗；
   // 打开后把 add 参数清掉，免得刷新或关掉弹窗后又弹一次。
   const [searchParams, setSearchParams] = useSearchParams()
@@ -134,7 +170,7 @@ export function PcSamples() {
       if (!vb) return -1
       return va.localeCompare(vb) * dir
     })
-  }, [accountFiltered, sortKey, sortDir])
+  }, [accountFiltered, sortKey, sortDir, refreshKey])
 
   const statusStats = useMemo(() => computeStatusStats(samples, accountFilter), [samples, accountFilter])
   // 与手机版一致：总数扣掉已放弃
@@ -325,7 +361,12 @@ export function PcSamples() {
                 // 各账号的明细留在 title 里，不占版面（多账号样品原来挤在一格里会溢出到隔壁列）。
                 const publishTotal = accounts.reduce((n, a) => n + (getCounts(s, a).publishCount || 0), 0)
                 return (
-                  <tr key={s.id}>
+                  <tr
+                    key={s.id}
+                    data-sample-id={s.id}
+                    // 刚新增的样品短暂高亮，配合 scrollIntoView 让用户一眼看到加在哪
+                    style={flashId === s.id ? { background: '#fff7e6', transition: 'background .3s ease' } : undefined}
+                  >
                     <td>
                       {/* 分类已单独成列，产品格只留名字。
                           名字可**行内编辑**（用户要求「可以编辑名字」）：点一下变输入框，
@@ -467,7 +508,11 @@ export function PcSamples() {
 
       {/* 新增/编辑样品：弹窗（PC 版外壳，见 components/SampleDialog），不跳页面 */}
       {sampleDialog !== undefined && (
-        <SampleDialog sample={sampleDialog} onClose={() => setSampleDialog(undefined)} />
+        <SampleDialog
+          sample={sampleDialog}
+          onClose={() => setSampleDialog(undefined)}
+          onSaved={handleSaved}
+        />
       )}
 
     </>
