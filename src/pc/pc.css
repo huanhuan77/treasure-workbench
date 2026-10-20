@@ -404,21 +404,21 @@
   border-collapse: collapse;
 }
 
-/* 表头：中性灰「表头带」，全站 13 个 PC 表格共用这一条规则。
+/* 表头：全站统一一支**淡藕粉**表头带（用户要求「整体统一换个颜色」）。
    底色必须是实色 —— th 是 sticky 的，半透明会在行滚过时透出来。
-   底色要比卡片白底明显深一档：之前 #f1f3f6 与白底几乎重合、看不出表头边界
-   （用户反馈「颜色重合了」），这里压到 #e7eaef。
-   调色记录：粉底(#fdf2f7→#fad4e5→#fce9f2→#fce4ef)一路调不出满意效果，最终定为中性灰。 */
+   演进：中性灰 #f1f3f6（与白底重合）→ #e7eaef（够深但偏冷，在卡片里像一条分隔带）
+        → 现在 #f8edf3 淡藕粉：与品牌粉同族但不抢眼，白卡头与数据行之间过渡自然。
+   所有表格 + 卡片内嵌小表共用这一色，不再分两套。 */
 .pcv-table th {
   position: sticky;
   top: 0;
   z-index: 1;
   padding: 9px 14px;
-  background: #e7eaef;
-  border-bottom: 0.5px solid rgba(15, 23, 42, 0.12);
+  background: #f8edf3;
+  border-bottom: 0.5px solid rgba(184, 81, 127, 0.14);
   font-size: 12px;
   font-weight: 600;
-  color: #4b5563;
+  color: #8a6a78;
   text-align: left;
   white-space: nowrap;
 }
@@ -430,13 +430,9 @@
   vertical-align: middle;
 }
 
-/* 卡片内嵌小表（目前是总览的「待投流」）：表头改成比卡片白底只深一点的浅灰，
-   与卡头（白底 + 细线）连成一块；原来沿用全局的深灰表头带（#e7eaef），
-   在只有一两行的小卡里像是「另一张表浮在卡片上」（用户反馈「像不是一块」）。 */
+/* 卡片内嵌小表（总览的「待投流」「发布提醒」）：表头颜色与全局统一（淡藕粉），
+   这里只做一点点内边距对齐，不再单独定义背景色。 */
 .pcv-table--inset th {
-  background: #f7f8fa;
-  border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
-  color: #6b7280;
   font-weight: 600;
 }
 .pcv-table--inset td:first-child,

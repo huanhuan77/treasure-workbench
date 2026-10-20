@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
 import { getCounts, hasPublished, isArchivedSample } from '../../utils/sampleStatus'
 
 // 总览「待投流」卡片（对齐手机端 DashboardPage 的那个板块）：
@@ -20,6 +20,10 @@ export function AdQueueCard() {
   const { show } = useToast()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [search, setSearch] = useState('')
+  // 弹窗里按账号切换（用户要求）：'' = 全部账号
+  const [pickAccount, setPickAccount] = useState('')
+  // 弹窗里按**发布日期**筛候选：'' 全部 / today 今天 / yesterday 昨天 / week 近七天
+  const [pickRange, setPickRange] = useState('')
 
   const list = adQueue || []
   const pendingCount = list.filter((a) => a.status === '未投流').length
@@ -44,11 +48,37 @@ export function AdQueueCard() {
     return out.sort((x, y) => (y.publishDate || '').localeCompare(x.publishDate || ''))
   }, [samples])
 
+  // 候选里出现过的账号（按 ACCOUNTS 顺序，未在册的排后面）
+  const accountOptions = useMemo(() => {
+    const set = new Set(options.map((o) => o.account).filter(Boolean))
+    return [...set].sort((x, y) => {
+      const ix = ACCOUNTS.indexOf(x)
+      const iy = ACCOUNTS.indexOf(y)
+      return (ix === -1 ? 999 : ix) - (iy === -1 ? 999 : iy) || x.localeCompare(y, 'zh')
+    })
+  }, [options])
+
   const filtered = useMemo(() => {
     const kw = search.trim()
-    if (!kw) return options
-    return options.filter((o) => o.name.includes(kw) || o.account.includes(kw))
-  }, [options, search])
+    let arr = options
+    if (pickAccount) arr = arr.filter((o) => o.account === pickAccount)
+    if (pickRange) {
+      const p = (n) => String(n).padStart(2, '0')
+      const fmt = (d) => `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+      const today = fmt(new Date())
+      const yesterday = fmt(new Date(Date.now() - 864e5))
+      const weekFrom = fmt(new Date(Date.now() - 6 * 864e5))
+      arr = arr.filter((o) => {
+        const d = o.publishDate || ''
+        if (!d) return false
+        if (pickRange === 'today') return d === today
+        if (pickRange === 'yesterday') return d === yesterday
+        return d >= weekFrom   // 近七天（含今天）
+      })
+    }
+    if (!kw) return arr
+    return arr.filter((o) => o.name.includes(kw) || o.account.includes(kw))
+  }, [options, search, pickAccount, pickRange])
 
   const add = (o) => {
     addAdQueue({
@@ -78,7 +108,7 @@ export function AdQueueCard() {
             className="pcv-metric-add"
             style={{ marginLeft: 2 }}
             title="从已发布视频里挑一条加入待投流"
-            onClick={() => { setSearch(''); setPickerOpen(true) }}
+            onClick={() => { setSearch(''); setPickAccount(''); setPickRange(''); setPickerOpen(true) }}
           >新增</button>
           <div className="pcv-spacer" />
         </div>
@@ -158,7 +188,65 @@ export function AdQueueCard() {
                 autoFocus
                 onChange={(e) => setSearch(e.target.value)}
               />
-              <div style={{ maxHeight: 420, overflowY: 'auto' }}>
+              {/* 账号切换：全部 + 候选里出现过的账号（用账号主题色描边，选中实底白字） */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                <button
+                  onClick={() => setPickAccount('')}
+                  style={{
+                    padding: '4px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                    fontSize: 12, fontWeight: 600,
+                    border: pickAccount === '' ? 'none' : '1px solid rgba(15,23,42,0.14)',
+                    background: pickAccount === '' ? '#b8517f' : '#fff',
+                    color: pickAccount === '' ? '#fff' : '#6b7280',
+                  }}
+                >全部账号</button>
+                {accountOptions.map((a) => {
+                  const col = (ACCOUNT_COLOR[a] || {}).c || '#6b7280'
+                  const on = pickAccount === a
+                  return (
+                    <button
+                      key={a}
+                      onClick={() => setPickAccount(on ? '' : a)}
+                      style={{
+                        padding: '4px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                        fontSize: 12, fontWeight: 600,
+                        border: on ? 'none' : `1px solid ${col}`,
+                        background: on ? col : '#fff',
+                        color: on ? '#fff' : col,
+                      }}
+                    >{a}</button>
+                  )
+                })}
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9aa0a9' }}>
+                  当前 {filtered.length} 个
+                </span>
+              </div>
+
+              {/* 发布日期筛选（用户要求）：今天 / 昨天 / 近七天，只看这段时间发过的视频 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                {[
+                  { k: '', l: '全部日期' },
+                  { k: 'today', l: '今天' },
+                  { k: 'yesterday', l: '昨天' },
+                  { k: 'week', l: '近七天' },
+                ].map((r) => {
+                  const on = pickRange === r.k
+                  return (
+                    <button
+                      key={r.k || 'all'}
+                      onClick={() => setPickRange(r.k)}
+                      style={{
+                        padding: '4px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                        fontSize: 12, fontWeight: 600,
+                        border: on ? 'none' : '1px solid rgba(15,23,42,0.14)',
+                        background: on ? '#b8517f' : '#fff',
+                        color: on ? '#fff' : '#6b7280',
+                      }}
+                    >{r.l}</button>
+                  )
+                })}
+              </div>
+              <div style={{ maxHeight: 380, overflowY: 'auto' }}>
                 {filtered.length === 0 ? (
                   <div className="pcv-empty" style={{ padding: '26px 0' }}>没有匹配的已发布视频</div>
                 ) : filtered.map((o, i) => {

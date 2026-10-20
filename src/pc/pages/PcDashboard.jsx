@@ -369,7 +369,8 @@ export function PcDashboard() {
               <div className="pcv-empty">当前筛选下没有需要处理的样品</div>
             ) : (
               // 合并成一张表：账号不再各占一个标题+表格，改成一列「账号」（用户要求）
-              <table className="pcv-table">
+              // --inset：表头不用深灰带（用户要求），与卡头连成一块，不再像被一条灰线分开
+              <table className="pcv-table pcv-table--inset">
                 <thead>
                   <tr>
                     <th style={{ width: 190 }}>产品</th>
