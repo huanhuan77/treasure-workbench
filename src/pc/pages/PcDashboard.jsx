@@ -512,10 +512,10 @@ export function PcDashboard() {
                   <tr>
                     <th style={{ width: 190 }}>产品</th>
                     <th style={{ width: 180 }}>操作</th>
-                    {/* 提醒天数单独一列（只有「每N天提醒」/「已逾期」这些标签），120 够用 */}
-                    <th style={{ width: 130 }}>{cur.header}</th>
                     {/* 账号列：高频出单 / 发布提醒里是「账号 + 已N天」双色胶囊，需要更宽 */}
                     <th style={{ width: 340 }}>账号</th>
+                    {/* 提醒天数单独一列（只有「每N天提醒」/「已逾期」这些标签） */}
+                    <th style={{ width: 130 }}>{cur.header}</th>
                     <th style={{ width: 90 }}>状态</th>
                     <th style={{ width: 110 }}>截止日期</th>
                   </tr>
@@ -535,8 +535,6 @@ export function PcDashboard() {
                           style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
                         >{s.name}</td>
                         <td>{cur.actions(it, acc)}</td>
-                        {/* 提醒天数（每N天提醒 / 已逾期）单独一列 */}
-                        <td>{cur.mid(it, acc, accs)}</td>
                         {/* 账号列：高频出单 / 发布提醒里显示「账号 + 已N天」（用户要求合并到这里）；
                             其它 tab 仍是圆点 + 名字 */}
                         {tab === 'hot' || tab === 'reminders' ? (
@@ -556,6 +554,8 @@ export function PcDashboard() {
                             </span>
                           </td>
                         )}
+                        {/* 提醒天数（每N天提醒 / 已逾期）单独一列 */}
+                        <td>{cur.mid(it, acc, accs)}</td>
                         <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>
                         <td
                           className="pcv-num"
