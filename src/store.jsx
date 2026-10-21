@@ -4456,28 +4456,37 @@ export function StoreProvider({ children }) {
       }
       if (list && list.length) {
         const perAcct = {}
+        // 先收集「明确写了账号」的记录归属集合，作为无账号老记录的兜底依据
+        const explicit = new Set()
         for (const r of list) {
-          // 记录里写了账号、但那些账号不属于这个样品（例如给「广东刘亦菲」记了某样品，
-          // 而该样品只有「晚梨不吃梨/努力成为富婆」）→ 这条记录**不能**算到样品现有账号头上，
-          // 否则会把别人的发布日期混进来，导致「距上次发布」少算、提醒不触发
-          // （用户反馈：月舒补 晚梨 实际 10-14 发布，却被 10-18 那条别人记录顶成「已3天」）。
+          const raw = Array.isArray(r.accounts) ? r.accounts.map((a) => mapAccount(a)).filter(Boolean) : []
+          for (const a of raw) if (accounts.includes(a)) explicit.add(a)
+        }
+        for (const r of list) {
+          // 记录里写了账号、但那些账号不属于这个样品 → 不能算到样品现有账号头上
           const raw = Array.isArray(r.accounts) ? r.accounts.map((a) => mapAccount(a)).filter(Boolean) : []
           const rAccs = raw.filter((a) => accounts.includes(a))
           if (raw.length && rAccs.length === 0) continue
-          // 记录本身没写账号 → 回退到样品全部账号（老数据）
+          // 记录本身没写账号 → 老数据。单账号样品直接算给该账号；多账号样品只补到
+          // 明确出现过的账号，新换进来的账号不继承历史账号的发布数。
           const qty = Number(r.qty) > 0 ? Number(r.qty) : 1
-          const targets = rAccs.length ? rAccs : accounts
+          const targets = rAccs.length
+            ? rAccs
+            : (accounts.length === 1 ? accounts : [...explicit])
           for (const a of targets) {
             if (!perAcct[a]) perAcct[a] = { count: 0, dates: [] }
             perAcct[a].count += qty
             if (r.publishDate) perAcct[a].dates.push(r.publishDate)
           }
         }
-        for (const a of Object.keys(perAcct)) {
+        // 按当前账号全集重建，避免旧账号残留数被新账号继承
+        for (const a of accounts) {
+          const pc = perAcct[a]
+          const dates = pc ? pc.dates.filter(Boolean).sort() : []
           countsByAccount[a] = {
-            publishCount: perAcct[a].count,
+            publishCount: pc ? pc.count : 0,
             orderCount: Number(countsByAccount[a]?.orderCount) || 0,
-            lastPublishAt: perAcct[a].dates.filter(Boolean).sort().slice(-1)[0] || '',
+            lastPublishAt: dates.slice(-1)[0] || '',
           }
           changed = true
         }
