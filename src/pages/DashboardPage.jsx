@@ -888,6 +888,13 @@ export function DashboardPage() {
               {(() => {
                 const planFiltered = planSorted.filter((p) => planAcct === 'all' || p.account === planAcct)
                 const visible = planExpanded ? planFiltered : planFiltered.slice(0, PREVIEW_COUNT)
+                // 同一天的计划给同一档淡背景，隔天换色便于按天分组
+                let lastDate = null, group = 0
+                const bgFor = (p) => {
+                  const d = p.planDate || ''
+                  if (d !== lastDate) { group += 1; lastDate = d }
+                  return group % 2 === 0 ? '#fbf3f7' : '#ffffff'
+                }
                 return (
                   <>
                     {visible.map((p) => {
@@ -898,6 +905,7 @@ export function DashboardPage() {
                       const canDone = !p.planDate || p.planDate <= todayPlan
                       return (
                         <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
+                          <div style={{ background: bgFor(p), borderRadius: 10, padding: '8px 10px' }}>
                           <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <button
                               onClick={(e) => { e.stopPropagation(); if (canDone) markPlanDone(p) }}
@@ -922,6 +930,7 @@ export function DashboardPage() {
                             <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0, fontWeight: 700 }}>
                               {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
                             </span>
+                          </div>
                           </div>
                         </SwipeRow>
                       )
