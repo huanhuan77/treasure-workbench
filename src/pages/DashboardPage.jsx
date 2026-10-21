@@ -421,8 +421,8 @@ export function DashboardPage() {
     setPlanQuery('')
     setPlanEdit(p)
   }
-  // 「新建计划」：与 PC 提醒中心的同名按钮同一口径 ——
-  // 取该样品**最该发**的账号，建一条今天的发布计划（数量 1）；今天已有同产品+同账号的计划就不重复建。
+  // 「新建计划」：与 PC 一致，**打开「新增发布计划」弹窗**并带上该行的产品名 + 账号
+  // （用户要求「新建计划要弹计划弹窗」）；数量/日期都在弹窗里确认后再保存。
   const quickPlan = (s) => {
     const name = String((s && s.name) || '').trim()
     const accs = pendingAccounts(s)
@@ -433,18 +433,16 @@ export function DashboardPage() {
       show('这个产品还没有到该发的账号', 'error')
       return
     }
-    const dup = (publishPlans || []).some(
-      (p) => !p.done
-        && String(p.name || '').trim() === name
-        && p.account === acc
-        && (p.planDate || todayPlan) === todayPlan,
-    )
-    if (dup) {
-      show(`「${name}」今天已有 ${acc} 的计划了`, 'error')
-      return
-    }
-    addPublishPlan({ name, account: acc, qty: 1, planDate: todayPlan })
-    show(`已加入发布计划：${name}（${acc}）`, 'success')
+    const o = {}
+    for (const a of ACCOUNTS) o[a] = []
+    o[acc] = [{ name, qty: '1' }]
+    setPlanByAcc(o)
+    setPlanAccount(acc)
+    setPlanDate(tomorrowPlan)
+    setPlanEditEntry({ name: '', qty: '1' })
+    setPlanPickIdx(-1)
+    setPlanQuery('')
+    setPlanEdit('new')
   }
 
   // 「标记已发」：与 PC 一致，顺手把这次发布**写进发布记录**（用户要求）
