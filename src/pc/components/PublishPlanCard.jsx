@@ -69,8 +69,6 @@ export function PublishPlanCard() {
   // '' = 全部账号。默认只列 5 条，底部「查看全部 N 条」展开（与「待办清单」一致）。
   const [accFilter, setAccFilter] = useState('')
   const [expanded, setExpanded] = useState(false)
-  // 账号筛选胶囊**不常驻**：卡头放一个「全部账号 ▾」按钮，点它才展开（用户要求「太紧凑了」）
-  const [filterOpen, setFilterOpen] = useState(false)
   // 只列卡里真实出现过的账号（按 ACCOUNTS 固定顺序，未在册的排后面）
   const accOptions = useMemo(() => {
     const set = new Set(list.map((p) => p.account).filter(Boolean))
@@ -245,29 +243,12 @@ export function PublishPlanCard() {
             <span className="pcv-chip" style={{ background: '#eef2ff', color: '#4f5fbb' }}>{upcoming} 待发</span>
           )}
           <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {accFiltered.length} 条</span>
-          {/* 账号筛选：卡头放一个「全部」按钮，**点它才展开**账号胶囊行；
-              胶囊不平铺常驻、也不做成「全部账号」下拉（用户要求） */}
-          {accOptions.length > 1 && (
-            <button
-              className="pcv-btn-text"
-              onClick={() => setFilterOpen((v) => !v)}
-              title="按账号筛选"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12, fontWeight: 600,
-                color: accFilter ? (ACCOUNT_COLOR[accFilter] || {}).c || '#6b7280' : '#6b7280',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {accFilter || '全部'}
-              <span style={{ fontSize: 9, transform: filterOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
-            </button>
-          )}
           <button className="pcv-metric-add" style={{ marginLeft: 2 }} title="新增一条发布计划" onClick={openNew}>新增</button>
           <div className="pcv-spacer" />
         </div>
 
-        {/* 账号筛选胶囊：点卡头「全部账号 ▾」才展开（平时不占一行） */}
-        {filterOpen && accOptions.length > 1 && (
+        {/* 账号筛选胶囊：直接平铺显示（用户要求「直接展开」） */}
+        {accOptions.length > 1 && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap',
             overflowX: 'auto', padding: '0 12px 8px',
