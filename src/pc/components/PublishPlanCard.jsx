@@ -358,8 +358,9 @@ export function PublishPlanCard() {
                   }}>
                     {(p.planDate || '').slice(5) || '—'}
                   </span>
-                  {/* 操作按钮：默认隐藏，鼠标悬停该行才出现（用户要求「太紧凑了」） */}
-                  <span className="pcv-rowacts" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                  {/* 操作按钮：默认隐藏，鼠标悬停该行才出现（用户要求「太紧凑了」）。
+                      左边留 20px 空档：数量/账号/日期整块往左 20px，操作列仍贴住右边缘 */}
+                  <span className="pcv-rowacts" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0, marginLeft: 20 }}>
                     <button className="pcv-x" title="编辑" style={{ width: 20, height: 20, fontSize: 13, color: '#8a8f98' }} onClick={() => openEdit(p)}>✎</button>
                     <button
                       className="pcv-x"

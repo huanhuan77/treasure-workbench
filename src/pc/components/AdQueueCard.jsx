@@ -273,8 +273,9 @@ export function AdQueueCard() {
                   >
                     {AD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  {/* 删除按钮：默认隐藏，鼠标悬停该行才出现（与「发布计划」一致） */}
-                  <span className="pcv-rowacts" style={{ display: 'inline-flex', flexShrink: 0 }}>
+                  {/* 删除按钮：默认隐藏，鼠标悬停该行才出现（与「发布计划」一致）；
+                      左边留 20px 空档：账号/日期整块往左 20px，操作仍贴住右边缘 */}
+                  <span className="pcv-rowacts" style={{ display: 'inline-flex', flexShrink: 0, marginLeft: 20 }}>
                     <button
                       className="pcv-x"
                       title="删除"
