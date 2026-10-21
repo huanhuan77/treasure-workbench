@@ -570,10 +570,7 @@ export function PublishPlanCard() {
                         />
                         <button type="button" onClick={() => bumpQty(idx, 1)}>＋</button>
                       </div>
-                      {!isEditing && (
-                        <button className="pcv-x" title="删除该条" onClick={() => removeEntry(idx)}>×</button>
-                      )}
-                      {/* 锁定态：把剩余空间推到右边，让「产品 + 数量 + ×」整体靠左 */}
+                      {/* 锁定态：把剩余空间推到右边，让「产品 + 数量」整体靠左 */}
                       {compactLayout && <div style={{ flex: 1 }} />}
                     </div>
 

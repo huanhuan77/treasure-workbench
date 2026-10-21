@@ -1072,12 +1072,6 @@ export function DashboardPage() {
                       fontSize: '16px', color: '#8a8f98', cursor: 'pointer',
                     }}>＋</button>
                   </div>
-                  {!planIsEditing && (
-                    <button onClick={() => planRemoveEntry(idx)} style={{
-                      border: 'none', background: 'transparent', color: '#c9cdd4',
-                      fontSize: '18px', cursor: 'pointer', padding: '0 2px',
-                    }}>×</button>
-                  )}
                 </div>
 
                 {/* 产品选择面板：就地展开，点一行即选中 */}
