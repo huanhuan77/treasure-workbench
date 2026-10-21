@@ -388,19 +388,20 @@ export function PublishPlanCard() {
                   </span>
                   {/* 操作按钮：默认隐藏，鼠标悬停该行才出现（用户要求「太紧凑了」）。
                       左边留 20px 空档：数量/账号/日期整块往左 20px，操作列仍贴住右边缘 */}
-                  <span className="pcv-rowacts" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0, marginLeft: 20 }}>
-                    {/* 完成：标记已发 + 自动写入发布记录（用户要求「加个完成按钮」） */}
+                  <span className="pcv-rowacts" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 14 }}>
+                    {/* 完成：标记已发 + 自动写入发布记录（用户要求「加个完成按钮」）。
+                        三个按钮放大到 24px、间距 8px，避免手快点错 */}
                     <button
                       className="pcv-x"
                       title="标记已发（同时写入发布记录）"
-                      style={{ width: 20, height: 20, fontSize: 12, color: '#16a34a', background: 'rgba(22,163,74,0.10)' }}
+                      style={{ width: 24, height: 24, fontSize: 14, color: '#16a34a', background: 'rgba(22,163,74,0.10)' }}
                       onClick={() => markDone(p)}
                     >✓</button>
-                    <button className="pcv-x" title="编辑" style={{ width: 20, height: 20, fontSize: 13, color: '#8a8f98' }} onClick={() => openEdit(p)}>✎</button>
+                    <button className="pcv-x" title="编辑" style={{ width: 24, height: 24, fontSize: 14, color: '#8a8f98' }} onClick={() => openEdit(p)}>✎</button>
                     <button
                       className="pcv-x"
                       title="删除"
-                      style={{ width: 20, height: 20, fontSize: 13 }}
+                      style={{ width: 24, height: 24, fontSize: 14 }}
                       onClick={() => { deletePublishPlan(p.id); show('已删除', 'success') }}
                     >×</button>
                   </span>

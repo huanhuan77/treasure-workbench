@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
-import { getAccounts } from '../../utils/accounts'
+import { ACCOUNTS, getAccounts } from '../../utils/accounts'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
 import { ResetButton } from '../components/ResetButton'
@@ -163,6 +163,12 @@ export function PcPublishRecords() {
       if (!B) return -1
       return dir === 'asc' ? A.localeCompare(B) : B.localeCompare(A)
     }
+    // 同一天/同数量时按**账号固定顺序**排（广东刘亦菲 → 晚梨不吃梨 → 努力成为富婆），
+    // 不然同一日期下账号会随机交错（用户反馈「这怎么不按账号顺序排」）
+    const accRank = (g) => {
+      const i = ACCOUNTS.indexOf(g.account || '')
+      return i < 0 ? 99 : i
+    }
     return [...map.values()]
       .map((g) => {
         const dates = [...new Set(g.records.map((r) => r.publishDate).filter(Boolean))].sort().reverse()
@@ -171,10 +177,11 @@ export function PcPublishRecords() {
       })
       .sort((a, b) => {
         // 次数排序与「发布次数」列同口径：用 qty（视频条数），不是记录条数
-        if (sortKey === 'dateAsc') return byDate(a, b, 'asc') || (b.qty - a.qty)
-        if (sortKey === 'countDesc') return (b.qty - a.qty) || byDate(a, b, 'desc')
-        if (sortKey === 'countAsc') return (a.qty - b.qty) || byDate(a, b, 'desc')
-        return byDate(a, b, 'desc') || (b.qty - a.qty)
+        // 每个分支最后都用账号顺序兜底：同日期（或同数量）时按账号固定顺序排
+        if (sortKey === 'dateAsc') return byDate(a, b, 'asc') || (b.qty - a.qty) || (accRank(a) - accRank(b))
+        if (sortKey === 'countDesc') return (b.qty - a.qty) || byDate(a, b, 'desc') || (accRank(a) - accRank(b))
+        if (sortKey === 'countAsc') return (a.qty - b.qty) || byDate(a, b, 'desc') || (accRank(a) - accRank(b))
+        return byDate(a, b, 'desc') || (accRank(a) - accRank(b)) || (b.qty - a.qty)
       })
   }, [records, sampleMap, account, bounds, keyword, sortKey])
 
