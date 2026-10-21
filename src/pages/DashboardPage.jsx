@@ -888,12 +888,20 @@ export function DashboardPage() {
               {(() => {
                 const planFiltered = planSorted.filter((p) => planAcct === 'all' || p.account === planAcct)
                 const visible = planExpanded ? planFiltered : planFiltered.slice(0, PREVIEW_COUNT)
+                // 同一个日期用同一个颜色：按日期首次出现顺序取色板
+                const datePalette = ['#db2777', '#2563eb', '#059669', '#d97706', '#7c3aed', '#0891b2', '#e11d48']
+                const seen = new Map()
+                for (const p of visible) {
+                  if (!p.planDate) continue
+                  if (!seen.has(p.planDate)) seen.set(p.planDate, datePalette[seen.size % datePalette.length])
+                }
                 return (
                   <>
                     {visible.map((p) => {
                       const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
                       const overdue = p.planDate && p.planDate < todayPlan
                       const isToday = p.planDate === todayPlan
+                      const dateColor = seen.get(p.planDate) || '#94a3b8'
                       // 只有「当天及以前」的计划才能标记完成（与 PC 一致，未来日期置灰）
                       const canDone = !p.planDate || p.planDate <= todayPlan
                       return (
@@ -919,7 +927,7 @@ export function DashboardPage() {
                             <span style={{ fontSize: '10px', color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0, fontWeight: 700 }}>
                               ×{p.qty || 1}
                             </span>
-                            <span style={{ fontSize: '10px', color: overdue ? '#b96a66' : '#94a3b8', flexShrink: 0, fontWeight: 700 }}>
+                            <span style={{ fontSize: '10px', color: overdue ? '#b91c1c' : dateColor, flexShrink: 0, fontWeight: 700 }}>
                               {p.planDate || '未填时间'}{isToday ? '（今天）' : overdue ? '（已过期）' : ''}
                             </span>
                           </div>
