@@ -39,6 +39,8 @@ export function PublishPlanCard() {
   const [pickIdx, setPickIdx] = useState(-1)     // 正在为第几行选产品；-1 = 面板收起
   const [query, setQuery] = useState('')
   const [catFilter, setCatFilter] = useState('') // 选品面板里的分类筛选，'' = 全部
+  // 选品面板里勾选的产品名（可多选，保留点击顺序）
+  const [picked, setPicked] = useState([])
   const [flashId, setFlashId] = useState('')     // 刚保存的那条：滚动定位 + 高亮 4 秒
 
   const list = publishPlans || []
@@ -149,9 +151,27 @@ export function PublishPlanCard() {
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
-  // 点一条产品即选中：填进当前行并收起面板
+  // 点一条产品即勾选（可多选）：编辑态只能选一个（该态只有一行），新增态可连着勾多个
   const pickProduct = (name) => {
-    setEntries((p) => p.map((e, k) => (k === pickIdx ? { ...e, name } : e)))
+    if (isEditing) { setPicked([name]); return }
+    setPicked((p) => (p.includes(name) ? p.filter((x) => x !== name) : [...p, name]))
+  }
+  // 确定：第一个勾的填进当前行，其余各自动占一行（数量默认 1）
+  const confirmPicked = () => {
+    if (picked.length > 0) {
+      setEntries((p) => {
+        const next = [...p]
+        picked.forEach((name, i) => {
+          if (i === 0 && pickIdx >= 0 && pickIdx < next.length) {
+            next[pickIdx] = { ...(next[pickIdx] || { qty: '1' }), name }
+          } else {
+            next.push({ name, qty: '1' })
+          }
+        })
+        return next
+      })
+    }
+    setPicked([])
     setPickIdx(-1)
     setQuery('')
     setCatFilter('')
@@ -168,7 +188,7 @@ export function PublishPlanCard() {
   }, [byAcc, isEditing, editEntry])
 
   // 打开弹窗时重置所有行的选择面板状态
-  const resetPicker = () => { setPickIdx(-1); setQuery(''); setCatFilter('') }
+  const resetPicker = () => { setPickIdx(-1); setQuery(''); setCatFilter(''); setPicked([]) }
   const openNew = () => {
     setByAcc(emptyByAcc())
     setAccount(ACCOUNTS[0] || '')
@@ -325,13 +345,14 @@ export function PublishPlanCard() {
                     fontSize: 13, fontWeight: 700, color: '#b8517f', background: '#fdf1f6',
                     padding: '2px 6px', borderRadius: 6, flexShrink: 0,
                   }}>×{p.qty || 1}</span>
+                  {/* 账号：直接用账号主题色给文字上色，不再加圆点（用户要求「账号标颜色，不要圆点了」） */}
                   <span
                     title={p.account}
-                    style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#8a8f98', maxWidth: 76 }}
-                  >
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.account || '—'}</span>
-                  </span>
+                    style={{
+                      flexShrink: 0, maxWidth: 76, fontSize: 11, fontWeight: 600, color: col.c,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                  >{p.account || '—'}</span>
                   <span style={{
                     flexShrink: 0, fontSize: 11, fontVariantNumeric: 'tabular-nums',
                     color: overdue ? '#b96a66' : (isToday ? '#4f5fbb' : '#b0b6bf'),
@@ -426,7 +447,7 @@ export function PublishPlanCard() {
                     <div className="pcv-entry">
                       <button
                         className={`pcv-entry-pick${e.name ? '' : ' empty'}`}
-                        onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery(''); setCatFilter('') }}
+                        onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery(''); setCatFilter(''); setPicked([]) }}
                       >
                         {e.name || '点击选择产品'}
                       </button>
@@ -473,21 +494,34 @@ export function PublishPlanCard() {
                             <div className="pcv-drop-hint">该账号下还没有样品（已放弃的不列出）</div>
                           ) : filtered.length === 0 ? (
                             <div className="pcv-drop-hint">没有匹配的产品</div>
-                          ) : filtered.map((c) => (
-                            <button
-                              key={c.name}
-                              className="pcv-drop-row"
-                              title="点一下即选中这条产品"
-                              onClick={() => pickProduct(c.name)}
-                            >
-                              <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
-                            </button>
-                          ))}
+                          ) : filtered.map((c) => {
+                            const on = picked.includes(c.name)
+                            return (
+                              <button
+                                key={c.name}
+                                className={`pcv-drop-row${on ? ' on' : ''}`}
+                                title={on ? '已勾选，再点一下取消' : '点一下勾选这条产品（可多选）'}
+                                onClick={() => pickProduct(c.name)}
+                              >
+                                <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
+                                {on && <span className="pcv-drop-check">✓</span>}
+                              </button>
+                            )
+                          })}
                         </div>
+                        {/* 底部：已选数量 + 取消 / 确定（可多选，勾完点确定才填进条目） */}
                         <div className="pcv-drop-f">
-                          <span style={{ fontSize: 12, color: '#9aa0a9' }}>点一条产品即选中</span>
+                          <span style={{ fontSize: 12, color: picked.length ? '#b8517f' : '#9aa0a9' }}>
+                            {picked.length > 0 ? `已选 ${picked.length} 条` : '可勾选多个产品'}
+                          </span>
                           <div className="pcv-spacer" />
                           <button className="pcv-btn pcv-btn-ghost" onClick={resetPicker}>取消</button>
+                          <button
+                            className="pcv-btn"
+                            style={{ marginLeft: 8 }}
+                            disabled={picked.length === 0}
+                            onClick={confirmPicked}
+                          >确定{picked.length > 1 ? ` ${picked.length} 条` : ''}</button>
                         </div>
                       </div>
                     )}

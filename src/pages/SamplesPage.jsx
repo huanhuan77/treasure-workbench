@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { formatDate, todayStr, deadlineDesc, addDays, copyText, toDateInput } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
-import { needPublishReminder, daysSincePublish, lastPublishText } from '../utils/publish'
+import { needPublishReminder, daysSincePublish, lastPublishText, sampleDays } from '../utils/publish'
 import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getCounts, getTopStatus, isShotSample, isArchivedSample, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
 import { CATEGORIES } from '../utils/categories'
 import { SampleForm } from '../components/SampleForm'
@@ -582,6 +582,23 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
                     )
                   })
             )}
+            {/* 发布提醒天数（与 PC 样品列表同一列、同一口径）：≤5 天按高频口径标玫红 */}
+            {acList.length > 0 && (() => {
+              const days = acList.map((a) => sampleDays(s, a.name))
+              const uniq = [...new Set(days)]
+              const hot = Math.min(...days) <= 5
+              return (
+                <span
+                  title={acList.map((a) => `${a.name} ${sampleDays(s, a.name)} 天`).join(' / ')}
+                  style={{
+                    fontSize: '10px', padding: '1px 6px', borderRadius: '5px', fontWeight: 700,
+                    whiteSpace: 'nowrap', flexShrink: 0,
+                    background: hot ? 'rgba(244,63,94,0.12)' : 'rgba(148,163,184,0.16)',
+                    color: hot ? '#f43f5e' : '#64748b',
+                  }}
+                >⏱{uniq.length === 1 ? `每${uniq[0]}天` : `每${Math.min(...days)}~${Math.max(...days)}天`}</span>
+              )
+            })()}
             {/* 已发布 / 已放弃 不再显示时间（截止日对这两类已无意义） */}
             {s.deadline && repStatus !== 'published' && repStatus !== 'abandoned' && (logistics === 'un_arrived' || logistics === 'arrived') && <span style={{ color: dlColor, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>⏰{formatDate(s.deadline)}{dl ? ` ${dl}` : ''}</span>}
             {(s.commission || 5) > 5 && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: '#fef3c7', color: '#d97706', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>💰佣金{s.commission}%</span>}

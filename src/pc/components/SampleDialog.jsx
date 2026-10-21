@@ -189,18 +189,9 @@ export function SampleDialog({ sample, onClose, onSaved }) {
                 注意 form.productId 仍然在 state 里、保存时原样带出去 ——
                 只是不给编辑入口，这样已有样品里存过的关联不会被清掉。 */}
 
-            <div className="pcv-field-label" style={{ marginTop: 18 }}>佣金（%）</div>
-            <input
-              className="pcv-input"
-              type="number"
-              style={{ width: 180 }}
-              value={form.commission === 5 ? '' : form.commission}
-              placeholder="5（默认不显示）"
-              onChange={(e) => {
-                const v = e.target.value === '' ? 5 : parseInt(e.target.value, 10)
-                setForm((f) => ({ ...f, commission: isNaN(v) ? 5 : v }))
-              }}
-            />
+            {/* 「佣金（%）」字段按用户要求去掉（截图圈的就是这一项）。
+                form.commission 仍留在 state 里、保存时原样带出去 ——
+                只是不给编辑入口，已有样品存过的佣金不会被清掉。 */}
 
             <div className="pcv-field-label" style={{ marginTop: 18 }}>几天没发提醒（按账号，留空=7天）</div>
             {form.accounts.map((a) => (

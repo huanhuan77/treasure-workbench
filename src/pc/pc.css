@@ -271,8 +271,10 @@
 /* 每张指标卡右侧的「新增」：粉底白字的小胶囊（用户要求：改成「新增」文字 + 粉色背景）
    就地新增对应内容，比一个「＋」符号更好认。 */
 .pcv-metric-add {
-  height: 24px;
-  padding: 0 10px;
+  height: auto;
+  min-height: 24px;
+  /* 用户要求加 padding 5px：按钮更好点，也和旁边的计数文字对齐 */
+  padding: 5px 10px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;

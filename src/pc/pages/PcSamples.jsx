@@ -7,6 +7,7 @@ import {
   getAccounts, getCounts, getTopStatus,
 } from '../../utils/sampleStatus'
 import { deadlineDesc } from '../../utils/helpers'
+import { sampleDays } from '../../utils/publish'
 import { CATEGORY_STYLE } from '../../utils/productDisplay'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
 import { SampleDialog } from '../components/SampleDialog'
@@ -313,6 +314,8 @@ export function PcSamples() {
                 <th style={{ width: 260 }}>账号</th>
                 <th style={{ width: 70 }}>发布</th>
                 <th style={{ width: 70 }}>是否出单</th>
+                {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天），与提醒中心同一套算 */}
+                <th style={{ width: 78 }}>提醒天数</th>
                 <th style={{ width: 107 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
                   收货日期{sortDirOf('receiveDate') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
@@ -325,7 +328,7 @@ export function PcSamples() {
             <tbody>
               {displayed.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="pcv-empty">当前筛选下没有样品</td>
+                  <td colSpan={10} className="pcv-empty">当前筛选下没有样品</td>
                 </tr>
               ) : displayed.map((s) => {
                 const top = getTopStatus(s)
@@ -421,6 +424,30 @@ export function PcSamples() {
                       ) : (
                         <span style={{ color: '#c9cdd4' }}>—</span>
                       )}
+                    </td>
+                    <td style={{ whiteSpace: 'nowrap' }}>
+                      {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天）。
+                          多账号取值不同时显示区间（如 5~7 天），完整明细放 title。 */}
+                      {accounts.length === 0 ? (
+                        <span style={{ color: '#c9cdd4' }}>—</span>
+                      ) : (() => {
+                        const days = accounts.map((a) => sampleDays(s, a))
+                        const uniq = [...new Set(days)]
+                        const hot = Math.min(...days) <= 5
+                        return (
+                          <span
+                            style={{
+                              fontSize: 13, fontWeight: hot ? 700 : 500, fontVariantNumeric: 'tabular-nums',
+                              color: hot ? '#f43f5e' : '#6b7280',
+                            }}
+                            title={accounts.map((a) => `${a} ${sampleDays(s, a)} 天`).join(' / ')}
+                          >
+                            {uniq.length === 1
+                              ? `${uniq[0]} 天`
+                              : `${Math.min(...days)}~${Math.max(...days)} 天`}
+                          </span>
+                        )
+                      })()}
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {/* 收货日期：仅作为排序维度展示（点表头可排），无则不显示「未设置」占位，

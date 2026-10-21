@@ -232,13 +232,14 @@ export function AdQueueCard() {
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}
                   >{a.name}</span>
+                  {/* 账号：直接用账号主题色给文字上色，不再加圆点（与「发布计划」一致） */}
                   <span
                     title={a.account}
-                    style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#8a8f98', maxWidth: 76 }}
-                  >
-                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.account}</span>
-                  </span>
+                    style={{
+                      flexShrink: 0, maxWidth: 76, fontSize: 11, fontWeight: 600, color: col.c,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                  >{a.account}</span>
                   <span style={{ flexShrink: 0, fontSize: 11, color: '#b0b6bf', fontVariantNumeric: 'tabular-nums' }}>
                     {(a.publishDate || '').slice(5) || '—'}
                   </span>
