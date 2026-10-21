@@ -151,10 +151,8 @@ export function reminderAccounts(sample) {
   const accs = getAccounts(sample)
   if (!accs.length) return []
   const counts = (sample && sample.countsByAccount) || {}
-  const exec = (sample && sample.execByAccount) || {}
-  const never = accs.filter((a) => (
-    exec[a] !== 'abandoned' && (Number(counts[a]?.publishCount) || 0) === 0
-  ))
+  // 同上：不再按 execByAccount='abandoned' 过滤（那个老字段界面上看不到也改不了）
+  const never = accs.filter((a) => (Number(counts[a]?.publishCount) || 0) === 0)
   if (never.length) return never
   const stale = pendingAccounts(sample)
   return stale.length ? stale : accs
@@ -177,27 +175,20 @@ export function needPublishReminder(sample) {
   if (sample.archived || sample.status === 'abandoned') return false   // 归档(放弃)不提醒
   // 逾期：仅仍需处理的待发状态（未到货/已到货未拍摄/已拍摄未发布）才提醒，已发布的过去截止日不计
   if (isOverdue(sample) && OVERDUE_STATES.includes(sample.status)) return true
-  // 按账号检查：截止日期已过，某个账号从未发布过（publishCount=0）且未放弃 → 提醒
+  // 按账号检查：截止日期已过，某个账号从未发布过（publishCount=0）→ 提醒
   if (isOverdue(sample)) {
-    const execByAccount = sample.execByAccount || {}
     const counts = sample.countsByAccount || {}
     const accounts = getAccounts(sample)
-    const anyUnpublished = accounts.some((a) => {
-      if (execByAccount[a] === 'abandoned') return false
-      const pc = Number(counts[a]?.publishCount) || 0
-      return pc === 0
-    })
+    const anyUnpublished = accounts.some((a) => (Number(counts[a]?.publishCount) || 0) === 0)
     if (anyUnpublished) return true
   }
-  // 出单锚点：某账号最近一次出单超过设定天数、且出单后没补发布 → 提醒（会一直催到补记发布）
-  {
-    const execByAccount = sample.execByAccount || {}
-    const accounts = getAccounts(sample)
-    const anyNeed = accounts.some((a) => {
-      if (execByAccount[a] === 'abandoned') return false
-      return accountDue(sample, a)
-    })
-    if (anyNeed) return true
+  // 按账号判定「距上次发布是否超期」。
+  // ⚠️ 不再看 execByAccount === 'abandoned'（老的单账号兼容字段，UI 已经不展示/不能改）：
+  //    它会被「出单后又发满5条无新单」的自动放弃规则写入，导致样品在界面上看着正常
+  //    （状态=已拍/已发布、提示天数也都对），却永远不进提醒，用户完全无从修改
+  //    （用户反馈「没放弃啊」）。现在只有**样品级归档**(archived) 才排除提醒。
+  for (const a of getAccounts(sample)) {
+    if (accountDue(sample, a)) return true
   }
   return false
 }

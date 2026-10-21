@@ -273,7 +273,6 @@ export function PcDashboard() {
       let reason = ''
       if (tabName) reason = `已在「${tabName}」tab`
       else if (s.archived || s.status === 'abandoned') reason = '样品已放弃/归档'
-      else if (over.every((x) => x.abandoned)) reason = '账号已标记放弃'
       else reason = '未进提醒（其它原因）'
       out.push({ s, over, tabName, reason })
     }
@@ -310,6 +309,13 @@ export function PcDashboard() {
           <div className="pcv-title">工作台总览</div>
           <div className="pcv-sub">{greeting()} · {todayLabel}</div>
         </div>
+        {/* 诊断入口挪到页面右上角（用户要求），点击看「已超阈值但没进提醒」的样品及原因 */}
+        <button
+          className="pcv-btn-text"
+          onClick={() => setWhyOpen(true)}
+          title="列出已超阈值、但没出现的样品，并说明原因"
+          style={{ marginLeft: 'auto', fontSize: 12, color: '#9aa0a9', flexShrink: 0 }}
+        >为什么没提醒</button>
       </div>
 
       <div className="pcv-body">
@@ -462,14 +468,6 @@ export function PcDashboard() {
                   )
                 })}
               </div>
-              <div className="pcv-spacer" />
-              {/* 诊断入口：列出「已超阈值但没进提醒」的样品及原因 */}
-              <button
-                className="pcv-btn-text"
-                onClick={() => setWhyOpen(true)}
-                title="列出已超阈值、但没出现的样品，并说明原因"
-                style={{ fontSize: 12, color: '#9aa0a9', flexShrink: 0 }}
-              >为什么没提醒</button>
             </div>
 
             {rows.length === 0 ? (
