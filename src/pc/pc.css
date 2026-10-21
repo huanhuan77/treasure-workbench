@@ -626,6 +626,19 @@
   background: rgba(185, 106, 102, 0.18);
 }
 
+/* 总览卡片（发布计划 / 待投流）行尾操作：默认隐藏，鼠标悬停该行才出现。
+   用户反馈「太紧凑了」—— 行宽有限，操作按钮常驻会把产品名挤成一小截。
+   键盘可达性：按钮仍可 Tab 聚焦，聚焦时也会显示（:focus-within）。 */
+.pcv-rowacts {
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.pcv-planrow:hover .pcv-rowacts,
+.pcv-adrow:hover .pcv-rowacts,
+.pcv-rowacts:focus-within {
+  opacity: 1;
+}
+
 .pcv-input {
   padding: 7px 12px;
   border: 0.5px solid rgba(15, 23, 42, 0.14);

@@ -28,6 +28,8 @@ export function AdQueueCard() {
   // 卡片内的账号筛选 + 默认只列 5 条（用户要求，与「待办清单 / 发布计划」一致）
   const [accFilter, setAccFilter] = useState('')
   const [expanded, setExpanded] = useState(false)
+  // 账号筛选胶囊**不常驻**：卡头放一个「全部账号 ▾」按钮，点它才展开（与「发布计划」一致）
+  const [filterOpen, setFilterOpen] = useState(false)
   // 改成「已投流」= 从列表消失（用户要求「就像删除了一样，不需要了」）：
   // 不再提供「已投流 N」查看入口，也不需要找回来。底层数据保留（不会真删，
   // 免得误点后不可恢复），只是不再参与展示。
@@ -144,6 +146,22 @@ export function AdQueueCard() {
           )}
           {/* 条数只算列表里看得到的（已投流的不算，否则「共 3 条」但只显示 2 行） */}
           <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {accFiltered.length} 条</span>
+          {/* 账号筛选：卡头放一个「全部」按钮，**点它才展开**账号胶囊行（不平铺常驻） */}
+          {accOptions.length > 1 && (
+            <button
+              className="pcv-btn-text"
+              onClick={() => setFilterOpen((v) => !v)}
+              title="按账号筛选"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12, fontWeight: 600,
+                color: accFilter ? (ACCOUNT_COLOR[accFilter] || {}).c || '#6b7280' : '#6b7280',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {accFilter || '全部'}
+              <span style={{ fontSize: 9, transform: filterOpen ? 'rotate(180deg)' : 'none' }}>▾</span>
+            </button>
+          )}
           {/* 「＋ 添加」紧跟标题（用户要求）：与上面「待办清单」卡头的「新增」同一位置，
               原来用 spacer 顶到最右端，中间空出一大片 */}
           <button
@@ -155,8 +173,8 @@ export function AdQueueCard() {
           <div className="pcv-spacer" />
         </div>
 
-        {/* 账号筛选（用户要求，与「发布计划 / 提醒中心」同款胶囊）：只列卡里出现过的账号 */}
-        {accOptions.length > 1 && (
+        {/* 账号筛选胶囊：点卡头「全部账号 ▾」才展开（平时不占一行） */}
+        {filterOpen && accOptions.length > 1 && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap',
             overflowX: 'auto', padding: '0 12px 8px',
@@ -217,8 +235,9 @@ export function AdQueueCard() {
                 <div
                   key={a.id}
                   data-ad-id={a.id}
+                  className="pcv-adrow"
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px',
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
                     borderTop: '0.5px solid rgba(15,23,42,0.05)',
                     ...(flashId === a.id ? { background: '#fff7e6', transition: 'background .3s ease' } : null),
                   }}
@@ -254,12 +273,14 @@ export function AdQueueCard() {
                   >
                     {AD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <button
-                    className="pcv-x"
-                    title="删除"
-                    style={{ flexShrink: 0, marginLeft: -2 }}
-                    onClick={() => { deleteAdQueue(a.id); show('已删除', 'success') }}
-                  >×</button>
+                  {/* 删除按钮：默认隐藏，鼠标悬停该行才出现（与「发布计划」一致） */}
+                  <span className="pcv-rowacts" style={{ display: 'inline-flex', flexShrink: 0 }}>
+                    <button
+                      className="pcv-x"
+                      title="删除"
+                      onClick={() => { deleteAdQueue(a.id); show('已删除', 'success') }}
+                    >×</button>
+                  </span>
                 </div>
               )
             })}
