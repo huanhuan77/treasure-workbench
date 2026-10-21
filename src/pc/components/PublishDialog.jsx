@@ -86,14 +86,26 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
-  // 选样品：**点一行就是确定**（用户要求「不用点确定了，选择就是确定」）——
-  // 点中即填进当前行并收起面板；不再需要「确定」按钮，也不用先勾选。
+  // 选样品：**可多选**（用户要求「可以选择多个」）——
+  // 点一行先勾上（左侧打 ✓），可以连着勾多个；点底部「确定」才填进条目。
   const pickSample = (sid) => {
-    setEntries((p) => {
-      const next = [...p]
-      next[pickIdx] = { ...(next[pickIdx] || { qty: '1' }), sampleId: sid }
-      return next
-    })
+    setPicked((p) => (p.includes(sid) ? p.filter((x) => x !== sid) : [...p, sid]))
+  }
+  // 确定：选中的样品依次填入 —— 第一个填进当前行，其余各占一行（数量默认 1）
+  const confirmPicked = () => {
+    if (picked.length > 0) {
+      setEntries((p) => {
+        const next = [...p]
+        picked.forEach((sid, i) => {
+          if (i === 0 && pickIdx >= 0 && pickIdx < next.length) {
+            next[pickIdx] = { ...(next[pickIdx] || { qty: '1' }), sampleId: sid }
+          } else {
+            next.push({ sampleId: sid, qty: '1' })
+          }
+        })
+        return next
+      })
+    }
     setPicked([])
     setPickIdx(-1)
     setQuery('')
@@ -236,7 +248,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
                           <button
                             key={s.id}
                             className={`pcv-drop-row${on ? ' on' : ''}`}
-                            title="点一下即选中这条样品"
+                            title={on ? '已勾选，再点一下取消' : '点一下勾选这条样品（可多选）'}
                             onClick={() => pickSample(s.id)}
                           >
                             <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
@@ -245,14 +257,22 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
                         )
                       })}
                     </div>
-                    {/* 底部只留「取消」：点样品行即确定（用户要求），不需要再点确定 */}
+                    {/* 底部：已选数量 + 取消 / 确定（可多选，勾完点确定才填进条目） */}
                     <div className="pcv-drop-f">
-                      <span style={{ fontSize: 12, color: '#9aa0a9' }}>点一条样品即选中</span>
+                      <span style={{ fontSize: 12, color: picked.length ? '#b8517f' : '#9aa0a9' }}>
+                        {picked.length > 0 ? `已选 ${picked.length} 条` : '可勾选多个样品'}
+                      </span>
                       <div className="pcv-spacer" />
                       <button
                         className="pcv-btn pcv-btn-ghost"
                         onClick={() => { setPicked([]); setPickIdx(-1); setQuery(''); setCatFilter('') }}
                       >取消</button>
+                      <button
+                        className="pcv-btn"
+                        style={{ marginLeft: 8 }}
+                        disabled={picked.length === 0}
+                        onClick={confirmPicked}
+                      >确定{picked.length > 1 ? ` ${picked.length} 条` : ''}</button>
                     </div>
                   </div>
                 )}

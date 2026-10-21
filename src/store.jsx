@@ -3899,6 +3899,45 @@ export function StoreProvider({ children }) {
     })
   }, [data.samples, data.publishRecords])
 
+  // 手动发布计划自动完成：**计划当天**该产品在这个账号下的发布条数累计达到计划数量
+  // → 标记 done，卡片里就不再显示这条计划。
+  // 用户反馈「我加了发布记录，发布计划怎么没消失」—— 记了发布就该把对应计划销掉；
+  // 但只认**同一天**的发布记录（用户要求「日期要是同一天的才能撤销」），
+  // 隔天补记的旧发布不算这条计划已完成。
+  // 自动计划（autoKey）由上面的「到点才生成」规则处理，这里不动。
+  useEffect(() => {
+    setData((prev) => {
+      const plans = prev.publishPlans || []
+      const recs = prev.publishRecords || []
+      if (!plans.length || !recs.length) return prev
+      const nameBySample = new Map()
+      for (const s of prev.samples || []) nameBySample.set(s.id, String(s.name || '').trim())
+      let changed = false
+      const next = plans.map((p) => {
+        if (p.done || p.autoKey) return p
+        const qty = Number(p.qty) > 0 ? Number(p.qty) : 1
+        const planDate = p.planDate || todayStr()
+        const name = String(p.name || '').trim()
+        let total = 0
+        for (const r of recs) {
+          if (nameBySample.get(r.sampleId) !== name) continue
+          const accs = Array.isArray(r.accounts) && r.accounts.length ? r.accounts : []
+          if (!accs.includes(p.account)) continue
+          // 只有「计划同一天」的发布记录才算这条计划已完成
+          if (String(r.publishDate || '') !== planDate) continue
+          total += Number(r.qty) > 0 ? Number(r.qty) : 1
+        }
+        if (total >= qty) {
+          changed = true
+          return { ...p, done: true, doneAt: Date.now(), autoDone: true }
+        }
+        return p
+      })
+      if (!changed) return prev
+      return { ...prev, publishPlans: next }
+    })
+  }, [data.publishPlans, data.publishRecords, data.samples])
+
   // 自动放弃规则（按账号粒度）：同一个样品的某个账号，发布满 AUTO_ABANDON_PUBLISH_COUNT 条视频
   // 却始终 0 出单 → 该账号自动置为「放弃」，并在总览页提醒。
   // 已放弃 / 用户手动处理过该账号(abandonDismissedByAccount)的不再重复处理，避免覆盖用户意图。

@@ -79,9 +79,8 @@ export function PcPublishRecords() {
     setDateEdit(null)
   }
   const [account, setAccount] = useState('')
-  // 默认「全部」：原来默认「今天」，而发布记录多数是隔天才补记的，
-  // 一进页面就是「当前筛选下暂无记录」，看着像数据丢了（用户反馈「手机有 PC 没有」）
-  const [dateRange, setDateRange] = useState('')
+  // 默认「今天」（用户要求，与手机端一致）：进来先看今天发了什么
+  const [dateRange, setDateRange] = useState('today')
   const [keyword, setKeyword] = useState('')
   const [sortKey, setSortKey] = useState('dateDesc')
   // 「发布详情」弹窗：存 group.key，渲染时再从 groups 里取最新对象（删除/改日期后自动同步）
@@ -113,12 +112,12 @@ export function PcPublishRecords() {
     else setSortKey(dir === 'desc' ? 'countAsc' : 'countDesc')
   }
 
-  // 重置：搜索 + 账号 + 时间范围 + 排序，回到进页面时的默认（时间范围默认「全部」）
-  const hasFilter = account !== '' || keyword !== '' || dateRange !== '' || sortKey !== 'dateDesc'
+  // 重置：搜索 + 账号 + 时间范围 + 排序，回到进页面时的默认（时间范围默认「今天」）
+  const hasFilter = account !== '' || keyword !== '' || dateRange !== 'today' || sortKey !== 'dateDesc'
   const resetFilters = () => {
     setAccount('')
     setKeyword('')
-    setDateRange('')
+    setDateRange('today')
     setSortKey('dateDesc')
   }
 
