@@ -272,18 +272,18 @@
    就地新增对应内容，比一个「＋」符号更好认。 */
 .pcv-metric-add {
   height: auto;
-  min-height: 24px;
-  /* 用户要求加 padding 5px：按钮更好点，也和旁边的计数文字对齐 */
-  padding: 5px 10px;
+  min-height: 26px;
+  /* 用户要求「新增按钮大一点」：字号 13、内边距 7/14，点击区域明显更大 */
+  padding: 7px 14px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 9px;
   border: none;
   background: #f472b6;
   color: #fff;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
