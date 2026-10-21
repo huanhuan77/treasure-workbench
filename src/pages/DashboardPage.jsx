@@ -960,7 +960,7 @@ export function DashboardPage() {
             <div style={{ fontSize: '12px', color: '#8a8f98', marginBottom: '4px' }}>发布时间</div>
             <input
               type="date"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '10px', border: '1px solid #e5e7eb', fontSize: '13px' }}
+              style={{ appearance: 'none', WebkitAppearance: 'none', width: 'auto', minWidth: 0, padding: '8px 14px', borderRadius: '999px', border: 'none', background: '#ec4899', color: '#fff', fontSize: '13px', fontWeight: 700, outline: 'none', cursor: 'pointer' }}
               value={planDate}
               onChange={(e) => setPlanDate(e.target.value)}
             />
