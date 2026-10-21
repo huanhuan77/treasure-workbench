@@ -86,13 +86,26 @@ export function OrderDialog({ prefill, onClose }) {
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
-  // 选样品：**点一行就是确定**（与「记录发布」一致，用户要求不用再点确定）
+  // 选样品：**可多选**（与「记录发布」一致，用户要求「可以勾选多个」）——
+  // 点一行先勾上（右侧打 ✓），可连着勾多个；点底部「确定」才填进条目。
   const pickSample = (sid) => {
-    setEntries((p) => {
-      const next = [...p]
-      next[pickIdx] = { ...(next[pickIdx] || {}), sampleId: sid }
-      return next
-    })
+    setPicked((p) => (p.includes(sid) ? p.filter((x) => x !== sid) : [...p, sid]))
+  }
+  // 确定：第一个填进当前行，其余各自动占一行
+  const confirmPicked = () => {
+    if (picked.length > 0) {
+      setEntries((p) => {
+        const next = [...p]
+        picked.forEach((sid, i) => {
+          if (i === 0 && pickIdx >= 0 && pickIdx < next.length) {
+            next[pickIdx] = { ...(next[pickIdx] || {}), sampleId: sid }
+          } else {
+            next.push({ sampleId: sid })
+          }
+        })
+        return next
+      })
+    }
     setPicked([])
     setPickIdx(-1)
     setQuery('')
@@ -151,7 +164,7 @@ export function OrderDialog({ prefill, onClose }) {
           />
 
           <div className="pcv-field-label" style={{ marginTop: 18 }}>账号</div>
-          <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} />
+          <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter(''); setPicked([]) }} counts={counts} />
 
           <div style={{ display: 'flex', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
             <span className="pcv-field-label" style={{ margin: 0 }}>关联产品（可多选）</span>
@@ -210,7 +223,7 @@ export function OrderDialog({ prefill, onClose }) {
                           <button
                             key={s.id}
                             className={`pcv-drop-row${on ? ' on' : ''}`}
-                            title="点一下即选中这条样品"
+                            title={on ? '已勾选，再点一下取消' : '点一下勾选这条样品（可多选）'}
                             onClick={() => pickSample(s.id)}
                           >
                             <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
@@ -219,14 +232,22 @@ export function OrderDialog({ prefill, onClose }) {
                         )
                       })}
                     </div>
-                    {/* 底部只留「取消」：点样品行即确定 */}
+                    {/* 底部：已选数量 + 取消 / 确定（可多选，勾完点确定才填进条目） */}
                     <div className="pcv-drop-f">
-                      <span style={{ fontSize: 12, color: '#9aa0a9' }}>点一条样品即选中</span>
+                      <span style={{ fontSize: 12, color: picked.length ? '#b8517f' : '#9aa0a9' }}>
+                        {picked.length > 0 ? `已选 ${picked.length} 条` : '可勾选多个样品'}
+                      </span>
                       <div className="pcv-spacer" />
                       <button
                         className="pcv-btn pcv-btn-ghost"
                         onClick={() => { setPicked([]); setPickIdx(-1); setQuery(''); setCatFilter('') }}
                       >取消</button>
+                      <button
+                        className="pcv-btn"
+                        style={{ marginLeft: 8 }}
+                        disabled={picked.length === 0}
+                        onClick={confirmPicked}
+                      >确定{picked.length > 1 ? ` ${picked.length} 条` : ''}</button>
                     </div>
                   </div>
                 )}

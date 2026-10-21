@@ -4,7 +4,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
-import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, compareUrgent, isHotAccount, sampleDays } from '../../utils/publish'
+import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, compareUrgent, sampleDays } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
@@ -63,8 +63,9 @@ export function PcDashboard() {
     // 高频出单：手动设了提醒天数（≤5 天）且已到该发的产品（与手机端同一口径）
     hot: {
       items: all.hot,
-      // 只列「到该发的高频账号」：pendingAccounts ∩ isHotAccount
-      accountsOf: (s) => pendingAccounts(s).filter((a) => isHotAccount(s, a)),
+      // 列「到该发」的账号：含多账号里非高频的那个，避免只显示高频账号后
+      // 另一个账号的待发状态被藏起来（这些样品已从「发布提醒」里剔除）
+      accountsOf: (s) => pendingAccounts(s),
       header: '未发布天数',
       mid: (s, a) => {
         const days = daysSincePublishByAccount(s, a)

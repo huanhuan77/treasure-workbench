@@ -44,8 +44,10 @@ export function isHotCadence(sample) {
 export function selectPublishReminders(samples) {
   return (samples || []).filter((s) => {
     if (!needPublishReminder(s)) return false
-    // 到该发的账号里，只要有一个不是高频账号，就留在普通发布提醒
-    return pendingAccounts(s).some((a) => !isHotAccount(s, a))
+    // 与「高频出单」互斥（用户要求「这 2 个状态的数据不能重复」）：
+    // 到该发的账号里只要有一个是高频口径，这个样品就归「高频出单」，
+    // 普通发布提醒里不再出现它，两个 tab 的条数加起来才是总数。
+    return !pendingAccounts(s).some((a) => isHotAccount(s, a))
   })
 }
 
