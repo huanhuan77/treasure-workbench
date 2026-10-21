@@ -1593,6 +1593,8 @@ export function DashboardPage() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
+                            {/* 「每N天提醒」紧跟状态标签（用户要求「几天提醒放在状态后面」） */}
+                            <span style={{ fontSize: '9px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '1px 6px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>每{hotReminderDays(s)}天提醒</span>
                           </div>
                           {/* 账号 + 天数**全部直接展开**（用户要求「可以都展开了」），不再折叠 */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', alignItems: 'center' }}>
@@ -1614,9 +1616,6 @@ export function DashboardPage() {
                                   </span>
                                 )
                               })}
-                            <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
-                              每{hotReminderDays(s)}天提醒
-                            </span>
                           </div>
                         </div>
                         </div>{/* /左滑卡片内容 */}
