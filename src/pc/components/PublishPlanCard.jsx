@@ -348,6 +348,8 @@ export function PublishPlanCard() {
               const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
               const overdue = p.planDate && p.planDate < today
               const isToday = p.planDate === today
+              // 只有「当天及以前的计划」才能点完成；未来日期置灰不可点（用户要求）
+              const canDone = !p.planDate || p.planDate <= today
               return (
                 <div
                   key={p.id}
@@ -390,12 +392,21 @@ export function PublishPlanCard() {
                       左边留 20px 空档：数量/账号/日期整块往左 20px，操作列仍贴住右边缘 */}
                   <span className="pcv-rowacts" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 14 }}>
                     {/* 完成：标记已发 + 自动写入发布记录（用户要求「加个完成按钮」）。
-                        三个按钮放大到 24px、间距 8px，避免手快点错 */}
+                        三个按钮放大到 24px、间距 8px，避免手快点错。
+                        **未来日期的不给点**（用户要求「不是当天的不能点」），只能点当天及以前的 */}
                     <button
                       className="pcv-x"
-                      title="标记已发（同时写入发布记录）"
-                      style={{ width: 24, height: 24, fontSize: 14, color: '#16a34a', background: 'rgba(22,163,74,0.10)' }}
-                      onClick={() => markDone(p)}
+                      title={canDone
+                        ? '标记已发（同时写入发布记录）'
+                        : `还没到发布时间（${p.planDate}），到那天才能标记完成`}
+                      disabled={!canDone}
+                      style={{
+                        width: 24, height: 24, fontSize: 14,
+                        color: canDone ? '#16a34a' : '#c9cdd4',
+                        background: canDone ? 'rgba(22,163,74,0.10)' : 'rgba(148,163,184,0.14)',
+                        cursor: canDone ? 'pointer' : 'not-allowed',
+                      }}
+                      onClick={() => { if (canDone) markDone(p) }}
                     >✓</button>
                     <button className="pcv-x" title="编辑" style={{ width: 24, height: 24, fontSize: 14, color: '#8a8f98' }} onClick={() => openEdit(p)}>✎</button>
                     <button
@@ -565,13 +576,23 @@ export function PublishPlanCard() {
             </div>
             <div className="pcv-dialog-f">
               {/* 编辑态：行内不放「完成」按钮了（用户要求列表更清爽），改到这里标记已发 */}
-              {isEditing && (
-                <button
-                  className="pcv-btn pcv-btn-ghost"
-                  style={{ color: '#16a34a', borderColor: 'rgba(22,163,74,0.35)' }}
-                  onClick={() => markDone(editing)}
-                >标记已发</button>
-              )}
+              {isEditing && (() => {
+                // 未来日期的计划还不能标记完成（与行内 ✓ 一致）
+                const ok = !planDate || planDate <= today
+                return (
+                  <button
+                    className="pcv-btn pcv-btn-ghost"
+                    disabled={!ok}
+                    title={ok ? '标记已发（同时写入发布记录）' : `还没到发布时间（${planDate}）`}
+                    style={{
+                      color: ok ? '#16a34a' : '#c9cdd4',
+                      borderColor: ok ? 'rgba(22,163,74,0.35)' : 'rgba(148,163,184,0.35)',
+                      cursor: ok ? 'pointer' : 'not-allowed',
+                    }}
+                    onClick={() => { if (ok) markDone(editing) }}
+                  >标记已发</button>
+                )
+              })()}
               <span style={{ fontSize: 12, color: '#9aa0a9' }}>
                 {total > 0
                   ? `共 ${total} 条（${ACCOUNTS.filter((a) => counts[a] > 0).map((a) => `${a} ${counts[a]}`).join('、')}）`
