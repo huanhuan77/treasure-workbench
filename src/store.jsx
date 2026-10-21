@@ -3858,15 +3858,11 @@ export function StoreProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }, [data])
 
-  // 高频出单自动生成发布计划：某账号按 ≤N 天高频口径、当前已到该发，就自动补一条发布计划；
-  // 用户补记发布记录后，该账号「距上次发布」重置 → 不再到点 → 对应自动计划自动消失。
-  // 自动计划带 autoKey，可正常编辑数量/日期。
-  //
-  // 用户口径（2026-10-21）：
-  //   ① 每个账号**每天最多排 5 条**，排满就自动顺延到第二天（一直往后找空位）；
-  //   ② 不再因为老字段 execByAccount='abandoned' 漏生成（与提醒口径一致：只认样品级归档）；
-  //   ③ 已完成的旧计划不再挡住新计划（到点了就重新补一条）。
+  // 自动生成发布计划：**已按用户要求关闭**（2026-10-21「不生成发布计划了，我自己手动建吧」）。
+  // 想恢复就把下面的 AUTO_PLAN 改回 true，逻辑原样保留（每账号每天最多 5 条、排满顺延）。
+  const AUTO_PLAN = false
   useEffect(() => {
+    if (!AUTO_PLAN) return
     const MAX_PLANS_PER_DAY = 5   // 每个账号每天最多排 5 条
     const desired = new Map()
     for (const s of data.samples || []) {
@@ -3888,11 +3884,16 @@ export function StoreProvider({ children }) {
       })
       // 「账号 + 日期」已被占用的**待发**条数（手动 + 自动都算，已完成的腾出位置）
       const used = new Map()
+      // 已有「产品 + 账号」的待发计划（不分日期）：有就不再自动补，避免出现两行一模一样
+      // （用户反馈 oily女维 ×1 / ×2 两条重复 —— 手动那条没有 autoKey，旧逻辑认不出来）
+      const pendingPair = new Set()
+      const dayKey = (p) => `${String(p.name || '').trim()}|${p.account}|${p.planDate || todayStr()}`
       for (const p of kept) {
         if (!p || !p.account || p.done) continue
         const d = p.planDate || todayStr()
         const k = `${p.account}|${d}`
         used.set(k, (used.get(k) || 0) + 1)
+        pendingPair.add(`${String(p.name || '').trim()}|${p.account}`)
       }
       // 从今天开始找第一个还没排满的日期，占一个位并返回
       const takeDate = (account) => {
@@ -3907,16 +3908,30 @@ export function StoreProvider({ children }) {
         }
         return d
       }
-      // 补缺失：同一 key 只要还有**未完成**的计划就不再补；已完成的不再挡住新的
+      // 补缺失：同一 key 只要还有**未完成**的计划就不再补；已完成的不再挡住新的；
+      // 另外「该产品 + 该账号」已经有待发计划时也不再补（手动计划同样算数）
       for (const [key, v] of desired) {
-        if (!kept.some((p) => p.autoKey === key && !p.done)) {
-          kept.push({
-            id: 'auto_' + Math.random().toString(36).slice(2, 8),
-            autoKey: key, name: v.name, account: v.account, qty: 1,
-            planDate: takeDate(v.account), auto: true, createdAt: Date.now(), updatedAt: Date.now(),
-          })
-          changed = true
-        }
+        const pair = `${String(v.name || '').trim()}|${v.account}`
+        if (kept.some((p) => p.autoKey === key && !p.done)) continue
+        if (pendingPair.has(pair)) continue
+        kept.push({
+          id: 'auto_' + Math.random().toString(36).slice(2, 8),
+          autoKey: key, name: v.name, account: v.account, qty: 1,
+          planDate: takeDate(v.account), auto: true, createdAt: Date.now(), updatedAt: Date.now(),
+        })
+        pendingPair.add(pair)
+        changed = true
+      }
+      // 清理已经产生的重复：自动计划与另一条待发计划「同产品+账号+同一天」时，删掉自动那条
+      // （保留用户手动建的那条，连同它的数量）
+      const deduped = kept.filter((p) => {
+        if (!p || !p.auto || p.done) return true
+        const dup = kept.some((o) => o !== p && !o.done && o.account === p.account && dayKey(o) === dayKey(p))
+        if (dup) changed = true
+        return !dup
+      })
+      if (deduped.length !== kept.length) {
+        return { ...prev, publishPlans: deduped }
       }
       if (!changed) return prev
       return { ...prev, publishPlans: kept }
@@ -4483,6 +4498,20 @@ export function StoreProvider({ children }) {
       return next
     })
   }
+
+  // 一次性清理：用户已停用「自动生成发布计划」，把历史上自动生成且**还没完成**的条目删掉
+  // （手动建的一条不动、已完成的留作记录）。只跑一次，避免每次启动都扫一遍。
+  const autoPlansCleanedRef = useRef(false)
+  useEffect(() => {
+    if (autoPlansCleanedRef.current) return
+    autoPlansCleanedRef.current = true
+    setData((prev) => {
+      const plans = prev.publishPlans || []
+      const next = plans.filter((p) => !(p && p.auto && !p.done))
+      if (next.length === plans.length) return prev
+      return { ...prev, publishPlans: next }
+    })
+  }, [])
 
   // 启动时按发布记录重算一次样品统计（幂等）：修掉旧版本把「不属于该样品的账号」的
   // 发布记录算到样品全部账号头上的问题 —— 那会让「距上次发布」被顶新，提醒不触发。
