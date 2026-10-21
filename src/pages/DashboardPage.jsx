@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
@@ -1487,15 +1487,18 @@ export function DashboardPage() {
                 <ReminderTable
                   items={fHot}
                   onlyAccount={remindAccount === 'all' ? '' : remindAccount}
-                  accountsOf={(s) => reminderAccounts(s)}
+                  accountsOf={(s) => pendingAccounts(s)}
                   midHeader="未发布天数"
                   renderMid={(s, account) => {
                     const days = daysSincePublishByAccount(s, account)
+                    // 与 PC 总览一致：每N天提醒用中性灰，天数超阈值标红
+                    const th = sampleDays(s, account)
+                    const due = days === Infinity || days >= th
                     return (
-                      <span style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        <span style={{ ...pcChip, background: '#f43f5e' }}>每{hotReminderDays(s)}天提醒</span>
-                        <span style={{ ...pcChip, background: '#f59e0b' }}>
-                          {days === Infinity ? '从未发布过视频' : `已 ${days} 天没发`}
+                      <span style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <span style={{ ...pcChip, background: '#f1f2f4', color: '#6b7280' }}>每{hotReminderDays(s)}天提醒</span>
+                        <span style={{ ...pcChip, background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)', color: due ? '#e11d48' : '#64748b' }}>
+                          {days === Infinity ? '从未发布' : `已 ${days} 天`}
                         </span>
                       </span>
                     )
@@ -1510,10 +1513,8 @@ export function DashboardPage() {
               ) : (
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fHot.map((s) => {
-                    const showAccounts = reminderAccounts(s)
-                    const daysText = showAccounts.length
-                      ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
-                      : daysSincePublish(s)
+                    // 与 PC 一致：列出**所有到该发**的账号（不再只挑从未发布的那个）
+                    const showAccounts = pendingAccounts(s)
                     return (
                       <div key={s.id} style={{ background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1521,14 +1522,27 @@ export function DashboardPage() {
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
+                          {/* 每个账号一个「账号 + 已N天」胶囊，超阈值的天数标红（与 PC 一致） */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {showAccounts.map((a) => (
-                              <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
-                            ))}
+                            {showAccounts.map((a) => {
+                              const d = daysSincePublishByAccount(s, a)
+                              const th = sampleDays(s, a)
+                              const due = d === Infinity || d >= th
+                              const col = ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)', c: '#64748b' }
+                              return (
+                                <span key={a} style={{ display: 'inline-flex', alignItems: 'center', borderRadius: '6px', overflow: 'hidden', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                  <span style={{ fontSize: '10px', padding: '2px 6px', background: col.bg, color: col.c, fontWeight: 600 }}>{a}</span>
+                                  <span style={{
+                                    fontSize: '10px', padding: '2px 6px', fontWeight: 700,
+                                    background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
+                                    color: due ? '#e11d48' : '#64748b',
+                                  }}>{d === Infinity ? '从未发布' : `已${d}天`}</span>
+                                </span>
+                              )
+                            })}
                           </div>
-                          <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#f43f5e', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>每{hotReminderDays(s)}天提醒</span>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>{daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}</span>
+                          <div style={{ marginTop: '4px' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>每{hotReminderDays(s)}天提醒</span>
                           </div>
                         </div>
                         <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
