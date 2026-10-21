@@ -27,6 +27,8 @@ const emptyByAcc = () => {
   return o
 }
 const newEntry = () => ({ name: '', qty: '1' })
+// 同一天的条目共用一档底色（三档循环），隔天颜色就变，方便一眼看出「哪天有几条」
+const DATE_TONES = ['#ffffff', '#fdf6fa', '#f6f9fd']
 
 export function PublishPlanCard() {
   const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan, addPublishRecord } = useStore()
@@ -89,6 +91,13 @@ export function PublishPlanCard() {
   )
   const visible = expanded ? accFiltered : accFiltered.slice(0, 5)
   const upcoming = accFiltered.filter((p) => !p.planDate || p.planDate >= today).length
+  // 日期 → 底色：同一日期共用一个底色，按日期升序循环三档（隔天一定换色）
+  const dateTone = useMemo(() => {
+    const dates = [...new Set(visible.map((p) => p.planDate || ''))].sort()
+    const map = {}
+    dates.forEach((d, i) => { map[d] = DATE_TONES[i % DATE_TONES.length] })
+    return map
+  }, [visible])
 
   const isEditing = !!editing && editing !== 'new'
   // 新增态看当前账号自己的行；编辑态只有一行（用户要求「编辑态只保留一行」）
@@ -374,7 +383,9 @@ export function PublishPlanCard() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
                     borderTop: '0.5px solid rgba(15,23,42,0.05)',
-                    ...(flashId === p.id ? { background: '#fff7e6', transition: 'background .3s ease' } : null),
+                    // 同一天用同一个底色（用户要求「同一天的同一个背景色」），隔天换一档
+                    background: flashId === p.id ? '#fff7e6' : (dateTone[p.planDate || ''] || '#fff'),
+                    ...(flashId === p.id ? { transition: 'background .3s ease' } : null),
                   }}
                 >
                   {/* 单行显示（用户要求）：产品名可截断，其余信息压到同一行 */}
