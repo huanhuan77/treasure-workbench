@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { DEFAULT_SENSITIVE_WORDS, generateTopics } from './utils/copyGenerator'
-import { todayStr } from './utils/helpers'
+import { todayStr, addDays } from './utils/helpers'
 import { isHotAccount, sampleDays, accountDue } from './utils/publish'
 import { recordDelete, clearDelete, setWordTime, syncAll } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
@@ -3860,14 +3860,18 @@ export function StoreProvider({ children }) {
 
   // 高频出单自动生成发布计划：某账号按 ≤N 天高频口径、当前已到该发，就自动补一条发布计划；
   // 用户补记发布记录后，该账号「距上次发布」重置 → 不再到点 → 对应自动计划自动消失。
-  // 自动计划带 autoKey，可正常编辑数量/日期；手动完成(done)的保留不复活。
+  // 自动计划带 autoKey，可正常编辑数量/日期。
+  //
+  // 用户口径（2026-10-21）：
+  //   ① 每个账号**每天最多排 5 条**，排满就自动顺延到第二天（一直往后找空位）；
+  //   ② 不再因为老字段 execByAccount='abandoned' 漏生成（与提醒口径一致：只认样品级归档）；
+  //   ③ 已完成的旧计划不再挡住新计划（到点了就重新补一条）。
   useEffect(() => {
+    const MAX_PLANS_PER_DAY = 5   // 每个账号每天最多排 5 条
     const desired = new Map()
     for (const s of data.samples || []) {
       if (!s || s.archived || s.status === 'abandoned') continue
-      const exec = s.execByAccount || {}
       for (const a of getAccounts(s)) {
-        if (exec[a] === 'abandoned') continue
         if (!isHotAccount(s, a)) continue
         if (accountDue(s, a)) {
           desired.set(`${s.id}|${a}`, { name: s.name, account: a })
@@ -3882,13 +3886,34 @@ export function StoreProvider({ children }) {
         if (p.autoKey && !p.done && !desired.has(p.autoKey)) { changed = true; return false }
         return true
       })
-      // 补缺失：只要该 key 还没有任何（含已完成）条目才新增
+      // 「账号 + 日期」已被占用的**待发**条数（手动 + 自动都算，已完成的腾出位置）
+      const used = new Map()
+      for (const p of kept) {
+        if (!p || !p.account || p.done) continue
+        const d = p.planDate || todayStr()
+        const k = `${p.account}|${d}`
+        used.set(k, (used.get(k) || 0) + 1)
+      }
+      // 从今天开始找第一个还没排满的日期，占一个位并返回
+      const takeDate = (account) => {
+        let d = todayStr()
+        for (let i = 0; i < 60; i++) {
+          const k = `${account}|${d}`
+          if ((used.get(k) || 0) < MAX_PLANS_PER_DAY) {
+            used.set(k, (used.get(k) || 0) + 1)
+            return d
+          }
+          d = addDays(d, 1)
+        }
+        return d
+      }
+      // 补缺失：同一 key 只要还有**未完成**的计划就不再补；已完成的不再挡住新的
       for (const [key, v] of desired) {
-        if (!kept.some((p) => p.autoKey === key)) {
+        if (!kept.some((p) => p.autoKey === key && !p.done)) {
           kept.push({
             id: 'auto_' + Math.random().toString(36).slice(2, 8),
             autoKey: key, name: v.name, account: v.account, qty: 1,
-            planDate: todayStr(), auto: true, createdAt: Date.now(), updatedAt: Date.now(),
+            planDate: takeDate(v.account), auto: true, createdAt: Date.now(), updatedAt: Date.now(),
           })
           changed = true
         }

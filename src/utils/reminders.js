@@ -3,7 +3,7 @@
 // 总览页的 Tab 计数与三个列表页的列表内容都从这里取，
 // 避免同一个口径散落在多处、改一处漏一处导致「卡片数字 ≠ 点进去的条数」。
 import { needPublishReminder } from './publish'
-import { getAccounts, getAggregateCounts, isArchivedSample } from './sampleStatus'
+import { getAccounts, getAggregateCounts, isArchivedSample, isShotSample } from './sampleStatus'
 
 // 发布不足的阈值：某产品发布数低于它即视为「发布不足」
 export const LOW_PUBLISH_LIMIT = 5
@@ -44,10 +44,15 @@ export function isHotCadence(sample) {
 export function selectPublishReminders(samples) {
   return (samples || []).filter((s) => {
     if (!needPublishReminder(s)) return false
+    const due = pendingAccounts(s)
+    if (!due.length) return false
     // 与「高频出单」互斥（用户要求「这 2 个状态的数据不能重复」）：
     // 到该发的账号里只要有一个是高频口径，这个样品就归「高频出单」，
     // 普通发布提醒里不再出现它，两个 tab 的条数加起来才是总数。
-    return !pendingAccounts(s).some((a) => isHotAccount(s, a))
+    if (due.some((a) => isHotAccount(s, a))) return false
+    // **没拍过视频的（未到货 / 已到货未拍）不进发布提醒**（用户要求「未拍的不进入发布提醒」）：
+    // 还没拍就没得发，催「该补发了」没有意义；这类样品由「即将到期」负责盯截止日
+    return isShotSample(s)
   })
 }
 

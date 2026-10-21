@@ -336,13 +336,6 @@ export function PcDashboard() {
           <div className="pcv-title">工作台总览</div>
           <div className="pcv-sub">{greeting()} · {todayLabel}</div>
         </div>
-        {/* 诊断入口挪到页面右上角（用户要求），点击看「已超阈值但没进提醒」的样品及原因 */}
-        <button
-          className="pcv-btn-text"
-          onClick={() => setWhyOpen(true)}
-          title="列出已超阈值、但没出现的样品，并说明原因"
-          style={{ marginLeft: 'auto', fontSize: 12, color: '#9aa0a9', flexShrink: 0 }}
-        >为什么没提醒</button>
       </div>
 
       <div className="pcv-body">
@@ -512,6 +505,14 @@ export function PcDashboard() {
               <span style={{ fontSize: 12, color: '#9aa0a9' }}>
                 {remKw ? `匹配 ${shownRows.length} / ${rows.length} 条` : ''}
               </span>
+              <div className="pcv-spacer" />
+              {/* 诊断入口：做成按钮放在提醒中心里（用户要求「改成按钮 提醒中心」） */}
+              <button
+                className="pcv-btn pcv-btn-ghost"
+                onClick={() => setWhyOpen(true)}
+                title="列出已超阈值、但没出现的样品，并说明原因"
+                style={{ flexShrink: 0 }}
+              >为什么没提醒</button>
             </div>
 
             {rows.length === 0 ? (

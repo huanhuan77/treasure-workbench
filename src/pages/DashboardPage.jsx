@@ -1427,8 +1427,7 @@ export function DashboardPage() {
               ) : (
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fReminders.map((s) => {
-                    // 只显示**真正还需要发**的账号（与 PC 总览、提醒页同一口径）：
-                    // 有账号从未发过就只列它们，已发过的账号不会再挂在这一行里
+                    // 只显示**真正还需要发**的账号（与 PC 总览、提醒页同一口径）
                     const showAccounts = reminderAccounts(s)
                     const daysText = showAccounts.length
                       ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))

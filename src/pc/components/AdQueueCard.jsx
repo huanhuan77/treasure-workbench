@@ -155,14 +155,14 @@ export function AdQueueCard() {
           <div className="pcv-spacer" />
         </div>
 
-        {/* 账号筛选胶囊：直接平铺显示（与「发布计划」一致） */}
-        {accOptions.length > 1 && (
+        {/* 账号筛选胶囊：只在「展开」时显示（与「发布计划」一致） */}
+        {expanded && accOptions.length > 1 && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap',
             overflowX: 'auto', padding: '0 12px 8px',
           }}>
             <button
-              onClick={() => { setAccFilter(''); setExpanded(false) }}
+              onClick={() => { setAccFilter('') }}
               style={{
                 padding: '3px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
                 fontSize: 12, fontWeight: 600,
@@ -177,7 +177,7 @@ export function AdQueueCard() {
               return (
                 <button
                   key={a}
-                  onClick={() => { setAccFilter(on ? '' : a); setExpanded(false) }}
+                  onClick={() => { setAccFilter(on ? '' : a) }}
                   style={{
                     padding: '3px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
                     fontSize: 12, fontWeight: 600,
@@ -273,7 +273,7 @@ export function AdQueueCard() {
             {accFiltered.length > 5 && (
               <button
                 className="pcv-btn-text"
-                onClick={() => setExpanded((v) => !v)}
+                onClick={() => { if (expanded) setAccFilter(''); setExpanded((v) => !v) }}
                 style={{
                   display: 'block', width: '100%', padding: '10px 14px', textAlign: 'center',
                   borderTop: '0.5px solid rgba(15, 23, 42, 0.05)', color: '#b8517f', fontWeight: 600,
