@@ -360,10 +360,11 @@ export function PublishPlanCard() {
                   </span>
                   {/* 操作按钮：默认隐藏，鼠标悬停该行才出现（用户要求「太紧凑了」） */}
                   <span className="pcv-rowacts" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                    <button className="pcv-x" title="编辑" style={{ color: '#8a8f98' }} onClick={() => openEdit(p)}>✎</button>
+                    <button className="pcv-x" title="编辑" style={{ width: 20, height: 20, fontSize: 13, color: '#8a8f98' }} onClick={() => openEdit(p)}>✎</button>
                     <button
                       className="pcv-x"
                       title="删除"
+                      style={{ width: 20, height: 20, fontSize: 13 }}
                       onClick={() => { deletePublishPlan(p.id); show('已删除', 'success') }}
                     >×</button>
                   </span>

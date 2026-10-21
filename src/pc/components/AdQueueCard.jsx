@@ -278,6 +278,7 @@ export function AdQueueCard() {
                     <button
                       className="pcv-x"
                       title="删除"
+                      style={{ width: 20, height: 20, fontSize: 13 }}
                       onClick={() => { deleteAdQueue(a.id); show('已删除', 'success') }}
                     >×</button>
                   </span>
