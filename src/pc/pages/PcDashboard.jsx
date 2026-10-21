@@ -43,6 +43,35 @@ function statusTone(status) {
   return status === 'published' ? TONE.good : TONE.neutral
 }
 
+// 「每个账号多少天没发」的小胶囊：左半段用账号主题色底，右半段浅琥珀底放天数。
+// 两块底色不同 → 一眼分得清「哪个账号 / 多少天」，也不会像同色 chip 那样糊成一片
+// （用户先后反馈「颜色重叠了」「加背景色区分」）。
+function AccountDays({ sample, list }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12 }}>
+      {list.map((x) => {
+        const days = daysSincePublishByAccount(sample, x)
+        const col = ACCOUNT_COLOR[x] || { c: '#8a8f98', bg: 'rgba(148,163,184,0.16)' }
+        return (
+          <span
+            key={x}
+            title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}
+            style={{
+              display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
+              borderRadius: 6, overflow: 'hidden', lineHeight: '18px',
+            }}
+          >
+            <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 6px' }}>{x}</span>
+            <span style={{ background: '#fdf1dc', color: '#a97c46', fontWeight: 600, padding: '0 6px' }}>
+              {days === Infinity ? '从未发布' : `已${days}天`}
+            </span>
+          </span>
+        )
+      })}
+    </span>
+  )
+}
+
 // PC 版总览。
 // 业务口径全部复用 utils/reminders 与 utils/publish 的选择器 ——
 // 这里只重写「怎么摆」，不重新定义「哪些算要提醒」，避免两套 UI 口径漂移。
@@ -74,21 +103,7 @@ export function PcDashboard() {
         return (
           <>
             <span className="pcv-chip" style={{ background: '#f43f5e', color: '#fff', marginRight: 6 }}>每{per}天提醒</span>
-            {/* 每个账号一段文字：账号名用账号主题色、天数用琥珀色，不再用带底色的 chip
-                （用户反馈「颜色重叠了」：多个浅色 chip 叠在一起和行底色糊成一片） */}
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 12 }}>
-              {list.map((x) => {
-                const days = daysSincePublishByAccount(s, x)
-                return (
-                  <span key={x} style={{ whiteSpace: 'nowrap' }} title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}>
-                    <span style={{ color: (ACCOUNT_COLOR[x] || {}).c || '#8a8f98', fontWeight: 600 }}>{x}</span>
-                    <span style={{ color: '#a97c46', marginLeft: 4 }}>
-                      {days === Infinity ? '从未发布' : `已${days}天`}
-                    </span>
-                  </span>
-                )
-              })}
-            </span>
+            <AccountDays sample={s} list={list} />
           </>
         )
       },
@@ -115,21 +130,7 @@ export function PcDashboard() {
             {/* 逾期 chip 不再重复带截止日 —— 右面已经有独立的「截止日期」列，
                 重复写会让这一格时宽时窄，短内容行的空洞特别明显 */}
             {overdue && <span className="pcv-chip" style={{ ...TONE.danger, marginRight: 6 }}>已逾期</span>}
-            {/* 每个账号一段文字：账号名用账号主题色、天数用琥珀色，不再用带底色的 chip
-                （用户反馈「颜色重叠了」：多个浅色 chip 叠在一起和行底色糊成一片） */}
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 12 }}>
-              {list.map((x) => {
-                const days = daysSincePublishByAccount(s, x)
-                return (
-                  <span key={x} style={{ whiteSpace: 'nowrap' }} title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}>
-                    <span style={{ color: (ACCOUNT_COLOR[x] || {}).c || '#8a8f98', fontWeight: 600 }}>{x}</span>
-                    <span style={{ color: '#a97c46', marginLeft: 4 }}>
-                      {days === Infinity ? '从未发布' : `已${days}天`}
-                    </span>
-                  </span>
-                )
-              })}
-            </span>
+            <AccountDays sample={s} list={list} />
           </>
         )
       },
