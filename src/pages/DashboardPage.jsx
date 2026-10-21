@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, compareUrgent, setPublishDays, hotReminderDays } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
@@ -562,10 +562,21 @@ export function DashboardPage() {
   // 三个列表现在都是**样品粒度**，账号筛选统一走 matchAcct（样品归属账号命中即显示）。
   // 「发布不足5条」曾短暂改成「样品×账号」条目、按条目 account 精确匹配，
   // 但那会让多账号样品被拆成多条（详见 utils/reminders 里 selectLowPublish 的注释）。
+  // 排序：逾期优先，其余按**行里显示的那个天数**（reminderAccounts 里最久没发的）降序。
+  // 不能用 compareUrgent（它跨全部账号取最久），否则会出现「50 / 24 / 50」这种看着没排序的情况。
+  const sortByShownDays = (a, b) => {
+    const oa = (a.status !== 'published' && isOverdue(a)) ? 0 : 1
+    const ob = (b.status !== 'published' && isOverdue(b)) ? 0 : 1
+    if (oa !== ob) return oa - ob
+    const days = (s) => {
+      const accs = reminderAccounts(s)
+      const d = accs.length ? Math.max(...accs.map((x) => daysSincePublishByAccount(s, x))) : daysSincePublish(s)
+      return d === Infinity ? Number.MAX_SAFE_INTEGER : d
+    }
+    return days(b) - days(a)
+  }
   const fReminders = useMemo(
-    // 已逾期排最前面（其次「多久没发视频」由久到近），与 PC 总览、发布提醒列表页同一套比较。
-    // 总览里这是最需要人动手的一屏，未逾期的混在前面会把真正过期的挤下去。
-    () => reminders.filter((s) => matchAcct(s, remindAccount)).sort(compareUrgent),
+    () => reminders.filter((s) => matchAcct(s, remindAccount)).sort(sortByShownDays),
     [reminders, remindAccount],
   )
   const fLowPublish = useMemo(
@@ -582,7 +593,7 @@ export function DashboardPage() {
     [expiringSoon, remindAccount],
   )
   const fHot = useMemo(
-    () => hotCadence.filter((s) => matchAcct(s, remindAccount)).sort(compareUrgent),
+    () => hotCadence.filter((s) => matchAcct(s, remindAccount)).sort(sortByShownDays),
     [hotCadence, remindAccount],
   )
   // 近 7 天发布条数（按 qty 累加）

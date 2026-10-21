@@ -4,7 +4,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
-import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, compareUrgent, hotReminderDays } from '../../utils/publish'
+import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
@@ -197,20 +197,26 @@ export function PcDashboard() {
         : accs[0]
       out.push({ it, accs, acc: worst })
     }
-    // 「发布提醒」排序（与手机端总览同一口径）：
+    // 「发布提醒 / 高频出单」排序：
     //   ① 已逾期的一律排最前；
-    //   ② 从未发布过视频的排第二梯队；
-    //   ③ 其余按最久没发天数降序（compareUrgent 统一处理 ②③）。
+    //   ② 其余按**这一行显示的那个天数**降序（从未发布 = 最大，排最前）。
+    // 注意：原来用 compareUrgent（跨全部账号取最久），跟行里显示的天数不是同一个口径，
+    // 会出现「50 / 24 / 50」这种看着没排序的情况（用户反馈「没按顺序排」）。
     if (tab === 'reminders' || tab === 'hot') {
       const overdueOf = (r) => {
         const s = r.it.sample || r.it
         return (s.status !== 'published' && isOverdue(s)) ? 0 : 1
       }
+      const rowDays = (r) => {
+        const s = r.it.sample || r.it
+        const d = daysSincePublishByAccount(s, r.acc)
+        return d === Infinity ? Number.MAX_SAFE_INTEGER : d
+      }
       out.sort((x, y) => {
         const oa = overdueOf(x)
         const ob = overdueOf(y)
         if (oa !== ob) return oa - ob
-        return compareUrgent(x.it.sample || x.it, y.it.sample || y.it)
+        return rowDays(y) - rowDays(x)
       })
     } else if (account === '') {
       // 其它 Tab 未筛选时按账号归拢，读起来是「一账号一段」而不是随机交错
