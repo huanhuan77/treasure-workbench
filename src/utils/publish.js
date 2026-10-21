@@ -114,8 +114,9 @@ export function isHotAccount(sample, account) {
   return Number.isFinite(pv) && pv >= 1 && pv <= 5
 }
 
-// 出单锚点口径：从最近一次出单日算起，超过设定天数（默认7）且出单之后没有补发布 → 需要提醒，
-// 没出过单的账号退回原「距上次发布超期 / 从未发」口径。
+// 出单锚点口径：从最近一次出单日算起，**满**设定天数（默认7）且出单之后没有补发布 → 需要提醒，
+// 没出过单的账号退回原「距上次发布超期 / 从未发」口径（老口径保持 > th）。
+// 边界：出单当天算第 0 天，第 7 天就提醒（用户要求「隔了 7 天没发布就提醒」）。
 export function accountDue(sample, account) {
   const c = (sample && sample.countsByAccount && sample.countsByAccount[account]) || {}
   const o = c.lastOrderAt
@@ -124,7 +125,7 @@ export function accountDue(sample, account) {
   if (o) {
     const days = Math.floor((new Date(todayStr()) - new Date(o)) / 86400000)
     const postedAfter = !!p && p > o
-    return days > th && !postedAfter
+    return days >= th && !postedAfter
   }
   const d = daysSincePublishByAccount(sample, account)
   return d === Infinity || d > th
