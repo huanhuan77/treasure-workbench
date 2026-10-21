@@ -1026,6 +1026,9 @@ export function DashboardPage() {
               </>
             )}
 
+            {/* 从提醒中心进来时上面的标签被隐藏了，留一点上下间距，别贴着账号胶囊 */}
+            {planLockProduct && <div style={{ height: 14 }} />}
+
             {planEntries.length === 0 && !planIsEditing && (
               <button onClick={planAddEntry} style={{
                 width: '100%', padding: '14px', border: '1px dashed #e5b7c8', borderRadius: '10px',

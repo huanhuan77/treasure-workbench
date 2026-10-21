@@ -526,7 +526,8 @@ export function PublishPlanCard() {
                 </>
               )}
 
-              <div className="pcv-entrylist">
+              {/* 从提醒中心进来时上面的标签被隐藏了，这里补上下间距，别贴着账号 tab */}
+              <div className="pcv-entrylist" style={lockProduct ? { marginTop: 18, marginBottom: 6 } : undefined}>
                 {/* 空态本身可点：直接新增一行并展开选品面板 */}
                 {entries.length === 0 && !isEditing && (
                   <button className="pcv-entry-empty" onClick={addEntry}>
