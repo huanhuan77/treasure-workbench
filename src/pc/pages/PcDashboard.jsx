@@ -176,7 +176,14 @@ export function PcDashboard() {
         )
       },
       actions: (it) => (
-        <button className="pcv-btn pcv-btn-ghost" onClick={() => setSampleDialog(it.sample)}>打开样品</button>
+        <>
+          {/* 发布不足5条 也给「新建计划」：账号取该样品已发布过的第一个账号（用户要求） */}
+          <button
+            className="pcv-btn"
+            onClick={() => quickPlan(it.sample, (it.accounts && it.accounts[0] ? it.accounts[0].account : ''))}
+          >新建计划</button>
+          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(it.sample)}>打开样品</button>
+        </>
       ),
     },
     expiring: {
@@ -221,8 +228,11 @@ export function PcDashboard() {
   const accountOptions = useMemo(() => {
     const set = new Set()
     for (const it of cur.items) for (const a of cur.accountsOf(it)) set.add(a)
+    // 切 tab 会保留账号筛选：即便该账号在这个 tab 没有条目，也要把胶囊显示出来，
+    // 否则「筛选还在生效、但看不见选中了谁」
+    if (account) set.add(account)
     return [...set].sort((x, y) => accRank(x) - accRank(y))
-  }, [cur])
+  }, [cur, account])
 
   // 「全部账号」时**合并成一张表**，用一列「账号」标出属于谁（用户要求）。
   // 粒度与手机端一致：**一个样品一行**（同一个品不按账号拆成多行），
@@ -456,10 +466,11 @@ export function PcDashboard() {
                   const on = tab === t.id
                   const n = tabCount(t.id)
                   return (
+                    // 切 tab 保留当前的账号筛选（用户要求「切换 tab 筛选条件带过来」）
                     <button
                       key={t.id}
                       className={`pcv-rtab${on ? ' on' : ''}`}
-                      onClick={() => { setTab(t.id); setAccount('') }}
+                      onClick={() => setTab(t.id)}
                     >
                       <span>{t.label}</span>
                       <span className="pcv-rtab-count">{n}</span>

@@ -476,40 +476,46 @@ export function PublishPlanCard() {
               <button className="pcv-dialog-x" title="关闭" onClick={() => setEditing(null)}>×</button>
             </div>
             <div className="pcv-dialog-b">
-              <div className="pcv-field-label">发布时间</div>
-              <input
-                className="pcv-input"
-                style={{ width: 180 }}
-                type="date"
-                value={planDate}
-                onChange={(e) => setPlanDate(e.target.value)}
-              />
-
-              {/* 先选账号、再选产品（用户要求）：产品候选按账号过滤 */}
-              <div className="pcv-field-label" style={{ marginTop: 18 }}>账号</div>
-              <AccountTabs
-                value={account}
-                onChange={(a) => {
-                  setAccount(a)
-                  // 编辑态只有一行：换账号就把已选产品清掉，避免「A 账号 + B 账号的品」
-                  if (isEditing) {
-                    setEditEntry((prev) => ({ ...prev, name: '' }))
-                  } else {
-                    // 新增态：从提醒中心带进来的那条产品，换账号时跟着搬过去，
-                    // 这样「带出来的账号不对」可以直接切到想要的账号（不用重新选产品）
-                    setByAcc((prev) => {
-                      const cur = prev[account] || []
-                      const target = prev[a] || []
-                      if (target.length === 0 && cur.length === 1 && cur[0] && cur[0].name) {
-                        return { ...prev, [a]: [{ ...cur[0] }], [account]: [] }
+              {/* 发布时间 + 账号放在同一行（用户要求「PC 的可以放一行」），省一层高度 */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+                <div style={{ flexShrink: 0 }}>
+                  <div className="pcv-field-label">发布时间</div>
+                  <input
+                    className="pcv-input"
+                    style={{ width: 150 }}
+                    type="date"
+                    value={planDate}
+                    onChange={(e) => setPlanDate(e.target.value)}
+                  />
+                </div>
+                {/* 先选账号、再选产品（用户要求）：产品候选按账号过滤 */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="pcv-field-label">账号</div>
+                  <AccountTabs
+                    value={account}
+                    onChange={(a) => {
+                      setAccount(a)
+                      // 编辑态只有一行：换账号就把已选产品清掉，避免「A 账号 + B 账号的品」
+                      if (isEditing) {
+                        setEditEntry((prev) => ({ ...prev, name: '' }))
+                      } else {
+                        // 新增态：从提醒中心带进来的那条产品，换账号时跟着搬过去，
+                        // 这样「带出来的账号不对」可以直接切到想要的账号（不用重新选产品）
+                        setByAcc((prev) => {
+                          const cur = prev[account] || []
+                          const target = prev[a] || []
+                          if (target.length === 0 && cur.length === 1 && cur[0] && cur[0].name) {
+                            return { ...prev, [a]: [{ ...cur[0] }], [account]: [] }
+                          }
+                          return prev
+                        })
                       }
-                      return prev
-                    })
-                  }
-                  resetPicker()
-                }}
-                counts={counts}
-              />
+                      resetPicker()
+                    }}
+                    counts={counts}
+                  />
+                </div>
+              </div>
 
               {/* 从提醒中心「新建计划」进来时产品已带好：隐藏「发布产品 & 数量 / ＋添加 / 提示」，
                   只留那一条产品行（与手机端一致） */}
@@ -539,6 +545,9 @@ export function PublishPlanCard() {
                     <div className="pcv-entry">
                       <button
                         className={`pcv-entry-pick${e.name ? '' : ' empty'}`}
+                        /* 从提醒中心进来（产品锁定）：名字不再拉满整行，数量加减跟着靠左，
+                           免得数量按钮孤零零贴在弹窗最右边（用户要求「往左移」） */
+                        style={lockProduct ? { flex: '0 1 auto', maxWidth: 360 } : undefined}
                         onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery(''); setCatFilter(''); setPicked([]) }}
                       >
                         {e.name || '点击选择产品'}
@@ -560,6 +569,8 @@ export function PublishPlanCard() {
                       {!isEditing && (
                         <button className="pcv-x" title="删除该条" onClick={() => removeEntry(idx)}>×</button>
                       )}
+                      {/* 锁定态：把剩余空间推到右边，让「产品 + 数量 + ×」整体靠左 */}
+                      {lockProduct && <div style={{ flex: 1 }} />}
                     </div>
 
                     {/* 产品选择面板：内联展开在该行下面，点一行即选中 */}
