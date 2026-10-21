@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { formatDate, todayStr, deadlineDesc, addDays, copyText, toDateInput } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
-import { needPublishReminder, daysSincePublish, lastPublishText, sampleDays, pendingAccounts, daysSincePublishByAccount } from '../utils/publish'
+import { sampleDays } from '../utils/publish'
 import { SAMPLE_STATUS, SAMPLE_STATUS_ORDER, SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter, getLogistics, getCounts, getTopStatus, isShotSample, isArchivedSample, EXEC_STATUS, LOGISTICS_STATUS } from '../utils/sampleStatus'
 import { CATEGORIES } from '../utils/categories'
 import { SampleForm } from '../components/SampleForm'
@@ -528,7 +528,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickPublish, onQuickShot }) {
+function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickShot }) {
   const logistics = getLogistics(s)
   const logInfo = LOGISTICS_STATUS[logistics]
   const logColor = logInfo ? logInfo.color : '#94a3b8'
@@ -630,32 +630,9 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
               {s.remark}
             </div>
           )}
-          {/* 未发布提醒 / 补记发布快捷入口（已发条数展示按用户要求移除） */}
-          {needPublishReminder(s) && (() => {
-            // 提醒按**账号**算（以前这里显示的是整个样品「距最后一次发布 N 天」，
-            // 多账号时会出现「努力成为富婆 2 天前刚发过，却提示 2天未发」的误导 ——
-            // 现在列出真正到该发的账号，各自带天数）
-            const due = pendingAccounts(s)
-            return (
-              <div style={{ paddingLeft: '28px', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                {due.length > 0 ? due.map((a) => {
-                  const d = daysSincePublishByAccount(s, a)
-                  return (
-                    <span
-                      key={a}
-                      style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}
-                    >⚠ {a} {d === Infinity ? '从未发布' : `已${d}天`}</span>
-                  )
-                }) : (
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>⚠ 已过截止日</span>
-                )}
-                <button onClick={(e) => { e.stopPropagation(); onQuickPublish && onQuickPublish(s) }} style={{
-                  fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ec4899', border: 'none',
-                  padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
-                }}>补记发布</button>
-              </div>
-            )
-          })()}
+          {/* 未发布提醒 / 补记发布快捷入口已按用户要求从手机端样品卡移除
+              （「手机端不显示这些」）：提醒统一到总览的提醒中心看，卡片只保留基本信息 */}
+
         </div>
       </div>
     </div>
