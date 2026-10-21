@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
+import { todayStr } from '../../utils/helpers'
 import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
@@ -87,7 +88,7 @@ function AccountDays({ sample, list }) {
 export function PcDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { samples, todos, orders } = useStore()
+  const { samples, todos, orders, publishPlans, addPublishPlan } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [account, setAccount] = useState('')
   // 「为什么没提醒」诊断弹窗
@@ -97,6 +98,27 @@ export function PcDashboard() {
   const [publishDialog, setPublishDialog] = useState(undefined)
 
   const all = useMemo(() => selectAllReminders(samples), [samples])
+
+  // 「新建计划」按钮：用「该产品 + 该行账号」快速建一条今天的发布计划。
+  // 防重复只针对**今天**：同产品 + 同账号今天已有待发计划才拦；
+  // 计划在别的日期（比如排到 10-25）不影响今天再建一条（用户反馈「那不是同一天的呢」）。
+  const quickPlan = useCallback((s, acc) => {
+    const name = String(s && s.name || '').trim()
+    if (!name || !acc) return
+    const today = todayStr()
+    const dup = (publishPlans || []).some(
+      (p) => !p.done
+        && String(p.name || '').trim() === name
+        && p.account === acc
+        && (p.planDate || today) === today,
+    )
+    if (dup) {
+      show(`「${name}」今天已有 ${acc} 的计划了`, 'error')
+      return
+    }
+    addPublishPlan({ name, account: acc, qty: 1, planDate: today })
+    show(`已加入发布计划：${name}（${acc}）`, 'success')
+  }, [publishPlans, addPublishPlan, show])
 
   // 每个 Tab 的口径：怎么取数、一条归到哪些账号、中列与操作各显示什么
   const spec = useMemo(() => ({
@@ -119,9 +141,10 @@ export function PcDashboard() {
           </>
         )
       },
-      actions: (s) => (
+      actions: (s, a) => (
         <>
           <button className="pcv-btn" onClick={() => setPublishDialog({ sampleId: s.id, accounts: getAccounts(s) })}>补记发布</button>
+          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => quickPlan(s, a)}>新建计划</button>
           <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
         </>
       ),
@@ -146,9 +169,10 @@ export function PcDashboard() {
           </>
         )
       },
-      actions: (s) => (
+      actions: (s, a) => (
         <>
           <button className="pcv-btn" onClick={() => setPublishDialog({ sampleId: s.id, accounts: getAccounts(s) })}>补记发布</button>
+          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => quickPlan(s, a)}>新建计划</button>
           <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
         </>
       ),
@@ -192,7 +216,7 @@ export function PcDashboard() {
         <button className="pcv-btn pcv-btn-ghost" onClick={() => setSampleDialog(s)}>打开样品</button>
       ),
     },
-  }), [all, navigate])
+  }), [all, navigate, quickPlan])
 
   // 当前 Tab；REMINDER_TABS 里新增了 tab 但 spec 还没跟上时，兜底回「发布提醒」，
   // 避免整页因为 spec[tab] 为 undefined 直接崩掉（reading 'items'）。
@@ -531,7 +555,7 @@ export function PcDashboard() {
                           title={s.name}
                           style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
                         >{s.name}</td>
-                        <td>{cur.actions(it)}</td>
+                        <td>{cur.actions(it, acc)}</td>
                         {/* 未发布天数（列顺序：操作 → 天数 → 账号，用户要求换顺序） */}
                         <td>{cur.mid(it, acc, accs)}</td>
                         {/* 账号列：彩色圆点 + 名字；多账号并列**不换行**（用户要求「不要换行」） */}

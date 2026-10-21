@@ -390,6 +390,32 @@ export function DashboardPage() {
     setPlanQuery('')
     setPlanEdit(p)
   }
+  // 「新建计划」：与 PC 提醒中心的同名按钮同一口径 ——
+  // 取该样品**最该发**的账号，建一条今天的发布计划（数量 1）；今天已有同产品+同账号的计划就不重复建。
+  const quickPlan = (s) => {
+    const name = String((s && s.name) || '').trim()
+    const accs = pendingAccounts(s)
+    const acc = accs
+      .slice()
+      .sort((x, y) => daysSincePublishByAccount(s, y) - daysSincePublishByAccount(s, x))[0]
+    if (!name || !acc) {
+      show('这个产品还没有到该发的账号', 'error')
+      return
+    }
+    const dup = (publishPlans || []).some(
+      (p) => !p.done
+        && String(p.name || '').trim() === name
+        && p.account === acc
+        && (p.planDate || todayPlan) === todayPlan,
+    )
+    if (dup) {
+      show(`「${name}」今天已有 ${acc} 的计划了`, 'error')
+      return
+    }
+    addPublishPlan({ name, account: acc, qty: 1, planDate: todayPlan })
+    show(`已加入发布计划：${name}（${acc}）`, 'success')
+  }
+
   // 「标记已发」：与 PC 一致，顺手把这次发布**写进发布记录**（用户要求）
   const markPlanDone = (p) => {
     // 未来日期的计划不能提前标记完成（与 PC 一致，按钮虽已置灰，这里再兜一层）
@@ -1460,6 +1486,7 @@ export function DashboardPage() {
                   renderActions={(s) => (
                     <>
                       <button style={pcPrimaryBtn} onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })}>补记发布</button>
+                      <button style={pcTextBtn} onClick={() => quickPlan(s)}>新建计划</button>
                       <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
                     </>
                   )}
@@ -1481,6 +1508,10 @@ export function DashboardPage() {
                             onClick={() => { setSwipedHotId(null); navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } }) }}
                             style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >补记发布</button>
+                          <button
+                            onClick={() => { setSwipedHotId(null); quickPlan(s) }}
+                            style={{ width: 74, height: '80%', border: 'none', background: '#b8517f', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >新建计划</button>
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
@@ -1510,7 +1541,7 @@ export function DashboardPage() {
                             position: 'relative', zIndex: 1,
                             background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
-                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-148px)' : 'translateX(0)',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-226px)' : 'translateX(0)',
                           }}
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1576,6 +1607,7 @@ export function DashboardPage() {
                   renderActions={(s) => (
                     <>
                       <button style={pcPrimaryBtn} onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })}>补记发布</button>
+                      <button style={pcTextBtn} onClick={() => quickPlan(s)}>新建计划</button>
                       <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
                     </>
                   )}
@@ -1594,6 +1626,10 @@ export function DashboardPage() {
                             onClick={() => { setSwipedHotId(null); navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } }) }}
                             style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >补记发布</button>
+                          <button
+                            onClick={() => { setSwipedHotId(null); quickPlan(s) }}
+                            style={{ width: 74, height: '80%', border: 'none', background: '#b8517f', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >新建计划</button>
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
@@ -1624,7 +1660,7 @@ export function DashboardPage() {
                             position: 'relative', zIndex: 1,
                             background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
-                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-148px)' : 'translateX(0)',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-226px)' : 'translateX(0)',
                           }}
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
