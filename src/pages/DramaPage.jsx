@@ -62,7 +62,7 @@ export function DramaPage() {
   }
 
   const tabBtn = (active) => ({
-    flex: 1, border: 'none', padding: '10px 0', borderRadius: '12px',
+    flex: 1, border: 'none', padding: '10px 0', borderRadius: '10px',
     fontSize: '14px', fontWeight: 700, cursor: 'pointer',
     color: active ? '#fff' : '#888',
     background: active ? 'linear-gradient(135deg,#f472b6,#ec4899)' : 'rgba(0,0,0,0.04)',
@@ -71,7 +71,7 @@ export function DramaPage() {
   return (
     <div className="app-container">
       <header style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 12px',
+        padding: 'calc(16px + var(--safe-top)) 8px 12px',
         display: 'flex', alignItems: 'center', gap: '12px',
       }}>
         <button onClick={() => navigate(-1)} style={{
@@ -89,7 +89,7 @@ export function DramaPage() {
         </div>
       </header>
 
-      <div style={{ padding: '8px 16px calc(96px + var(--safe-bottom, 0px))' }}>
+      <div style={{ padding: '8px 8px calc(96px + var(--safe-bottom, 0px))' }}>
         {/* 类型 Tab */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
           <button onClick={() => setTypeTab('tv')} style={tabBtn(typeTab === 'tv')}>
@@ -126,13 +126,13 @@ export function DramaPage() {
               placeholder={typeTab === 'tv' ? '输入剧名，如：狂飙' : '输入综艺名，如：奔跑吧'}
               style={{
                 flex: 1, minWidth: 0, boxSizing: 'border-box',
-                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px',
                 padding: '12px 14px', fontSize: '15px', color: 'var(--text-main)',
                 outline: 'none', background: '#fff',
               }}
             />
             <button onClick={handleAdd} style={{
-              flexShrink: 0, padding: '0 20px', border: 'none', borderRadius: '12px',
+              flexShrink: 0, padding: '0 20px', border: 'none', borderRadius: '10px',
               fontSize: '15px', fontWeight: 600, color: '#fff',
               background: 'linear-gradient(135deg,#f472b6,#ec4899)', cursor: 'pointer',
             }}>＋ 加入</button>
@@ -149,7 +149,7 @@ export function DramaPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {filtered.map((d, i) => (
               <div key={d.id} style={{
-                background: '#fff', borderRadius: '12px', padding: '10px 12px',
+                background: '#fff', borderRadius: '10px', padding: '10px 12px',
                 border: '1px solid rgba(244,114,182,0.16)',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

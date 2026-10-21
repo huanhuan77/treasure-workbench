@@ -18,7 +18,7 @@ function DistBar({ list }) {
     if (dist[n] !== undefined) dist[n]++
   }
   return (
-    <div style={{ padding: '4px 16px 2px', display: 'flex', gap: '6px', flexShrink: 0 }}>
+    <div style={{ padding: '4px 8px 2px', display: 'flex', gap: '6px', flexShrink: 0 }}>
       {[1, 2, 3, 4].map((n) => (
         <div key={n} style={{
           flex: '1 1 0', minWidth: 0, textAlign: 'center', padding: '6px 2px',

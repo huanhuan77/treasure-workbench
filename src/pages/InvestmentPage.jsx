@@ -520,7 +520,7 @@ export function InvestmentPage() {
       </header>
 
       {/* Tab 切换 */}
-      <div style={{ display:'flex', gap:'8px', padding:'14px 16px 8px' }}>
+      <div style={{ display:'flex', gap:'8px', padding:'14px 8px 8px' }}>
         {TABS.map((tab) => {
           const active = activeTab === tab.key
           const dotColor = tab.key === 'stock' ? '#3b82f6' : tab.key === 'fund' ? '#f59e0b' : '#6366f1'
@@ -551,7 +551,7 @@ export function InvestmentPage() {
       </div>
       {/* 固定区域结束 */}
 
-      <div style={{ padding:'200px 16px 0' }}>
+      <div style={{ padding:'200px 8px 0' }}>
         {filteredGroups.length === 0 && (
           <div style={{ textAlign:'center', padding:'48px 20px', color:'#cbd5e1' }}>
             <div style={{ fontSize:'40px', marginBottom:'10px' }}>📊</div>
@@ -641,7 +641,7 @@ export function InvestmentPage() {
               {expanded && (
                 <div style={{
                   borderTop:'1px solid #f1f5f9',
-                  padding:'8px 16px 12px',
+                  padding:'8px 8px 12px',
                   background:'#f8fafc',
                 }}>
                   <div style={{ fontSize:'10px', fontWeight:700, color:'#64748b', marginBottom:'6px', letterSpacing:'0.3px' }}>

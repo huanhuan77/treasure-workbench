@@ -22,7 +22,7 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
   // inline 模式：直接渲染，不弹窗（避免键盘问题）
   if (inline) {
     return (
-      <div style={{ padding: '0 16px 80px' }}>
+      <div style={{ padding: '0 8px 80px' }}>
         {/* 行内头部 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.04)', marginBottom: '16px' }}>
           <button onClick={onClose} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
@@ -188,7 +188,7 @@ export const inputStyle = {
   minHeight: '44px',
   padding: '12px 14px',
   border: '1.5px solid rgba(0,0,0,0.1)',
-  borderRadius: '12px',
+  borderRadius: '10px',
   fontSize: '15px',
   lineHeight: '1.4',
   outline: 'none',

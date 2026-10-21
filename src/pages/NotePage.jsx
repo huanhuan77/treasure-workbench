@@ -54,7 +54,7 @@ export function NotePage() {
   return (
     <div className="app-container" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* 头部 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 8px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
         <button onClick={() => navigate(-1)} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(217,119,6,0.1)', color: '#d97706', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>📝 我的笔记</h1>
@@ -96,7 +96,7 @@ export function NotePage() {
       {/* 底部固定按钮 */}
       <div style={{
         position: 'sticky', bottom: 0,
-        padding: '12px 16px calc(12px + var(--safe-bottom))',
+        padding: '12px 8px calc(12px + var(--safe-bottom))',
         background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid rgba(0,0,0,0.06)',
         display: 'flex', gap: '10px',

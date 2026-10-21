@@ -95,7 +95,7 @@ export function TodoPage() {
   return (
     <div className="app-container">
       <header style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 12px',
+        padding: 'calc(16px + var(--safe-top)) 8px 12px',
         display: 'flex', alignItems: 'center', gap: '12px',
       }}>
         <button onClick={() => navigate(-1)} style={{
@@ -113,7 +113,7 @@ export function TodoPage() {
         </div>
       </header>
 
-      <div style={{ padding: '8px 16px calc(96px + var(--safe-bottom, 0px))' }}>
+      <div style={{ padding: '8px 8px calc(96px + var(--safe-bottom, 0px))' }}>
         {/* 筛选 */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
           {FILTERS.map((f) => {
@@ -139,7 +139,7 @@ export function TodoPage() {
             </p>
             {list.length === 0 && (
               <button onClick={openAdd} style={{
-                marginTop: '16px', padding: '10px 22px', border: 'none', borderRadius: '12px',
+                marginTop: '16px', padding: '10px 22px', border: 'none', borderRadius: '10px',
                 fontSize: '14px', fontWeight: 600, color: '#fff', cursor: 'pointer',
                 background: 'linear-gradient(135deg,#f472b6,#ec4899)',
               }}>＋ 新增待办</button>
@@ -149,7 +149,7 @@ export function TodoPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {shown.map((t) => (
               <div key={t.id} style={{
-                background: '#fff', borderRadius: '12px', padding: '11px 12px',
+                background: '#fff', borderRadius: '10px', padding: '11px 12px',
                 border: '1px solid rgba(0,0,0,0.06)',
                 display: 'flex', alignItems: 'center', gap: '10px',
               }}>

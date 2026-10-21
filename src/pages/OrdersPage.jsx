@@ -34,7 +34,7 @@ const sortChipStyle = (sel) => ({
 
 function PageHeader({ title, onBack, right }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(244,114,182,0.12)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 8px 12px', borderBottom: '1px solid rgba(244,114,182,0.12)' }}>
       <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.12)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
       <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', flex: 1 }}>{title}</h1>
       {right}
@@ -194,7 +194,7 @@ export function OrdersPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'transparent', color: 'var(--text-main)', display: 'flex', flexDirection: 'column' }}>
-      <div className="pc-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: 'calc(12px + var(--safe-top)) 16px 6px', borderBottom: '1px solid rgba(244,114,182,0.12)', flexShrink: 0 }}>
+      <div className="pc-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: 'calc(12px + var(--safe-top)) 8px 6px', borderBottom: '1px solid rgba(244,114,182,0.12)', flexShrink: 0 }}>
         <button onClick={() => navigate('/')} style={{
           width: '38px', height: '38px', borderRadius: '50%', border: 'none',
           background: 'rgba(244,114,182,0.12)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0,
@@ -221,7 +221,7 @@ export function OrdersPage() {
       <DateFilterBar value={dateRange} onChange={setDateRange} />
 
       {/* 账号筛选：一行不换行，可横滚（与视频发布记录一致） */}
-      <div className="hide-scrollbar" style={{ padding: '4px 16px 2px', display: 'flex', gap: '8px', flexWrap: 'nowrap', alignItems: 'center', flexShrink: 0, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
+      <div className="hide-scrollbar" style={{ padding: '4px 8px 2px', display: 'flex', gap: '8px', flexWrap: 'nowrap', alignItems: 'center', flexShrink: 0, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }}>
         <button onClick={() => setAccountFilter('')} style={{
           flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
           border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
@@ -247,7 +247,7 @@ export function OrdersPage() {
       </div>
 
       {/* 排序 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '2px 16px 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '2px 8px 2px' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
         <button onClick={toggleDateSort} style={sortChipStyle(isDateMode)}>
           日期 {dateAsc ? '↑' : '↓'}
@@ -255,7 +255,7 @@ export function OrdersPage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '8px 8px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {filtered.length === 0 ? (
           orders.length === 0 ? (
             <button onClick={openAdd} style={{

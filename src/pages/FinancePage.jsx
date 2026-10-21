@@ -92,7 +92,7 @@ export function FinancePage() {
   return (
     <div className="app-container">
       <header style={{
-        padding: 'calc(20px + var(--safe-top)) 20px 16px',
+        padding: 'calc(20px + var(--safe-top)) 20px 8px',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>收支明细</h1>
@@ -110,10 +110,10 @@ export function FinancePage() {
       </header>
 
       {/* 合计卡片 — 毛玻璃 */}
-      <div style={{ padding: '4px 16px 16px' }}>
+      <div style={{ padding: '4px 8px 16px' }}>
         <div style={{
           ...glassStyle,
-          padding: '18px 16px',
+          padding: '18px 8px',
           display: 'grid',
           gridTemplateColumns: '1fr 1fr 1fr',
           gap: '12px',
@@ -153,7 +153,7 @@ export function FinancePage() {
       </div>
 
       {/* 筛选区 */}
-      <div style={{ padding: '0 16px 12px' }}>
+      <div style={{ padding: '0 8px 12px' }}>
         {/* 分类筛选 */}
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', marginBottom: '8px' }}>
           <FilterChip active={filterCategory === 'all'} onClick={() => setFilterCategory('all')}>全部</FilterChip>
@@ -195,7 +195,7 @@ export function FinancePage() {
       </div>
 
       {/* 列表 */}
-      <div style={{ padding: '0 16px 16px' }}>
+      <div style={{ padding: '0 8px 16px' }}>
         {filtered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '40px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>💰</div>
@@ -218,7 +218,7 @@ export function FinancePage() {
                     onTouchMove={(e) => { const ct = e.touches[0]; const start = (e.currentTarget.dataset.swipeStart || '').split(',').map(Number); if (!start[0]) return; const dx = ct.clientX - start[0]; const dy = ct.clientY - start[1]; if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) e.currentTarget.dataset.swiping = 'true' }}
                     onTouchEnd={(e) => { if (e.currentTarget.dataset.swiping === 'true') { setSwipedTxId(prev => prev === t.id ? null : t.id) } }}
                     style={{
-                      ...glassStyle, padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      ...glassStyle, padding: '14px 8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       transition: 'transform 0.2s ease', transform: isSwiped ? 'translateX(-160px)' : 'translateX(0)',
                       position: 'relative', zIndex: 1,
                     }}
@@ -451,7 +451,7 @@ function TransactionForm({ accounts = [], onClose, onSave }) {
           <button
             onClick={() => handleTypeChange('income')}
             style={{
-              flex: 1, padding: '11px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+              flex: 1, padding: '11px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
               background: form.type === 'income' ? 'linear-gradient(135deg, #34d399, #10b981)' : 'rgba(255, 255, 255, 0.5)',
               color: form.type === 'income' ? '#fff' : 'var(--text-sub)',
               border: form.type === 'income' ? 'none' : '1px solid rgba(255, 255, 255, 0.6)',
@@ -461,7 +461,7 @@ function TransactionForm({ accounts = [], onClose, onSave }) {
           <button
             onClick={() => handleTypeChange('expense')}
             style={{
-              flex: 1, padding: '11px', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+              flex: 1, padding: '11px', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
               background: form.type === 'expense' ? 'linear-gradient(135deg, #fb7185, #f43f5e)' : 'rgba(255, 255, 255, 0.5)',
               color: form.type === 'expense' ? '#fff' : 'var(--text-sub)',
               border: form.type === 'expense' ? 'none' : '1px solid rgba(255, 255, 255, 0.6)',

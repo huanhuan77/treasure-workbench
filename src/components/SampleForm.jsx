@@ -58,7 +58,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
       footer={
         <div style={{ display: 'flex', gap: '10px' }}>
           {onDelete && (
-            <button style={{ ...btnGhost, color: '#fb7185', flex: '0 0 auto', width: 'auto', padding: '12px 16px' }} onClick={onDelete}>删除</button>
+            <button style={{ ...btnGhost, color: '#fb7185', flex: '0 0 auto', width: 'auto', padding: '12px 8px' }} onClick={onDelete}>删除</button>
           )}
           <button style={btnGhost} onClick={onClose}>取消</button>
           <button style={{ ...btnPrimary, flex: 1 }} onClick={handleSave}>保存</button>
@@ -155,7 +155,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
                   else setForm((f) => ({ ...f, archived: false, isShot: false }))
                 }}
                 style={{
-                  padding: '11px 4px', borderRadius: '12px', fontSize: '13px', fontWeight: 600,
+                  padding: '11px 4px', borderRadius: '10px', fontSize: '13px', fontWeight: 600,
                   background: active ? (it.v === 'archived' ? '#ef4444' : it.v === 'shot' ? '#06b6d4' : '#f97316') : 'rgba(255,255,255,0.5)',
                   color: active ? '#fff' : 'var(--text-sub)', border: 'none',
                 }}

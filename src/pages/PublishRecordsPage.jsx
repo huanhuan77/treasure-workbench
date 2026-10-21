@@ -121,7 +121,7 @@ export function PublishRecordsPage() {
 
   return (
     <div className="app-container scroll-lock-page" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', color: '#1a1a1a', display: 'flex', flexDirection: 'column' }}>
-      <header className="pc-header" style={{ padding: 'calc(12px + var(--safe-top)) 16px 6px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
+      <header className="pc-header" style={{ padding: 'calc(12px + var(--safe-top)) 8px 6px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(236,72,153,0.12)', flexShrink: 0 }}>
         <button onClick={() => navigate(-1)} style={{
           width: '38px', height: '38px', borderRadius: '50%', border: 'none',
           background: 'rgba(244,114,182,0.12)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0,
@@ -160,7 +160,7 @@ export function PublishRecordsPage() {
 
       {/* 账号筛选：单行横向滚动，不换行 */}
       <div className="hide-scrollbar" style={{
-        display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 16px 2px',
+        display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 8px 2px',
         flexShrink: 0, overflowX: 'auto', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch',
       }}>
         <button onClick={() => setAccount('')} style={{
@@ -184,7 +184,7 @@ export function PublishRecordsPage() {
       </div>
 
       {/* 排序：单个「日期」切换按钮（点一下升序↑ 再点降序↓）+ 发布最多 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '2px 16px 2px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', flexShrink: 0, padding: '2px 8px 2px' }}>
         <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>排序</span>
         <button onClick={toggleDateSort} style={sortChipStyle(isDateMode)}>
           日期 {dateAsc ? '↑' : '↓'}
@@ -195,7 +195,7 @@ export function PublishRecordsPage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div className="pc-list" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', padding: '10px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div className="pc-list" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', padding: '10px 8px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {groups.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🎬</div>
@@ -229,7 +229,7 @@ export function PublishRecordsPage() {
                   key={g.key}
                   onClick={() => { if (canExpand) setExpanded(isOpen ? '' : g.key) }}
                   className="pc-card"
-                  style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px 14px', cursor: canExpand ? 'pointer' : 'default' }}
+                  style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '10px', padding: '12px 14px', cursor: canExpand ? 'pointer' : 'default' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>

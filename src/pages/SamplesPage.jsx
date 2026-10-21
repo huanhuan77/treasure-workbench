@@ -272,7 +272,7 @@ export function SamplesPage() {
       </header>
 
       {/* 状态分组卡：一排横滚，每张显示该状态汇总（点选切换 filter） */}
-      <div style={{ display: 'flex', gap: '6px', padding: '2px 16px 6px', overflowX: 'auto', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: '6px', padding: '2px 8px 6px', overflowX: 'auto', flexShrink: 0 }}>
         {/* 全部 */}
         {(() => {
           const allCnt = Object.values(statusStats).reduce((a, b) => a + b, 0) - (statusStats['abandoned'] || 0)
@@ -325,7 +325,7 @@ export function SamplesPage() {
 
       {/* 已发布tab下的出单筛选子chips */}
       {filter === 'published' && (
-        <div style={{ display: 'flex', gap: '6px', padding: '0 16px 6px', overflowX: 'auto', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '6px', padding: '0 8px 6px', overflowX: 'auto', flexShrink: 0 }}>
           {[
             { key: 'all', label: '全部已发布' },
             { key: 'has', label: '已出单' },
@@ -364,7 +364,7 @@ export function SamplesPage() {
       )}
 
       {/* 列表：独立滚动 */}
-      <div ref={listRef} className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div ref={listRef} className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '4px 8px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {accountFiltered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏷️</div>
@@ -485,7 +485,7 @@ export function SamplesPage() {
           </div>
           <div style={{ display: 'flex', gap: '10px', padding: '12px 22px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
             <button onClick={() => setAccountModalOpen(false)} style={{
-              flex: 1, padding: '12px', borderRadius: '12px',
+              flex: 1, padding: '12px', borderRadius: '10px',
               background: 'rgba(0,0,0,0.04)', color: 'var(--text-sub)', border: 'none',
               fontSize: '14px', fontWeight: 600, cursor: 'pointer',
             }}>取消</button>
@@ -495,7 +495,7 @@ export function SamplesPage() {
               sessionStorage.setItem('samples_account', accountDraft)
               setAccountModalOpen(false)
             }} style={{
-              flex: 1, padding: '12px', borderRadius: '12px',
+              flex: 1, padding: '12px', borderRadius: '10px',
               background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff', border: 'none',
               fontSize: '14px', fontWeight: 600, cursor: 'pointer',
               boxShadow: '0 4px 14px rgba(244,114,182,0.3)',

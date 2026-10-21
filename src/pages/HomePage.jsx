@@ -253,7 +253,7 @@ export function HomePage() {
   return (
     <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
       <header className="pc-header" style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 6px',
+        padding: 'calc(16px + var(--safe-top)) 8px 6px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px',
         flexShrink: 0,
       }}>
@@ -284,7 +284,7 @@ export function HomePage() {
       </header>
 
       {/* 分类筛选：固定不滚动 */}
-      <div style={{ padding: '0 16px 4px', flexShrink: 0 }}>
+      <div style={{ padding: '0 8px 4px', flexShrink: 0 }}>
         {/* 分类筛选：横向 chip 条，直接可见、可滑动 */}
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingTop: '4px', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
           <button onClick={() => setCategoryFilter('')} style={{
@@ -311,7 +311,7 @@ export function HomePage() {
       </div>
 
       {/* 列表：独立滚动 */}
-      <div className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '8px 16px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
+      <div className="pc-list" style={{ flex: 1, overflowY: 'auto', padding: '8px 8px calc(88px + var(--safe-bottom, 0px))', WebkitOverflowScrolling: 'touch' }}>
         {!active ? (
           products.length === 0 ? (
             emptyGlass('📭', '还没有产品', '点击下方 + 添加你的第一个产品')

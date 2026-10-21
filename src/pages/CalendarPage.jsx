@@ -33,7 +33,7 @@ export function CalendarPage() {
     <div className="app-container">
       {/* 头部 */}
       <header style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 8px',
+        padding: 'calc(16px + var(--safe-top)) 8px 8px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
         <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📅 日历</h1>
@@ -45,7 +45,7 @@ export function CalendarPage() {
         }}>+</button>
       </header>
 
-      <div style={{ padding: '0 16px' }}>
+      <div style={{ padding: '0 8px' }}>
         {/* 月历 */}
         <div style={{ ...glassStyle, padding: '12px 8px 8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', padding: '0 8px' }}>
@@ -89,7 +89,7 @@ export function CalendarPage() {
         </div>
 
         {/* 进度 */}
-        <div style={{ ...glassStyle, padding: '10px 16px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-sub)' }}>
+        <div style={{ ...glassStyle, padding: '10px 8px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--text-sub)' }}>
           📊 本月 {monthEntries.length}/{daysInMonth} 天
           <div style={{ flex: 1, height: '8px', borderRadius: '4px', background: 'rgba(244,114,182,0.1)', overflow: 'hidden' }}>
             <div style={{ height: '100%', borderRadius: '4px', width: `${Math.min(100, (monthEntries.length / daysInMonth) * 100)}%`, background: 'linear-gradient(90deg,#f472b6,#ec4899)' }} />
@@ -99,7 +99,7 @@ export function CalendarPage() {
         {/* 列表 */}
         <h3 style={{ margin: '16px 0 8px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>{month}月记录</h3>
         {monthEntries.length === 0 ? (
-          <div style={{ ...glassStyle, padding: '24px 16px', textAlign: 'center', fontSize: '14px', color: 'var(--text-sub)' }}>
+          <div style={{ ...glassStyle, padding: '24px 8px', textAlign: 'center', fontSize: '14px', color: 'var(--text-sub)' }}>
             还没有记录，点右上角 + 开始写日记
           </div>
         ) : (

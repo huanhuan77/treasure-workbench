@@ -7,7 +7,7 @@ import { lookupDramaOnline } from '../utils/dramaLib'
 
 function PageHeader({ title, onBack }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 8px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
       <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
       <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>{title}</h1>
     </div>
@@ -65,7 +65,7 @@ export function NewDramaPage() {
     <div className="app-container">
       <PageHeader title="新增追剧" onBack={() => navigate('/dramas')} />
 
-      <div style={{ padding: '12px 16px 16px' }}>
+      <div style={{ padding: '12px 8px 16px' }}>
         <div style={{ ...glassStyle, padding: '14px' }}>
           {/* 剧名 */}
           <div style={{ position: 'relative' }}>
@@ -76,7 +76,7 @@ export function NewDramaPage() {
               placeholder="输入剧名，如：狂飙"
               style={{
                 width: '100%', boxSizing: 'border-box',
-                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px',
                 padding: '11px 14px', fontSize: '15px', color: 'var(--text-main)',
                 outline: 'none', background: '#fff',
               }}
@@ -92,7 +92,7 @@ export function NewDramaPage() {
               inputMode="numeric"
               style={{
                 width: '96px', flexShrink: 0, boxSizing: 'border-box',
-                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px',
                 padding: '11px 14px', fontSize: '15px', color: 'var(--text-main)',
                 outline: 'none', background: '#fff',
               }}
@@ -104,7 +104,7 @@ export function NewDramaPage() {
               placeholder="主演"
               style={{
                 flex: 1, boxSizing: 'border-box',
-                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px',
                 padding: '11px 14px', fontSize: '15px', color: 'var(--text-main)',
                 outline: 'none', background: '#fff',
               }}
@@ -121,7 +121,7 @@ export function NewDramaPage() {
           <button onClick={handleAdd}
             style={{
               width: '100%', marginTop: '12px', padding: '13px 0', border: 'none',
-              borderRadius: '12px', fontSize: '15px', fontWeight: 600, color: '#fff',
+              borderRadius: '10px', fontSize: '15px', fontWeight: 600, color: '#fff',
               background: 'linear-gradient(135deg,#f472b6,#ec4899)', cursor: 'pointer',
             }}>＋ 加入追剧</button>
         </div>

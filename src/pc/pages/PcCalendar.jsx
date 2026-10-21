@@ -224,7 +224,7 @@ export function PcCalendar() {
                   <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>{charCount} 字</span>
                 </div>
 
-                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
+                <div style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 }}>
                   {/* 日期 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span className="pcv-field-label" style={{ margin: 0, minWidth: 30 }}>日期</span>
@@ -304,7 +304,7 @@ export function PcCalendar() {
                   />
                 </div>
 
-                <div className="pcv-dialog-f" style={{ borderTop: '0.5px solid rgba(15,23,42,0.06)', padding: '10px 16px' }}>
+                <div className="pcv-dialog-f" style={{ borderTop: '0.5px solid rgba(15,23,42,0.06)', padding: '10px 8px' }}>
                   <span style={{ fontSize: 11, color: '#9aa0a9' }}>按日期归档，手机端「日历」能看到同一批日记</span>
                   <div className="pcv-spacer" />
                   {editingKey && data[editingKey] && (

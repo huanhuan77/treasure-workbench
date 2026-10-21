@@ -210,7 +210,7 @@ export function ReadingPage() {
   return (
     <div className="app-container">
       {/* 头部 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'calc(16px + var(--safe-top)) 8px 12px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>📚 读书成长</h1>
           <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>自我提升综艺 + 开智必读书单</p>
@@ -218,8 +218,8 @@ export function ReadingPage() {
       </div>
 
       {/* 进度卡片 */}
-      <div style={{ padding: '0 16px 12px' }}>
-        <div style={{ ...glassStyle, padding: '14px 16px' }}>
+      <div style={{ padding: '0 8px 12px' }}>
+        <div style={{ ...glassStyle, padding: '14px 8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-main)' }}>读书进度</span>
             <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>{done}/{total} 项 · {progress}%</span>
@@ -231,7 +231,7 @@ export function ReadingPage() {
       </div>
 
       {/* 类型筛选：综艺 / 读书 */}
-      <div style={{ display: 'flex', gap: '6px', padding: '0 16px 8px' }}>
+      <div style={{ display: 'flex', gap: '6px', padding: '0 8px 8px' }}>
         {[
           { key: '全部', label: '📚 全部' },
           { key: '综艺', label: '🎬 综艺' },
@@ -248,7 +248,7 @@ export function ReadingPage() {
       </div>
 
       {/* 分类筛选（综艺和读书分类不同） */}
-      <div style={{ display: 'flex', gap: '6px', padding: '0 16px 8px', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: '6px', padding: '0 8px 8px', overflowX: 'auto' }}>
         {['全部', ...currentCats].map(c => (
           <button key={c} onClick={() => setCatFilter(c)} style={{
             padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, whiteSpace: 'nowrap',
@@ -260,7 +260,7 @@ export function ReadingPage() {
       </div>
 
       {/* 状态筛选 */}
-      <div style={{ display: 'flex', gap: '6px', padding: '0 16px 12px' }}>
+      <div style={{ display: 'flex', gap: '6px', padding: '0 8px 12px' }}>
         {['全部', ...STATUS_ORDER].map(s => {
           const active = statusFilter === s
           const activeColor = s === '全部' ? 'rgba(244,114,182,0.85)' : STATUS[s].color
@@ -276,7 +276,7 @@ export function ReadingPage() {
       </div>
 
       {/* 列表 */}
-      <div style={{ padding: '4px 16px calc(90px + var(--safe-bottom))' }}>
+      <div style={{ padding: '4px 8px calc(90px + var(--safe-bottom))' }}>
         {filtered.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '40px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '36px', marginBottom: '8px' }}>📚</div>
@@ -414,7 +414,7 @@ export function ReadingPage() {
 function ReadingCard({ item, st, color, onToggleStatus, onNotes, onEdit, onDelete }) {
   const [swiped, setSwiped] = useState(false)
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '12px' }}>
+    <div style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
       {/* 左滑操作按钮 */}
       <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: '4px', paddingRight: '6px' }}>
         <button onClick={() => { setSwiped(false); onEdit() }} style={{

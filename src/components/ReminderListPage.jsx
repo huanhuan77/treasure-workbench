@@ -15,7 +15,7 @@ function PageHeader({ title, onBack }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '12px',
-      padding: 'calc(12px + var(--safe-top)) 16px 12px',
+      padding: 'calc(12px + var(--safe-top)) 8px 12px',
       borderBottom: '1px solid rgba(236,72,153,0.12)',
       background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 100%)',
       flexShrink: 0,
@@ -102,7 +102,7 @@ export function ReminderListPage({
       <PageHeader title={title} onBack={() => navigate(-1)} />
 
       {/* 筛选区：账号胶囊 + 搜索框 + 排序胶囊 */}
-      <div style={{ padding: '10px 16px 6px', display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
+      <div style={{ padding: '10px 8px 6px', display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
         <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
           {[{ k: 'all', label: '全部账号' }, ...ACCOUNTS.map((a) => ({ k: a, label: a }))].map((o) => (
             <Pill key={o.k} active={accountFilter === o.k} accent={accent} onClick={() => setAccountFilter(o.k)}>{o.label}</Pill>
@@ -155,7 +155,7 @@ export function ReminderListPage({
       {/* 列表：底部留出 BottomNav 高度，避免最后几条被遮挡 */}
       <div style={{ padding: '8px 12px calc(80px + var(--safe-bottom, 0px))' }}>
         {list.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '30px 16px', textAlign: 'center', color: filtered ? 'var(--text-sub)' : '#16a34a', fontSize: '13px' }}>
+          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '10px', padding: '30px 8px', textAlign: 'center', color: filtered ? 'var(--text-sub)' : '#16a34a', fontSize: '13px' }}>
             {filtered ? noMatchText : emptyText}
           </div>
         ) : (

@@ -305,7 +305,7 @@ export function DateFilterBar({ value, onChange }) {
             <CalendarMonths months={months} startTmp={startTmp} endTmp={endTmp} onSelect={handleSelect} todayStr={todayStr} />
 
             {/* 底部确定 */}
-            <div style={{ flexShrink: 0, padding: '10px 16px 14px' }}>
+            <div style={{ flexShrink: 0, padding: '10px 8px 14px' }}>
               <button onClick={confirm} style={{
                 width: '100%', padding: '12px', borderRadius: '999px', border: 'none', background: BLUE,
                 color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer',

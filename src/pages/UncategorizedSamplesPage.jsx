@@ -62,7 +62,7 @@ export function UncategorizedSamplesPage() {
 
   return (
     <div className="app-container" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(236,72,153,0.12)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 8px 12px', borderBottom: '1px solid rgba(236,72,153,0.12)' }}>
         <button onClick={() => navigate(-1)} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
         <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)', flex: 1 }}>未分类样品（{list.length}）</h1>
         {list.length > 0 && (
@@ -72,15 +72,15 @@ export function UncategorizedSamplesPage() {
         )}
       </div>
 
-      <div style={{ padding: '10px 12px 16px' }}>
+      <div style={{ padding: '10px 12px 8px' }}>
         {list.length === 0 ? (
-          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '30px 16px', textAlign: 'center', color: '#16a34a', fontSize: '13px' }}>
+          <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '10px', padding: '30px 8px', textAlign: 'center', color: '#16a34a', fontSize: '13px' }}>
             🎉 所有样品都已经有分类了
           </div>
         ) : (
           <>
             {/* 批量操作区 */}
-            <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '12px', padding: '12px', marginBottom: '10px' }}>
+            <div style={{ background: '#fff', border: '1px solid #fce7ec', borderRadius: '10px', padding: '12px', marginBottom: '10px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
                 <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>
                   已选 <b style={{ color: 'var(--primary)' }}>{checkedIds.length}</b> / {list.length} 个

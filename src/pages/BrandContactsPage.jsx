@@ -36,7 +36,7 @@ export function BrandContactsPage() {
   return (
     <div className="app-container">
       {/* 头部 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'calc(16px + var(--safe-top)) 8px 12px' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>🤝 品牌方联系</h1>
           <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-sub)' }}>{list.length} 个品牌方 · 点击复制「品牌方名称 微信」</p>
@@ -44,7 +44,7 @@ export function BrandContactsPage() {
       </div>
 
       {/* 状态筛选 */}
-      <div style={{ display: 'flex', gap: '6px', padding: '0 16px 12px' }}>
+      <div style={{ display: 'flex', gap: '6px', padding: '0 8px 12px' }}>
         {['全部', '已添加', '未添加'].map(f => {
           const cnt = f === '全部' ? list.length : list.filter(i => (f === '已添加') === !!i.added).length
           return (
@@ -59,7 +59,7 @@ export function BrandContactsPage() {
       </div>
 
       {/* 列表 */}
-      <div style={{ padding: '4px 16px calc(90px + var(--safe-bottom))' }}>
+      <div style={{ padding: '4px 8px calc(90px + var(--safe-bottom))' }}>
         {list.length === 0 ? (
           <div style={{ ...glassStyle, textAlign: 'center', padding: '50px 20px', color: 'var(--text-sub)' }}>
             <div style={{ fontSize: '40px', marginBottom: '8px' }}>🤝</div>

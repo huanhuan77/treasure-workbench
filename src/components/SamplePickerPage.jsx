@@ -30,7 +30,7 @@ export function SamplePickerPage({
   }
   const fieldBox = {
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    width: '100%', padding: '13px 14px', borderRadius: '12px',
+    width: '100%', padding: '13px 14px', borderRadius: '10px',
     background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
     fontSize: '15px', color: 'var(--text-main)', cursor: 'pointer', boxSizing: 'border-box',
   }
@@ -39,7 +39,7 @@ export function SamplePickerPage({
     <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column', background: 'linear-gradient(170deg, #ffe0ea 0%, #ffeef5 38%, #fff8f4 100%)', zIndex: 1000, position: 'relative' }}>
       {/* 全屏头部 */}
       <header style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 14px',
+        padding: 'calc(16px + var(--safe-top)) 8px 14px',
         display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0,
         borderBottom: '1px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.75)',
         backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
@@ -52,7 +52,7 @@ export function SamplePickerPage({
       </header>
 
       {/* 搜索 + 操作条（固定不随列表滚） */}
-      <div style={{ padding: '12px 16px 8px', flexShrink: 0 }}>
+      <div style={{ padding: '12px 8px 8px', flexShrink: 0 }}>
         <input
           autoFocus
           placeholder={placeholder}
@@ -113,7 +113,7 @@ export function SamplePickerPage({
 
       {/* 列表滚动区（底部留出固定确定栏高度） */}
       <div style={{
-        flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 16px calc(120px + var(--safe-bottom))',
+        flex: 1, minHeight: 0, overflowY: 'auto', padding: '4px 8px calc(120px + var(--safe-bottom))',
         WebkitOverflowScrolling: 'touch',
       }}>
         {children}
@@ -123,7 +123,7 @@ export function SamplePickerPage({
       <div className="app-fixed-narrow" style={{
         position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 300,
         maxWidth: '480px', margin: '0 auto',
-        padding: '12px 16px calc(14px + var(--safe-bottom))',
+        padding: '12px 8px calc(14px + var(--safe-bottom))',
         borderTop: '1px solid rgba(0,0,0,0.05)',
         background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
       }}>

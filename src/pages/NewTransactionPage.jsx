@@ -9,7 +9,7 @@ import { CATEGORIES, INCOME_TYPES, EXPENSE_TYPES } from '../utils/financeCategor
 
 function PageHeader({ title, onBack }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 8px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
       <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
       <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>{title}</h1>
     </div>
@@ -45,11 +45,11 @@ export function NewTransactionPage() {
         <Field label="类型">
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => { setType('income'); setCategory('sample'); setReceived(true) }}
-              style={{ flex: 1, padding: '11px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: 'none',
+              style={{ flex: 1, padding: '11px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, border: 'none',
                 background: type === 'income' ? 'linear-gradient(135deg, #34d399, #10b981)' : 'rgba(255, 255, 255, 0.5)',
                 color: type === 'income' ? '#fff' : 'var(--text-sub)' }}>💰 收入</button>
             <button onClick={() => { setType('expense'); setCategory('prop') }}
-              style={{ flex: 1, padding: '11px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: 'none',
+              style={{ flex: 1, padding: '11px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, border: 'none',
                 background: type === 'expense' ? 'linear-gradient(135deg, #fb7185, #f43f5e)' : 'rgba(255, 255, 255, 0.5)',
                 color: type === 'expense' ? '#fff' : 'var(--text-sub)' }}>💸 支出</button>
           </div>
@@ -74,7 +74,7 @@ export function NewTransactionPage() {
               const selected = account === a
               return (
                 <button key={a} onClick={() => setAccount(a)} style={{
-                  padding: '9px 16px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
+                  padding: '9px 8px', borderRadius: '999px', fontSize: '13px', fontWeight: 600,
                   border: '1.5px solid', cursor: 'pointer', transition: 'all 0.15s',
                   whiteSpace: 'nowrap', minWidth: '96px',
                   borderColor: selected ? 'var(--primary)' : 'rgba(0,0,0,0.06)',
@@ -98,12 +98,12 @@ export function NewTransactionPage() {
           <Field label="收款状态">
             <div style={{ display: 'flex', gap: '8px' }}>
               <button onClick={() => setReceived(true)} style={{
-                flex: 1, padding: '10px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer',
+                flex: 1, padding: '10px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer',
                 background: received ? 'linear-gradient(135deg, #34d399, #10b981)' : 'rgba(255,255,255,0.5)',
                 color: received ? '#fff' : 'var(--text-sub)',
               }}>已收款</button>
               <button onClick={() => setReceived(false)} style={{
-                flex: 1, padding: '10px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer',
+                flex: 1, padding: '10px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, border: 'none', cursor: 'pointer',
                 background: !received ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'rgba(255,255,255,0.5)',
                 color: !received ? '#fff' : 'var(--text-sub)',
               }}>待收款</button>

@@ -106,7 +106,7 @@ export function OrderFormModal({ open, onClose, editing, onSave, prefill }) {
           <button type="button" onClick={openSamplePicker} style={{
             width: '100%', minHeight: '44px', padding: '12px 14px',
             border: currentSample ? '1.5px solid #16a34a' : '1.5px solid rgba(0,0,0,0.1)',
-            borderRadius: '12px', background: '#fff', cursor: 'pointer',
+            borderRadius: '10px', background: '#fff', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px',
             color: 'var(--text-main)', textAlign: 'left', fontFamily: 'inherit', fontSize: '15px',
           }}>
@@ -122,7 +122,7 @@ export function OrderFormModal({ open, onClose, editing, onSave, prefill }) {
 
           {/* 搜索面板：内联展开 */}
           {sampleOpen && account && (
-            <div style={{ marginTop: '8px', border: '1px solid rgba(244,114,182,0.22)', borderRadius: '12px', background: '#fff', overflow: 'hidden' }}>
+            <div style={{ marginTop: '8px', border: '1px solid rgba(244,114,182,0.22)', borderRadius: '10px', background: '#fff', overflow: 'hidden' }}>
               <div style={{ padding: '8px', borderBottom: '1px solid rgba(244,114,182,0.10)' }}>
                 <input
                   autoFocus

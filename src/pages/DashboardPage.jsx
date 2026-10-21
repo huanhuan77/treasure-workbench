@@ -787,7 +787,7 @@ export function DashboardPage() {
 
       {/* 待办清单（独立事项池：截止日期可有可无；管理入口 /todos） */}
       <div style={{ padding: '12px 8px 4px' }}>
-        <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+        <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           {/* 标题行 */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -846,7 +846,7 @@ export function DashboardPage() {
 
       {/* 发布计划：产品 / 账号 / 数量 / 时间（与 PC 同一份数据） */}
       <div style={{ padding: '12px 8px 4px' }}>
-        <div className="pc-card" style={{ background: '#fff', border: '1px solid #e6e6ef', borderRadius: '12px', padding: '12px 12px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+        <div className="pc-card" style={{ background: '#fff', border: '1px solid #e6e6ef', borderRadius: '10px', padding: '12px 12px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>发布计划</span>
@@ -1137,7 +1137,7 @@ export function DashboardPage() {
 
       {/* 待投流：从已发布样品挑选，带出账号与发布时间，状态可改 */}
       <div style={{ padding: '12px 8px 4px' }}>
-        <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+        <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>待投流</span>
@@ -1464,7 +1464,7 @@ export function DashboardPage() {
         <div
           className="hide-scrollbar"
           style={{
-            padding: '6px 16px 4px', display: 'flex', gap: '6px',
+            padding: '6px 8px 4px', display: 'flex', gap: '6px',
             flexWrap: 'nowrap', alignItems: 'center', flexShrink: 0,
             overflowX: 'auto', WebkitOverflowScrolling: 'touch',
           }}
@@ -1503,7 +1503,7 @@ export function DashboardPage() {
             吸顶条下沿，毛玻璃边缘和卡片圆角挨在一起显得很挤。
             这个间距属于内容区、不是吸顶条的一部分，所以往下滚时它会随内容一起收走，
             卡片仍能贴到吸顶条下沿（符合吸顶的常规预期）。 */}
-        <div style={{ padding: '5px 16px 0' }}>
+        <div style={{ padding: '5px 8px 0' }}>
           {remindTab === 'reminders' && (
             <>
               {/* 原「按紧急度排序」说明行已去掉：条目数由 Tab 气泡表达，排序规则对用户无意义。

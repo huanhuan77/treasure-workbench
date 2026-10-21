@@ -266,7 +266,7 @@ export function ProductDetailPage() {
     <div className="app-container scroll-lock-page" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* 顶部 · 毛玻璃浅色 */}
       <header style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 14px',
+        padding: 'calc(16px + var(--safe-top)) 8px 14px',
         display: 'flex',
         alignItems: 'center',
         gap: '12px',
@@ -294,7 +294,7 @@ export function ProductDetailPage() {
       </header>
 
       {/* 固定区：话题 + 工具行 + 筛选（不随列表滚动）；本层占满根剩余高度，列表在其内独立滚动 */}
-      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '8px 16px 0' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, padding: '8px 8px 0' }}>
         {/* 话题：左侧标签固定 + 中间 chips 横向滚动 + 右侧复制图标固定不随滚动 */}
         {allTopicTags.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
@@ -336,7 +336,7 @@ export function ProductDetailPage() {
                 color: 'var(--text-sub)',
                 border: '1px solid rgba(0,0,0,0.10)',
                 padding: '6px 12px',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -350,7 +350,7 @@ export function ProductDetailPage() {
                 color: 'var(--primary)',
                 border: '1px solid rgba(236, 72, 182, 0.35)',
                 padding: '6px 12px',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -364,7 +364,7 @@ export function ProductDetailPage() {
                 color: '#ef4444',
                 border: '1px solid rgba(239, 68, 68, 0.35)',
                 padding: '6px 12px',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -402,7 +402,7 @@ export function ProductDetailPage() {
         </div>
 
         {/* 文案列表：仅此区域滚动，上方工具行/筛选固定 */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 16px calc(24px + 76px + var(--safe-bottom))' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 8px calc(24px + 76px + var(--safe-bottom))' }}>
         {product.copies.length === 0 ? (
           <div style={{
             ...glassStyle,
@@ -455,7 +455,7 @@ export function ProductDetailPage() {
             onChange={(ev) => setNewTopic(ev.target.value)}
             onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); addTopic() } }}
           />
-          <button style={{ ...btnPrimary, padding: '0 16px' }} onClick={addTopic}>添加</button>
+          <button style={{ ...btnPrimary, padding: '0 8px' }} onClick={addTopic}>添加</button>
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', minHeight: '40px' }}>
           {topicDraft.length === 0 ? (
@@ -550,7 +550,7 @@ export function ProductDetailPage() {
         >
           {/* 顶部导航栏 */}
           <div style={{
-            padding: 'calc(12px + var(--safe-top)) 16px 12px',
+            padding: 'calc(12px + var(--safe-top)) 8px 12px',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -835,7 +835,7 @@ function CopyCard({
       {/* 文案内容 */}
       <div style={{
         background: 'rgba(255, 255, 255, 0.5)',
-        borderRadius: '12px',
+        borderRadius: '10px',
         padding: '12px 14px',
         fontSize: '14px',
         lineHeight: 1.7,
@@ -890,7 +890,7 @@ function CopyCard({
             padding: '10px',
             background: 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)',
             color: '#fff',
-            borderRadius: '12px',
+            borderRadius: '10px',
             fontSize: '13px',
             fontWeight: 600,
             boxShadow: '0 2px 8px rgba(244, 114, 182, 0.25)',

@@ -23,7 +23,7 @@ function yesterdayStr() {
 }
 
 const fieldBox = {
-  display: 'block', width: '100%', padding: '13px 14px', borderRadius: '12px',
+  display: 'block', width: '100%', padding: '13px 14px', borderRadius: '10px',
   background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
   fontSize: '15px', color: 'var(--text-main)', cursor: 'pointer', boxSizing: 'border-box',
   appearance: 'none', WebkitAppearance: 'none', outline: 'none', margin: 0, textAlign: 'center',
@@ -201,7 +201,7 @@ export function NewOrderPage() {
 
   return (
     <div className="app-container">
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 8px 14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => navigate(-1)} style={{
           width: '44px', height: '44px', borderRadius: '50%',
           background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
@@ -213,7 +213,7 @@ export function NewOrderPage() {
         </h1>
       </header>
 
-      <div style={{ padding: '12px 16px' }}>
+      <div style={{ padding: '12px 8px' }}>
         {/* 出单日期 */}
         <div style={{ marginBottom: '14px' }}>
           <div style={sectionTitle}>出单日期</div>
@@ -227,7 +227,7 @@ export function NewOrderPage() {
 
         {/* 账号 Tab 切换 */}
         <div style={{
-          display: 'flex', gap: '0', background: '#fff', borderRadius: '12px',
+          display: 'flex', gap: '0', background: '#fff', borderRadius: '10px',
           border: '1.5px solid rgba(0,0,0,0.08)', padding: '4px', marginBottom: '14px', boxSizing: 'border-box',
         }}>
           {ACCOUNTS.map((a) => {
@@ -278,7 +278,7 @@ export function NewOrderPage() {
                 <div key={idx} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
                   background: '#fff', border: '1.5px solid rgba(0,0,0,0.08)',
-                  borderRadius: '12px', padding: '10px 12px',
+                  borderRadius: '10px', padding: '10px 12px',
                 }}>
                   <button onClick={() => openSamplePicker(idx)} style={{
                     flex: 1, minWidth: 0, textAlign: 'left',
@@ -313,14 +313,14 @@ export function NewOrderPage() {
       </div>
 
       {/* 底部保存 */}
-      <div style={{ padding: '12px 16px 24px', display: 'flex', gap: '12px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ padding: '12px 8px 24px', display: 'flex', gap: '12px', borderTop: '1px solid rgba(0,0,0,0.04)' }}>
         <button onClick={() => navigate(-1)} style={{
-          flex: 1, padding: '14px 0', borderRadius: '12px',
+          flex: 1, padding: '14px 0', borderRadius: '10px',
           border: '1.5px solid rgba(0,0,0,0.1)', background: '#f9fafb',
           color: 'var(--text-sub)', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
         }}>取消</button>
         <button onClick={handleSave} style={{
-          flex: 2, padding: '14px 0', borderRadius: '12px', border: 'none',
+          flex: 2, padding: '14px 0', borderRadius: '10px', border: 'none',
           background: 'linear-gradient(135deg,#f472b6,#ec4899)',
           color: '#fff', fontSize: '15px', fontWeight: 600, cursor: 'pointer',
           boxShadow: '0 4px 14px rgba(244,114,182,0.3)',

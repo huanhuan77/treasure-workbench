@@ -45,7 +45,7 @@ export function BatchImportPage() {
   return (
     <div className="app-container">
       {/* 头部 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 8px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
         <button onClick={() => navigate(-1)} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
         <div style={{ flex: 1 }}>
           <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>批量导入文案</h1>
@@ -53,7 +53,7 @@ export function BatchImportPage() {
         </div>
       </div>
 
-      <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', flex: 1, gap: '8px', minHeight: 0 }}>
+      <div style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', flex: 1, gap: '8px', minHeight: 0 }}>
         <textarea
           placeholder="格式：多条文案之间用空行分隔；&#10;👍=出单、✅=用过（标记会自动去掉）"
           value={text}
@@ -109,7 +109,7 @@ export function BatchImportPage() {
       {/* 底部固定按钮 - 始终可见 */}
       <div style={{
         position: 'sticky', bottom: 0,
-        padding: '12px 16px calc(12px + var(--safe-bottom))',
+        padding: '12px 8px calc(12px + var(--safe-bottom))',
         background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid rgba(0,0,0,0.06)',
         display: 'flex', gap: '10px',

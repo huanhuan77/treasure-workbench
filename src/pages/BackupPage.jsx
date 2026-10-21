@@ -126,12 +126,12 @@ export function BackupPage() {
 
   return (
     <div className="app-container">
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 8px 12px' }}>
         <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>💾 数据备份</h1>
         <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-sub)' }}>云同步到 GitHub Gist，数据永不丢失</p>
       </header>
 
-      <div style={{ padding: '0 16px' }}>
+      <div style={{ padding: '0 8px' }}>
         {/* 当前数据概览 */}
         <div style={{ ...glassStyle, padding: '16px', marginBottom: '12px' }}>
           <h3 style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>📊 当前数据</h3>

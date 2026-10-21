@@ -235,7 +235,7 @@ export function SensitiveCenterPage() {
   return (
     <div className="app-container">
       <header style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 12px',
+        padding: 'calc(16px + var(--safe-top)) 8px 12px',
         display: 'flex', alignItems: 'center', gap: '12px',
       }}>
         <button onClick={() => navigate(-1)} style={{
@@ -254,10 +254,10 @@ export function SensitiveCenterPage() {
       </header>
 
       {/* Tab 切换 */}
-      <div style={{ padding: '0 16px 8px', display: 'flex', gap: '8px' }}>
+      <div style={{ padding: '0 8px 8px', display: 'flex', gap: '8px' }}>
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
-            flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+            flex: 1, padding: '10px 0', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
             cursor: 'pointer', border: 'none',
             background: tab === t.key ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
             color: tab === t.key ? '#fff' : 'var(--text-sub)',
@@ -266,7 +266,7 @@ export function SensitiveCenterPage() {
         ))}
       </div>
 
-      <div style={{ padding: '8px 16px 16px' }}>
+      <div style={{ padding: '8px 8px 16px' }}>
         {tab === 'lib' ? (
           <>
             <div style={{ ...glassStyle, padding: '12px 14px', marginBottom: '14px', fontSize: '13px', color: 'var(--text-sub)', lineHeight: 1.6 }}>
@@ -279,12 +279,12 @@ export function SensitiveCenterPage() {
                 onKeyDown={(e) => { if (e.key === 'Enter') handleAddWord() }}
                 placeholder="输入要添加的卡审词，如：黑奴"
                 style={{
-                  flex: 1, border: '1px solid rgba(0,0,0,0.08)', borderRadius: '12px',
+                  flex: 1, border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px',
                   padding: '11px 14px', fontSize: '15px', color: 'var(--text-main)', outline: 'none', background: '#fff',
                 }}
               />
               <button onClick={handleAddWord} style={{
-                flexShrink: 0, padding: '0 18px', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: 600,
+                flexShrink: 0, padding: '0 18px', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600,
                 color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', cursor: 'pointer',
               }}>添加</button>
             </div>
@@ -321,7 +321,7 @@ export function SensitiveCenterPage() {
                   { label: '🟡 建议改', value: result.stats.byLevel[2] || 0, color: '#f59e0b' },
                   { label: '🟢 注意', value: result.stats.byLevel[3] || 0, color: '#10b981' },
                 ].map(s => (
-                  <div key={s.label} style={{ flex: 1, background: 'rgba(255,255,255,0.5)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center' }}>
+                  <div key={s.label} style={{ flex: 1, background: 'rgba(255,255,255,0.5)', borderRadius: '10px', padding: '10px 8px', textAlign: 'center' }}>
                     <div style={{ fontSize: '20px', fontWeight: 700, color: s.color }}>{s.value}</div>
                     <div style={{ fontSize: '11px', color: 'var(--gray-400)', marginTop: '2px' }}>{s.label}</div>
                   </div>
@@ -373,7 +373,7 @@ export function SensitiveCenterPage() {
                 {result.found.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {result.found.map((f, i) => (
-                      <div key={i} style={{ background: levelBg(f.level), borderRadius: '12px', padding: '12px 14px', border: `1px solid ${levelBorder(f.level)}` }}>
+                      <div key={i} style={{ background: levelBg(f.level), borderRadius: '10px', padding: '12px 14px', border: `1px solid ${levelBorder(f.level)}` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontWeight: 600, fontSize: '15px', color: 'var(--text-main)' }}>{f.match}</span>
                           <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '999px', background: levelBg(f.level), border: `1px solid ${levelBorder(f.level)}`, color: levelBorder(f.level) === '#fca5a5' ? '#991b1b' : levelBorder(f.level) === '#fcd34d' ? '#92400e' : '#166534' }}>{levelName(f.level)}</span>

@@ -81,7 +81,7 @@ export function SavingsPage() {
       </div>
 
       {/* 每月列表 */}
-      <div style={{ padding:'0 16px' }}>
+      <div style={{ padding:'0 8px' }}>
         {MONTH_KEYS.map(key => {
           const r = records[key] || {}
           const t = r.target || 0
@@ -102,7 +102,7 @@ export function SavingsPage() {
                 <span style={{ fontSize:'12px', fontWeight:600, color:d>=0?'#059669':'#dc2626', textAlign:'right', minWidth:'80px' }}>{formatNum(a)} / {formatNum(t)}</span>
               </div>
               {editing ? (
-                <div style={{ padding:'12px 16px 14px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
+                <div style={{ padding:'12px 8px 14px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
                   {/* 各账户 */}
                   {Object.entries(editAccounts).map(([acct, val], idx) => (
                     <div key={acct} style={{ display:'flex', alignItems:'center', gap:'6px', padding:'5px 0' }}>
@@ -142,7 +142,7 @@ export function SavingsPage() {
                   </div>
                 </div>
               ) : expanded ? (
-                <div style={{ padding:'4px 16px 12px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
+                <div style={{ padding:'4px 8px 12px', borderTop:'1px solid rgba(251,191,36,0.1)' }}>
                   {Object.entries(r.details||{}).filter(([k])=>k!='_合计').map(([acct, amt]) => (
                     <div key={acct} style={{ display:'flex', justifyContent:'space-between', padding:'3px 0', fontSize:'13px', color:'var(--text-sub)' }}>
                       <span>{acct}</span>

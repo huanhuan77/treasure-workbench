@@ -335,7 +335,7 @@ const ACCOUNT_CARD_COLOR = {
 
   return (
     <div className="app-container">
-      <header style={{ padding: 'calc(16px + var(--safe-top)) 16px 12px' }}>
+      <header style={{ padding: 'calc(16px + var(--safe-top)) 8px 12px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div>
             <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)' }}>
@@ -369,7 +369,7 @@ const ACCOUNT_CARD_COLOR = {
 
       {/* 每日计划 tab 内的今日/明日子切换 */}
       {tab === 1 && (
-        <div style={{ display: 'flex', gap: '6px', padding: '0 16px 12px' }}>
+        <div style={{ display: 'flex', gap: '6px', padding: '0 8px 12px' }}>
           {[
             { key: 0, label: '今日', date: today },
             { key: 1, label: '明日', date: tomorrow },
@@ -391,7 +391,7 @@ const ACCOUNT_CARD_COLOR = {
       )}
 
       {
-        <div style={{ padding: '0 16px' }}>
+        <div style={{ padding: '0 8px' }}>
         {/* 进度卡片 */}
         <div style={{ ...glassStyle, padding: '16px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -405,7 +405,7 @@ const ACCOUNT_CARD_COLOR = {
 
         {/* 任务列表 */}
         {tasks.length === 0 ? (
-          <div style={{ ...glassStyle, padding: '32px 16px', textAlign: 'center' }}>
+          <div style={{ ...glassStyle, padding: '32px 8px', textAlign: 'center' }}>
             <p style={{ fontSize: '14px', color: 'var(--text-sub)', margin: 0 }}>
               {viewDate === today ? '今天还没有任务' : '明天还没有计划'}
             </p>
@@ -459,7 +459,7 @@ const ACCOUNT_CARD_COLOR = {
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '12px', color: 'var(--gray-400)' }}>{input.length}/{MAX_LEN}</span>
             <button onClick={addTask} disabled={!input.trim()} style={{
-              padding: '10px 28px', borderRadius: '12px', border: 'none',
+              padding: '10px 28px', borderRadius: '10px', border: 'none',
               background: input.trim() ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#e5e7eb',
               color: '#fff', fontSize: '15px', fontWeight: 600,
               cursor: input.trim() ? 'pointer' : 'not-allowed',
@@ -478,7 +478,7 @@ const ACCOUNT_CARD_COLOR = {
           rows={3}
           autoFocus
           style={{
-            width: '100%', padding: '14px 16px', border: '1.5px solid rgba(0,0,0,0.08)',
+            width: '100%', padding: '14px 8px', border: '1.5px solid rgba(0,0,0,0.08)',
             borderRadius: '14px', fontSize: '16px', outline: 'none', resize: 'none',
             background: '#fff', color: 'var(--text-main)',
             boxSizing: 'border-box', lineHeight: 1.5, fontFamily: 'inherit',
@@ -509,7 +509,7 @@ const ACCOUNT_CARD_COLOR = {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '60vh', overflowY: 'auto' }}>
                 {(historyPlan.tasks || []).map(task => (
                   <div key={task.id} style={{
-                    padding: '12px 14px', borderRadius: '12px',
+                    padding: '12px 14px', borderRadius: '10px',
                     background: 'rgba(255,255,255,0.7)',
                     border: '1.5px solid rgba(0,0,0,0.04)',
                     display: 'flex', alignItems: 'center', gap: '10px',
@@ -577,7 +577,7 @@ function HistoryList({ data, today, getDateLabel, onOpen }) {
           const pct = tasks.length > 0 ? Math.round((d / tasks.length) * 100) : 0
           return (
             <button key={date} onClick={() => onOpen(date)} style={{
-              padding: '14px 16px', borderRadius: '12px',
+              padding: '14px 8px', borderRadius: '10px',
               border: '1.5px solid rgba(0,0,0,0.06)',
               background: 'rgba(255,255,255,0.6)',
               textAlign: 'left', cursor: 'pointer',

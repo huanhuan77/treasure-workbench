@@ -13,7 +13,7 @@ const LOGISTICS_LIST = Object.values(LOGISTICS_STATUS)
 
 function PageHeader({ title, onBack }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 16px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: 'calc(12px + var(--safe-top)) 8px 12px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
       <button onClick={onBack} style={{ width: '44px', height: '44px', borderRadius: '50%', border: 'none', background: 'rgba(244,114,182,0.08)', color: 'var(--primary)', fontSize: '22px', cursor: 'pointer', flexShrink: 0 }}>‹</button>
       <h1 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: 'var(--text-main)' }}>{title}</h1>
     </div>
@@ -173,7 +173,7 @@ export function EditSamplePage() {
                   else if (it.v === 'shot') { setArchived(false); setIsShot(true) }
                   else { setArchived(false); setIsShot(false) }
                 }} style={{
-                  flex: 1, padding: '10px 0', borderRadius: '12px', fontSize: '13px', fontWeight: 600, border: 'none',
+                  flex: 1, padding: '10px 0', borderRadius: '10px', fontSize: '13px', fontWeight: 600, border: 'none',
                   background: active ? (it.v === 'archived' ? '#ef4444' : it.v === 'shot' ? '#06b6d4' : '#f97316') : 'rgba(255,255,255,0.5)',
                   color: active ? '#fff' : 'var(--text-sub)' }}>{it.label}</button>
               )

@@ -34,7 +34,7 @@ export function LinksEditor({ links, onChange }) {
           {list.map((it, i) => (
             <div key={it.id} style={{
               background: '#fff', border: '1px solid rgba(244,114,182,0.18)',
-              borderRadius: '12px', padding: '10px',
+              borderRadius: '10px', padding: '10px',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-sub)', background: 'rgba(244,114,182,0.12)', padding: '2px 8px', borderRadius: '6px' }}>链接 {i + 1}</span>

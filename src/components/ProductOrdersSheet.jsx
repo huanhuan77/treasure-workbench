@@ -69,7 +69,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
         </div>
 
         {/* 头部：品名 + 汇总 */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '6px 16px 10px', borderBottom: '1px solid rgba(244,114,182,0.14)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '6px 8px 10px', borderBottom: '1px solid rgba(244,114,182,0.14)' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {group.name}
@@ -167,11 +167,11 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
         </div>
 
         {/* 底部：继续新增一单。底部 padding 加大到 76px + 安全区，主动避开底部 BottomNav(~60px)+安全区，避免按钮被遮挡。 */}
-        <div style={{ padding: '10px 16px calc(76px + var(--safe-bottom, 0px))', borderTop: '1px solid rgba(244,114,182,0.14)' }}>
+        <div style={{ padding: '10px 8px calc(76px + var(--safe-bottom, 0px))', borderTop: '1px solid rgba(244,114,182,0.14)' }}>
           <button
             onClick={onAddMore}
             style={{
-              width: '100%', padding: '13px', borderRadius: '12px', border: 'none',
+              width: '100%', padding: '13px', borderRadius: '10px', border: 'none',
               background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff',
               fontSize: '15px', fontWeight: 700, cursor: 'pointer',
             }}

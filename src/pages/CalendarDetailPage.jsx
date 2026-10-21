@@ -66,7 +66,7 @@ export function CalendarDetailPage() {
     <div className="app-container">
       {/* 顶部栏 */}
       <div style={{
-        padding: 'calc(16px + var(--safe-top)) 16px 12px',
+        padding: 'calc(16px + var(--safe-top)) 8px 12px',
         display: 'flex', alignItems: 'center', gap: '12px',
         borderBottom: '1px solid rgba(0,0,0,0.04)',
       }}>
@@ -123,7 +123,7 @@ export function CalendarDetailPage() {
           placeholder={`今天发生了什么？\n有什么想记录的？`}
           style={{
             width: '100%', boxSizing: 'border-box', minHeight: '240px', padding: '14px',
-            borderRadius: '12px', border: '1.5px solid rgba(0,0,0,0.06)',
+            borderRadius: '10px', border: '1.5px solid rgba(0,0,0,0.06)',
             fontSize: '15px', lineHeight: 1.7, outline: 'none', resize: 'vertical',
             fontFamily: 'inherit', background: '#fff',
           }}
