@@ -37,6 +37,8 @@ export function PublishPlanCard() {
   const [byAcc, setByAcc] = useState(emptyByAcc)  // 新增态：{ 账号: [{ name, qty }] }
   const [editEntry, setEditEntry] = useState(newEntry())  // 编辑态：只有这一行
   const [pickIdx, setPickIdx] = useState(-1)     // 正在为第几行选产品；-1 = 面板收起
+  // 从提醒中心「新建计划」进来：产品已带好，隐藏「发布产品 & 数量 / ＋添加 / 提示」那块
+  const [lockProduct, setLockProduct] = useState(false)
   const [query, setQuery] = useState('')
   const [catFilter, setCatFilter] = useState('') // 选品面板里的分类筛选，'' = 全部
   // 选品面板里勾选的产品名（可多选，保留点击顺序）
@@ -219,6 +221,7 @@ export function PublishPlanCard() {
     const base = emptyByAcc()
     const acc = (prefill && prefill.account) || ACCOUNTS[0] || ''
     if (prefill && prefill.name) base[acc] = [{ name: String(prefill.name), qty: '1' }]
+    setLockProduct(!!(prefill && prefill.name))
     setByAcc(base)
     setAccount(acc)
     setPlanDate(tomorrowStr())
@@ -235,6 +238,7 @@ export function PublishPlanCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const openEdit = (p) => {
+    setLockProduct(false)
     setAccount(p.account || ACCOUNTS[0] || '')
     setPlanDate(p.planDate || tomorrowStr())
     setEditEntry({ name: p.name || '', qty: String(p.qty || 1) })
@@ -496,14 +500,20 @@ export function PublishPlanCard() {
                 counts={counts}
               />
 
-              <div style={{ display: 'flex', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
-                <span className="pcv-field-label" style={{ margin: 0 }}>发布产品 &amp; 数量（可多选）</span>
-                <div className="pcv-spacer" />
-                {!isEditing && <button className="pcv-btn pcv-btn-ghost" onClick={addEntry}>＋ 添加</button>}
-              </div>
-              <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>
-                只能选「{account}」的样品（已放弃的不会出现）
-              </div>
+              {/* 从提醒中心「新建计划」进来时产品已带好：隐藏「发布产品 & 数量 / ＋添加 / 提示」，
+                  只留那一条产品行（与手机端一致） */}
+              {!lockProduct && (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
+                    <span className="pcv-field-label" style={{ margin: 0 }}>发布产品 &amp; 数量（可多选）</span>
+                    <div className="pcv-spacer" />
+                    {!isEditing && <button className="pcv-btn pcv-btn-ghost" onClick={addEntry}>＋ 添加</button>}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>
+                    只能选「{account}」的样品（已放弃的不会出现）
+                  </div>
+                </>
+              )}
 
               <div className="pcv-entrylist">
                 {/* 空态本身可点：直接新增一行并展开选品面板 */}
