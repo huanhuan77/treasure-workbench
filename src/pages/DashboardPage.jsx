@@ -430,9 +430,8 @@ export function DashboardPage() {
   const quickPlan = (s) => {
     const name = String((s && s.name) || '').trim()
     const accs = pendingAccounts(s)
-    const acc = accs
-      .slice()
-      .sort((x, y) => daysSincePublishByAccount(s, y) - daysSincePublishByAccount(s, x))[0]
+    // 用账号固定顺序里的第一个（通常是「广东刘亦菲」），可预期；进弹窗后还能切账号
+    const acc = accs[0]
     if (!name || !acc) {
       show('这个产品还没有到该发的账号', 'error')
       return
@@ -980,8 +979,20 @@ export function DashboardPage() {
                     key={a}
                     onClick={() => {
                       setPlanAccount(a)
-                      // 编辑态只有一行：换账号就清掉已选产品，避免串账号
-                      if (planIsEditing) setPlanEditEntry((prev) => ({ ...prev, name: '' }))
+                      // 编辑态只有一行：换账号就清掉已选产品，避免串账号；
+                      // 新增态：从提醒中心带进来的产品跟着搬到新账号，换账号不用重新选产品
+                      if (planIsEditing) {
+                        setPlanEditEntry((prev) => ({ ...prev, name: '' }))
+                      } else {
+                        setPlanByAcc((prev) => {
+                          const cur = prev[planAccount] || []
+                          const target = prev[a] || []
+                          if (target.length === 0 && cur.length === 1 && cur[0] && cur[0].name) {
+                            return { ...prev, [a]: [{ ...cur[0] }], [planAccount]: [] }
+                          }
+                          return prev
+                        })
+                      }
                       setPlanPickIdx(-1)
                       setPlanQuery('')
                     }}

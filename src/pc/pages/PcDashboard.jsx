@@ -127,9 +127,9 @@ export function PcDashboard() {
           </>
         )
       },
-      actions: (s, a) => (
+      actions: (s, a, accs) => (
         <>
-          <button className="pcv-btn" onClick={() => quickPlan(s, a)}>新建计划</button>
+          <button className="pcv-btn" onClick={() => quickPlan(s, (accs && accs[0]) || a)}>新建计划</button>
           <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
         </>
       ),
@@ -153,9 +153,9 @@ export function PcDashboard() {
           </>
         )
       },
-      actions: (s, a) => (
+      actions: (s, a, accs) => (
         <>
-          <button className="pcv-btn" onClick={() => quickPlan(s, a)}>新建计划</button>
+          <button className="pcv-btn" onClick={() => quickPlan(s, (accs && accs[0]) || a)}>新建计划</button>
           <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
         </>
       ),
@@ -534,7 +534,7 @@ export function PcDashboard() {
                           title={s.name}
                           style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
                         >{s.name}</td>
-                        <td>{cur.actions(it, acc)}</td>
+                        <td>{cur.actions(it, acc, accs)}</td>
                         {/* 账号列：高频出单 / 发布提醒里显示「账号 + 已N天」（用户要求合并到这里）；
                             其它 tab 仍是圆点 + 名字 */}
                         {tab === 'hot' || tab === 'reminders' ? (

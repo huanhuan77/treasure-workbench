@@ -477,7 +477,20 @@ export function PublishPlanCard() {
                 onChange={(a) => {
                   setAccount(a)
                   // 编辑态只有一行：换账号就把已选产品清掉，避免「A 账号 + B 账号的品」
-                  if (isEditing) setEditEntry((prev) => ({ ...prev, name: '' }))
+                  if (isEditing) {
+                    setEditEntry((prev) => ({ ...prev, name: '' }))
+                  } else {
+                    // 新增态：从提醒中心带进来的那条产品，换账号时跟着搬过去，
+                    // 这样「带出来的账号不对」可以直接切到想要的账号（不用重新选产品）
+                    setByAcc((prev) => {
+                      const cur = prev[account] || []
+                      const target = prev[a] || []
+                      if (target.length === 0 && cur.length === 1 && cur[0] && cur[0].name) {
+                        return { ...prev, [a]: [{ ...cur[0] }], [account]: [] }
+                      }
+                      return prev
+                    })
+                  }
                   resetPicker()
                 }}
                 counts={counts}
