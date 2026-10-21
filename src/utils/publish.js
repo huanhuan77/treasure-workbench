@@ -114,11 +114,24 @@ export function isHotAccount(sample, account) {
   return Number.isFinite(pv) && pv >= 1 && pv <= 5
 }
 
+// 出单锚点口径：从最近一次出单日算起，超过设定天数（默认7）且出单之后没有补发布 → 需要提醒，
+// 没出过单的账号退回原「距上次发布超期 / 从未发」口径。
+export function accountDue(sample, account) {
+  const c = (sample && sample.countsByAccount && sample.countsByAccount[account]) || {}
+  const o = c.lastOrderAt
+  const p = c.lastPublishAt
+  const th = sampleDays(sample, account)
+  if (o) {
+    const days = Math.floor((new Date(todayStr()) - new Date(o)) / 86400000)
+    const postedAfter = !!p && p > o
+    return days > th && !postedAfter
+  }
+  const d = daysSincePublishByAccount(sample, account)
+  return d === Infinity || d > th
+}
+
 export function pendingAccounts(sample) {
-  return getAccounts(sample).filter((a) => {
-    const d = daysSincePublishByAccount(sample, a)
-    return d === Infinity || d > sampleDays(sample, a)
-  })
+  return getAccounts(sample).filter((a) => accountDue(sample, a))
 }
 
 // 「发布提醒」这一行该显示哪些账号（以及按谁算未发布天数）。
@@ -171,25 +184,15 @@ export function needPublishReminder(sample) {
     })
     if (anyUnpublished) return true
   }
-  // 已发布的样品：某个账号超过 7 天没发，就提醒
-  // 未拍/未到货的样品不走这个判断（它们由逾期逻辑管）
-  //
-  // ⚠️ 这里**不要**因为「已过截止日」就直接 return false —— 试过，提醒总数从 62 掉到 15，
-  // 大量「已发布但很久没发」的样品被静默吞掉（用户反馈「怎么只有15条了」）。
-  // 「改状态后仍提醒」的问题是另一回事，由规则 4 里「执行状态已发布不再算从未发」解决。
+  // 出单锚点：某账号最近一次出单超过设定天数、且出单后没补发布 → 提醒（会一直催到补记发布）
   {
-    const counts = sample.countsByAccount || {}
-    const hasAnyPublish = Object.values(counts).some((c) => (Number(c?.publishCount) || 0) > 0)
-    if (hasAnyPublish) {
-      const execByAccount = sample.execByAccount || {}
-      const accounts = getAccounts(sample)
-      const anyNeed = accounts.some((a) => {
-        if (execByAccount[a] === 'abandoned') return false
-        const d = daysSincePublishByAccount(sample, a)
-        return d === Infinity || d > sampleDays(sample, a)
-      })
-      if (anyNeed) return true
-    }
+    const execByAccount = sample.execByAccount || {}
+    const accounts = getAccounts(sample)
+    const anyNeed = accounts.some((a) => {
+      if (execByAccount[a] === 'abandoned') return false
+      return accountDue(sample, a)
+    })
+    if (anyNeed) return true
   }
   return false
 }

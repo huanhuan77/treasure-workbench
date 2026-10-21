@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { DEFAULT_SENSITIVE_WORDS, generateTopics } from './utils/copyGenerator'
 import { todayStr } from './utils/helpers'
-import { isHotAccount, sampleDays, daysSincePublishByAccount } from './utils/publish'
+import { isHotAccount, sampleDays, accountDue } from './utils/publish'
 import { recordDelete, clearDelete, setWordTime, syncAll } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
 import { ACCOUNT_MAP, mapAccount } from './utils/accounts'
@@ -3869,8 +3869,7 @@ export function StoreProvider({ children }) {
       for (const a of getAccounts(s)) {
         if (exec[a] === 'abandoned') continue
         if (!isHotAccount(s, a)) continue
-        const d = daysSincePublishByAccount(s, a)
-        if (d === Infinity || d > sampleDays(s, a)) {
+        if (accountDue(s, a)) {
           desired.set(`${s.id}|${a}`, { name: s.name, account: a })
         }
       }
