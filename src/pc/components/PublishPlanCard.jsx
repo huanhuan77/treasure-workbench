@@ -27,8 +27,9 @@ const emptyByAcc = () => {
   return o
 }
 const newEntry = () => ({ name: '', qty: '1' })
-// 同一天的条目共用一档底色（三档循环），隔天颜色就变，方便一眼看出「哪天有几条」
-const DATE_TONES = ['#ffffff', '#fdf6fa', '#f6f9fd']
+// 同一天的条目共用一档底色（三档循环），隔天颜色就变，方便一眼看出「哪天有几条」。
+// 三档都带淡色、不用纯白 —— 否则第一天（列表最上面那组）看着像「没上背景色」。
+const DATE_TONES = ['#fdf6fa', '#f5f8fd', '#fbfaf2']
 
 export function PublishPlanCard() {
   const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan, addPublishRecord } = useStore()
@@ -100,6 +101,9 @@ export function PublishPlanCard() {
   }, [visible])
 
   const isEditing = !!editing && editing !== 'new'
+  // 「紧凑布局」= 从提醒中心带产品进来，或编辑已有计划：两种情况都按「一行固定产品 + 数量」排，
+  // 和新增带产品的形态一致（用户要求「编辑的时候跟新增一样的布局」）
+  const compactLayout = lockProduct || isEditing
   // 新增态看当前账号自己的行；编辑态只有一行（用户要求「编辑态只保留一行」）
   const entries = isEditing ? [editEntry] : (byAcc[account] || [])
 
@@ -519,7 +523,7 @@ export function PublishPlanCard() {
 
               {/* 从提醒中心「新建计划」进来时产品已带好：隐藏「发布产品 & 数量 / ＋添加 / 提示」，
                   只留那一条产品行（与手机端一致） */}
-              {!lockProduct && (
+              {!compactLayout && (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
                     <span className="pcv-field-label" style={{ margin: 0 }}>发布产品 &amp; 数量（可多选）</span>
@@ -533,7 +537,7 @@ export function PublishPlanCard() {
               )}
 
               {/* 从提醒中心进来时上面的标签被隐藏了，这里补上下间距，别贴着账号 tab */}
-              <div className="pcv-entrylist" style={lockProduct ? { marginTop: 18, marginBottom: 6 } : undefined}>
+              <div className="pcv-entrylist" style={compactLayout ? { marginTop: 18, marginBottom: 6 } : undefined}>
                 {/* 空态本身可点：直接新增一行并展开选品面板 */}
                 {entries.length === 0 && !isEditing && (
                   <button className="pcv-entry-empty" onClick={addEntry}>
@@ -545,9 +549,9 @@ export function PublishPlanCard() {
                     <div className="pcv-entry">
                       <button
                         className={`pcv-entry-pick${e.name ? '' : ' empty'}`}
-                        /* 从提醒中心进来（产品锁定）：名字不再拉满整行，数量加减跟着靠左，
-                           免得数量按钮孤零零贴在弹窗最右边（用户要求「往左移」） */
-                        style={lockProduct ? { flex: '0 1 auto', maxWidth: 360 } : undefined}
+                        /* 从提醒中心进来（产品锁定）：产品名占固定 280px，数量加减跟在其后 ——
+                           既不会贴到弹窗最右边，也不会紧贴产品名（用户要求「数量框往右一点」） */
+                        style={compactLayout ? { flex: '0 0 280px', maxWidth: 280 } : undefined}
                         onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery(''); setCatFilter(''); setPicked([]) }}
                       >
                         {e.name || '点击选择产品'}
@@ -570,7 +574,7 @@ export function PublishPlanCard() {
                         <button className="pcv-x" title="删除该条" onClick={() => removeEntry(idx)}>×</button>
                       )}
                       {/* 锁定态：把剩余空间推到右边，让「产品 + 数量 + ×」整体靠左 */}
-                      {lockProduct && <div style={{ flex: 1 }} />}
+                      {compactLayout && <div style={{ flex: 1 }} />}
                     </div>
 
                     {/* 产品选择面板：内联展开在该行下面，点一行即选中 */}
