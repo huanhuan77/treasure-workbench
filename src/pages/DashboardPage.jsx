@@ -392,6 +392,11 @@ export function DashboardPage() {
   }
   // 「标记已发」：与 PC 一致，顺手把这次发布**写进发布记录**（用户要求）
   const markPlanDone = (p) => {
+    // 未来日期的计划不能提前标记完成（与 PC 一致，按钮虽已置灰，这里再兜一层）
+    if (p.planDate && p.planDate > todayPlan) {
+      show(`还没到发布时间（${p.planDate}），到那天才能标记完成`, 'error')
+      return
+    }
     const name = String(p.name || '').trim()
     const sm = (samples || []).find(
       (s) => String(s.name || '').trim() === name && getAccounts(s).includes(p.account),
@@ -830,13 +835,23 @@ export function DashboardPage() {
                       const col = ACCOUNT_COLOR[p.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
                       const overdue = p.planDate && p.planDate < todayPlan
                       const isToday = p.planDate === todayPlan
+                      // 只有「当天及以前」的计划才能标记完成（与 PC 一致，未来日期置灰）
+                      const canDone = !p.planDate || p.planDate <= todayPlan
                       return (
                         <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
                           <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <button
-                              onClick={(e) => { e.stopPropagation(); markPlanDone(p) }}
-                              title="点一下标记为已发（同时写入发布记录），自动隐藏"
-                              style={{ width: 18, height: 18, borderRadius: '50%', border: '1.5px solid #d4a3c0', background: '#fff', cursor: 'pointer', flexShrink: 0, padding: 0 }}
+                              onClick={(e) => { e.stopPropagation(); if (canDone) markPlanDone(p) }}
+                              disabled={!canDone}
+                              title={canDone
+                                ? '点一下标记为已发（同时写入发布记录），自动隐藏'
+                                : `还没到发布时间（${p.planDate}），到那天才能标记完成`}
+                              style={{
+                                width: 18, height: 18, borderRadius: '50%', flexShrink: 0, padding: 0,
+                                border: canDone ? '1.5px solid #d4a3c0' : '1.5px solid #d8dde4',
+                                background: canDone ? '#fff' : '#f3f4f6',
+                                cursor: canDone ? 'pointer' : 'not-allowed',
+                              }}
                             />
                             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{ fontSize: '13px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{p.name}</span>
