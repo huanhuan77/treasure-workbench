@@ -67,15 +67,23 @@ export function PcDashboard() {
       // 另一个账号的待发状态被藏起来（这些样品已从「发布提醒」里剔除）
       accountsOf: (s) => pendingAccounts(s),
       header: '未发布天数',
-      mid: (s, a) => {
-        const days = daysSincePublishByAccount(s, a)
+      mid: (s, a, accs) => {
         // 展示高频口径的天数（取高频账号里最小的），不要拿默认 7 天
         const per = hotReminderDays(s)
+        const list = (accs && accs.length ? accs : [a]).filter(Boolean)
         return (
           <>
             <span className="pcv-chip" style={{ background: '#f43f5e', color: '#fff', marginRight: 6 }}>每{per}天提醒</span>
-            <span className="pcv-chip" style={TONE.warn}>
-              {days === Infinity ? '从未发布过视频' : `已 ${days} 天没发`}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              {list.map((x) => {
+                const days = daysSincePublishByAccount(s, x)
+                return (
+                  <span key={x} className="pcv-chip" style={TONE.warn} title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}>
+                    <span style={{ opacity: 0.7, marginRight: 4 }}>{x}</span>
+                    {days === Infinity ? '从未发布' : `已${days}天`}
+                  </span>
+                )
+              })}
             </span>
           </>
         )
@@ -93,16 +101,26 @@ export function PcDashboard() {
       // 不会把已经发过的账号一起挂在这一行里（用户反馈：晚梨发过了，不该再提醒）
       accountsOf: (s) => reminderAccounts(s),
       header: '未发布天数',
-      mid: (s, a) => {
-        const days = daysSincePublishByAccount(s, a)
+      mid: (s, a, accs) => {
         const overdue = s.status !== 'published' && isOverdue(s)
+        // 多账号时**每个账号各一个天数**（用户要求「能列出来每个账号分别几天吗」），
+        // 只有该账号确实该发才列，避免把不用管的账号也挂上来
+        const list = (accs && accs.length ? accs : [a]).filter(Boolean)
         return (
           <>
             {/* 逾期 chip 不再重复带截止日 —— 右面已经有独立的「截止日期」列，
                 重复写会让这一格时宽时窄，短内容行的空洞特别明显 */}
             {overdue && <span className="pcv-chip" style={{ ...TONE.danger, marginRight: 6 }}>已逾期</span>}
-            <span className="pcv-chip" style={TONE.warn}>
-              {days === Infinity ? '从未发布过视频' : `已 ${days} 天没发`}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              {list.map((x) => {
+                const days = daysSincePublishByAccount(s, x)
+                return (
+                  <span key={x} className="pcv-chip" style={TONE.warn} title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}>
+                    <span style={{ opacity: 0.7, marginRight: 4 }}>{x}</span>
+                    {days === Infinity ? '从未发布' : `已${days}天`}
+                  </span>
+                )
+              })}
             </span>
           </>
         )
@@ -420,7 +438,8 @@ export function PcDashboard() {
                     <th style={{ width: 180 }}>操作</th>
                     <th style={{ width: 170 }}>账号</th>
                     <th style={{ width: 90 }}>状态</th>
-                    <th style={{ width: 230 }}>{cur.header}</th>
+                    {/* 每个账号一个天数 chip，列加宽到 280 避免两三个账号换行换得太高 */}
+                    <th style={{ width: 280 }}>{cur.header}</th>
                     <th style={{ width: 110 }}>截止日期</th>
                   </tr>
                 </thead>
@@ -452,7 +471,7 @@ export function PcDashboard() {
                           </span>
                         </td>
                         <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>
-                        <td>{cur.mid(it, acc)}</td>
+                        <td>{cur.mid(it, acc, accs)}</td>
                         <td
                           className="pcv-num"
                           style={{
