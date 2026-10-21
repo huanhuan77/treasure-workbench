@@ -786,7 +786,7 @@ export function DashboardPage() {
       {/* 收支卡片已移到「更多」侧边栏（/finance），总览不再占位 */}
 
       {/* 待办清单（独立事项池：截止日期可有可无；管理入口 /todos） */}
-      <div style={{ padding: '12px 16px 4px' }}>
+      <div style={{ padding: '12px 8px 4px' }}>
         <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           {/* 标题行 */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1136,7 +1136,7 @@ export function DashboardPage() {
       )}
 
       {/* 待投流：从已发布样品挑选，带出账号与发布时间，状态可改 */}
-      <div style={{ padding: '12px 16px 4px' }}>
+      <div style={{ padding: '12px 8px 4px' }}>
         <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1249,7 +1249,7 @@ export function DashboardPage() {
 
       {/* 自动放弃提醒：发布满 10 条仍 0 出单，已自动置为「放弃」 */}
       {autoAbandoned.length > 0 && (
-        <div style={{ padding: '12px 16px 4px' }}>
+        <div style={{ padding: '12px 8px 4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
             <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ef4444' }} />
             未出单已自动放弃
@@ -1296,7 +1296,7 @@ export function DashboardPage() {
         const suggested = (samples || []).filter((s) => s.suggestAbandonedByAccount && Object.keys(s.suggestAbandonedByAccount).length > 0)
         if (!suggested.length) return null
         return (
-          <div style={{ padding: '12px 16px 4px' }}>
+          <div style={{ padding: '12px 8px 4px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
               <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#f59e0b' }} />
               建议放弃
