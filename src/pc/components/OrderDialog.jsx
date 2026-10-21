@@ -59,13 +59,12 @@ export function OrderDialog({ prefill, onClose }) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    // 别的行已经选过的样品不再重复列出（正在编辑的这行除外）
-    const used = new Set(entries.map((e, i) => (i === pickIdx ? null : e.sampleId)).filter(Boolean))
+    // 已勾选的样品**仍然列出来并打钩**（用户要求「勾选多个打钩，不是消失」），
+    // 不再把它们从列表里剔掉 —— 再点一次就是取消勾选
     return candidates
-      .filter((s) => !used.has(s.id))
       .filter((s) => !catFilter || s.category === catFilter)
       .filter((s) => !q || (s.name || '').toLowerCase().includes(q))
-  }, [candidates, query, entries, pickIdx, catFilter])
+  }, [candidates, query, catFilter])
 
   const counts = useMemo(() => {
     const o = {}
@@ -84,19 +83,24 @@ export function OrderDialog({ prefill, onClose }) {
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
-  // 选样品：**点一行直接生效**（用户要求「不用点确定」）——
-  // 当前行还是空的就填进这一行，已经有样品就自动再加一行；
-  // 面板保持展开，可以连着点多个，账号 tab 上的条数会实时跟着变。
+  // 选样品：**点一下=勾选，再点=取消**（用户要求「勾选多个打钩，不是消失」）——
+  // 勾上就立刻占一条（当前行空着就填当前行，否则再加一行），
+  // 列表里保持打钩可见，账号 tab 的条数实时跟着变，不需要点「确定」。
   const pickSample = (sid) => {
-    setEntries((p) => {
-      const next = [...p]
-      if (pickIdx >= 0 && pickIdx < next.length && !next[pickIdx].sampleId) {
-        next[pickIdx] = { ...(next[pickIdx] || {}), sampleId: sid }
-      } else {
-        next.push({ sampleId: sid })
-      }
-      return next
-    })
+    const exists = entries.some((e) => e.sampleId === sid)
+    if (exists) {
+      setEntries((p) => p.filter((e) => e.sampleId !== sid))
+    } else {
+      setEntries((p) => {
+        const next = [...p]
+        if (pickIdx >= 0 && pickIdx < next.length && !next[pickIdx].sampleId) {
+          next[pickIdx] = { ...(next[pickIdx] || {}), sampleId: sid }
+        } else {
+          next.push({ sampleId: sid })
+        }
+        return next
+      })
+    }
     setQuery('')
     setCatFilter('')
   }
@@ -206,21 +210,27 @@ export function OrderDialog({ prefill, onClose }) {
                         <div className="pcv-drop-hint">该账号下暂无可出单的样品（需已发布）</div>
                       ) : filtered.length === 0 ? (
                         <div className="pcv-drop-hint">没有匹配的样品</div>
-                      ) : filtered.map((s) => (
-                        <button
-                          key={s.id}
-                          className="pcv-drop-row"
-                          title="点一下就加进条目，可以连着点多个"
-                          onClick={() => pickSample(s.id)}
-                        >
-                          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
-                        </button>
-                      ))}
+                      ) : filtered.map((s) => {
+                        const on = entries.some((e) => e.sampleId === s.id)
+                        return (
+                          <button
+                            key={s.id}
+                            className={`pcv-drop-row${on ? ' on' : ''}`}
+                            title={on ? '已勾选，再点一下取消' : '点一下勾选（可多选）'}
+                            onClick={() => pickSample(s.id)}
+                          >
+                            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                            {on && <span className="pcv-drop-check">✓</span>}
+                          </button>
+                        )
+                      })}
                     </div>
-                    {/* 底部：只作提示 + 收起（点样品即生效，不需要再点确定） */}
+                    {/* 底部：只作提示 + 收起（勾选即生效，不需要再点确定） */}
                     <div className="pcv-drop-f">
-                      <span style={{ fontSize: 12, color: '#9aa0a9' }}>
-                        点一下就加进条目，可连着点多个（当前已加 {entries.filter((e) => e.sampleId).length} 条）
+                      <span style={{ fontSize: 12, color: entries.some((e) => e.sampleId) ? '#b8517f' : '#9aa0a9' }}>
+                        {entries.filter((e) => e.sampleId).length > 0
+                          ? `已勾选 ${entries.filter((e) => e.sampleId).length} 条（再点一次取消）`
+                          : '点一下勾选，可多选'}
                       </span>
                       <div className="pcv-spacer" />
                       <button
