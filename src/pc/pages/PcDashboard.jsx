@@ -114,16 +114,16 @@ export function PcDashboard() {
       // 列「到该发」的账号：含多账号里非高频的那个，避免只显示高频账号后
       // 另一个账号的待发状态被藏起来（这些样品已从「发布提醒」里剔除）
       accountsOf: (s) => pendingAccounts(s),
-      header: '未发布天数',
-      mid: (s, a, accs) => {
+      // 「提醒天数」单独一列（用户要求「提醒天数放一列，账号那里显示账号加未发布天数」）
+      header: '提醒天数',
+      mid: (s) => {
         // 展示高频口径的天数（取高频账号里最小的），不要拿默认 7 天
         const per = hotReminderDays(s)
-        const list = (accs && accs.length ? accs : [a]).filter(Boolean)
+        const overdue = s.status !== 'published' && isOverdue(s)
         return (
           <>
-            {/* 「每N天提醒」不再用红色（红色留给真正超期的天数），改为中性灰 */}
-            <span className="pcv-chip" style={{ background: '#f1f2f4', color: '#6b7280', marginRight: 6 }}>每{per}天提醒</span>
-            <AccountDays sample={s} list={list} />
+            {overdue && <span className="pcv-chip" style={{ ...TONE.danger, marginRight: 6 }}>已逾期</span>}
+            <span className="pcv-chip" style={{ background: '#f1f2f4', color: '#6b7280' }}>每{per}天提醒</span>
           </>
         )
       },
@@ -139,18 +139,17 @@ export function PcDashboard() {
       // 只列「真正还需要发」的账号：有账号从未发过就只显示它们，
       // 不会把已经发过的账号一起挂在这一行里（用户反馈：晚梨发过了，不该再提醒）
       accountsOf: (s) => reminderAccounts(s),
-      header: '未发布天数',
+      header: '提醒天数',
       mid: (s, a, accs) => {
         const overdue = s.status !== 'published' && isOverdue(s)
-        // 多账号时**每个账号各一个天数**（用户要求「能列出来每个账号分别几天吗」），
-        // 只有该账号确实该发才列，避免把不用管的账号也挂上来
         const list = (accs && accs.length ? accs : [a]).filter(Boolean)
+        // 这一行涉及账号里最短的阈值（多账号混口径时按最紧的那个显示）
+        const per = list.length ? Math.min(...list.map((x) => sampleDays(s, x))) : sampleDays(s, a)
         return (
           <>
-            {/* 逾期 chip 不再重复带截止日 —— 右面已经有独立的「截止日期」列，
-                重复写会让这一格时宽时窄，短内容行的空洞特别明显 */}
+            {/* 逾期 chip 与「每N天提醒」都留在这一列；账号与天数已合并到「账号」列 */}
             {overdue && <span className="pcv-chip" style={{ ...TONE.danger, marginRight: 6 }}>已逾期</span>}
-            <AccountDays sample={s} list={list} />
+            <span className="pcv-chip" style={{ background: '#f1f2f4', color: '#6b7280' }}>每{per}天提醒</span>
           </>
         )
       },
@@ -513,11 +512,10 @@ export function PcDashboard() {
                   <tr>
                     <th style={{ width: 190 }}>产品</th>
                     <th style={{ width: 180 }}>操作</th>
-                    {/* 未发布天数挪到「账号」前面（用户要求换顺序）：先看还差几天，再看是哪个账号 */}
-                    {/* 每个账号一个天数胶囊，列加宽到 320，配合 11px 字号尽量不换行 */}
-                    <th style={{ width: 320 }}>{cur.header}</th>
-                    {/* 账号列加宽到 210：两个长账号名并排也能放下，不再折行 */}
-                    <th style={{ width: 210 }}>账号</th>
+                    {/* 提醒天数单独一列（只有「每N天提醒」/「已逾期」这些标签），120 够用 */}
+                    <th style={{ width: 130 }}>{cur.header}</th>
+                    {/* 账号列：高频出单 / 发布提醒里是「账号 + 已N天」双色胶囊，需要更宽 */}
+                    <th style={{ width: 340 }}>账号</th>
                     <th style={{ width: 90 }}>状态</th>
                     <th style={{ width: 110 }}>截止日期</th>
                   </tr>
@@ -537,20 +535,27 @@ export function PcDashboard() {
                           style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
                         >{s.name}</td>
                         <td>{cur.actions(it, acc)}</td>
-                        {/* 未发布天数（列顺序：操作 → 天数 → 账号，用户要求换顺序） */}
+                        {/* 提醒天数（每N天提醒 / 已逾期）单独一列 */}
                         <td>{cur.mid(it, acc, accs)}</td>
-                        {/* 账号列：彩色圆点 + 名字；多账号并列**不换行**（用户要求「不要换行」） */}
-                        <td style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'nowrap' }}>
-                            {accs.map((a, k) => (
-                              <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                                {k > 0 && <span style={{ width: 8 }} />}
-                                <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.75, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
-                                <span style={{ color: '#333a45' }}>{a}</span>
-                              </span>
-                            ))}
-                          </span>
-                        </td>
+                        {/* 账号列：高频出单 / 发布提醒里显示「账号 + 已N天」（用户要求合并到这里）；
+                            其它 tab 仍是圆点 + 名字 */}
+                        {tab === 'hot' || tab === 'reminders' ? (
+                          <td style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                            <AccountDays sample={s} list={accs} />
+                          </td>
+                        ) : (
+                          <td style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'nowrap' }}>
+                              {accs.map((a, k) => (
+                                <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                                  {k > 0 && <span style={{ width: 8 }} />}
+                                  <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.75, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
+                                  <span style={{ color: '#333a45' }}>{a}</span>
+                                </span>
+                              ))}
+                            </span>
+                          </td>
+                        )}
                         <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>
                         <td
                           className="pcv-num"
