@@ -897,7 +897,7 @@ export function DashboardPage() {
                       // 只有「当天及以前」的计划才能标记完成（与 PC 一致，未来日期置灰）
                       const canDone = !p.planDate || p.planDate <= todayPlan
                       return (
-                        <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
+                        <SwipeRow key={p.id} radius={0} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
                           <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', padding: '10px 14px' }}>
                             <button
                               onClick={(e) => { e.stopPropagation(); if (canDone) markPlanDone(p) }}
