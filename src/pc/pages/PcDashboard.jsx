@@ -498,10 +498,11 @@ export function PcDashboard() {
                   <tr>
                     <th style={{ width: 190 }}>产品</th>
                     <th style={{ width: 180 }}>操作</th>
-                    <th style={{ width: 170 }}>账号</th>
-                    <th style={{ width: 90 }}>状态</th>
+                    {/* 未发布天数挪到「账号」前面（用户要求换顺序）：先看还差几天，再看是哪个账号 */}
                     {/* 每个账号一个天数 chip，列加宽到 280 避免两三个账号换行换得太高 */}
                     <th style={{ width: 280 }}>{cur.header}</th>
+                    <th style={{ width: 170 }}>账号</th>
+                    <th style={{ width: 90 }}>状态</th>
                     <th style={{ width: 110 }}>截止日期</th>
                   </tr>
                 </thead>
@@ -520,6 +521,8 @@ export function PcDashboard() {
                           style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
                         >{s.name}</td>
                         <td>{cur.actions(it)}</td>
+                        {/* 未发布天数（列顺序：操作 → 天数 → 账号，用户要求换顺序） */}
+                        <td>{cur.mid(it, acc, accs)}</td>
                         {/* 账号列：彩色圆点 + 名字；多账号（即将到期）并列显示 */}
                         <td style={{ whiteSpace: 'nowrap' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -533,7 +536,6 @@ export function PcDashboard() {
                           </span>
                         </td>
                         <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>
-                        <td>{cur.mid(it, acc, accs)}</td>
                         <td
                           className="pcv-num"
                           style={{
