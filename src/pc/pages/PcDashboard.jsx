@@ -9,7 +9,6 @@ import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
-import { PublishDialog } from '../components/PublishDialog'
 import { AdQueueCard } from '../components/AdQueueCard'
 import { PublishPlanCard } from '../components/PublishPlanCard'
 
@@ -95,7 +94,7 @@ export function PcDashboard() {
   const [whyOpen, setWhyOpen] = useState(false)
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
-  const [publishDialog, setPublishDialog] = useState(undefined)
+  // 「补记发布」入口已按用户要求去掉（总览不再用 PublishDialog，记录发布走「视频发布记录」页）
 
   const all = useMemo(() => selectAllReminders(samples), [samples])
 
@@ -143,8 +142,7 @@ export function PcDashboard() {
       },
       actions: (s, a) => (
         <>
-          <button className="pcv-btn" onClick={() => setPublishDialog({ sampleId: s.id, accounts: getAccounts(s) })}>补记发布</button>
-          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => quickPlan(s, a)}>新建计划</button>
+          <button className="pcv-btn" onClick={() => quickPlan(s, a)}>新建计划</button>
           <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
         </>
       ),
@@ -171,8 +169,7 @@ export function PcDashboard() {
       },
       actions: (s, a) => (
         <>
-          <button className="pcv-btn" onClick={() => setPublishDialog({ sampleId: s.id, accounts: getAccounts(s) })}>补记发布</button>
-          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => quickPlan(s, a)}>新建计划</button>
+          <button className="pcv-btn" onClick={() => quickPlan(s, a)}>新建计划</button>
           <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
         </>
       ),
@@ -193,10 +190,7 @@ export function PcDashboard() {
         )
       },
       actions: (it) => (
-        <>
-          <button className="pcv-btn" onClick={() => setPublishDialog({ sampleId: it.sample.id, accounts: it.accounts.map((x) => x.account) })}>补发布</button>
-          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(it.sample)}>打开样品</button>
-        </>
+        <button className="pcv-btn pcv-btn-ghost" onClick={() => setSampleDialog(it.sample)}>打开样品</button>
       ),
     },
     expiring: {
@@ -667,14 +661,6 @@ export function PcDashboard() {
         <SampleDialog sample={sampleDialog} onClose={() => setSampleDialog(undefined)} />
       )}
 
-      {/* 补记发布：弹窗，不跳页面 */}
-      {publishDialog !== undefined && (
-        <PublishDialog
-          sampleId={publishDialog.sampleId}
-          accounts={publishDialog.accounts}
-          onClose={() => setPublishDialog(undefined)}
-        />
-      )}
 
     </>
   )

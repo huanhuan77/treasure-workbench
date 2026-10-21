@@ -1485,8 +1485,7 @@ export function DashboardPage() {
                   }}
                   renderActions={(s) => (
                     <>
-                      <button style={pcPrimaryBtn} onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })}>补记发布</button>
-                      <button style={pcTextBtn} onClick={() => quickPlan(s)}>新建计划</button>
+                      <button style={pcPrimaryBtn} onClick={() => quickPlan(s)}>新建计划</button>
                       <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
                     </>
                   )}
@@ -1505,12 +1504,8 @@ export function DashboardPage() {
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
                           <button
-                            onClick={() => { setSwipedHotId(null); navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } }) }}
-                            style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >补记发布</button>
-                          <button
                             onClick={() => { setSwipedHotId(null); quickPlan(s) }}
-                            style={{ width: 74, height: '80%', border: 'none', background: '#b8517f', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                            style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >新建计划</button>
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
@@ -1541,7 +1536,7 @@ export function DashboardPage() {
                             position: 'relative', zIndex: 1,
                             background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
-                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-226px)' : 'translateX(0)',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-148px)' : 'translateX(0)',
                           }}
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1606,8 +1601,7 @@ export function DashboardPage() {
                   }}
                   renderActions={(s) => (
                     <>
-                      <button style={pcPrimaryBtn} onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })}>补记发布</button>
-                      <button style={pcTextBtn} onClick={() => quickPlan(s)}>新建计划</button>
+                      <button style={pcPrimaryBtn} onClick={() => quickPlan(s)}>新建计划</button>
                       <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
                     </>
                   )}
@@ -1623,12 +1617,8 @@ export function DashboardPage() {
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
                           <button
-                            onClick={() => { setSwipedHotId(null); navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } }) }}
-                            style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >补记发布</button>
-                          <button
                             onClick={() => { setSwipedHotId(null); quickPlan(s) }}
-                            style={{ width: 74, height: '80%', border: 'none', background: '#b8517f', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                            style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >新建计划</button>
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
@@ -1660,7 +1650,7 @@ export function DashboardPage() {
                             position: 'relative', zIndex: 1,
                             background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
-                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-226px)' : 'translateX(0)',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-148px)' : 'translateX(0)',
                           }}
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
