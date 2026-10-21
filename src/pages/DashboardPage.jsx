@@ -180,7 +180,7 @@ export function DashboardPage() {
   const {
     samples, transactions, orders, publishRecords, todos, applySyncResult, updateSample,
     adQueue, addAdQueue, updateAdQueue, deleteAdQueue,
-    publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan,
+    publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan, addPublishRecord,
     settings,
   } = useStore()
   const { show } = useToast()
@@ -390,6 +390,29 @@ export function DashboardPage() {
     setPlanQuery('')
     setPlanEdit(p)
   }
+  // 「标记已发」：与 PC 一致，顺手把这次发布**写进发布记录**（用户要求）
+  const markPlanDone = (p) => {
+    const name = String(p.name || '').trim()
+    const sm = (samples || []).find(
+      (s) => String(s.name || '').trim() === name && getAccounts(s).includes(p.account),
+    )
+    const qty = Math.max(1, Number(p.qty) || 1)
+    if (sm) {
+      addPublishRecord({
+        sampleId: sm.id,
+        productId: sm.productId || '',
+        accounts: [p.account],
+        publishDate: p.planDate || new Date().toISOString().slice(0, 10),
+        qty,
+      })
+    }
+    updatePublishPlan(p.id, { done: true, doneAt: Date.now() })
+    show(
+      sm ? `已标记发布，并写入发布记录（${p.account} · ${qty} 条）` : '已标记完成（未找到对应样品，未写发布记录）',
+      'success',
+    )
+  }
+
   const savePlan = () => {
     if (planIsEditing) {
       const name = planEditEntry.name.trim()
@@ -811,8 +834,8 @@ export function DashboardPage() {
                         <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
                           <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <button
-                              onClick={(e) => { e.stopPropagation(); updatePublishPlan(p.id, { done: true, doneAt: Date.now() }); show('已标记发布', 'success') }}
-                              title="点一下标记为已发，自动隐藏"
+                              onClick={(e) => { e.stopPropagation(); markPlanDone(p) }}
+                              title="点一下标记为已发（同时写入发布记录），自动隐藏"
                               style={{ width: 18, height: 18, borderRadius: '50%', border: '1.5px solid #d4a3c0', background: '#fff', cursor: 'pointer', flexShrink: 0, padding: 0 }}
                             />
                             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>

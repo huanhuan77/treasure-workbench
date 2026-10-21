@@ -29,7 +29,7 @@ const emptyByAcc = () => {
 const newEntry = () => ({ name: '', qty: '1' })
 
 export function PublishPlanCard() {
-  const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan } = useStore()
+  const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan, addPublishRecord } = useStore()
   const { show } = useToast()
   const [editing, setEditing] = useState(null)   // null=关闭 / 'new' / 条目对象
   const [account, setAccount] = useState(ACCOUNTS[0] || '')
@@ -189,6 +189,31 @@ export function PublishPlanCard() {
 
   // 打开弹窗时重置所有行的选择面板状态
   const resetPicker = () => { setPickIdx(-1); setQuery(''); setCatFilter(''); setPicked([]) }
+
+  // 「标记已发」：同时把这次发布**写进发布记录**（用户要求「点击完成之后能自动把记录添加到发布记录」）。
+  // 记录写进去后，store 会重算该账号的「距上次发布」，提醒自然消失；找不到对应样品时只标记完成。
+  const markDone = (p) => {
+    const name = String(p.name || '').trim()
+    const sm = (samples || []).find(
+      (s) => String(s.name || '').trim() === name && getAccounts(s).includes(p.account),
+    )
+    const qty = Math.max(1, Number(p.qty) || 1)
+    if (sm) {
+      addPublishRecord({
+        sampleId: sm.id,
+        productId: sm.productId || '',
+        accounts: [p.account],
+        publishDate: p.planDate || todayStr(),
+        qty,
+      })
+    }
+    updatePublishPlan(p.id, { done: true, doneAt: Date.now() })
+    show(
+      sm ? `已标记发布，并写入发布记录（${p.account} · ${qty} 条）` : '已标记完成（未找到对应样品，未写发布记录）',
+      'success',
+    )
+    setEditing(null)
+  }
   const openNew = () => {
     setByAcc(emptyByAcc())
     setAccount(ACCOUNTS[0] || '')
@@ -364,6 +389,13 @@ export function PublishPlanCard() {
                   {/* 操作按钮：默认隐藏，鼠标悬停该行才出现（用户要求「太紧凑了」）。
                       左边留 20px 空档：数量/账号/日期整块往左 20px，操作列仍贴住右边缘 */}
                   <span className="pcv-rowacts" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, flexShrink: 0, marginLeft: 20 }}>
+                    {/* 完成：标记已发 + 自动写入发布记录（用户要求「加个完成按钮」） */}
+                    <button
+                      className="pcv-x"
+                      title="标记已发（同时写入发布记录）"
+                      style={{ width: 20, height: 20, fontSize: 12, color: '#16a34a', background: 'rgba(22,163,74,0.10)' }}
+                      onClick={() => markDone(p)}
+                    >✓</button>
                     <button className="pcv-x" title="编辑" style={{ width: 20, height: 20, fontSize: 13, color: '#8a8f98' }} onClick={() => openEdit(p)}>✎</button>
                     <button
                       className="pcv-x"
@@ -536,11 +568,7 @@ export function PublishPlanCard() {
                 <button
                   className="pcv-btn pcv-btn-ghost"
                   style={{ color: '#16a34a', borderColor: 'rgba(22,163,74,0.35)' }}
-                  onClick={() => {
-                    updatePublishPlan(editing.id, { done: true, doneAt: Date.now() })
-                    show('已标记发布', 'success')
-                    setEditing(null)
-                  }}
+                  onClick={() => markDone(editing)}
                 >标记已发</button>
               )}
               <span style={{ fontSize: 12, color: '#9aa0a9' }}>
