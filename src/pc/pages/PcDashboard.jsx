@@ -4,7 +4,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
-import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, compareUrgent, sampleDays } from '../../utils/publish'
+import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, compareUrgent, hotReminderDays } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
@@ -69,7 +69,8 @@ export function PcDashboard() {
       header: '未发布天数',
       mid: (s, a) => {
         const days = daysSincePublishByAccount(s, a)
-        const per = Number(s?.reminderDays) > 0 ? Number(s.reminderDays) : sampleDays(s, a)
+        // 展示高频口径的天数（取高频账号里最小的），不要拿默认 7 天
+        const per = hotReminderDays(s)
         return (
           <>
             <span className="pcv-chip" style={{ background: '#f43f5e', color: '#fff', marginRight: 6 }}>每{per}天提醒</span>

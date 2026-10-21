@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, compareUrgent, setPublishDays } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, compareUrgent, setPublishDays, hotReminderDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
@@ -1483,7 +1483,7 @@ export function DashboardPage() {
                     const days = daysSincePublishByAccount(s, account)
                     return (
                       <span style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                        <span style={{ ...pcChip, background: '#f43f5e' }}>每{Number(s.reminderDays)}天提醒</span>
+                        <span style={{ ...pcChip, background: '#f43f5e' }}>每{hotReminderDays(s)}天提醒</span>
                         <span style={{ ...pcChip, background: '#f59e0b' }}>
                           {days === Infinity ? '从未发布过视频' : `已 ${days} 天没发`}
                         </span>
@@ -1517,7 +1517,7 @@ export function DashboardPage() {
                             ))}
                           </div>
                           <div style={{ marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#f43f5e', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>每{Number(s.reminderDays)}天提醒</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#f43f5e', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>每{hotReminderDays(s)}天提醒</span>
                             <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>{daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}</span>
                           </div>
                         </div>

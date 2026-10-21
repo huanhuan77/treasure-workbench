@@ -134,6 +134,17 @@ export function pendingAccounts(sample) {
   return getAccounts(sample).filter((a) => accountDue(sample, a))
 }
 
+// 「高频出单」tab 里「每 N 天提醒」的展示值。
+// 必须取**高频账号**（≤5 天）的天数，不能拿产品级/默认的 7 天：
+// 用户反馈「我不是改成了 5 天吗」—— 行内账号可能是按 7 天口径的那个账号，
+// 直接用它算就会显示「每7天提醒」，看起来像设置没生效。
+export function hotReminderDays(sample) {
+  const accs = pendingAccounts(sample).filter((a) => isHotAccount(sample, a))
+  const list = accs.length ? accs : getAccounts(sample).filter((a) => isHotAccount(sample, a))
+  if (list.length) return Math.min(...list.map((a) => sampleDays(sample, a)))
+  return sampleDays(sample, getAccounts(sample)[0])
+}
+
 // 「发布提醒」这一行该显示哪些账号（以及按谁算未发布天数）。
 //
 // 口径（用户反馈「晚梨已经发过了，应该只提醒一个账号吧」）：
