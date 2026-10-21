@@ -4,7 +4,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
-import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, compareUrgent } from '../../utils/publish'
+import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, compareUrgent, isHotAccount, sampleDays } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
@@ -50,7 +50,7 @@ export function PcDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
   const { samples, todos, orders } = useStore()
-  const [tab, setTab] = useState('reminders')
+  const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [account, setAccount] = useState('')
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
@@ -60,6 +60,31 @@ export function PcDashboard() {
 
   // 每个 Tab 的口径：怎么取数、一条归到哪些账号、中列与操作各显示什么
   const spec = useMemo(() => ({
+    // 高频出单：手动设了提醒天数（≤5 天）且已到该发的产品（与手机端同一口径）
+    hot: {
+      items: all.hot,
+      // 只列「到该发的高频账号」：pendingAccounts ∩ isHotAccount
+      accountsOf: (s) => pendingAccounts(s).filter((a) => isHotAccount(s, a)),
+      header: '未发布天数',
+      mid: (s, a) => {
+        const days = daysSincePublishByAccount(s, a)
+        const per = Number(s?.reminderDays) > 0 ? Number(s.reminderDays) : sampleDays(s, a)
+        return (
+          <>
+            <span className="pcv-chip" style={{ background: '#f43f5e', color: '#fff', marginRight: 6 }}>每{per}天提醒</span>
+            <span className="pcv-chip" style={TONE.warn}>
+              {days === Infinity ? '从未发布过视频' : `已 ${days} 天没发`}
+            </span>
+          </>
+        )
+      },
+      actions: (s) => (
+        <>
+          <button className="pcv-btn" onClick={() => setPublishDialog({ sampleId: s.id, accounts: getAccounts(s) })}>补记发布</button>
+          <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
+        </>
+      ),
+    },
     reminders: {
       items: all.reminders,
       // 只列「真正还需要发」的账号：有账号从未发过就只显示它们，
@@ -128,7 +153,9 @@ export function PcDashboard() {
     },
   }), [all, navigate])
 
-  const cur = spec[tab]
+  // 当前 Tab；REMINDER_TABS 里新增了 tab 但 spec 还没跟上时，兜底回「发布提醒」，
+  // 避免整页因为 spec[tab] 为 undefined 直接崩掉（reading 'items'）。
+  const cur = spec[tab] || spec.reminders
 
   const items = useMemo(
     () => (account ? cur.items.filter((it) => cur.accountsOf(it).includes(account)) : cur.items),
@@ -140,6 +167,7 @@ export function PcDashboard() {
   // 看起来像「点了没反应」。
   const tabCount = (id) => {
     const sp = spec[id]
+    if (!sp) return 0
     if (!account) return sp.items.length
     return sp.items.filter((it) => sp.accountsOf(it).includes(account)).length
   }
@@ -162,7 +190,7 @@ export function PcDashboard() {
       if (accs.length === 0) continue
       const s = it.sample || it
       // 天数 / 条数这类数字按「最严重的那一个账号」展示（与手机端一致：取最大值）
-      const worst = tab === 'reminders'
+      const worst = (tab === 'reminders' || tab === 'hot')
         ? accs.reduce((w, a) => (daysSincePublishByAccount(s, a) > daysSincePublishByAccount(s, w) ? a : w), accs[0])
         : accs[0]
       out.push({ it, accs, acc: worst })
@@ -171,7 +199,7 @@ export function PcDashboard() {
     //   ① 已逾期的一律排最前；
     //   ② 从未发布过视频的排第二梯队；
     //   ③ 其余按最久没发天数降序（compareUrgent 统一处理 ②③）。
-    if (tab === 'reminders') {
+    if (tab === 'reminders' || tab === 'hot') {
       const overdueOf = (r) => {
         const s = r.it.sample || r.it
         return (s.status !== 'published' && isOverdue(s)) ? 0 : 1

@@ -132,9 +132,10 @@ export function selectExpiringSoon(samples, days = EXPIRING_DAYS) {
     .sort((a, b) => (daysUntilDeadline(a.deadline) ?? 999) - (daysUntilDeadline(b.deadline) ?? 999))
 }
 
-// 一次性取出三组，供总览 Tab 与列表页共用
+// 一次性取出四组，供总览 Tab 与列表页共用
 export function selectAllReminders(samples) {
   return {
+    hot: selectHotCadence(samples),
     reminders: selectPublishReminders(samples),
     low: selectLowPublish(samples),
     expiring: selectExpiringSoon(samples),
