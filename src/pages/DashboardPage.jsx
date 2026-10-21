@@ -845,8 +845,8 @@ export function DashboardPage() {
       </div>
 
       {/* 发布计划：产品 / 账号 / 数量 / 时间（与 PC 同一份数据） */}
-      <div style={{ padding: '12px 16px 4px' }}>
-        <div className="pc-card" style={{ background: '#fff', border: '1px solid #e6e6ef', borderRadius: '12px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+      <div style={{ padding: '12px 0 4px' }}>
+        <div className="pc-card" style={{ background: '#fff', border: 'none', borderRadius: 0, padding: '12px 14px 4px', boxShadow: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>发布计划</span>
@@ -867,7 +867,7 @@ export function DashboardPage() {
               还没有发布计划，点「新增」记一条：产品、账号、数量、发布时间
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px', margin: '10px -14px 0', background: '#ece8ec', padding: '6px 0' }}>
               {planExpanded && (
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
                   {['all', ...ACCOUNTS].map((a) => {
@@ -898,7 +898,7 @@ export function DashboardPage() {
                       const canDone = !p.planDate || p.planDate <= todayPlan
                       return (
                         <SwipeRow key={p.id} onEdit={() => openPlanEdit(p)} onDelete={() => { deletePublishPlan(p.id); show('已删除', 'success') }}>
-                          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px', background: '#fff', padding: '10px 14px' }}>
                             <button
                               onClick={(e) => { e.stopPropagation(); if (canDone) markPlanDone(p) }}
                               disabled={!canDone}
