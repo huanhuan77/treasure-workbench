@@ -337,6 +337,8 @@ export function DashboardPage() {
   // 形态与 PC 一致（照「记录发布」弹窗）：切账号分别填、每行「产品 + 数量」可加减，
   // 一次保存写成多条计划；编辑已有计划时只保留一行。
   const [planEdit, setPlanEdit] = useState(null)
+  // 从提醒中心「新建计划」进来：产品已预填、锁定，不显示「发布产品 & 数量 / ＋添加 / 提示」
+  const [planLockProduct, setPlanLockProduct] = useState(false)
   const [planAccount, setPlanAccount] = useState(ACCOUNTS[0] || '')
   const [planDate, setPlanDate] = useState(tomorrowPlan)
   const [planByAcc, setPlanByAcc] = useState(() => {
@@ -411,6 +413,7 @@ export function DashboardPage() {
     setPlanEditEntry({ name: '', qty: '1' })
     setPlanPickIdx(-1)
     setPlanQuery('')
+    setPlanLockProduct(false)   // 手动新增：产品那块照常显示（可多选 / 可添加）
     setPlanEdit('new')
   }
   const openPlanEdit = (p) => {
@@ -419,6 +422,7 @@ export function DashboardPage() {
     setPlanEditEntry({ name: p.name || '', qty: String(p.qty || 1) })
     setPlanPickIdx(-1)
     setPlanQuery('')
+    setPlanLockProduct(false)
     setPlanEdit(p)
   }
   // 「新建计划」：与 PC 一致，**打开「新增发布计划」弹窗**并带上该行的产品名 + 账号
@@ -442,6 +446,7 @@ export function DashboardPage() {
     setPlanEditEntry({ name: '', qty: '1' })
     setPlanPickIdx(-1)
     setPlanQuery('')
+    setPlanLockProduct(true)   // 提醒中心进来：产品已带好，隐藏「发布产品 & 数量」那块
     setPlanEdit('new')
   }
 
@@ -991,19 +996,24 @@ export function DashboardPage() {
               })}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', margin: '12px 0 4px' }}>
-              <span style={{ fontSize: '12px', color: '#8a8f98' }}>发布产品 &amp; 数量（可多选）</span>
-              <div style={{ flex: 1 }} />
-              {!planIsEditing && (
-                <button onClick={planAddEntry} style={{
-                  border: '1px solid #e5e7eb', background: '#fff', color: '#64748b', fontSize: '12px',
-                  fontWeight: 600, padding: '4px 10px', borderRadius: '8px', cursor: 'pointer',
-                }}>＋ 添加</button>
-              )}
-            </div>
-            <div style={{ fontSize: '11px', color: '#9aa0a9', marginBottom: '6px' }}>
-              只能选「{planAccount}」的样品（已放弃的不会出现）
-            </div>
+            {/* 从提醒中心「新建计划」进来时，产品已带好，不显示「发布产品 &amp; 数量 / ＋添加 / 提示」这一块 */}
+            {!planLockProduct && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', margin: '12px 0 4px' }}>
+                  <span style={{ fontSize: '12px', color: '#8a8f98' }}>发布产品 &amp; 数量（可多选）</span>
+                  <div style={{ flex: 1 }} />
+                  {!planIsEditing && (
+                    <button onClick={planAddEntry} style={{
+                      border: '1px solid #e5e7eb', background: '#fff', color: '#64748b', fontSize: '12px',
+                      fontWeight: 600, padding: '4px 10px', borderRadius: '8px', cursor: 'pointer',
+                    }}>＋ 添加</button>
+                  )}
+                </div>
+                <div style={{ fontSize: '11px', color: '#9aa0a9', marginBottom: '6px' }}>
+                  只能选「{planAccount}」的样品（已放弃的不会出现）
+                </div>
+              </>
+            )}
 
             {planEntries.length === 0 && !planIsEditing && (
               <button onClick={planAddEntry} style={{
