@@ -216,9 +216,7 @@ export function DashboardPage() {
     const v = sessionStorage.getItem('dash_remind_tab')
     return v === 'low' || v === 'expiring' || v === 'reminders' ? v : 'hot'
   })
-  // 高频出单卡片：账号 / 天数默认收起，点一下才展开（用户要求「账号收起来 点击才展开，时间也是」）
-  const [openHot, setOpenHot] = useState({})
-  // 高频出单卡片左滑露出的操作（补记发布 / 调整状态）——用户要求「操作放到左滑操作」
+  // 提醒卡片左滑露出的操作（补记发布 / 调整状态）——用户要求「操作放到左滑操作」
   const [swipedHotId, setSwipedHotId] = useState(null)
   const pickTab = (id) => {
     setRemindTab(id)
@@ -1596,51 +1594,30 @@ export function DashboardPage() {
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
-                          {/* 账号 + 天数默认**收起**成一行（只显示最久的那个账号），点一下展开全部 */}
-                          {(() => {
-                            const opened = !!openHot[s.id]
-                            const chip = (a) => {
-                              const d = daysSincePublishByAccount(s, a)
-                              const th = sampleDays(s, a)
-                              const due = d === Infinity || d >= th
-                              const col = ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)', c: '#64748b' }
-                              return (
-                                <span key={a} style={{ display: 'inline-flex', alignItems: 'center', borderRadius: '6px', overflow: 'hidden', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                  <span style={{ fontSize: '10px', padding: '2px 6px', background: col.bg, color: col.c, fontWeight: 600 }}>{a}</span>
-                                  <span style={{
-                                    fontSize: '10px', padding: '2px 6px', fontWeight: 700,
-                                    background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
-                                    color: due ? '#e11d48' : '#64748b',
-                                  }}>{d === Infinity ? '从未发布' : `已${d}天`}</span>
-                                </span>
-                              )
-                            }
-                            // 收起时按「最久没发」的那个账号排第一，信息量最大
-                            const sorted = [...showAccounts].sort(
-                              (x, y) => daysSincePublishByAccount(s, y) - daysSincePublishByAccount(s, x),
-                            )
-                            const first = sorted[0]
-                            return (
-                              <div
-                                onClick={() => setOpenHot((p) => ({ ...p, [s.id]: !p[s.id] }))}
-                                style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', alignItems: 'center', cursor: 'pointer' }}
-                              >
-                                {first && chip(first)}
-                                {!opened && showAccounts.length > 1 && (
-                                  <span style={{ fontSize: '10px', color: '#9aa0a9', fontWeight: 600 }}>+{showAccounts.length - 1}</span>
-                                )}
-                                {opened && sorted.slice(1).map((a) => chip(a))}
-                                {opened && (
-                                  <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
-                                    每{hotReminderDays(s)}天提醒
+                          {/* 账号 + 天数**全部直接展开**（用户要求「可以都展开了」），不再折叠 */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', alignItems: 'center' }}>
+                            {[...showAccounts]
+                              .sort((x, y) => daysSincePublishByAccount(s, y) - daysSincePublishByAccount(s, x))
+                              .map((a) => {
+                                const d = daysSincePublishByAccount(s, a)
+                                const th = sampleDays(s, a)
+                                const due = d === Infinity || d >= th
+                                const col = ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)', c: '#64748b' }
+                                return (
+                                  <span key={a} style={{ display: 'inline-flex', alignItems: 'center', borderRadius: '6px', overflow: 'hidden', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                    <span style={{ fontSize: '10px', padding: '2px 6px', background: col.bg, color: col.c, fontWeight: 600 }}>{a}</span>
+                                    <span style={{
+                                      fontSize: '10px', padding: '2px 6px', fontWeight: 700,
+                                      background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
+                                      color: due ? '#e11d48' : '#64748b',
+                                    }}>{d === Infinity ? '从未发布' : `已${d}天`}</span>
                                   </span>
-                                )}
-                                <span style={{ fontSize: '10px', color: '#b8517f', fontWeight: 700 }}>
-                                  {opened ? '收起' : '展开'}
-                                </span>
-                              </div>
-                            )
-                          })()}
+                                )
+                              })}
+                            <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+                              每{hotReminderDays(s)}天提醒
+                            </span>
+                          </div>
                         </div>
                         </div>{/* /左滑卡片内容 */}
                       </div>
