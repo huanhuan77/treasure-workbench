@@ -296,16 +296,7 @@ export function PcDashboard() {
     })
   }, [whyRows, whyQuery, whyOnlyMiss])
 
-  // 提醒中心搜索：在 55 条里找某个产品太费眼，加个关键字过滤（只过滤列表，不影响 tab 计数）
-  const [remKw, setRemKw] = useState('')
-  const shownRows = useMemo(() => {
-    const q = remKw.trim().toLowerCase()
-    if (!q) return rows
-    return rows.filter((r) => {
-      const s = r.it.sample || r.it
-      return String(s.name || '').toLowerCase().includes(q) || r.accs.some((a) => a.includes(remKw.trim()))
-    })
-  }, [rows, remKw])
+  // 提醒中心的列表直接用 rows（搜索条已按用户要求去掉）
 
   // 待办清单默认只列 5 条，卡片底部「查看全部 N 条」再展开剩余（用户要求）。
   // 不再用卡内滚动：滚动条在小卡片里不好点，展开/收起更直观。
@@ -336,6 +327,13 @@ export function PcDashboard() {
           <div className="pcv-title">工作台总览</div>
           <div className="pcv-sub">{greeting()} · {todayLabel}</div>
         </div>
+        {/* 诊断入口：页面标题栏右上角，粉色描边按钮（用户要求「放在标题顶部右边 粉色边框」） */}
+        <button
+          className="pcv-btn pcv-btn-ghost"
+          onClick={() => setWhyOpen(true)}
+          title="列出已超阈值、但没出现的样品，并说明原因"
+          style={{ marginLeft: 'auto', flexShrink: 0, color: '#b8517f', borderColor: 'rgba(184,81,127,0.55)' }}
+        >为什么没提醒</button>
       </div>
 
       <div className="pcv-body">
@@ -490,35 +488,8 @@ export function PcDashboard() {
               </div>
             </div>
 
-            {/* 搜索条：按产品名 / 账号过滤当前 tab 的列表 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 14px 8px' }}>
-              <input
-                className="pcv-input"
-                style={{ width: 220 }}
-                placeholder="搜索产品名 / 账号…"
-                value={remKw}
-                onChange={(e) => setRemKw(e.target.value)}
-              />
-              {remKw && (
-                <button className="pcv-btn-text" style={{ fontSize: 12, color: '#9aa0a9' }} onClick={() => setRemKw('')}>清空</button>
-              )}
-              <span style={{ fontSize: 12, color: '#9aa0a9' }}>
-                {remKw ? `匹配 ${shownRows.length} / ${rows.length} 条` : ''}
-              </span>
-              <div className="pcv-spacer" />
-              {/* 诊断入口：做成按钮放在提醒中心里（用户要求「改成按钮 提醒中心」） */}
-              <button
-                className="pcv-btn pcv-btn-ghost"
-                onClick={() => setWhyOpen(true)}
-                title="列出已超阈值、但没出现的样品，并说明原因"
-                style={{ flexShrink: 0 }}
-              >为什么没提醒</button>
-            </div>
-
             {rows.length === 0 ? (
               <div className="pcv-empty">当前筛选下没有需要处理的样品</div>
-            ) : shownRows.length === 0 ? (
-              <div className="pcv-empty">没有匹配「{remKw}」的样品</div>
             ) : (
               // 合并成一张表：账号不再各占一个标题+表格，改成一列「账号」（用户要求）
               // --inset：表头不用深灰带（用户要求），与卡头连成一块，不再像被一条灰线分开
@@ -535,7 +506,7 @@ export function PcDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {shownRows.map(({ it, accs, acc }, i) => {
+                  {rows.map(({ it, accs, acc }, i) => {
                     const s = it.sample || it
                     const st = SAMPLE_STATUS[s.status]
                     // 逾期行重点标注：整行淡红底 + 产品单元格左侧 3px 竖条（inset 阴影，
