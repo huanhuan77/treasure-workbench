@@ -117,18 +117,25 @@ export function isHotAccount(sample, account) {
 // 出单锚点口径：从最近一次出单日算起，**满**设定天数（默认7）且出单之后没有补发布 → 需要提醒，
 // 没出过单的账号退回原「距上次发布超期 / 从未发」口径（老口径保持 > th）。
 // 边界：出单当天算第 0 天，第 7 天就提醒（用户要求「隔了 7 天没发布就提醒」）。
+//
+// ⚠️ 出单后补过发布 ≠ 永久不催：补发布只是把锚点重置到「最近一次发布」，
+//    之后又隔 N 天没发，仍然要再提醒（用户反馈「10-14 发过、提醒天数 5 天、
+//    今天 10-21 已经 7 天没发，为什么没提醒」—— 就是漏了这一条）。
 export function accountDue(sample, account) {
   const c = (sample && sample.countsByAccount && sample.countsByAccount[account]) || {}
   const o = c.lastOrderAt
   const p = c.lastPublishAt
   const th = sampleDays(sample, account)
+  const sincePublish = daysSincePublishByAccount(sample, account)
   if (o) {
-    const days = Math.floor((new Date(todayStr()) - new Date(o)) / 86400000)
     const postedAfter = !!p && p > o
-    return days >= th && !postedAfter
+    // 出单后补过发布 → 从最近一次发布重新起算：满 N 天没发就再提醒
+    if (postedAfter) return sincePublish === Infinity || sincePublish >= th
+    // 出单后一直没补发布 → 从出单日起算，满 N 天就提醒
+    const days = Math.floor((new Date(todayStr()) - new Date(o)) / 86400000)
+    return days >= th
   }
-  const d = daysSincePublishByAccount(sample, account)
-  return d === Infinity || d > th
+  return sincePublish === Infinity || sincePublish > th
 }
 
 export function pendingAccounts(sample) {

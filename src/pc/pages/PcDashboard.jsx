@@ -74,13 +74,17 @@ export function PcDashboard() {
         return (
           <>
             <span className="pcv-chip" style={{ background: '#f43f5e', color: '#fff', marginRight: 6 }}>每{per}天提醒</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {/* 每个账号一段文字：账号名用账号主题色、天数用琥珀色，不再用带底色的 chip
+                （用户反馈「颜色重叠了」：多个浅色 chip 叠在一起和行底色糊成一片） */}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 12 }}>
               {list.map((x) => {
                 const days = daysSincePublishByAccount(s, x)
                 return (
-                  <span key={x} className="pcv-chip" style={TONE.warn} title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}>
-                    <span style={{ opacity: 0.7, marginRight: 4 }}>{x}</span>
-                    {days === Infinity ? '从未发布' : `已${days}天`}
+                  <span key={x} style={{ whiteSpace: 'nowrap' }} title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}>
+                    <span style={{ color: (ACCOUNT_COLOR[x] || {}).c || '#8a8f98', fontWeight: 600 }}>{x}</span>
+                    <span style={{ color: '#a97c46', marginLeft: 4 }}>
+                      {days === Infinity ? '从未发布' : `已${days}天`}
+                    </span>
                   </span>
                 )
               })}
@@ -111,13 +115,17 @@ export function PcDashboard() {
             {/* 逾期 chip 不再重复带截止日 —— 右面已经有独立的「截止日期」列，
                 重复写会让这一格时宽时窄，短内容行的空洞特别明显 */}
             {overdue && <span className="pcv-chip" style={{ ...TONE.danger, marginRight: 6 }}>已逾期</span>}
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {/* 每个账号一段文字：账号名用账号主题色、天数用琥珀色，不再用带底色的 chip
+                （用户反馈「颜色重叠了」：多个浅色 chip 叠在一起和行底色糊成一片） */}
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', fontSize: 12 }}>
               {list.map((x) => {
                 const days = daysSincePublishByAccount(s, x)
                 return (
-                  <span key={x} className="pcv-chip" style={TONE.warn} title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}>
-                    <span style={{ opacity: 0.7, marginRight: 4 }}>{x}</span>
-                    {days === Infinity ? '从未发布' : `已${days}天`}
+                  <span key={x} style={{ whiteSpace: 'nowrap' }} title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}>
+                    <span style={{ color: (ACCOUNT_COLOR[x] || {}).c || '#8a8f98', fontWeight: 600 }}>{x}</span>
+                    <span style={{ color: '#a97c46', marginLeft: 4 }}>
+                      {days === Infinity ? '从未发布' : `已${days}天`}
+                    </span>
                   </span>
                 )
               })}
