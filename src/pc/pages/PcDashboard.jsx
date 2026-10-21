@@ -591,22 +591,22 @@ export function PcDashboard() {
               <div className="pcv-spacer" />
               <button className="pcv-dialog-x" title="关闭" onClick={() => setWhyOpen(false)}>×</button>
             </div>
-            <div className="pcv-dialog-b" style={{ maxHeight: '66vh', overflowY: 'auto' }}>
-              {/* 搜索 + 只看漏掉的：样品多的时候能直接搜到某一条 */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <input
-                  className="pcv-input"
-                  style={{ flex: 1, minWidth: 0 }}
-                  placeholder="搜索产品名或账号…"
-                  value={whyQuery}
-                  onChange={(e) => setWhyQuery(e.target.value)}
-                />
-                <button
-                  className={whyOnlyMiss ? 'pcv-btn' : 'pcv-btn pcv-btn-ghost'}
-                  onClick={() => setWhyOnlyMiss((v) => !v)}
-                  style={{ flexShrink: 0 }}
-                >只看漏掉的</button>
-              </div>
+            {/* 搜索 + 只看漏掉的：**放在滚动区外面**，列表滚的时候它固定不动（用户要求「搜索栏固定」） */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 18px 10px' }}>
+              <input
+                className="pcv-input"
+                style={{ flex: 1, minWidth: 0 }}
+                placeholder="搜索产品名或账号…"
+                value={whyQuery}
+                onChange={(e) => setWhyQuery(e.target.value)}
+              />
+              <button
+                className={whyOnlyMiss ? 'pcv-btn' : 'pcv-btn pcv-btn-ghost'}
+                onClick={() => setWhyOnlyMiss((v) => !v)}
+                style={{ flexShrink: 0 }}
+              >只看漏掉的</button>
+            </div>
+            <div className="pcv-dialog-b" style={{ maxHeight: '62vh', overflowY: 'auto', paddingTop: 0 }}>
               {whyShown.length === 0 ? (
                 <div className="pcv-empty">没有匹配的样品</div>
               ) : (
