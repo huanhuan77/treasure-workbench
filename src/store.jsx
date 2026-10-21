@@ -4807,8 +4807,19 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
+  const toggleHiddenAccount = useCallback((a) => {
+    setData((d) => {
+      const hidden = Array.isArray(d.hiddenAccounts) ? [...d.hiddenAccounts] : []
+      const i = hidden.indexOf(a)
+      if (i >= 0) hidden.splice(i, 1)
+      else hidden.push(a)
+      return { ...d, hiddenAccounts: hidden }
+    })
+  }, [])
+
   const value = {
     ...data,
+    toggleHiddenAccount,
     addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics,

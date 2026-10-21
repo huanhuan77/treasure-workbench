@@ -87,7 +87,8 @@ function AccountDays({ sample, list }) {
 export function PcDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { samples, todos, orders } = useStore()
+  const { samples, todos, orders, hiddenAccounts, toggleHiddenAccount } = useStore()
+  const [hiddenOpen, setHiddenOpen] = useState(false)
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [account, setAccount] = useState('')
   // 「为什么没提醒」诊断弹窗
@@ -209,9 +210,15 @@ export function PcDashboard() {
   // 避免整页因为 spec[tab] 为 undefined 直接崩掉（reading 'items'）。
   const cur = spec[tab] || spec.reminders
 
+  const visAcc = useCallback((arr) => (arr || []).filter((a) => !(hiddenAccounts || []).includes(a)), [hiddenAccounts])
+
   const items = useMemo(
-    () => (account ? cur.items.filter((it) => cur.accountsOf(it).includes(account)) : cur.items),
-    [cur, account],
+    () => {
+      let list = cur.items
+      if (account) list = list.filter((it) => cur.accountsOf(it).includes(account))
+      return list.filter((it) => visAcc(cur.accountsOf(it)).length > 0)
+    },
+    [cur, account, visAcc],
   )
 
   // Tab 上的数字要跟着账号筛选变（与手机端一致）：
@@ -227,12 +234,10 @@ export function PcDashboard() {
   // 当前 Tab 涉及到的账号（供筛选条）
   const accountOptions = useMemo(() => {
     const set = new Set()
-    for (const it of cur.items) for (const a of cur.accountsOf(it)) set.add(a)
-    // 切 tab 会保留账号筛选：即便该账号在这个 tab 没有条目，也要把胶囊显示出来，
-    // 否则「筛选还在生效、但看不见选中了谁」
-    if (account) set.add(account)
+    for (const it of cur.items) for (const a of visAcc(cur.accountsOf(it))) set.add(a)
+    if (account && visAcc([account]).length) set.add(account)
     return [...set].sort((x, y) => accRank(x) - accRank(y))
-  }, [cur, account])
+  }, [cur, account, visAcc])
 
   // 「全部账号」时**合并成一张表**，用一列「账号」标出属于谁（用户要求）。
   // 粒度与手机端一致：**一个样品一行**（同一个品不按账号拆成多行），
@@ -241,7 +246,7 @@ export function PcDashboard() {
   const rows = useMemo(() => {
     const out = []
     for (const it of items) {
-      const accs = cur.accountsOf(it).filter((a) => !account || a === account)
+      const accs = visAcc(cur.accountsOf(it)).filter((a) => !account || a === account)
       if (accs.length === 0) continue
       const s = it.sample || it
       // 天数 / 条数这类数字按「最严重的那一个账号」展示（与手机端一致：取最大值）
@@ -358,6 +363,39 @@ export function PcDashboard() {
           title="列出已超阈值、但没出现的样品，并说明原因"
           style={{ marginLeft: 'auto', flexShrink: 0, color: '#b8517f', borderColor: 'rgba(184,81,127,0.55)' }}
         >为什么没提醒</button>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            className="pcv-btn pcv-btn-ghost"
+            onClick={() => setHiddenOpen((v) => !v)}
+            title="隐藏后，整个系统所有界面都不再显示该账号"
+            style={{ color: '#7a5ea8', borderColor: 'rgba(122,94,168,0.55)' }}
+          >隐藏账号{hiddenAccounts?.length ? `（${hiddenAccounts.length}）` : ''}</button>
+          {hiddenOpen && (
+            <div style={{
+              position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 50,
+              background: '#fff', border: '1px solid #eadfe8', borderRadius: 10,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 10, minWidth: 200,
+            }}>
+              <div style={{ fontSize: 12, color: '#8a8f98', margin: '0 4px 8px' }}>勾选要隐藏的账号（全站生效）</div>
+              {ACCOUNTS.map((a) => {
+                const on = (hiddenAccounts || []).includes(a)
+                const col = ACCOUNT_COLOR[a] || { c: '#7c3aed' }
+                return (
+                  <label key={a} style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px',
+                    borderRadius: 8, cursor: 'pointer', fontSize: 13, color: '#222',
+                    background: on ? '#f5f0f8' : 'transparent',
+                  }}>
+                    <input type="checkbox" checked={on} onChange={() => toggleHiddenAccount(a)} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
+                    <span>{a}</span>
+                    {on && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#a06' }}>已隐藏</span>}
+                  </label>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="pcv-body">
