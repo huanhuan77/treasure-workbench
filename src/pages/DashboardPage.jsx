@@ -1535,11 +1535,7 @@ export function DashboardPage() {
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
                           <button
-                            onClick={() => { if (!tapOK()) return; setSwipedHotId(null); quickPlan(s) }}
-                            style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >新建计划</button>
-                          <button
-                            onClick={() => { if (!tapOK()) return; setSwipedHotId(null); setEditingSample(s) }}
+                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >调整状态</button>
                         </div>
@@ -1568,7 +1564,7 @@ export function DashboardPage() {
                             position: 'relative', zIndex: 1,
                             background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
-                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-148px)' : 'translateX(0)',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
                           }}
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1596,6 +1592,11 @@ export function DashboardPage() {
                             </div>
                           ) : null}
                         </div>
+                        {/* 「新建计划」常驻显示（用户要求「计划按钮放出来，不要左滑才显示」） */}
+                        <button
+                          onClick={() => { if (!tapOK()) return; quickPlan(s) }}
+                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >新建计划</button>
                         </div>{/* /左滑卡片内容 */}
                       </div>
                     )
@@ -1649,11 +1650,7 @@ export function DashboardPage() {
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
                           <button
-                            onClick={() => { if (!tapOK()) return; setSwipedHotId(null); quickPlan(s) }}
-                            style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >新建计划</button>
-                          <button
-                            onClick={() => { if (!tapOK()) return; setSwipedHotId(null); setEditingSample(s) }}
+                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >调整状态</button>
                         </div>
@@ -1683,7 +1680,7 @@ export function DashboardPage() {
                             position: 'relative', zIndex: 1,
                             background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
-                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-148px)' : 'translateX(0)',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
                           }}
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -1715,6 +1712,11 @@ export function DashboardPage() {
                               })}
                           </div>
                         </div>
+                        {/* 「新建计划」常驻显示（用户要求「计划按钮放出来，不要左滑才显示」） */}
+                        <button
+                          onClick={() => { if (!tapOK()) return; quickPlan(s) }}
+                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >新建计划</button>
                         </div>{/* /左滑卡片内容 */}
                       </div>
                     )
