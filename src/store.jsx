@@ -4499,19 +4499,19 @@ export function StoreProvider({ children }) {
     })
   }
 
-  // 一次性清理：用户已停用「自动生成发布计划」，把历史上自动生成且**还没完成**的条目删掉
-  // （手动建的一条不动、已完成的留作记录）。只跑一次，避免每次启动都扫一遍。
-  const autoPlansCleanedRef = useRef(false)
+  // 清理自动生成的发布计划：用户已停用自动生成，并要求把历史自动条目清掉。
+  // 依据三处标记判定（auto 布尔 / autoKey / id 以 auto_ 开头），只要命中就删——
+  // 之前只认 p.auto，遇到老数据（没有 auto 字段）就漏掉了（用户反馈「没删掉」）。
+  // 手动建的计划没有这些标记，不会被删。
   useEffect(() => {
-    if (autoPlansCleanedRef.current) return
-    autoPlansCleanedRef.current = true
     setData((prev) => {
       const plans = prev.publishPlans || []
-      const next = plans.filter((p) => !(p && p.auto && !p.done))
+      const isAuto = (p) => !!p && (p.auto === true || !!p.autoKey || String(p.id || '').startsWith('auto_'))
+      const next = plans.filter((p) => !isAuto(p))
       if (next.length === plans.length) return prev
       return { ...prev, publishPlans: next }
     })
-  }, [])
+  }, [data.publishPlans])
 
   // 启动时按发布记录重算一次样品统计（幂等）：修掉旧版本把「不属于该样品的账号」的
   // 发布记录算到样品全部账号头上的问题 —— 那会让「距上次发布」被顶新，提醒不触发。
