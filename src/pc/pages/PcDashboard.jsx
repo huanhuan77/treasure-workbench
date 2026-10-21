@@ -255,30 +255,46 @@ export function PcDashboard() {
   }, [items, cur, account, tab])
 
   // ── 「为什么没提醒」诊断数据 ────────────────────────────────
-  // 把所有「有账号已超期」的样品列出来，并标注它现在的归属：
-  //   已在某个 tab / 样品已归档 / 账号被标放弃 / 其它
-  // 这样以后「这个为什么没提醒」点开就能看到答案，不用再靠猜。
+  // 列出**全部样品**（不再只列已超期的），每个账号给出「已N天 / 阈值」和是否判为超期，
+  // 再标注它现在的归属（高频出单 / 发布提醒 / 未超期 / 已归档）。
+  // 这样「这个为什么没提醒」点开就能看到具体数字，不用再猜。
+  const [whyQuery, setWhyQuery] = useState('')
+  const [whyOnlyMiss, setWhyOnlyMiss] = useState(false)
   const whyRows = useMemo(() => {
     const hotIds = new Set((all.hot || []).map((s) => s.id))
     const remIds = new Set((all.reminders || []).map((s) => s.id))
     const out = []
     for (const s of samples || []) {
       if (!s || !s.id) continue
-      const exec = s.execByAccount || {}
-      const over = getAccounts(s)
-        .filter((a) => accountDue(s, a))
-        .map((a) => ({ a, days: daysSincePublishByAccount(s, a), abandoned: exec[a] === 'abandoned' }))
-      if (!over.length) continue
+      const accs = getAccounts(s).map((a) => ({
+        a,
+        days: daysSincePublishByAccount(s, a),
+        th: sampleDays(s, a),
+        due: accountDue(s, a),
+      }))
+      if (!accs.length) continue
       const tabName = hotIds.has(s.id) ? '高频出单' : (remIds.has(s.id) ? '发布提醒' : '')
+      const archived = !!(s.archived || s.status === 'abandoned')
+      const anyDue = accs.some((x) => x.due)
       let reason = ''
       if (tabName) reason = `已在「${tabName}」tab`
-      else if (s.archived || s.status === 'abandoned') reason = '样品已放弃/归档'
+      else if (archived) reason = '样品已放弃/归档'
+      else if (!anyDue) reason = '没有账号超期'
       else reason = '未进提醒（其它原因）'
-      out.push({ s, over, tabName, reason })
+      out.push({ s, accs, tabName, reason, anyDue, missing: anyDue && !tabName })
     }
-    // 没进任何 tab 的排前面（这才是用户真正想找的），其次按名字
-    return out.sort((x, y) => (x.tabName ? 1 : 0) - (y.tabName ? 1 : 0) || String(x.s.name).localeCompare(String(y.s.name), 'zh'))
+    // 真的漏掉的排最前，其次按名字
+    return out.sort((x, y) => (y.missing ? 1 : 0) - (x.missing ? 1 : 0) || String(x.s.name).localeCompare(String(y.s.name), 'zh'))
   }, [samples, all])
+  // 弹窗里按关键字 + 「只看漏掉的」过滤
+  const whyShown = useMemo(() => {
+    const q = whyQuery.trim().toLowerCase()
+    return whyRows.filter((r) => {
+      if (whyOnlyMiss && !r.missing) return false
+      if (!q) return true
+      return String(r.s.name || '').toLowerCase().includes(q) || r.accs.some((x) => x.a.includes(q))
+    })
+  }, [whyRows, whyQuery, whyOnlyMiss])
 
   // 待办清单默认只列 5 条，卡片底部「查看全部 N 条」再展开剩余（用户要求）。
   // 不再用卡内滚动：滚动条在小卡片里不好点，展开/收起更直观。
@@ -540,42 +556,56 @@ export function PcDashboard() {
             <div className="pcv-dialog-h">
               <span>为什么没提醒</span>
               <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>
-                共 {whyRows.length} 个样品有账号已超阈值
+                共 {whyRows.length} 个样品
               </span>
               <div className="pcv-spacer" />
               <button className="pcv-dialog-x" title="关闭" onClick={() => setWhyOpen(false)}>×</button>
             </div>
-            <div className="pcv-dialog-b" style={{ maxHeight: '62vh', overflowY: 'auto' }}>
-              {whyRows.length === 0 ? (
-                <div className="pcv-empty">没有「已超阈值却没提醒」的样品</div>
+            <div className="pcv-dialog-b" style={{ maxHeight: '66vh', overflowY: 'auto' }}>
+              {/* 搜索 + 只看漏掉的：样品多的时候能直接搜到某一条 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <input
+                  className="pcv-input"
+                  style={{ flex: 1, minWidth: 0 }}
+                  placeholder="搜索产品名或账号…"
+                  value={whyQuery}
+                  onChange={(e) => setWhyQuery(e.target.value)}
+                />
+                <button
+                  className={whyOnlyMiss ? 'pcv-btn' : 'pcv-btn pcv-btn-ghost'}
+                  onClick={() => setWhyOnlyMiss((v) => !v)}
+                  style={{ flexShrink: 0 }}
+                >只看漏掉的</button>
+              </div>
+              {whyShown.length === 0 ? (
+                <div className="pcv-empty">没有匹配的样品</div>
               ) : (
                 <table className="pcv-table">
                   <thead>
                     <tr>
                       <th style={{ width: 190 }}>产品</th>
-                      <th>已超期的账号（天数 / 该账号阈值）</th>
-                      <th style={{ width: 170 }}>结论</th>
+                      <th>每个账号：已N天 / 阈值（超期标红）</th>
+                      <th style={{ width: 165 }}>结论</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {whyRows.map(({ s, over, tabName, reason }) => (
+                    {whyShown.map(({ s, accs, reason, missing }) => (
                       <tr key={s.id}>
                         <td className="pcv-name" title={s.name}>{s.name}</td>
                         <td>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                            {over.map((x) => (
+                            {accs.map((x) => (
                               <span key={x.a} style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
                                 <span style={{ color: (ACCOUNT_COLOR[x.a] || {}).c || '#8a8f98', fontWeight: 600 }}>{x.a}</span>
-                                <span style={{ color: '#a97c46', marginLeft: 4 }}>
+                                <span style={{ color: x.due ? '#c2410c' : '#94a3b8', marginLeft: 4, fontWeight: x.due ? 700 : 400 }}>
                                   {x.days === Infinity ? '从未发布' : `已${x.days}天`}
-                                  {` / 阈值${sampleDays(s, x.a)}`}
+                                  {` / 阈值${x.th}`}
                                 </span>
-                                {x.abandoned && <span style={{ color: '#b96a66', marginLeft: 4 }}>（已放弃）</span>}
                               </span>
                             ))}
                           </span>
                         </td>
-                        <td style={{ color: tabName ? '#5f8a74' : '#b96a66', fontWeight: 600 }}>{reason}</td>
+                        <td style={{ color: missing ? '#b96a66' : '#5f8a74', fontWeight: 600 }}>{reason}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -584,7 +614,7 @@ export function PcDashboard() {
             </div>
             <div className="pcv-dialog-f">
               <span style={{ fontSize: 12, color: '#9aa0a9' }}>
-                「已在某 tab」＝提醒正常，只是不在你当前看的那个 tab；红色的是真的漏了
+                红色字＝该账号已超阈值；结论「已在某 tab」是正常的，红色的「未进提醒」才是漏了
               </span>
               <div className="pcv-spacer" />
               <button className="pcv-btn pcv-btn-ghost" onClick={() => setWhyOpen(false)}>关闭</button>
