@@ -4,7 +4,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
-import { todayStr } from '../../utils/helpers'
+
 import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
@@ -87,7 +87,7 @@ function AccountDays({ sample, list }) {
 export function PcDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { samples, todos, orders, publishPlans, addPublishPlan } = useStore()
+  const { samples, todos, orders } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [account, setAccount] = useState('')
   // 「为什么没提醒」诊断弹窗
@@ -98,26 +98,13 @@ export function PcDashboard() {
 
   const all = useMemo(() => selectAllReminders(samples), [samples])
 
-  // 「新建计划」按钮：用「该产品 + 该行账号」快速建一条今天的发布计划。
-  // 防重复只针对**今天**：同产品 + 同账号今天已有待发计划才拦；
-  // 计划在别的日期（比如排到 10-25）不影响今天再建一条（用户反馈「那不是同一天的呢」）。
+  // 「新建计划」按钮：**打开「新增发布计划」弹窗**，并带上该行的产品名 + 账号
+  // （用户要求「点击新建计划要弹出这个，带上产品名」），数量/日期/多选都在弹窗里改。
   const quickPlan = useCallback((s, acc) => {
     const name = String(s && s.name || '').trim()
-    if (!name || !acc) return
-    const today = todayStr()
-    const dup = (publishPlans || []).some(
-      (p) => !p.done
-        && String(p.name || '').trim() === name
-        && p.account === acc
-        && (p.planDate || today) === today,
-    )
-    if (dup) {
-      show(`「${name}」今天已有 ${acc} 的计划了`, 'error')
-      return
-    }
-    addPublishPlan({ name, account: acc, qty: 1, planDate: today })
-    show(`已加入发布计划：${name}（${acc}）`, 'success')
-  }, [publishPlans, addPublishPlan, show])
+    if (!name) return
+    window.dispatchEvent(new CustomEvent('wb:new-plan', { detail: { name, account: acc } }))
+  }, [])
 
   // 每个 Tab 的口径：怎么取数、一条归到哪些账号、中列与操作各显示什么
   const spec = useMemo(() => ({

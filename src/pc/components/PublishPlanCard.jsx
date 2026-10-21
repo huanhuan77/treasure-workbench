@@ -214,14 +214,26 @@ export function PublishPlanCard() {
     )
     setEditing(null)
   }
-  const openNew = () => {
-    setByAcc(emptyByAcc())
-    setAccount(ACCOUNTS[0] || '')
+  // prefill = { name, account }：外部（提醒中心「新建计划」）带过来的产品名与账号
+  const openNew = (prefill) => {
+    const base = emptyByAcc()
+    const acc = (prefill && prefill.account) || ACCOUNTS[0] || ''
+    if (prefill && prefill.name) base[acc] = [{ name: String(prefill.name), qty: '1' }]
+    setByAcc(base)
+    setAccount(acc)
     setPlanDate(tomorrowStr())
     setEditEntry(newEntry())
     resetPicker()
     setEditing('new')
   }
+
+  // 监听外部「新建计划」事件：打开新增弹窗并带上产品名/账号（用户要求「点击新建计划要弹出这个，带上产品名」）
+  useEffect(() => {
+    const onOpen = (e) => openNew(e && e.detail)
+    window.addEventListener('wb:new-plan', onOpen)
+    return () => window.removeEventListener('wb:new-plan', onOpen)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const openEdit = (p) => {
     setAccount(p.account || ACCOUNTS[0] || '')
     setPlanDate(p.planDate || tomorrowStr())

@@ -216,8 +216,39 @@ export function DashboardPage() {
     const v = sessionStorage.getItem('dash_remind_tab')
     return v === 'low' || v === 'expiring' || v === 'reminders' ? v : 'hot'
   })
-  // 提醒卡片左滑露出的操作（补记发布 / 调整状态）——用户要求「操作放到左滑操作」
+  // 提醒卡片左滑露出的操作（新建计划 / 调整状态）——用户要求「操作放到左滑操作」
   const [swipedHotId, setSwipedHotId] = useState(null)
+  // 刚滑完的 400ms 内忽略操作按钮的点击：手指离开时正好落在被拉出来的按钮上，
+  // 浏览器会补发一次 click，会误触「调整状态」直接弹编辑弹窗（用户反馈「我只是左滑，怎么弹出来了」）
+  const swipeGuardRef = useRef(0)
+  // 更彻底的兜底：记录本次触摸是否发生过明显位移（>10px）。
+  // 卡片上的操作按钮统一用 tapOK() 判定 —— 只要是「滑动」，松手时就不会触发按钮，
+  // 避免在某些列表（没有左滑的「发布不足5条 / 即将到期」）上滑动时误点到右侧按钮。
+  const movedRef = useRef(false)
+  useEffect(() => {
+    let sx = 0
+    let sy = 0
+    const onStart = (e) => {
+      const t = e.touches && e.touches[0]
+      if (!t) return
+      sx = t.clientX
+      sy = t.clientY
+      movedRef.current = false
+    }
+    const onMove = (e) => {
+      const t = e.touches && e.touches[0]
+      if (!t) return
+      if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) movedRef.current = true
+    }
+    document.addEventListener('touchstart', onStart, { passive: true })
+    document.addEventListener('touchmove', onMove, { passive: true })
+    return () => {
+      document.removeEventListener('touchstart', onStart)
+      document.removeEventListener('touchmove', onMove)
+    }
+  }, [])
+  // 是「点」才放行；滑动松手不算点击
+  const tapOK = () => !movedRef.current && Date.now() - swipeGuardRef.current > 400
   const pickTab = (id) => {
     setRemindTab(id)
     try { sessionStorage.setItem('dash_remind_tab', id) } catch { /* 忽略隐私模式写入失败 */ }
@@ -1504,11 +1535,11 @@ export function DashboardPage() {
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
                           <button
-                            onClick={() => { setSwipedHotId(null); quickPlan(s) }}
+                            onClick={() => { if (!tapOK()) return; setSwipedHotId(null); quickPlan(s) }}
                             style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >新建计划</button>
                           <button
-                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
+                            onClick={() => { if (!tapOK()) return; setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >调整状态</button>
                         </div>
@@ -1529,6 +1560,7 @@ export function DashboardPage() {
                           onTouchEnd={(e) => {
                             if (e.currentTarget.dataset.swiping !== 'true') return
                             const dir = e.currentTarget.dataset.dir
+                            swipeGuardRef.current = Date.now()   // 记录滑动结束时刻，用于拦截误触点击
                             setSwipedHotId((prev) => (dir === 'left' ? (prev === s.id ? null : s.id) : null))
                           }}
                           onClick={() => { if (swiped) setSwipedHotId(null) }}
@@ -1617,11 +1649,11 @@ export function DashboardPage() {
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
                           <button
-                            onClick={() => { setSwipedHotId(null); quickPlan(s) }}
+                            onClick={() => { if (!tapOK()) return; setSwipedHotId(null); quickPlan(s) }}
                             style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >新建计划</button>
                           <button
-                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
+                            onClick={() => { if (!tapOK()) return; setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >调整状态</button>
                         </div>
@@ -1643,6 +1675,7 @@ export function DashboardPage() {
                           onTouchEnd={(e) => {
                             if (e.currentTarget.dataset.swiping !== 'true') return
                             const dir = e.currentTarget.dataset.dir
+                            swipeGuardRef.current = Date.now()   // 记录滑动结束时刻，用于拦截误触点击
                             setSwipedHotId((prev) => (dir === 'left' ? (prev === s.id ? null : s.id) : null))
                           }}
                           onClick={() => { if (swiped) setSwipedHotId(null) }}
@@ -1757,11 +1790,11 @@ export function DashboardPage() {
                           </div>
                         </div>
                         <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
-                          <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } })} style={{
+                          <button onClick={() => { if (!tapOK()) return; navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } }) }} style={{
                             padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
                             fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
                           }}>补发布</button>
-                          <button onClick={() => setEditingSample(s)} style={{
+                          <button onClick={() => { if (!tapOK()) return; setEditingSample(s) }} style={{
                             padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
                             color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
                           }}>调整状态</button>
@@ -1824,7 +1857,7 @@ export function DashboardPage() {
                             {text}
                           </div>
                         </div>
-                        <button onClick={() => setEditingSample(s)} style={{
+                        <button onClick={() => { if (!tapOK()) return; setEditingSample(s) }} style={{
                           flexShrink: 0, padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
                           color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
                         }}>调整状态</button>
