@@ -20,6 +20,7 @@ export function SamplePickerPage({
   confirmText,     // 确定按钮文案（含计数时调用方拼好）
   confirmDisabled,
   onConfirm,
+  hint = '勾选后点下方「确定」写回表单，可多选',   // 头部提示（点选即生效的页面可传自己的文案）
 }) {
   const backBtn = {
     width: '44px', height: '44px', borderRadius: '50%',
@@ -46,7 +47,7 @@ export function SamplePickerPage({
         <button onClick={onBack} style={backBtn} aria-label="返回">‹</button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3 }}>{title}</h1>
-          <div style={{ fontSize: '11px', color: '#9ca3af' }}>勾选后点下方「确定」写回表单，可多选</div>
+          <div style={{ fontSize: '11px', color: '#9ca3af' }}>{hint}</div>
         </div>
       </header>
 

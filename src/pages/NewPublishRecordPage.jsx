@@ -43,9 +43,11 @@ export function NewPublishRecordPage() {
   const [activeEntryIdx, setActiveEntryIdx] = useState(0)
   const [sampleQuery, setSampleQuery] = useState('')
   const [sampleCategory, setSampleCategory] = useState('')
-  const [pickedIds, setPickedIds] = useState(() => new Set())
+  // 勾选状态直接由 entries 推导（点一下即生效，不再需要「确定」）
 
   const currentEntries = entriesByAccount[activeAccount] || []
+  // 已勾选条数（账号 tab 与本页计数都读它）
+  const pickedCount = currentEntries.filter((e) => e.sampleId).length
 
   // 可选样品：已拍且归属当前账号、未归档
   const sampleList = useMemo(() => {
@@ -59,9 +61,8 @@ export function NewPublishRecordPage() {
 
   const filteredSamples = useMemo(() => {
     const q = sampleQuery.trim().toLowerCase()
-    const usedElsewhere = new Set(currentEntries.map((e, i) => (i === activeEntryIdx ? null : e.sampleId)).filter(Boolean))
-    const base = sampleList.filter((s) => !usedElsewhere.has(s.id))
-    const byCat = sampleCategory ? base.filter((s) => (s.category || '') === sampleCategory) : base
+    // 已勾选的样品**仍然列出来并打钩**（与 PC 一致：勾选多个打钩，不是消失）
+    const byCat = sampleCategory ? sampleList.filter((s) => (s.category || '') === sampleCategory) : sampleList
     const list = q ? byCat.filter((s) => (s.name || '').toLowerCase().includes(q)) : byCat
     return [...list].sort((a, b) => {
       const cur = currentEntries[activeEntryIdx]?.sampleId
@@ -71,20 +72,11 @@ export function NewPublishRecordPage() {
     })
   }, [sampleList, sampleQuery, sampleCategory, currentEntries, activeEntryIdx])
 
-  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery(''); setSampleCategory(''); setPickedIds(new Set()) }
+  const closeSamplePicker = () => { setShowSamples(false); setSampleQuery(''); setSampleCategory('') }
   const openSamplePicker = (idx) => {
     setActiveEntryIdx(idx)
     setSampleQuery('')
-    setPickedIds(new Set([currentEntries[idx]?.sampleId].filter(Boolean)))
     setShowSamples(true)
-  }
-  const togglePicked = (id) => {
-    setPickedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
   }
 
   const updateCurrentEntries = (updater) => {
@@ -94,21 +86,18 @@ export function NewPublishRecordPage() {
     }))
   }
 
-  const confirmMultiPick = () => {
-    if (pickedIds.size === 0) { closeSamplePicker(); return }
-    const pickedArr = sampleList.filter((s) => pickedIds.has(s.id)).map((s) => s.id)
-    if (pickedArr.length === 0) { closeSamplePicker(); return }
+  // 点一下=勾选（立刻加一条），再点=取消（移除该条）；不需要再点「确定」
+  const toggleSample = (id) => {
     updateCurrentEntries((prev) => {
-      const idx = Math.min(activeEntryIdx, prev.length)
-      const before = prev.slice(0, idx)
-      const after = prev.slice(idx + 1).filter((e) => !pickedIds.has(e.sampleId))
-      return [
-        ...before,
-        ...pickedArr.map((id) => ({ sampleId: id, qty: '1' })),
-        ...after,
-      ]
+      if (prev.some((e) => e.sampleId === id)) return prev.filter((e) => e.sampleId !== id)
+      const next = [...prev]
+      if (next[activeEntryIdx] && !next[activeEntryIdx].sampleId) {
+        next[activeEntryIdx] = { ...next[activeEntryIdx], sampleId: id }
+      } else {
+        next.push({ sampleId: id, qty: '1' })
+      }
+      return next
     })
-    closeSamplePicker()
   }
 
   const addEntry = () => updateCurrentEntries((prev) => [...prev, { sampleId: '', qty: '1' }])
@@ -157,13 +146,16 @@ export function NewPublishRecordPage() {
         onQueryChange={setSampleQuery}
         category={sampleCategory}
         onCategoryChange={setSampleCategory}
-        count={pickedIds.size}
+        count={pickedCount}
         showBulk={filteredSamples.length > 0}
-        onSelectAll={() => setPickedIds((prev) => new Set([...prev, ...filteredSamples.map((s) => s.id)]))}
-        onClear={() => setPickedIds(new Set())}
-        confirmText={`确定${pickedIds.size > 0 ? ` · 已选 ${pickedIds.size}` : ''}`}
-        confirmDisabled={pickedIds.size === 0}
-        onConfirm={confirmMultiPick}
+        onSelectAll={() => updateCurrentEntries((prev) => {
+          const have = new Set(prev.map((e) => e.sampleId))
+          return [...prev, ...filteredSamples.filter((s) => !have.has(s.id)).map((s) => ({ sampleId: s.id, qty: '1' }))]
+        })}
+        onClear={() => updateCurrentEntries((prev) => prev.filter((e) => !filteredSamples.some((s) => s.id === e.sampleId)))}
+        hint="点一下即勾选（可多选），再点一次取消；不用再点确定"
+        confirmText={`完成${pickedCount > 0 ? ` · 已选 ${pickedCount}` : ''}`}
+        onConfirm={closeSamplePicker}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {sampleList.length === 0 ? (
@@ -172,9 +164,9 @@ export function NewPublishRecordPage() {
             <div style={{ fontSize: '13px', color: '#9ca3af', padding: '24px 0', textAlign: 'center' }}>没有匹配的样品</div>
           ) : (
             filteredSamples.map((s) => {
-              const sel = pickedIds.has(s.id)
+              const sel = currentEntries.some((e) => e.sampleId === s.id)
               return (
-                <button key={s.id} onClick={() => togglePicked(s.id)} style={{
+                <button key={s.id} onClick={() => toggleSample(s.id)} style={{
                   display: 'flex', alignItems: 'center', width: '100%', gap: '10px',
                   padding: '12px 6px', borderRadius: '8px', border: 'none',
                   background: sel ? 'rgba(244,114,182,0.1)' : 'transparent', color: 'var(--text-main)',
