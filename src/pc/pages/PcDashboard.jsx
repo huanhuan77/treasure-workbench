@@ -48,7 +48,7 @@ function statusTone(status) {
 // （用户先后反馈「颜色重叠了」「加背景色区分」）。
 function AccountDays({ sample, list }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12 }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 11 }}>
       {list.map((x) => {
         const days = daysSincePublishByAccount(sample, x)
         const th = sampleDays(sample, x)
@@ -61,13 +61,13 @@ function AccountDays({ sample, list }) {
             title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}（阈值 ${th} 天）`}
             style={{
               display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
-              borderRadius: 6, overflow: 'hidden', lineHeight: '18px',
+              borderRadius: 6, overflow: 'hidden', lineHeight: '16px',
             }}
           >
-            <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 6px' }}>{x}</span>
+            <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{x}</span>
             <span
               style={{
-                padding: '0 6px', fontWeight: 700,
+                padding: '0 5px', fontWeight: 700,
                 background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
                 color: due ? '#e11d48' : '#64748b',
               }}
@@ -509,8 +509,8 @@ export function PcDashboard() {
                     <th style={{ width: 190 }}>产品</th>
                     <th style={{ width: 180 }}>操作</th>
                     {/* 未发布天数挪到「账号」前面（用户要求换顺序）：先看还差几天，再看是哪个账号 */}
-                    {/* 每个账号一个天数 chip，列加宽到 280 避免两三个账号换行换得太高 */}
-                    <th style={{ width: 280 }}>{cur.header}</th>
+                    {/* 每个账号一个天数胶囊，列加宽到 320，配合 11px 字号尽量不换行 */}
+                    <th style={{ width: 320 }}>{cur.header}</th>
                     {/* 账号列加宽到 210：两个长账号名并排也能放下，不再折行 */}
                     <th style={{ width: 210 }}>账号</th>
                     <th style={{ width: 90 }}>状态</th>
