@@ -70,7 +70,7 @@ export function OrdersPage() {
   const filtered = useMemo(() => {
     let arr = list
     if (accountFilter) arr = arr.filter((o) => o.account === accountFilter)
-    if (productFilter) arr = arr.filter((o) => (o.name || '') === productFilter)
+    if (productFilter) arr = arr.filter((o) => (o.name || '').includes(productFilter))
     const bounds = dateBounds(dateRange)
     if (bounds) {
       const [s, e] = bounds
@@ -203,21 +203,17 @@ export function OrdersPage() {
         <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-main)', whiteSpace: 'nowrap', flexShrink: 0 }}>出单记录</h1>
         <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
           <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', fontSize: '12px', color: '#c084a0', zIndex: 1, pointerEvents: 'none' }}>🔍</span>
-          <select
+          <input
             value={productFilter}
             onChange={(e) => setProductFilter(e.target.value)}
+            placeholder="全部产品"
             style={{
-              width: '100%', boxSizing: 'border-box', height: '36px', padding: '0 28px 0 30px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, lineHeight: '36px',
+              width: '100%', boxSizing: 'border-box', height: '36px', padding: '0 12px 0 30px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, lineHeight: '36px',
               border: '1px solid rgba(244,114,182,0.28)', background: '#fff',
-              color: productFilter ? '#4f46e5' : 'var(--text-sub)', cursor: 'pointer',
-              outline: 'none', appearance: 'auto',
+              color: productFilter ? '#4f46e5' : 'var(--text-sub)',
+              outline: 'none',
             }}
-          >
-            <option value="">全部产品</option>
-            {groups.map((g) => (
-              <option key={g.name} value={g.name}>{g.name}</option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 
