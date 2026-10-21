@@ -216,6 +216,10 @@ export function DashboardPage() {
     const v = sessionStorage.getItem('dash_remind_tab')
     return v === 'low' || v === 'expiring' || v === 'reminders' ? v : 'hot'
   })
+  // 高频出单卡片：账号 / 天数默认收起，点一下才展开（用户要求「账号收起来 点击才展开，时间也是」）
+  const [openHot, setOpenHot] = useState({})
+  // 高频出单卡片左滑露出的操作（补记发布 / 调整状态）——用户要求「操作放到左滑操作」
+  const [swipedHotId, setSwipedHotId] = useState(null)
   const pickTab = (id) => {
     setRemindTab(id)
     try { sessionStorage.setItem('dash_remind_tab', id) } catch { /* 忽略隐私模式写入失败 */ }
@@ -1432,8 +1436,47 @@ export function DashboardPage() {
                     const daysText = showAccounts.length
                       ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
                       : daysSincePublish(s)
+                    const swiped = swipedHotId === s.id
                     return (
-                      <div key={s.id} style={{ background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      // 与「高频出单」一致：操作收到左滑里（用户要求「发布提醒也一样」）
+                      <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+                        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
+                          <button
+                            onClick={() => { setSwipedHotId(null); navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } }) }}
+                            style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >补记发布</button>
+                          <button
+                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
+                            style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >调整状态</button>
+                        </div>
+                        <div
+                          onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
+                          onTouchMove={(e) => {
+                            const t = e.touches[0]
+                            const sx = Number(e.currentTarget.dataset.sx)
+                            const sy = Number(e.currentTarget.dataset.sy)
+                            if (!sx) return
+                            const dx = t.clientX - sx
+                            const dy = t.clientY - sy
+                            if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                              e.currentTarget.dataset.swiping = 'true'
+                              e.currentTarget.dataset.dir = dx < 0 ? 'left' : 'right'
+                            }
+                          }}
+                          onTouchEnd={(e) => {
+                            if (e.currentTarget.dataset.swiping !== 'true') return
+                            const dir = e.currentTarget.dataset.dir
+                            setSwipedHotId((prev) => (dir === 'left' ? (prev === s.id ? null : s.id) : null))
+                          }}
+                          onClick={() => { if (swiped) setSwipedHotId(null) }}
+                          style={{
+                            position: 'relative', zIndex: 1,
+                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px',
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-148px)' : 'translateX(0)',
+                          }}
+                        >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
@@ -1459,16 +1502,7 @@ export function DashboardPage() {
                             </div>
                           ) : null}
                         </div>
-                        <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
-                          <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
-                            padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
-                            fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
-                          }}>补记发布</button>
-                          <button onClick={() => setEditingSample(s)} style={{
-                            padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                            color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
-                          }}>调整状态</button>
-                        </div>
+                        </div>{/* /左滑卡片内容 */}
                       </div>
                     )
                   })}
@@ -1515,16 +1549,57 @@ export function DashboardPage() {
                   {fHot.map((s) => {
                     // 与 PC 一致：列出**所有到该发**的账号（不再只挑从未发布的那个）
                     const showAccounts = pendingAccounts(s)
+                    const swiped = swipedHotId === s.id
                     return (
-                      <div key={s.id} style={{ background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      // 左滑露出操作（用户要求「操作放到左滑操作」）：操作条固定在底层，卡片整体左移
+                      <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+                        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
+                          <button
+                            onClick={() => { setSwipedHotId(null); navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } }) }}
+                            style={{ width: 74, height: '80%', border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >补记发布</button>
+                          <button
+                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
+                            style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >调整状态</button>
+                        </div>
+                        <div
+                          onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
+                          onTouchMove={(e) => {
+                            const t = e.touches[0]
+                            const sx = Number(e.currentTarget.dataset.sx)
+                            const sy = Number(e.currentTarget.dataset.sy)
+                            if (!sx) return
+                            const dx = t.clientX - sx
+                            const dy = t.clientY - sy
+                            // 横向位移足够大且明显大于纵向 → 判定为滑动（避免和上下滚动打架）
+                            if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                              e.currentTarget.dataset.swiping = 'true'
+                              e.currentTarget.dataset.dir = dx < 0 ? 'left' : 'right'
+                            }
+                          }}
+                          onTouchEnd={(e) => {
+                            if (e.currentTarget.dataset.swiping !== 'true') return
+                            const dir = e.currentTarget.dataset.dir
+                            setSwipedHotId((prev) => (dir === 'left' ? (prev === s.id ? null : s.id) : null))
+                          }}
+                          onClick={() => { if (swiped) setSwipedHotId(null) }}
+                          style={{
+                            position: 'relative', zIndex: 1,
+                            background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px',
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-148px)' : 'translateX(0)',
+                          }}
+                        >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
-                          {/* 每个账号一个「账号 + 已N天」胶囊，超阈值的天数标红（与 PC 一致） */}
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {showAccounts.map((a) => {
+                          {/* 账号 + 天数默认**收起**成一行（只显示最久的那个账号），点一下展开全部 */}
+                          {(() => {
+                            const opened = !!openHot[s.id]
+                            const chip = (a) => {
                               const d = daysSincePublishByAccount(s, a)
                               const th = sampleDays(s, a)
                               const due = d === Infinity || d >= th
@@ -1539,22 +1614,35 @@ export function DashboardPage() {
                                   }}>{d === Infinity ? '从未发布' : `已${d}天`}</span>
                                 </span>
                               )
-                            })}
-                          </div>
-                          <div style={{ marginTop: '4px' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>每{hotReminderDays(s)}天提醒</span>
-                          </div>
+                            }
+                            // 收起时按「最久没发」的那个账号排第一，信息量最大
+                            const sorted = [...showAccounts].sort(
+                              (x, y) => daysSincePublishByAccount(s, y) - daysSincePublishByAccount(s, x),
+                            )
+                            const first = sorted[0]
+                            return (
+                              <div
+                                onClick={() => setOpenHot((p) => ({ ...p, [s.id]: !p[s.id] }))}
+                                style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', alignItems: 'center', cursor: 'pointer' }}
+                              >
+                                {first && chip(first)}
+                                {!opened && showAccounts.length > 1 && (
+                                  <span style={{ fontSize: '10px', color: '#9aa0a9', fontWeight: 600 }}>+{showAccounts.length - 1}</span>
+                                )}
+                                {opened && sorted.slice(1).map((a) => chip(a))}
+                                {opened && (
+                                  <span style={{ fontSize: '10px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+                                    每{hotReminderDays(s)}天提醒
+                                  </span>
+                                )}
+                                <span style={{ fontSize: '10px', color: '#b8517f', fontWeight: 700 }}>
+                                  {opened ? '收起' : '展开'}
+                                </span>
+                              </div>
+                            )
+                          })()}
                         </div>
-                        <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
-                          <button onClick={() => navigate('/publish-record/new', { state: { sampleId: s.id, accounts: getAccounts(s) } })} style={{
-                            padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#f43f5e', color: '#fff',
-                            fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
-                          }}>补记发布</button>
-                          <button onClick={() => setEditingSample(s)} style={{
-                            padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                            color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
-                          }}>调整状态</button>
-                        </div>
+                        </div>{/* /左滑卡片内容 */}
                       </div>
                     )
                   })}
