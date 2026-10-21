@@ -888,12 +888,13 @@ export function DashboardPage() {
               {(() => {
                 const planFiltered = planSorted.filter((p) => planAcct === 'all' || p.account === planAcct)
                 const visible = planExpanded ? planFiltered : planFiltered.slice(0, PREVIEW_COUNT)
-                // 同一天的计划给同一档淡背景，隔天换色便于按天分组
-                let lastDate = null, group = 0
+                // 不同日期给不同淡底色，便于按天分组
+                const palette = ['#fdf2f8', '#f0f9ff', '#f0fdf4', '#fffbeb', '#faf5ff', '#fff7ed', '#fdf2f2']
+                let lastDate = null, group = -1
                 const bgFor = (p) => {
                   const d = p.planDate || ''
                   if (d !== lastDate) { group += 1; lastDate = d }
-                  return group % 2 === 0 ? '#fbf3f7' : '#ffffff'
+                  return palette[group % palette.length]
                 }
                 return (
                   <>
