@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { DEFAULT_SENSITIVE_WORDS, generateTopics } from './utils/copyGenerator'
 import { todayStr } from './utils/helpers'
 import { isHotAccount, sampleDays, accountDue } from './utils/publish'
@@ -4417,8 +4417,14 @@ export function StoreProvider({ children }) {
       if (list && list.length) {
         const perAcct = {}
         for (const r of list) {
-          const rAccs = (Array.isArray(r.accounts) && r.accounts.length ? r.accounts : accounts)
-            .map((a) => mapAccount(a)).filter((a) => accounts.includes(a))
+          // 记录里写了账号、但那些账号不属于这个样品（例如给「广东刘亦菲」记了某样品，
+          // 而该样品只有「晚梨不吃梨/努力成为富婆」）→ 这条记录**不能**算到样品现有账号头上，
+          // 否则会把别人的发布日期混进来，导致「距上次发布」少算、提醒不触发
+          // （用户反馈：月舒补 晚梨 实际 10-14 发布，却被 10-18 那条别人记录顶成「已3天」）。
+          const raw = Array.isArray(r.accounts) ? r.accounts.map((a) => mapAccount(a)).filter(Boolean) : []
+          const rAccs = raw.filter((a) => accounts.includes(a))
+          if (raw.length && rAccs.length === 0) continue
+          // 记录本身没写账号 → 回退到样品全部账号（老数据）
           const qty = Number(r.qty) > 0 ? Number(r.qty) : 1
           const targets = rAccs.length ? rAccs : accounts
           for (const a of targets) {
@@ -4453,6 +4459,20 @@ export function StoreProvider({ children }) {
     })
   }
 
+  // 启动时按发布记录重算一次样品统计（幂等）：修掉旧版本把「不属于该样品的账号」的
+  // 发布记录算到样品全部账号头上的问题 —— 那会让「距上次发布」被顶新，提醒不触发。
+  const statsFixedRef = useRef(false)
+  useEffect(() => {
+    if (statsFixedRef.current) return
+    statsFixedRef.current = true
+    setData((prev) => {
+      const recs = prev.publishRecords || []
+      if (!recs.length || !(prev.samples || []).length) return prev
+      return { ...prev, samples: recomputeSamplePublish(prev.samples, recs) }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const addPublishRecord = useCallback((record) => {
     const now = Date.now()
     const newRec = {
@@ -4472,9 +4492,10 @@ export function StoreProvider({ children }) {
         const sm = next.samples.find((x) => x.id === newRec.sampleId)
         if (sm) {
           const accounts = getAccounts(sm)
-          const rAccs = (Array.isArray(newRec.accounts) && newRec.accounts.length ? newRec.accounts : accounts)
-            .map((a) => mapAccount(a)).filter((a) => accounts.includes(a))
-          const targets = rAccs.length ? rAccs : accounts
+          const rawAccs = Array.isArray(newRec.accounts) ? newRec.accounts.map((a) => mapAccount(a)).filter(Boolean) : []
+          const rAccs = rawAccs.filter((a) => accounts.includes(a))
+          // 记录写的账号不属于这个样品 → 不动该样品任何账号的状态（与 recomputeSamplePublish 同口径）
+          const targets = rAccs.length ? rAccs : (rawAccs.length ? [] : accounts)
           const execByAccount = { ...(sm.execByAccount || {}) }
           let changed = false
           for (const a of targets) {
