@@ -7,7 +7,7 @@ import {
   getAccounts, getCounts, getTopStatus,
 } from '../../utils/sampleStatus'
 import { deadlineDesc } from '../../utils/helpers'
-import { sampleDays } from '../../utils/publish'
+import { sampleDays, pendingAccounts, daysSincePublishByAccount } from '../../utils/publish'
 import { CATEGORY_STYLE } from '../../utils/productDisplay'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
 import { SampleDialog } from '../components/SampleDialog'
@@ -315,7 +315,7 @@ export function PcSamples() {
                 <th style={{ width: 70 }}>发布</th>
                 <th style={{ width: 70 }}>是否出单</th>
                 {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天），与提醒中心同一套算 */}
-                <th style={{ width: 78 }}>提醒天数</th>
+                <th style={{ width: 150 }}>提醒天数</th>
                 <th style={{ width: 107 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
                   收货日期{sortDirOf('receiveDate') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
@@ -427,25 +427,42 @@ export function PcSamples() {
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天）。
-                          多账号取值不同时显示区间（如 5~7 天），完整明细放 title。 */}
+                          多账号取值不同时显示区间（如 5~7 天），完整明细放 title。
+                          下面再补一行「到该发的账号 + 已N天」（与手机端样品卡同口径） */}
                       {accounts.length === 0 ? (
                         <span style={{ color: '#c9cdd4' }}>—</span>
                       ) : (() => {
                         const days = accounts.map((a) => sampleDays(s, a))
                         const uniq = [...new Set(days)]
                         const hot = Math.min(...days) <= 5
+                        const due = pendingAccounts(s)
                         return (
-                          <span
-                            style={{
-                              fontSize: 13, fontWeight: hot ? 700 : 500, fontVariantNumeric: 'tabular-nums',
-                              color: hot ? '#f43f5e' : '#6b7280',
-                            }}
-                            title={accounts.map((a) => `${a} ${sampleDays(s, a)} 天`).join(' / ')}
-                          >
-                            {uniq.length === 1
-                              ? `${uniq[0]} 天`
-                              : `${Math.min(...days)}~${Math.max(...days)} 天`}
-                          </span>
+                          <>
+                            <span
+                              style={{
+                                fontSize: 13, fontWeight: hot ? 700 : 500, fontVariantNumeric: 'tabular-nums',
+                                color: hot ? '#f43f5e' : '#6b7280',
+                              }}
+                              title={accounts.map((a) => `${a} ${sampleDays(s, a)} 天`).join(' / ')}
+                            >
+                              {uniq.length === 1
+                                ? `${uniq[0]} 天`
+                                : `${Math.min(...days)}~${Math.max(...days)} 天`}
+                            </span>
+                            {due.length > 0 && (
+                              <div style={{ marginTop: 2, fontSize: 11, fontWeight: 600, color: '#e11d48', lineHeight: '15px' }}>
+                                {due.slice(0, 2).map((a) => {
+                                  const d = daysSincePublishByAccount(s, a)
+                                  return (
+                                    <span key={a} style={{ marginRight: 8 }}>
+                                      {a} {d === Infinity ? '从未发布' : `已${d}天`}
+                                    </span>
+                                  )
+                                })}
+                                {due.length > 2 && <span style={{ color: '#9aa0a9' }}>+{due.length - 2}</span>}
+                              </div>
+                            )}
+                          </>
                         )
                       })()}
                     </td>
