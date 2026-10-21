@@ -51,18 +51,27 @@ function AccountDays({ sample, list }) {
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 12 }}>
       {list.map((x) => {
         const days = daysSincePublishByAccount(sample, x)
+        const th = sampleDays(sample, x)
+        // 超过阈值（该提醒了）的天数用红色，其余用灰 —— 用户要求「过期天数改为红色」
+        const due = days === Infinity || days >= th
         const col = ACCOUNT_COLOR[x] || { c: '#8a8f98', bg: 'rgba(148,163,184,0.16)' }
         return (
           <span
             key={x}
-            title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}`}
+            title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}（阈值 ${th} 天）`}
             style={{
               display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
               borderRadius: 6, overflow: 'hidden', lineHeight: '18px',
             }}
           >
             <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 6px' }}>{x}</span>
-            <span style={{ background: '#fdf1dc', color: '#a97c46', fontWeight: 600, padding: '0 6px' }}>
+            <span
+              style={{
+                padding: '0 6px', fontWeight: 700,
+                background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
+                color: due ? '#e11d48' : '#64748b',
+              }}
+            >
               {days === Infinity ? '从未发布' : `已${days}天`}
             </span>
           </span>
@@ -104,7 +113,8 @@ export function PcDashboard() {
         const list = (accs && accs.length ? accs : [a]).filter(Boolean)
         return (
           <>
-            <span className="pcv-chip" style={{ background: '#f43f5e', color: '#fff', marginRight: 6 }}>每{per}天提醒</span>
+            {/* 「每N天提醒」不再用红色（红色留给真正超期的天数），改为中性灰 */}
+            <span className="pcv-chip" style={{ background: '#f1f2f4', color: '#6b7280', marginRight: 6 }}>每{per}天提醒</span>
             <AccountDays sample={s} list={list} />
           </>
         )
@@ -501,7 +511,8 @@ export function PcDashboard() {
                     {/* 未发布天数挪到「账号」前面（用户要求换顺序）：先看还差几天，再看是哪个账号 */}
                     {/* 每个账号一个天数 chip，列加宽到 280 避免两三个账号换行换得太高 */}
                     <th style={{ width: 280 }}>{cur.header}</th>
-                    <th style={{ width: 170 }}>账号</th>
+                    {/* 账号列加宽到 210：两个长账号名并排也能放下，不再折行 */}
+                    <th style={{ width: 210 }}>账号</th>
                     <th style={{ width: 90 }}>状态</th>
                     <th style={{ width: 110 }}>截止日期</th>
                   </tr>
@@ -523,9 +534,9 @@ export function PcDashboard() {
                         <td>{cur.actions(it)}</td>
                         {/* 未发布天数（列顺序：操作 → 天数 → 账号，用户要求换顺序） */}
                         <td>{cur.mid(it, acc, accs)}</td>
-                        {/* 账号列：彩色圆点 + 名字；多账号（即将到期）并列显示 */}
-                        <td style={{ whiteSpace: 'nowrap' }}>
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        {/* 账号列：彩色圆点 + 名字；多账号并列**不换行**（用户要求「不要换行」） */}
+                        <td style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexWrap: 'nowrap' }}>
                             {accs.map((a, k) => (
                               <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                                 {k > 0 && <span style={{ width: 8 }} />}
