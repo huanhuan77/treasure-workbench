@@ -43,7 +43,7 @@ export function SamplesPage() {
   const { samples, orders, addSample, deleteSample, updateSample } = useStore()
   const { show } = useToast()
   // 出单件数：与 PC 同口径，直接从出单台账按 sampleId 累加 qty
-  const orderQtyBySample = React.useMemo(() => {
+  const orderQtyBySample = useMemo(() => {
     const m = new Map()
     for (const o of orders || []) {
       if (!o || !o.sampleId) continue
