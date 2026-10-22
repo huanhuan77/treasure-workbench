@@ -667,8 +667,8 @@ export function PcDashboard() {
                                 display: 'inline-block', marginLeft: 6, verticalAlign: '1px',
                                 fontSize: 10, fontWeight: 700, lineHeight: '16px',
                                 padding: '0 6px', borderRadius: 999,
-                                background: '#fce7f0', color: '#b8517f',
-                                border: '1px solid rgba(184,81,127,0.35)',
+                                background: '#f3f4f6', color: '#6b7280',
+                                border: '1px solid rgba(107,114,128,0.35)',
                               }}
                             >已建计划</span>
                           )}

@@ -661,8 +661,8 @@ export function DashboardPage() {
         title={`已在发布计划：${arr.map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`).join('；')}`}
         style={{
           display: 'inline-block', fontSize: 10, fontWeight: 700, lineHeight: '15px',
-          padding: '0 6px', borderRadius: 999, background: '#fce7f0', color: '#b8517f',
-          border: '1px solid rgba(184,81,127,0.35)', flexShrink: 0,
+          padding: '0 6px', borderRadius: 999, background: '#f3f4f6', color: '#6b7280',
+          border: '1px solid rgba(107,114,128,0.35)', flexShrink: 0,
         }}
       >已建计划</span>
     )
