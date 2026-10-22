@@ -119,10 +119,10 @@ export function PublishPlanCard() {
       if (!getAccounts(s).includes(account)) continue
       const n = String((s && s.name) || '').trim()
       if (!n || map.has(n)) continue
-      map.set(n, s.category || '')
+      map.set(n, { id: s.id, category: s.category || '' })
     }
     return [...map.entries()]
-      .map(([name, category]) => ({ name, category }))
+      .map(([name, v]) => ({ name, id: v.id, category: v.category }))
       .sort((a, b) => a.name.localeCompare(b.name, 'zh'))
   }, [samples, account])
 
@@ -214,7 +214,8 @@ export function PublishPlanCard() {
   const markDone = (p) => {
     const name = String(p.name || '').trim()
     const sm = (samples || []).find(
-      (s) => String(s.name || '').trim() === name && getAccounts(s).includes(p.account),
+      (s) => (p.sampleId && s.id === p.sampleId)
+        || (String(s.name || '').trim() === name && getAccounts(s).includes(p.account)),
     )
     const qty = Math.max(1, Number(p.qty) || 1)
     if (sm) {
@@ -237,7 +238,7 @@ export function PublishPlanCard() {
   const openNew = (prefill) => {
     const base = emptyByAcc()
     const acc = (prefill && prefill.account) || ACCOUNTS[0] || ''
-    if (prefill && prefill.name) base[acc] = [{ name: String(prefill.name), qty: '1' }]
+    if (prefill && prefill.name) base[acc] = [{ name: String(prefill.name), qty: '1', sampleId: (prefill && prefill.sampleId) || '' }]
     setLockProduct(!!(prefill && prefill.name))
     setByAcc(base)
     setAccount(acc)
@@ -258,7 +259,7 @@ export function PublishPlanCard() {
     setLockProduct(false)
     setAccount(p.account || ACCOUNTS[0] || '')
     setPlanDate(p.planDate || tomorrowStr())
-    setEditEntry({ name: p.name || '', qty: String(p.qty || 1) })
+    setEditEntry({ name: p.name || '', qty: String(p.qty || 1), sampleId: p.sampleId || '' })
     resetPicker()
     setEditing(p)
   }
@@ -272,6 +273,7 @@ export function PublishPlanCard() {
         account,
         qty: Math.max(1, Number(editEntry.qty) || 1),
         planDate: planDate || '',
+        sampleId: editEntry.sampleId || editing.sampleId || '',
       })
       show('已保存', 'success')
       setFlashId(editing.id)
@@ -288,6 +290,8 @@ export function PublishPlanCard() {
           account: a,
           qty: Math.max(1, Number(e.qty) || 1),
           planDate: planDate || '',
+          // 选品时带的样品 ID；没有就按当前账号的候选名兜底解析一个
+          sampleId: e.sampleId || (candidates.find((c) => c.name === e.name.trim()) || {}).id || '',
         })
         if (id) lastId = id
         n++
@@ -610,6 +614,7 @@ export function PublishPlanCard() {
                                 className={`pcv-drop-row${on ? ' on' : ''}`}
                                 title={on ? '已勾选，再点一下取消' : '点一下勾选这条产品（可多选）'}
                                 onClick={() => pickProduct(c.name)}
+
                               >
                                 <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</span>
                                 {on && <span className="pcv-drop-check">✓</span>}
