@@ -11,7 +11,8 @@ const fmtInt = (n) => String(Number(n) || 0)
 
 export default function SummaryPage() {
   const { samples, publishRecords, orders, transactions, todos, hiddenAccounts } = useStore()
-  const [period, setPeriod] = useState('week')
+  // 默认「本月」（与 PC 一致，用户要求）
+  const [period, setPeriod] = useState('month')
   // 自定义日期区间
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')

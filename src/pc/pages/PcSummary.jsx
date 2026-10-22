@@ -12,7 +12,8 @@ const fmtInt = (n) => String(Number(n) || 0)
 
 export function PcSummary() {
   const { samples, publishRecords, orders, transactions, todos, hiddenAccounts } = useStore()
-  const [period, setPeriod] = useState('week')
+  // 默认「本月」（用户要求）：进来先看自然月，不再默认本周
+  const [period, setPeriod] = useState('month')
   // 自定义日期区间（用户要求「加个日期期间选择」）：选了日期就切到 custom，清空则回到预设
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')

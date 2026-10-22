@@ -25,6 +25,10 @@ export function dateBounds(value) {
   if (value === 'today') return [today0, tomorrow0]
   if (value === 'yesterday') return [new Date(y, m, d - 1).getTime(), today0]
   if (value === 'last7') return [new Date(y, m, d - 6).getTime(), tomorrow0]
+  // 近 N 天（PC 出单记录用户要求加近30/60/90）：含今天，往前推 N-1 天
+  if (value === 'last30') return [new Date(y, m, d - 29).getTime(), tomorrow0]
+  if (value === 'last60') return [new Date(y, m, d - 59).getTime(), tomorrow0]
+  if (value === 'last90') return [new Date(y, m, d - 89).getTime(), tomorrow0]
   if (value === 'thisWeek') {
     const day = n.getDay()
     const off = day === 0 ? 6 : day - 1
