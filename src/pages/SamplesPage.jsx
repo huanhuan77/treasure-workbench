@@ -40,8 +40,17 @@ const SORT_OPTIONS = [
 
 export function SamplesPage() {
   const navigate = useNavigate()
-  const { samples, addSample, deleteSample, updateSample } = useStore()
+  const { samples, orders, addSample, deleteSample, updateSample } = useStore()
   const { show } = useToast()
+  // 出单件数：与 PC 同口径，直接从出单台账按 sampleId 累加 qty
+  const orderQtyBySample = React.useMemo(() => {
+    const m = new Map()
+    for (const o of orders || []) {
+      if (!o || !o.sampleId) continue
+      m.set(o.sampleId, (m.get(o.sampleId) || 0) + (Number(o.qty) > 0 ? Number(o.qty) : 1))
+    }
+    return m
+  }, [orders])
   const [showAdd, setShowAdd] = useState(false)
   const [editing, setEditing] = useState(null)
   const [swipedId, setSwipedId] = useState(null)
@@ -560,7 +569,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
           {/* 第一行：产品名 + 分类 + 代表状态 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '40px' }}>{s.name}</h3>
-            {(() => { const totalQty = getAccounts(s).reduce((sum, a) => sum + (getCounts(s, a).orderCount || 0), 0); return totalQty > 0 ? <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>×{totalQty}</span> : null })()}
+            {(() => { const totalQty = orderQtyBySample.get(s.id) || 0; return totalQty > 0 ? <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>×{totalQty}</span> : null })()}
             {s.category && <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: 'rgba(109,40,217,0.12)', color: '#6d28d9', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.category}</span>}
             {repInfo && <span style={{ fontSize: '11px', color: '#fff', background: repInfo.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{repInfo.label}</span>}
           </div>
