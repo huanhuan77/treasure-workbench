@@ -58,7 +58,7 @@ export function CopyImportDialog({ product, onClose }) {
 
   return (
     <div className="pcv-overlay" onClick={onClose}>
-      <div className="pcv-dialog" style={{ maxWidth: 720 }} onClick={(e) => e.stopPropagation()}>
+      <div className="pcv-dialog" style={{ maxWidth: 920, width: "92vw" }} onClick={(e) => e.stopPropagation()}>
         <div className="pcv-dialog-h">
           <span>批量导入文案</span>
           <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>{product.name}</span>
@@ -86,7 +86,7 @@ export function CopyImportDialog({ product, onClose }) {
 
           <textarea
             className="pcv-input"
-            style={{ width: '100%', minHeight: 150, resize: 'vertical', lineHeight: 1.7, fontFamily: 'inherit' }}
+            style={{ width: '100%', minHeight: 260, resize: 'vertical', lineHeight: 1.7, fontFamily: 'inherit' }}
             placeholder={'多条文案之间用空行分隔；👍=出单、✅=用过（标记会被自动去掉）\n末尾单独一行 #话题1 #话题2 可套用到全部'}
             value={text}
             onChange={(e) => setText(e.target.value)}
