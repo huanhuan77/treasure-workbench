@@ -7,7 +7,7 @@ import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../util
 
 import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
-import { SAMPLE_STATUS } from '../../utils/sampleStatus'
+import { SAMPLE_STATUS, getTopStatus } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
 import { AdQueueCard } from '../components/AdQueueCard'
 import { PublishPlanCard } from '../components/PublishPlanCard'
@@ -432,7 +432,8 @@ export function PcDashboard() {
           {/* 「新增」统一改成「跳到对应页面并自动打开那页的新增弹窗」（?add=1），
               这样加完能顺手在列表里看到刚加的那条，而不是在总览上弹一个孤立的表单。 */}
           {[
-            { label: '样品总数', value: samples.length, accent: '#b8517f', addLabel: '新增样品', onAdd: () => navigate('/pc/samples?add=1') },
+            /* 样品总数：**不含已放弃**，与样品记录页「N / N 个样品」「全部胶囊」同一口径（用户要求「只统计这个」） */
+            { label: '样品总数', value: samples.filter((s) => getTopStatus(s) !== 'abandoned').length, accent: '#b8517f', addLabel: '新增样品', onAdd: () => navigate('/pc/samples?add=1') },
             { label: '待办未完成', value: todoUndone, accent: '#a97c46', addLabel: '新增待办', onAdd: () => navigate('/pc/todos') },
             { label: '发布提醒', value: all.reminders.length, accent: '#b96a66', addLabel: '记一条发布', onAdd: () => navigate('/pc/publish-records?add=1') },
             // 出单数量（件数合计），不是记录条数（用户要求「改成出单数量」）
