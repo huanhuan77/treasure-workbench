@@ -26,7 +26,8 @@ const emptyByAcc = () => {
   for (const a of ACCOUNTS) o[a] = []
   return o
 }
-const newEntry = () => ({ name: '', qty: '1' })
+// 行结构带 sampleId：从样品发起/选品时记下，样品改名后「已建计划」仍能对上
+const newEntry = () => ({ name: '', qty: '1', sampleId: '' })
 // 同一天的条目共用一档底色（三档循环），隔天颜色就变，方便一眼看出「哪天有几条」。
 // 三档都带淡色、不用纯白 —— 否则第一天（列表最上面那组）看着像「没上背景色」。
 const DATE_TONES = ['#fdf6fa', '#f5f8fd', '#fbfaf2']

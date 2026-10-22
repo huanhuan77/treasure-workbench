@@ -639,22 +639,28 @@ export function DashboardPage() {
   const ACC_META = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
 
   // 「已建计划」标记索引（与 PC 总览一致，用户要求手机端也加）：按产品名关联、排除已完成的计划，
-  // 且**跟着账号筛选走**（用户要求：筛了账号就只认该账号的计划，别的账号排的不算）
+  // 且**跟着账号筛选走**（用户要求：筛了账号就只认该账号的计划，别的账号排的不算）。
+  // 匹配做两层归一，避免「有计划却不标」：
+  //   ① 账号：别名（大号/小号…）映射成正式名再比；计划没填账号时视为匹配任意筛选；
+  //   ② 产品名：去掉所有空白再比（防止首尾/全角空格对不上）。
+  const normPlanName = (v) => String(v || '').replace(/\s+/g, '')
+  const normPlanAcc = (a) => mapAccount(String(a || '').trim())
   const planNameSet = useMemo(() => {
     const m = new Map()
     for (const p of publishPlans || []) {
       if (p.done) continue
-      if (remindAccount !== 'all' && p.account !== remindAccount) continue
-      const n = String(p.name || '').trim()
+      const pa = normPlanAcc(p.account)
+      if (remindAccount !== 'all' && pa && pa !== remindAccount) continue
+      const n = normPlanName(p.name)
       if (!n) continue
       if (!m.has(n)) m.set(n, [])
       m.get(n).push({ account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 })
     }
     return m
   }, [publishPlans, remindAccount])
-  // 行内复用：未建计划返回 null；否则粉色小标（只写「已建计划」，账号靠筛选自己判断）
+  // 行内复用：未建计划返回 null；否则灰色小标（只写「已建计划」，账号靠筛选自己判断）
   const planBadge = (name) => {
-    const arr = planNameSet.get(String(name || '').trim()) || []
+    const arr = planNameSet.get(normPlanName(name)) || []
     if (!arr.length) return null
     return (
       <span

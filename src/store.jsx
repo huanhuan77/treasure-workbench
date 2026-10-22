@@ -4752,6 +4752,9 @@ export function StoreProvider({ children }) {
       id: uid(),
       name: String(entry.name || '').trim(),
       account: entry.account || '',
+      // 关联的样品 ID（从样品发起新建计划时带上）：样品改名后仍能对上，
+      // 老数据没有这个字段，回退按名称匹配
+      sampleId: entry.sampleId || '',
       qty: Number(entry.qty) > 0 ? Number(entry.qty) : 1,
       planDate: entry.planDate || '',
       note: entry.note || '',

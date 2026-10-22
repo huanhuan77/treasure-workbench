@@ -6,7 +6,7 @@ import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 
 import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
-import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
+import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount, mapAccount } from '../../utils/accounts'
 import { SAMPLE_STATUS, getTopStatus } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
 import { AdQueueCard } from '../components/AdQueueCard'
@@ -151,7 +151,8 @@ export function PcDashboard() {
   const quickPlan = useCallback((s, acc) => {
     const name = String(s && s.name || '').trim()
     if (!name) return
-    window.dispatchEvent(new CustomEvent('wb:new-plan', { detail: { name, account: acc } }))
+    // 带上 sampleId：样品改名后「已建计划」仍能对上（老计划没有 ID，回退按名称匹配）
+    window.dispatchEvent(new CustomEvent('wb:new-plan', { detail: { name, account: acc, sampleId: s && s.id } }))
   }, [])
 
   // 每个 Tab 的口径：怎么取数、一条归到哪些账号、中列与操作各显示什么
@@ -282,16 +283,31 @@ export function PcDashboard() {
   }
 
   // 「已建计划」标记索引（用户要求）：发布计划按产品名关联（store.publishPlans 无 sampleId），
-  // name -> [{ account, planDate, qty }]，行内查这个名字有没有排过计划
+  // name -> [{ account, planDate, qty }]，行内查这个名字有没有排过计划。
+  // 匹配做两层归一，避免「有计划却不标」：
+  //   ① 账号：别名（大号/小号…）映射成正式名再比；计划没填账号时视为匹配任意筛选；
+  //   ② 产品名：去掉所有空白再比（防止首尾空格/全角空格导致对不上）。
+  const normPlanName = (v) => String(v || '').replace(/\s+/g, '')
+  const normPlanAcc = (a) => mapAccount(String(a || '').trim())
   const planIndex = useMemo(() => {
     const m = new Map()
     for (const p of publishPlans || []) {
-      // 用户要求：筛了账号就只认该账号的计划（其他账号排的计划不算「已建计划」）
-      if (account && p.account !== account) continue
-      const n = String(p.name || '').trim()
-      if (!n) continue
-      if (!m.has(n)) m.set(n, [])
-      m.get(n).push({ account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 })
+      // 用户要求：筛了账号就只认该账号的计划（其他账号排的计划不算「已建计划」）；
+      // 但计划本身没填账号（老数据/未指定）时不过滤，否则会莫名其妙不标
+      const pa = normPlanAcc(p.account)
+      if (account && pa && pa !== account) continue
+      const rec = { account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 }
+      const n = normPlanName(p.name)
+      if (n) {
+        if (!m.has(n)) m.set(n, [])
+        m.get(n).push(rec)
+      }
+      // 同时按 sampleId 建索引：样品改名后旧名称对不上，靠 ID 仍能标上
+      if (p.sampleId) {
+        const k = `id:${p.sampleId}`
+        if (!m.has(k)) m.set(k, [])
+        m.get(k).push(rec)
+      }
     }
     return m
   }, [publishPlans, account])
@@ -658,20 +674,28 @@ export function PcDashboard() {
                           {s.name}
                           {/* 已建计划标记（用户要求）：只显示「已建计划」四个字（账号靠筛选自己判断，
                               筛了账号就只认该账号的计划），悬停可看计划详情 */}
-                          {(planIndex.get(s.name) || []).length > 0 && (
-                            <span
-                              title={`已在发布计划：${(planIndex.get(s.name) || [])
-                                .map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`)
-                                .join('；')}`}
-                              style={{
-                                display: 'inline-block', marginLeft: 6, verticalAlign: '1px',
-                                fontSize: 10, fontWeight: 700, lineHeight: '16px',
-                                padding: '0 6px', borderRadius: 999,
-                                background: '#f3f4f6', color: '#6b7280',
-                                border: '1px solid rgba(107,114,128,0.35)',
-                              }}
-                            >已建计划</span>
-                          )}
+                          {(() => {
+                            // 先按样品 ID 找（改名也对得上），再按归一化名称兜底（老计划没有 ID）
+                            const plans = [
+                              ...(planIndex.get(`id:${s.id}`) || []),
+                              ...(planIndex.get(normPlanName(s.name)) || []),
+                            ]
+                            if (plans.length === 0) return null
+                            return (
+                              <span
+                                title={`已在发布计划：${plans
+                                  .map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`)
+                                  .join('；')}`}
+                                style={{
+                                  display: 'inline-block', marginLeft: 6, verticalAlign: '1px',
+                                  fontSize: 10, fontWeight: 700, lineHeight: '16px',
+                                  padding: '0 6px', borderRadius: 999,
+                                  background: '#f3f4f6', color: '#6b7280',
+                                  border: '1px solid rgba(107,114,128,0.35)',
+                                }}
+                              >已建计划</span>
+                            )
+                          })()}
                         </td>
                         <td>{cur.actions(it, acc, accs)}</td>
                         {/* 账号列：高频出单 / 发布提醒里显示「账号 + 已N天」（用户要求合并到这里）；
