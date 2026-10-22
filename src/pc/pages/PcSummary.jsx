@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 import { PERIODS, periodRange, buildSummary, buildTrendFor, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../../utils/summary'
-import { makePeriodOption, makeMonthlyOption, makePieOption } from '../../utils/chartOptions'
+import { makePeriodOption, makeMonthlyOption, makePieOption, makeAccountOption } from '../../utils/chartOptions'
 import { EChart } from '../../components/EChart'
 
 // PC 版「周 / 月总结」：只做**数据**（用户要求「只要数据表格，不需要文案」）。
@@ -48,6 +48,8 @@ export function PcSummary() {
   )
 
   const periodOption = useMemo(() => makePeriodOption(trend.bars), [trend])
+  // 分账号对比柱状图（账号名跟随「隐藏账号」打码）
+  const accountOption = useMemo(() => makeAccountOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
 
   // 按产品明细的排序：默认「出单件数」降序（用户要求），点表头可切换列与升降序
   const [prodSort, setProdSort] = useState({ key: 'order', dir: 'desc' })
@@ -186,43 +188,21 @@ export function PcSummary() {
           )}
         </div>
 
-        {/* 分账号明细 */}
+        {/* 分账号明细：做成图表（用户要求「做成图表」）——分组柱 + 柱顶数值 */}
         <div className="pcv-card" style={{ marginTop: 12 }}>
           <div className="pcv-card-h">
             <span style={{ fontWeight: 600 }}>分账号明细</span>
-            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>{range.label}</span>
+            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
+              发布 / 出单 / 新增产品 · {range.label}
+            </span>
           </div>
-          <table className="pcv-table">
-            <thead>
-              <tr>
-                <th style={{ width: 170 }}>账号</th>
-                <th style={{ width: 110 }}>发布条数</th>
-                <th style={{ width: 110 }}>出单件数</th>
-                <th style={{ width: 100 }}>出单笔数</th>
-                <th style={{ width: 110 }}>新增产品数</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {sum.accounts.length === 0 ? (
-                <tr><td colSpan={6} className="pcv-empty">这个区间没有数据</td></tr>
-              ) : sum.accounts.map((r) => {
-                const col = ACCOUNT_COLOR[r.account] || { c: '#6b7280' }
-                return (
-                  <tr key={r.account}>
-                    <td>
-                      <span style={{ color: col.c, fontWeight: 600 }}>{mask(r.account)}</span>
-                    </td>
-                    <td className="pcv-num">{fmtInt(r.publish)}</td>
-                    <td className="pcv-num">{fmtInt(r.orderQty)}</td>
-                    <td className="pcv-num">{fmtInt(r.orderCount)}</td>
-                    <td className="pcv-num">{fmtInt(r.newProducts)}</td>
-                    <td />
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          {sum.accounts.length === 0 ? (
+            <div className="pcv-empty">这个区间没有数据</div>
+          ) : (
+            <div style={{ padding: '10px 12px 12px' }}>
+              <EChart option={accountOption} height={260} />
+            </div>
+          )}
         </div>
 
         {/* 按产品明细：哪个品发了多少、出了多少单（用户要求「要统计具体的」） */}

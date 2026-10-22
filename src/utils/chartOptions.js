@@ -60,6 +60,45 @@ export function makeMonthlyOption(monthly = []) {
   }
 }
 
+// 分账号对比：分组柱（发布条数 / 出单件数 / 新增产品数），柱顶标数值
+export function makeAccountOption(accounts = [], maskFn = (x) => x) {
+  const labels = accounts.map((r) => maskFn(r.account))
+  return {
+    grid: { left: 8, right: 12, top: 34, bottom: 4, containLabel: true },
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { top: 0, left: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: '#6b7280', fontSize: 11 } },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisLine: { lineStyle: { color: 'rgba(15,23,42,0.12)' } },
+      axisTick: { show: false },
+      axisLabel: { color: AXIS, fontSize: 11 },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: 'rgba(15,23,42,0.06)' } },
+      axisLabel: { color: AXIS, fontSize: 10 },
+    },
+    series: [
+      {
+        name: '发布条数', type: 'bar', barMaxWidth: 26, itemStyle: { color: PUB, borderRadius: [3, 3, 0, 0] },
+        label: { show: true, position: 'top', fontSize: 10, color: PUB },
+        data: accounts.map((r) => r.publish),
+      },
+      {
+        name: '出单件数', type: 'bar', barMaxWidth: 26, itemStyle: { color: ORD, borderRadius: [3, 3, 0, 0] },
+        label: { show: true, position: 'top', fontSize: 10, color: ORD },
+        data: accounts.map((r) => r.orderQty),
+      },
+      {
+        name: '新增产品数', type: 'bar', barMaxWidth: 26, itemStyle: { color: '#a97c46', borderRadius: [3, 3, 0, 0] },
+        label: { show: true, position: 'top', fontSize: 10, color: '#a97c46' },
+        data: accounts.map((r) => r.newProducts || 0),
+      },
+    ],
+  }
+}
+
 // 分类占比：环形饼图
 export function makePieOption(share = []) {
   return {

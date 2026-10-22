@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
 import { PERIODS, periodRange, buildSummary, buildTrendFor, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../utils/summary'
-import { makePeriodOption, makeMonthlyOption, makePieOption } from '../utils/chartOptions'
+import { makePeriodOption, makeMonthlyOption, makePieOption, makeAccountOption } from '../utils/chartOptions'
 import { EChart } from '../components/EChart'
 
 // 手机版「周 / 月总结」：只做数据展示（用户要求「只要数据表格」）。
@@ -52,6 +52,8 @@ export default function SummaryPage() {
     [samples, publishRecords, orders, range, catMetric],
   )
   const pieOption = useMemo(() => makePieOption(catShare), [catShare])
+  // 分账号对比柱状图（账号名跟随隐藏账号打码）
+  const accountOption = useMemo(() => makeAccountOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
 
   // 只留「发布 / 出单 / 样品」（用户要求去掉收入、净收入、完成待办）
   const cards = [
@@ -183,20 +185,11 @@ export default function SummaryPage() {
         </div>
         {sum.accounts.length === 0 ? (
           <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
-        ) : sum.accounts.map((r) => {
-          const col = ACCOUNT_COLOR[r.account] || { c: '#6b7280' }
-          return (
-            <div key={r.account} style={{
-              padding: '10px 12px', borderTop: '0.5px solid rgba(15,23,42,0.05)',
-              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-            }}>
-              <span style={{ color: col.c, fontWeight: 700, fontSize: 13 }}>{mask(r.account)}</span>
-              <span style={{ fontSize: 12, color: '#64748b' }}>发布 {fmtInt(r.publish)}</span>
-              <span style={{ fontSize: 12, color: '#64748b' }}>出单 {fmtInt(r.orderQty)} 件 / {fmtInt(r.orderCount)} 笔</span>
-              <span style={{ fontSize: 12, color: '#7a5ea8' }}>新增产品 {fmtInt(r.newProducts)}</span>
-            </div>
-          )
-        })}
+        ) : (
+          <div style={{ padding: '8px 8px 10px' }}>
+            <EChart option={accountOption} height={220} />
+          </div>
+        )}
       </div>
 
       {/* 按产品明细 */}
