@@ -598,8 +598,8 @@ export function PcDashboard() {
                 placeholder="🔍 搜索产品名…"
                 title="按产品名/品类搜索当前列表"
                 style={{
-                  marginLeft: 'auto', flexShrink: 0, width: 150,
-                  padding: '5px 10px', fontSize: 12,
+                  marginLeft: 8, flexShrink: 0, width: 220,
+                  padding: '7px 12px', fontSize: 13,
                   background: kw ? '#fdf3f8' : '#fff',
                   borderColor: kw ? 'rgba(184,81,127,0.55)' : undefined,
                 }}

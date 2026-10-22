@@ -165,42 +165,37 @@ export function AdQueueCard() {
             onClick={() => { setSearch(''); setPickAccount(''); setPickerOpen(true) }}
           >新增</button>
           <div className="pcv-spacer" />
-        </div>
-
-        {/* 状态筛选：全部 / 未投流 / 暂停（「已投流」按设计不进列表） */}
-        {list.some((a) => a.status === '暂停' || a.status === '已投流') && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px 8px' }}>
-            {(() => {
-              const chip = (key, label, n) => {
-                const on = statusFilter === key
-                return (
-                  <button
-                    key={key || 'all'}
-                    onClick={() => setStatusFilter(key)}
-                    style={{
-                      padding: '3px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
-                      fontSize: 12, fontWeight: 600,
-                      border: on ? 'none' : '1px solid rgba(15,23,42,0.14)',
-                      background: on ? '#b8517f' : '#fff',
-                      color: on ? '#fff' : '#6b7280',
-                    }}
-                  >{label}{n != null ? ` ${n}` : ''}</button>
-                )
-              }
-              const pend = list.filter((a) => a.status === '未投流').length
-              const paused = list.filter((a) => a.status === '暂停').length
-              const done = list.filter((a) => a.status === '已投流').length
+          {/* 状态筛选（用户截图箭头指到卡头）：从单独一行移进卡头右侧，省一行高度 */}
+          {list.some((a) => a.status === '暂停' || a.status === '已投流') && (() => {
+            const chip = (key, label, n) => {
+              const on = statusFilter === key
               return (
-                <>
-                  {chip('', '全部')}
-                  {chip('未投流', '未投流', pend)}
-                  {chip('暂停', '暂停', paused)}
-                  {done > 0 && chip('已投流', '已投流', done)}
-                </>
+                <button
+                  key={key || 'all'}
+                  onClick={() => setStatusFilter(key)}
+                  style={{
+                    padding: '3px 9px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                    fontSize: 12, fontWeight: 600, flexShrink: 0,
+                    border: on ? 'none' : '1px solid rgba(15,23,42,0.14)',
+                    background: on ? '#b8517f' : '#fff',
+                    color: on ? '#fff' : '#6b7280',
+                  }}
+                >{label}{n != null ? ` ${n}` : ''}</button>
               )
-            })()}
-          </div>
-        )}
+            }
+            const pend = list.filter((a) => a.status === '未投流').length
+            const paused = list.filter((a) => a.status === '暂停').length
+            const done = list.filter((a) => a.status === '已投流').length
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                {chip('', '全部')}
+                {chip('未投流', '未投流', pend)}
+                {chip('暂停', '暂停', paused)}
+                {done > 0 && chip('已投流', '已投流', done)}
+              </div>
+            )
+          })()}
+        </div>
 
         {/* 账号筛选胶囊：只在「展开」时显示（与「发布计划」一致） */}
         {expanded && accOptions.length > 1 && (
