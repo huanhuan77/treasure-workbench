@@ -583,11 +583,13 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
                     )
                   })
             )}
-            {/* 发布提醒天数（与 PC 样品列表同一列、同一口径）：≤5 天按高频口径标玫红 */}
+            {/* 发布提醒天数：只有比默认7天更快（<7天）才显示，默认7天不占位置 */}
             {acList.length > 0 && (() => {
               const days = acList.map((a) => sampleDays(s, a.name))
               const uniq = [...new Set(days)]
-              const hot = Math.min(...days) <= 5
+              const minD = Math.min(...days)
+              if (minD >= 7) return null
+              const hot = minD <= 5
               return (
                 <span
                   title={acList.map((a) => `${a.name} ${sampleDays(s, a.name)} 天`).join(' / ')}
