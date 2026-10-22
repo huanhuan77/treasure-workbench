@@ -327,7 +327,7 @@ export function BottomNav() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  padding: '8px 12px',
+                  padding: '12px 12px',
                   marginBottom: '2px',
                   border: 'none',
                   borderRadius: '10px',
