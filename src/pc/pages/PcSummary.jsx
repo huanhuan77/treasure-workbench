@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
-import { PERIODS, periodRange, buildSummary, buildTrendFor, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../../utils/summary'
-import { makePeriodOption, makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../../utils/chartOptions'
+import { PERIODS, periodRange, buildSummary, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../../utils/summary'
+import { makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../../utils/chartOptions'
 import { EChart } from '../../components/EChart'
 import { DateRangePicker } from '../components/DateRangePicker'
 
@@ -31,11 +31,6 @@ export function PcSummary() {
   )
   const mask = (a) => maskAccount(a, hiddenAccounts)
 
-  // 趋势柱：本周/上周 → 按天（7 根）；本月/上月 → 按周（自然周切分）
-  const trend = useMemo(
-    () => buildTrendFor({ samples, publishRecords, orders, transactions, todos }, range),
-    [samples, publishRecords, orders, transactions, todos, range],
-  )
   // 近 6 个月（发布 / 出单 / 转化率）
   const monthly = useMemo(
     () => buildMonthlyTrend({ samples, publishRecords, orders, transactions, todos }, 6),
@@ -48,7 +43,6 @@ export function PcSummary() {
     [samples, publishRecords, orders, range, catMetric],
   )
 
-  const periodOption = useMemo(() => makePeriodOption(trend.bars), [trend])
   // 分账号对比柱状图（账号名跟随「隐藏账号」打码）
   const accountOption = useMemo(() => makeAccountOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
   // 按账号出单数量对比（横向条形）
@@ -123,18 +117,18 @@ export function PcSummary() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
           <div className="pcv-card">
             <div className="pcv-card-h">
-              <span style={{ fontWeight: 600 }}>
-                {range.key === 'custom'
-                  ? `自定义区间（按${trend.mode === 'day' ? '天' : '周'}）`
-                  : (trend.mode === 'day' ? '本周按天对比' : '本月按周对比')}
-              </span>
+              <span style={{ fontWeight: 600 }}>按账号出单量对比</span>
               <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
-                发布 / 出单 · {range.label}
+                出单件数 · {range.label}
               </span>
             </div>
-            <div style={{ padding: '10px 12px 12px' }}>
-              <EChart option={periodOption} height={240} />
-            </div>
+            {sum.accounts.length === 0 ? (
+              <div className="pcv-empty">这个区间没有数据</div>
+            ) : (
+              <div style={{ padding: '10px 12px 12px' }}>
+                <EChart option={accountOrderOption} height={240} />
+              </div>
+            )}
           </div>
 
           <div className="pcv-card">
@@ -188,23 +182,6 @@ export function PcSummary() {
           ) : (
             <div style={{ padding: '10px 12px 12px' }}>
               <EChart option={accountOption} height={260} />
-            </div>
-          )}
-        </div>
-
-        {/* 按账号出单数量对比（用户要求）：横向条形，一眼看出哪个账号出得多 */}
-        <div className="pcv-card" style={{ marginTop: 12 }}>
-          <div className="pcv-card-h">
-            <span style={{ fontWeight: 600 }}>按账号出单数量对比</span>
-            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
-              出单件数 · {range.label}
-            </span>
-          </div>
-          {sum.accounts.length === 0 ? (
-            <div className="pcv-empty">这个区间没有数据</div>
-          ) : (
-            <div style={{ padding: '10px 12px 12px' }}>
-              <EChart option={accountOrderOption} height={Math.max(160, sum.accounts.length * 46 + 40)} />
             </div>
           )}
         </div>

@@ -88,7 +88,7 @@ function AccountDays({ sample, list, hidden }) {
 export function PcDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { samples, todos, orders, hiddenAccounts, setHiddenAccounts } = useStore()
+  const { samples, todos, orders, hiddenAccounts, setHiddenAccounts, updateTodo } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [account, setAccount] = useState('')
   // 「为什么没提醒」诊断弹窗
@@ -444,7 +444,16 @@ export function PcDashboard() {
                 <div className="pcv-todogrid">
                   {todoList.map((t) => (
                     <div key={t.id} className="pcv-copyitem" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 14, height: 14, borderRadius: '50%', border: '1.5px solid #c4b5fd', flexShrink: 0 }} />
+                      {/* 圆圈是「完成」按钮：原来只是个 span，点了当然没反应（用户反馈「点了没反应」） */}
+                      <button
+                        type="button"
+                        title="点一下标记完成"
+                        onClick={() => updateTodo(t.id, { done: true })}
+                        style={{
+                          width: 16, height: 16, borderRadius: '50%', flexShrink: 0, padding: 0,
+                          border: '1.5px solid #c4b5fd', background: '#fff', cursor: 'pointer',
+                        }}
+                      />
                       {/* 标题不再 flex:1，截止日期紧跟标题靠左（原来被推到整行最右，离标题很远） */}
                       <span style={{
                         flex: '0 1 auto', minWidth: 0, maxWidth: '72%', fontSize: 14, color: '#334155',

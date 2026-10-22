@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
-import { PERIODS, periodRange, buildSummary, buildTrendFor, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../utils/summary'
-import { makePeriodOption, makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../utils/chartOptions'
+import { PERIODS, periodRange, buildSummary, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../utils/summary'
+import { makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../utils/chartOptions'
 import { EChart } from '../components/EChart'
 
 // 手机版「周 / 月总结」：只做数据展示（用户要求「只要数据表格」）。
@@ -30,15 +30,6 @@ export default function SummaryPage() {
   )
   const mask = (a) => maskAccount(a, hiddenAccounts)
 
-  // 趋势柱：本周/上周 → 按天；本月/上月 → 按周
-  const trend = useMemo(
-    () => buildTrendFor({ samples, publishRecords, orders, transactions, todos }, range),
-    [samples, publishRecords, orders, transactions, todos, range],
-  )
-  const periodOption = useMemo(
-    () => makePeriodOption(trend.bars, { rotate: trend.bars.length > 7 ? 40 : 0 }),
-    [trend],
-  )
   // 近 6 个月（发布 / 出单 / 转化率）
   const monthly = useMemo(
     () => buildMonthlyTrend({ samples, publishRecords, orders, transactions, todos }, 6),
@@ -135,16 +126,18 @@ export default function SummaryPage() {
         ))}
       </div>
 
-      {/* 近 4 周柱状图 */}
+      {/* 按账号出单量对比（取代原来的按天/按周柱状图，用户要求） */}
       <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
         <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
-          {range.key === 'custom'
-            ? `自定义区间（按${trend.mode === 'day' ? '天' : '周'}）`
-            : (trend.mode === 'day' ? '本周按天对比' : '本月按周对比')}
+          按账号出单量对比
         </div>
-        <div style={{ padding: '10px 8px 8px' }}>
-          <EChart option={periodOption} height={200} />
-        </div>
+        {sum.accounts.length === 0 ? (
+          <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
+        ) : (
+          <div style={{ padding: '10px 8px 10px' }}>
+            <EChart option={accountOrderOption} height={Math.max(150, sum.accounts.length * 40 + 30)} />
+          </div>
+        )}
       </div>
 
       {/* 近 6 个月趋势 / 出单转化 */}
@@ -189,20 +182,6 @@ export default function SummaryPage() {
         ) : (
           <div style={{ padding: '8px 8px 10px' }}>
             <EChart option={accountOption} height={220} />
-          </div>
-        )}
-      </div>
-
-      {/* 按账号出单数量对比 */}
-      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
-        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
-          按账号出单数量对比
-        </div>
-        {sum.accounts.length === 0 ? (
-          <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
-        ) : (
-          <div style={{ padding: '8px 8px 10px' }}>
-            <EChart option={accountOrderOption} height={Math.max(150, sum.accounts.length * 40 + 30)} />
           </div>
         )}
       </div>
