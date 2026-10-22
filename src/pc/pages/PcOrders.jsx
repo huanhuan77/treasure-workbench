@@ -237,17 +237,27 @@ export function PcOrders() {
           />
           {/* 「重置」靠左：紧跟日期选择器之后（去掉 spacer，不再顶到行尾） */}
           <ResetButton active={hasFilter} onClick={resetFilters} />
-          {/* 合计提到顶部（用户要求「在顶部显示合计」），跟随筛选实时变化 */}
-          <span style={{ marginLeft: 10, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ background: '#faf3f6', borderRadius: 999, padding: '3px 12px', fontSize: 12, color: '#6b7280' }}>
-              出单数量合计 <b style={{ color: '#b8517f', fontSize: 14 }}>{totalQty}</b> 件
-            </span>
-            <span style={{ background: '#f4f4f8', borderRadius: 999, padding: '3px 12px', fontSize: 12, color: '#6b7280' }}>
-              笔数 <b style={{ color: '#334155', fontSize: 13 }}>{totalCount}</b>
-            </span>
-            <span style={{ background: '#f4f4f8', borderRadius: 999, padding: '3px 12px', fontSize: 12, color: '#6b7280' }}>
-              产品 <b style={{ color: '#334155', fontSize: 13 }}>{groups.length}</b> 个
-            </span>
+          {/* 合计提到顶部（用户要求「在顶部显示合计」），样式做成指标卡那种（用户要求「要这种统计」） */}
+          <span style={{ marginLeft: 10, display: 'inline-flex', alignItems: 'stretch', gap: 10 }}>
+            {[
+              { label: '出单数量合计', value: totalQty, unit: '件', color: '#b8517f' },
+              { label: '笔数', value: totalCount, unit: '笔', color: '#b96a66' },
+              { label: '产品', value: groups.length, unit: '个', color: '#7a5ea8' },
+            ].map((c) => (
+              <span
+                key={c.label}
+                style={{
+                  display: 'inline-flex', flexDirection: 'column', justifyContent: 'center',
+                  background: '#fff', border: '1px solid #f0e2ea', borderLeft: `3px solid ${c.color}`,
+                  borderRadius: 10, padding: '4px 14px', minWidth: 74,
+                }}
+              >
+                <span style={{ fontSize: 11, color: '#8a8f98', lineHeight: 1.4 }}>{c.label}</span>
+                <span style={{ fontSize: 17, fontWeight: 700, color: c.color, lineHeight: 1.3 }}>
+                  {c.value}<span style={{ fontSize: 11, fontWeight: 400, color: '#9aa1ab', marginLeft: 3 }}>{c.unit}</span>
+                </span>
+              </span>
+            ))}
           </span>
         </div>
 

@@ -26,44 +26,45 @@ export default function QtyDetailModal({ title, total, count, accounts, lines, o
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#fff', borderRadius: 14, padding: '16px 18px',
-          width: 340, maxHeight: '72vh', overflowY: 'auto',
+          /* 弹窗大一点（用户要求）：480 宽、字号相应放大 */
+          background: '#fff', borderRadius: 14, padding: '22px 26px',
+          width: 480, maxWidth: '92vw', maxHeight: '78vh', overflowY: 'auto',
           boxShadow: '0 18px 50px rgba(31,27,45,0.25)',
         }}
       >
         {/* 标题 + 关闭 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, gap: 10 }}>
-          <strong style={{ fontSize: 14, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 10 }}>
+          <strong style={{ fontSize: 16, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {title}
           </strong>
           <button
             type="button"
             onClick={onClose}
-            style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 15, color: '#9aa1ab', lineHeight: 1, flexShrink: 0 }}
+            style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 17, color: '#9aa1ab', lineHeight: 1, flexShrink: 0 }}
           >✕</button>
         </div>
 
         {/* 合计 */}
-        <div style={{ fontSize: 12.5, color: '#6b7280', marginBottom: 12 }}>
-          合计 <b style={{ color: '#b8517f', fontSize: 15 }}>{total}</b> 件 · {count} 笔
+        <div style={{ fontSize: 13.5, color: '#6b7280', marginBottom: 14 }}>
+          合计 <b style={{ color: '#b8517f', fontSize: 18 }}>{total}</b> 件 · {count} 笔
         </div>
 
         {/* 按账号汇总 */}
         {(accounts || []).map((a) => (
-          <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, lineHeight: 2 }}>
+          <div key={a.name} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13.5, lineHeight: 2.1 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: a.color }} />
             <span style={{ color: '#4b5563' }}>{a.name}</span>
-            <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#b8517f' }}>{a.qty}</span>
+            <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#b8517f', fontSize: 14.5 }}>{a.qty}</span>
           </div>
         ))}
 
         {/* 每笔明细 */}
         {(lines || []).length > 0 && (
           <>
-            <div style={{ borderTop: '1px solid #f0e9ef', margin: '10px 0 8px' }} />
-            <div style={{ fontSize: 11, color: '#a0a6b0', marginBottom: 4 }}>每笔明细</div>
+            <div style={{ borderTop: '1px solid #f0e9ef', margin: '12px 0 10px' }} />
+            <div style={{ fontSize: 11.5, color: '#a0a6b0', marginBottom: 6 }}>每笔明细</div>
             {(lines || []).map((t, i) => (
-              <div key={i} style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.9, whiteSpace: 'nowrap' }}>{t}</div>
+              <div key={i} style={{ fontSize: 13, color: '#6b7280', lineHeight: 2, whiteSpace: 'nowrap' }}>{t}</div>
             ))}
           </>
         )}
