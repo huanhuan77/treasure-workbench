@@ -1562,7 +1562,13 @@ export function DashboardPage() {
                 <ReminderTable
                   items={fReminders}
                   onlyAccount={remindAccount === 'all' ? '' : remindAccount}
-                  accountsOf={(s) => reminderAccounts(s)}
+                  accountsOf={(s) => {
+                    const list = reminderAccounts(s)
+                    if (remindAccount !== 'all' && pendingAccounts(s).includes(remindAccount) && !list.includes(remindAccount)) {
+                      return [remindAccount, ...list]
+                    }
+                    return list
+                  }}
                   midHeader="未发布天数"
                   renderMid={(s, account) => {
                     const days = daysSincePublishByAccount(s, account)
@@ -1587,7 +1593,12 @@ export function DashboardPage() {
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fReminders.map((s) => {
                     // 只显示**真正还需要发**的账号（与 PC 总览、提醒页同一口径）
-                    const showAccounts = reminderAccounts(s)
+                    let showAccounts = reminderAccounts(s)
+                    // 筛了账号时：该账号虽已发过但超期没发（不在"从未发过"列表里），
+                    // 也要把它显示出来，否则卡片像是"别的账号冒出来"
+                    if (remindAccount !== 'all' && pendingAccounts(s).includes(remindAccount) && !showAccounts.includes(remindAccount)) {
+                      showAccounts = [remindAccount, ...showAccounts]
+                    }
                     const daysText = showAccounts.length
                       ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
                       : daysSincePublish(s)
