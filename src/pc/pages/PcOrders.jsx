@@ -2,7 +2,6 @@ import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { OrderFormModal } from '../../components/OrderFormModal'
 import { OrderDialog } from '../components/OrderDialog'
 import { ResetButton } from '../components/ResetButton'
 import { SearchSelect } from '../components/SearchSelect'
@@ -36,7 +35,7 @@ const dispDate = (v) => (v ? String(v).replace(/-/g, '/') : '未填日期')
 // 每天的明细、单条编辑/删除、按天删除、以及「继续新增一单」。
 export function PcOrders() {
   const { show } = useToast()
-  const { orders, addOrder, updateOrder, deleteOrder, hiddenAccounts } = useStore()
+  const { orders, updateOrder, deleteOrder, hiddenAccounts } = useStore()
   const [accountFilter, setAccountFilter] = useState('')
   const [dateRange, setDateRange] = useState('yesterday') // 与手机版同默认值
   const [sortKey, setSortKey] = useState('dateDesc')
@@ -48,7 +47,6 @@ export function PcOrders() {
   const [orderOpen, setOrderOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [prefill, setPrefill] = useState(null)
-  const [formSeq, setFormSeq] = useState(0)
 
   // 从总览指标卡「新增」跳过来（/pc/orders?add=1）时直接打开记出单弹窗，随后清掉参数
   const [searchParams, setSearchParams] = useSearchParams()
@@ -167,14 +165,7 @@ export function PcOrders() {
     return [...map.entries()].sort((a, b) => String(b[0]).localeCompare(String(a[0])))
   }
 
-  const openEdit = (o) => { setEditing(o); setFormSeq((s) => s + 1); setModalOpen(true) }
-  const handleSave = (payload) => {
-    if (!payload.name) { show('请填写品名', 'error'); return }
-    if (editing) { updateOrder(editing.id, payload); show('已更新', 'success') }
-    else { addOrder(payload); show('已记一笔出单', 'success') }
-    setModalOpen(false)
-    setEditing(null)
-  }
+  const openEdit = (o) => { setEditing(o); setModalOpen(true) }
   const delEntry = (o) => {
     if (!window.confirm(`删除「${o.name}」这笔出单记录？`)) return
     deleteOrder(o.id)
@@ -394,15 +385,13 @@ export function PcOrders() {
         </div>
       </div>
 
-      {/* 编辑单笔出单：复用手机版的表单弹窗（PC 上不再跳页面） */}
-      <OrderFormModal
-        key={formSeq}
-        open={modalOpen}
-        onClose={() => { setModalOpen(false); setEditing(null); setPrefill(null) }}
-        editing={editing}
-        onSave={handleSave}
-        prefill={prefill}
-      />
+      {/* 编辑单笔出单：用 PC 自己的弹窗（不再复用手机版 OrderFormModal，用户反馈「怎么变成了手机弹窗」） */}
+      {modalOpen && editing && (
+        <OrderDialog
+          editing={editing}
+          onClose={() => { setModalOpen(false); setEditing(null); setPrefill(null) }}
+        />
+      )}
 
       {/* 记出单（新增）：账号 Tab 切换，一次可记多个账号 */}
       {orderOpen && (

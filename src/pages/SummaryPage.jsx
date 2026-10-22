@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
-import { PERIODS, periodRange, buildSummary, buildTrendFor, daysBetween } from '../utils/summary'
-import { TrendBars } from '../components/TrendBars'
+import { PERIODS, periodRange, buildSummary, buildTrendFor, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../utils/summary'
+import { makePeriodOption, makeMonthlyOption, makePieOption } from '../utils/chartOptions'
+import { EChart } from '../components/EChart'
 
 // 手机版「周 / 月总结」：只做数据展示（用户要求「只要数据表格」）。
 // 口径与 PC 完全一致（共用 utils/summary.js）：周=周一~周日、月=自然月。
@@ -11,8 +12,18 @@ const fmtInt = (n) => String(Number(n) || 0)
 export default function SummaryPage() {
   const { samples, publishRecords, orders, transactions, todos, hiddenAccounts } = useStore()
   const [period, setPeriod] = useState('week')
+  // 自定义日期区间
+  const [customStart, setCustomStart] = useState('')
+  const [customEnd, setCustomEnd] = useState('')
 
-  const range = useMemo(() => periodRange(period), [period])
+  const range = useMemo(() => {
+    if (customStart && customEnd) {
+      const s = customStart <= customEnd ? customStart : customEnd
+      const e = customStart <= customEnd ? customEnd : customStart
+      return { key: 'custom', start: s, end: e, label: `${s} ~ ${e}` }
+    }
+    return periodRange(period)
+  }, [period, customStart, customEnd])
   const sum = useMemo(
     () => buildSummary({ samples, publishRecords, orders, transactions, todos }, range),
     [samples, publishRecords, orders, transactions, todos, range],
@@ -24,6 +35,23 @@ export default function SummaryPage() {
     () => buildTrendFor({ samples, publishRecords, orders, transactions, todos }, range),
     [samples, publishRecords, orders, transactions, todos, range],
   )
+  const periodOption = useMemo(
+    () => makePeriodOption(trend.bars, { rotate: trend.bars.length > 7 ? 40 : 0 }),
+    [trend],
+  )
+  // 近 6 个月（发布 / 出单 / 转化率）
+  const monthly = useMemo(
+    () => buildMonthlyTrend({ samples, publishRecords, orders, transactions, todos }, 6),
+    [samples, publishRecords, orders, transactions, todos],
+  )
+  const monthlyOption = useMemo(() => makeMonthlyOption(monthly), [monthly])
+  // 分类占比（发布条数 / 出单件数）
+  const [catMetric, setCatMetric] = useState('publish')
+  const catShare = useMemo(
+    () => buildCategoryShare({ samples, publishRecords, orders }, range, catMetric),
+    [samples, publishRecords, orders, range, catMetric],
+  )
+  const pieOption = useMemo(() => makePieOption(catShare), [catShare])
 
   // 只留「发布 / 出单 / 样品」（用户要求去掉收入、净收入、完成待办）
   const cards = [
@@ -42,13 +70,13 @@ export default function SummaryPage() {
       </header>
 
       {/* 期间切换 */}
-      <div style={{ display: 'flex', gap: 8, padding: '0 16px 10px', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', gap: 8, padding: '0 16px 8px', overflowX: 'auto' }}>
         {PERIODS.map((p) => {
-          const on = period === p.key
+          const on = !customStart && !customEnd && period === p.key
           return (
             <button
               key={p.key}
-              onClick={() => setPeriod(p.key)}
+              onClick={() => { setCustomStart(''); setCustomEnd(''); setPeriod(p.key) }}
               style={{
                 padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600,
                 whiteSpace: 'nowrap', cursor: 'pointer',
@@ -59,6 +87,35 @@ export default function SummaryPage() {
             >{p.label}</button>
           )
         })}
+      </div>
+
+      {/* 自定义日期区间 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px 10px' }}>
+        <input
+          type="date"
+          value={customStart}
+          onChange={(e) => setCustomStart(e.target.value)}
+          style={{
+            flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
+            border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
+          }}
+        />
+        <span style={{ color: '#9aa0a9', fontSize: 12 }}>~</span>
+        <input
+          type="date"
+          value={customEnd}
+          onChange={(e) => setCustomEnd(e.target.value)}
+          style={{
+            flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
+            border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
+          }}
+        />
+        {(customStart || customEnd) && (
+          <button
+            onClick={() => { setCustomStart(''); setCustomEnd('') }}
+            style={{ border: 'none', background: 'transparent', color: '#9aa0a9', fontSize: 12, cursor: 'pointer' }}
+          >清空</button>
+        )}
       </div>
 
       {/* 指标卡：两列 */}
@@ -78,11 +135,45 @@ export default function SummaryPage() {
       {/* 近 4 周柱状图 */}
       <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
         <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
-          {trend.mode === 'day' ? '本周按天对比' : '本月按周对比'}
+          {range.key === 'custom'
+            ? `自定义区间（按${trend.mode === 'day' ? '天' : '周'}）`
+            : (trend.mode === 'day' ? '本周按天对比' : '本月按周对比')}
         </div>
-        <div style={{ padding: '10px 12px 12px' }}>
-          <TrendBars data={trend.bars} height={130} barWidth={trend.mode === 'day' ? 10 : 14} />
+        <div style={{ padding: '10px 8px 8px' }}>
+          <EChart option={periodOption} height={200} />
         </div>
+      </div>
+
+      {/* 近 6 个月趋势 / 出单转化 */}
+      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
+        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
+          近 6 个月趋势 / 出单转化
+        </div>
+        <div style={{ padding: '10px 8px 8px' }}>
+          <EChart option={monthlyOption} height={210} />
+        </div>
+      </div>
+
+      {/* 分类占比 */}
+      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
+        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)', display: 'flex', alignItems: 'center' }}>
+          分类占比
+          <div style={{ flex: 1 }} />
+          <button
+            onClick={() => setCatMetric(catMetric === 'publish' ? 'order' : 'publish')}
+            style={{
+              border: '1px solid rgba(184,81,127,0.45)', background: '#fff', color: '#b8517f',
+              fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 999, cursor: 'pointer',
+            }}
+          >{catMetric === 'publish' ? '按发布条数' : '按出单件数'}</button>
+        </div>
+        {catShare.length === 0 ? (
+          <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
+        ) : (
+          <div style={{ padding: '6px 8px 8px' }}>
+            <EChart option={pieOption} height={230} />
+          </div>
+        )}
       </div>
 
       {/* 分账号明细 */}

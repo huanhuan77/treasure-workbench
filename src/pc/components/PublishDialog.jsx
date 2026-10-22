@@ -151,17 +151,23 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
         </div>
 
         <div className="pcv-dialog-b">
-          <div className="pcv-field-label">发布日期</div>
-          <input
-            className="pcv-input"
-            style={{ width: 180 }}
-            type="date"
-            value={publishDate}
-            onChange={(e) => setPublishDate(e.target.value)}
-          />
-
-          <div className="pcv-field-label" style={{ marginTop: 18 }}>账号</div>
-          <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} />
+          {/* 发布日期 + 账号放同一行（用户要求「一行显示」，与记出单/新建计划一致） */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+            <div style={{ flexShrink: 0 }}>
+              <div className="pcv-field-label">发布日期</div>
+              <input
+                className="pcv-input"
+                style={{ width: 150 }}
+                type="date"
+                value={publishDate}
+                onChange={(e) => setPublishDate(e.target.value)}
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="pcv-field-label">账号</div>
+              <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} />
+            </div>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
             <span className="pcv-field-label" style={{ margin: 0 }}>样品 &amp; 发布数量（可多选）</span>
@@ -171,102 +177,97 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
           <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>只能选「{account}」已拍的样品</div>
 
           <div className="pcv-entrylist">
-            {/* 空态本身可点：直接新增一行并展开选样面板（用户要求「点击能新增」），
-                不用再去找右上角那个「＋ 添加」 */}
-            {entries.length === 0 && (
-              <button className="pcv-entry-empty" onClick={addEntry}>
-                ＋ 点这里新增一条「样品 + 数量」
-              </button>
-            )}
-            {entries.map((e, idx) => (
-              <div key={idx}>
-                <div className="pcv-entry">
+            {/* 与「记出单」统一：已选样品是可删除的标签（带数量 ×N），点框展开选样面板 */}
+            <div className="pcv-tagbox" onClick={() => { if (pickIdx < 0) { setPickIdx(0); setQuery('') } }}>
+              {entries.filter((e) => e.sampleId).map((e) => (
+                <span key={e.sampleId} className="pcv-tag">
+                  {nameOf(e.sampleId)} ×{Number(e.qty) > 0 ? Number(e.qty) : 1}
                   <button
-                    className={`pcv-entry-pick${e.sampleId ? '' : ' empty'}`}
-                    onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery('') }}
-                  >
-                    {e.sampleId ? nameOf(e.sampleId) : '点击选择样品'}
-                  </button>
-                  <div className="pcv-qty">
-                    <button
-                      type="button"
-                      onClick={() => bumpQty(idx, -1)}
-                    >−</button>
-                    <input
-                      type="number"
-                      min="1"
-                      value={e.qty}
-                      onChange={(ev) => {
-                        const n = parseInt(ev.target.value, 10)
-                        setQty(idx, Number.isNaN(n) || n < 1 ? '' : String(n))
-                      }}
-                      onBlur={() => { if (!(Number(e.qty) >= 1)) setQty(idx, '1') }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => bumpQty(idx, 1)}
-                    >＋</button>
-                  </div>
-                  <button className="pcv-x" title="删除该条" onClick={() => removeEntry(idx)}>×</button>
-                </div>
+                    type="button"
+                    title="移除这条"
+                    onClick={(ev) => {
+                      ev.stopPropagation()
+                      removeEntry(entries.findIndex((x) => x.sampleId === e.sampleId))
+                    }}
+                  >×</button>
+                </span>
+              ))}
+              {entries.filter((e) => e.sampleId).length === 0 && (
+                <span className="pcv-tagbox-hint">点击选择样品</span>
+              )}
+              <span className="pcv-tagbox-caret">▾</span>
+            </div>
 
-                {/* 样品选择面板：内联展开在该行下面 */}
-                {pickIdx === idx && (
-                  <div className="pcv-drop">
-                    {/* 分类筛选：只列候选样品里出现过的分类，一个都没有时整行不显示 */}
-                    {catOptions.length > 1 && (
-                      <div className="pcv-catfilter">
-                        <button className={catFilter === '' ? 'on' : ''} onClick={() => setCatFilter('')}>全部</button>
-                        {catOptions.map((c) => (
-                          <button key={c} className={catFilter === c ? 'on' : ''} onClick={() => setCatFilter(c)}>{c}</button>
-                        ))}
-                      </div>
-                    )}
-                    <input
-                      className="pcv-input"
-                      style={{ width: '100%' }}
-                      placeholder="搜索样品名称…"
-                      value={query}
-                      onChange={(ev) => setQuery(ev.target.value)}
-                      autoFocus
-                    />
-                    <div className="pcv-drop-list">
-                      {candidates.length === 0 ? (
-                        <div className="pcv-drop-hint">该账号下暂无可发布的样品（需已拍、未放弃）</div>
-                      ) : filtered.length === 0 ? (
-                        <div className="pcv-drop-hint">没有匹配的样品</div>
-                      ) : filtered.map((s) => {
-                        const on = entries.some((e) => e.sampleId === s.id)
-                        return (
-                          <button
-                            key={s.id}
-                            className={`pcv-drop-row${on ? ' on' : ''}`}
-                            title={on ? '已勾选，再点一下取消' : '点一下勾选（可多选）'}
-                            onClick={() => pickSample(s.id)}
-                          >
-                            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
-                            {on && <span className="pcv-drop-check">✓</span>}
-                          </button>
-                        )
-                      })}
-                    </div>
-                    {/* 底部：只作提示 + 收起（勾选即生效，不需要再点确定） */}
-                    <div className="pcv-drop-f">
-                      <span style={{ fontSize: 12, color: entries.some((e) => e.sampleId) ? '#b8517f' : '#9aa0a9' }}>
-                        {entries.filter((e) => e.sampleId).length > 0
-                          ? `已勾选 ${entries.filter((e) => e.sampleId).length} 条（再点一次取消）`
-                          : '点一下勾选，可多选'}
-                      </span>
-                      <div className="pcv-spacer" />
-                      <button
-                        className="pcv-btn pcv-btn-ghost"
-                        onClick={() => { setPickIdx(-1); setQuery(''); setCatFilter('') }}
-                      >收起</button>
-                    </div>
+            {/* 样品选择面板：勾选即生效，数量在行内直接加减 */}
+            {pickIdx >= 0 && (
+              <div className="pcv-drop">
+                {/* 分类筛选：只列候选样品里出现过的分类，一个都没有时整行不显示 */}
+                {catOptions.length > 1 && (
+                  <div className="pcv-catfilter">
+                    <button className={catFilter === '' ? 'on' : ''} onClick={() => setCatFilter('')}>全部</button>
+                    {catOptions.map((c) => (
+                      <button key={c} className={catFilter === c ? 'on' : ''} onClick={() => setCatFilter(c)}>{c}</button>
+                    ))}
                   </div>
                 )}
+                <input
+                  className="pcv-input"
+                  style={{ width: '100%' }}
+                  placeholder="搜索样品名称…"
+                  value={query}
+                  onChange={(ev) => setQuery(ev.target.value)}
+                  autoFocus
+                />
+                <div className="pcv-drop-list">
+                  {candidates.length === 0 ? (
+                    <div className="pcv-drop-hint">该账号下暂无可发布的样品（需已拍、未放弃）</div>
+                  ) : filtered.length === 0 ? (
+                    <div className="pcv-drop-hint">没有匹配的样品</div>
+                  ) : filtered.map((s) => {
+                    const idx = entries.findIndex((e) => e.sampleId === s.id)
+                    const on = idx >= 0
+                    const qty = on ? (Number(entries[idx].qty) > 0 ? Number(entries[idx].qty) : 1) : 1
+                    return (
+                      <div
+                        key={s.id}
+                        className={`pcv-drop-row${on ? ' on' : ''}`}
+                        title={on ? '已勾选，再点一下取消' : '点一下勾选（可多选）'}
+                        onClick={() => pickSample(s.id)}
+                      >
+                        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                        {on && (
+                          <>
+                            {/* 数量直接在行内加减（不用回到上面那条目行） */}
+                            <span
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              onClick={(ev) => ev.stopPropagation()}
+                            >
+                              <button type="button" className="pcv-qty-mini" onClick={() => bumpQty(idx, -1)}>−</button>
+                              <span style={{ minWidth: 18, textAlign: 'center', fontWeight: 700 }}>{qty}</span>
+                              <button type="button" className="pcv-qty-mini" onClick={() => bumpQty(idx, 1)}>＋</button>
+                            </span>
+                            <span className="pcv-drop-check">✓</span>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {/* 底部：只作提示 + 收起（勾选即生效，不需要再点确定） */}
+                <div className="pcv-drop-f">
+                  <span style={{ fontSize: 12, color: entries.some((e) => e.sampleId) ? '#b8517f' : '#9aa0a9' }}>
+                    {entries.filter((e) => e.sampleId).length > 0
+                      ? `已勾选 ${entries.filter((e) => e.sampleId).length} 条（再点一次取消）`
+                      : '点一下勾选，可多选'}
+                  </span>
+                  <div className="pcv-spacer" />
+                  <button
+                    className="pcv-btn pcv-btn-ghost"
+                    onClick={() => { setPickIdx(-1); setQuery(''); setCatFilter('') }}
+                  >收起</button>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
 

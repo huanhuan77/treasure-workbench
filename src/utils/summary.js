@@ -229,7 +229,9 @@ export function buildSummary(data, range) {
 //   · 本周 / 上周 → **按天**对比（周一~周日，7 根柱，用户要求「点本周是天数对比」）
 //   · 本月 / 上月 → **按周**对比（自然周切分，通常 4~5 根柱，用户要求「本月是 4 周对比」）
 export function buildTrendFor(data, range) {
-  const isDay = range.key === 'week' || range.key === 'lastWeek'
+  // 自定义区间：跨度小（≤10 天）按天画，跨度大按周画，避免柱子挤成一团
+  const spanDays = daysBetween(range.start, range.end)
+  const isDay = range.key === 'week' || range.key === 'lastWeek' || (range.key === 'custom' && spanDays <= 10)
   const today = ymd(new Date())
   if (isDay) {
     const bars = []
@@ -293,6 +295,60 @@ export function buildTrend(data, weeks = 4, base = new Date()) {
     })
   }
   return out
+}
+
+// ── 图表数据 ────────────────────────────────────────────────
+// 近 N 个月趋势（含本月）：发布条数 / 出单件数 / 转化率（出单件数 ÷ 发布条数）
+export function buildMonthlyTrend(data, months = 6, base = new Date()) {
+  const out = []
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(base.getFullYear(), base.getMonth() - i, 1)
+    const start = ymd(d)
+    const end = ymd(new Date(d.getFullYear(), d.getMonth() + 1, 0))
+    const s = buildSummary(data, { start, end })
+    out.push({
+      key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`,
+      label: `${d.getMonth() + 1}月`,
+      start,
+      end,
+      publish: s.publish,
+      orderQty: s.orderQty,
+      orderCount: s.orderCount,
+      rate: s.publish > 0 ? Math.round((s.orderQty / s.publish) * 1000) / 10 : 0,
+    })
+  }
+  return out
+}
+
+// 分类占比（当前区间内）：按「发布条数」或「出单件数」统计各分类的占比
+export function buildCategoryShare(data, range, metric = 'publish') {
+  const samples = data.samples || []
+  const catById = new Map()
+  const catByName = new Map()
+  for (const s of samples) {
+    const cat = s.category || '未分类'
+    catById.set(s.id, cat)
+    catByName.set(String(s.name || ''), cat)
+  }
+  const map = new Map()
+  const add = (k, v) => map.set(k, (map.get(k) || 0) + v)
+
+  if (metric === 'order') {
+    for (const o of data.orders || []) {
+      if (!inRange(String(o.date || ''), range.start, range.end)) continue
+      add(catByName.get(String(o.name || '')) || '未分类', Number(o.qty) > 0 ? Number(o.qty) : 1)
+    }
+  } else {
+    for (const r of data.publishRecords || []) {
+      if (!inRange(String(r.publishDate || ''), range.start, range.end)) continue
+      add(catById.get(r.sampleId) || '未分类', Number(r.qty) > 0 ? Number(r.qty) : 1)
+    }
+  }
+
+  return [...map.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .filter((x) => x.value > 0)
+    .sort((a, b) => b.value - a.value)
 }
 
 // 粗略天数（用于展示「共 N 天」）

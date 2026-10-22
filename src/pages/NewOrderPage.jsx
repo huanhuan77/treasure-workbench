@@ -93,7 +93,7 @@ export function NewOrderPage() {
     }))
   }
 
-  const addEntry = () => updateCurrentEntries((prev) => [...prev, { sampleId: '' }])
+  const addEntry = () => updateCurrentEntries((prev) => [...prev, { sampleId: '', qty: '1' }])
   const removeEntry = (idx) => updateCurrentEntries((prev) => prev.filter((_, i) => i !== idx))
   const updateEntry = (idx, patch) => updateCurrentEntries((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)))
 
@@ -103,9 +103,9 @@ export function NewOrderPage() {
       if (prev.some((e) => e.sampleId === id)) return prev.filter((e) => e.sampleId !== id)
       const next = [...prev]
       if (next[activeEntryIdx] && !next[activeEntryIdx].sampleId) {
-        next[activeEntryIdx] = { ...next[activeEntryIdx], sampleId: id }
+        next[activeEntryIdx] = { ...next[activeEntryIdx], sampleId: id, qty: next[activeEntryIdx].qty || '1' }
       } else {
-        next.push({ sampleId: id })
+        next.push({ sampleId: id, qty: '1' })
       }
       return next
     })
@@ -135,7 +135,7 @@ export function NewOrderPage() {
           account: a,
           sampleId: e.sampleId,
           productId: sm?.productId || '',
-          qty: 1,
+          qty: Math.max(1, Number(e.qty) || 1),
         })
         count++
       }
@@ -288,6 +288,32 @@ export function NewOrderPage() {
                   }}>
                     {sm ? sm.name : '点击选择产品'}
                   </button>
+                  {/* 出单数量：− N ＋（用户要求「出单填写出单数量」） */}
+                  {sm && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                      <button
+                        type="button"
+                        onClick={() => updateEntry(idx, { qty: String(Math.max(1, (Number(e.qty) || 1) - 1)) })}
+                        style={{
+                          width: '26px', height: '26px', borderRadius: '7px', padding: 0,
+                          border: '1px solid rgba(0,0,0,0.10)', background: '#fff', color: '#6b7280',
+                          fontSize: '14px', lineHeight: 1, cursor: 'pointer',
+                        }}
+                      >−</button>
+                      <span style={{ minWidth: '18px', textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>
+                        {Number(e.qty) > 0 ? Number(e.qty) : 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => updateEntry(idx, { qty: String((Number(e.qty) || 1) + 1) })}
+                        style={{
+                          width: '26px', height: '26px', borderRadius: '7px', padding: 0,
+                          border: '1px solid rgba(0,0,0,0.10)', background: '#fff', color: '#6b7280',
+                          fontSize: '14px', lineHeight: 1, cursor: 'pointer',
+                        }}
+                      >＋</button>
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeEntry(idx)}

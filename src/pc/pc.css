@@ -1519,6 +1519,23 @@ select.pcv-input {
   line-height: 1;
   cursor: pointer;
 }
+/* 选样面板里每行的小数量加减（记录发布用） */
+.pcv-qty-mini {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: #fff;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.pcv-qty-mini:hover {
+  border-color: #b8517f;
+  color: #b8517f;
+}
 .pcv-tag > button:hover {
   color: #b96a66;
 }

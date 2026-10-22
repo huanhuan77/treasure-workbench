@@ -6,33 +6,37 @@ import { CATEGORIES } from '../../utils/categories'
 import { isSelectableForOrder } from '../../utils/publish'
 import { AccountTabs } from './AccountTabs'
 
-// PC 版「记出单」弹窗（新增）。
+// PC 版「记出单 / 编辑出单」弹窗。
 //
 // 交互照手机版 NewOrderPage：**账号 Tab 切换，每个账号下独立加产品，
 // 保存时一次性把所有账号的条目都写进去** —— 用户要求「可以同时记录多个账号」。
-// 原来 PC 用的是手机版的 OrderFormModal：账号是一排单选 pill，一次只能记一个账号。
 //
-// 只负责**新增**。编辑单笔出单仍走 OrderFormModal：
-// 一条出单记录只属于一个账号，编辑场景没有「多账号」这回事，不需要 tab。
+// editing 传一条出单记录 → 进入编辑模式（只保留这一条，保存走 updateOrder）。
+// 编辑也用这个 PC 弹窗，不再复用手机版 OrderFormModal（用户反馈「怎么变成了手机弹窗」）。
 // prefill 可传 { account, sampleId }，用于「继续新增一单」。
-export function OrderDialog({ prefill, onClose }) {
-  const { samples, addOrder } = useStore()
+export function OrderDialog({ prefill, onClose, editing }) {
+  const { samples, addOrder, updateOrder } = useStore()
   const { show } = useToast()
+  const isEditing = !!editing
 
-  const initAcc = prefill?.account || ACCOUNTS[0]
+  const initAcc = editing?.account || prefill?.account || ACCOUNTS[0]
   const [account, setAccount] = useState(initAcc)
   // 出单日期默认「昨天」：出单基本都是事后补记，写当天十有八九要改（用户要求）
   const [date, setDate] = useState(() => {
+    if (editing?.date) return editing.date
     if (prefill?.date) return prefill.date
     const d = new Date()
     d.setDate(d.getDate() - 1)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   })
-  // 每个账号独立的条目：{ [account]: [{ sampleId }] }
+  // 备注（编辑时可改；新增时也允许填）
+  const [remark, setRemark] = useState(editing?.remark || '')
+  // 每个账号独立的条目：{ [account]: [{ sampleId, qty }] }
   const [byAcc, setByAcc] = useState(() => {
     const o = {}
     for (const a of ACCOUNTS) o[a] = []
-    if (prefill?.sampleId) o[initAcc] = [{ sampleId: prefill.sampleId }]
+    const sid = editing?.sampleId || prefill?.sampleId
+    if (sid) o[initAcc] = [{ sampleId: sid, qty: String(Math.max(1, Number(editing?.qty) || 1)) }]
     return o
   })
   const [pickIdx, setPickIdx] = useState(-1)   // 正在为第几行选样品；-1 = 面板收起
@@ -74,7 +78,7 @@ export function OrderDialog({ prefill, onClose }) {
 
   const setEntries = (fn) => setByAcc((prev) => ({ ...prev, [account]: fn(prev[account] || []) }))
   const addEntry = () => {
-    setEntries((p) => [...p, { sampleId: '' }])
+    setEntries((p) => [...p, { sampleId: '', qty: '1' }])
     setQuery('')
     setPickIdx(entries.length)   // 新加的那行直接展开选择面板
   }
@@ -85,6 +89,10 @@ export function OrderDialog({ prefill, onClose }) {
   }
   // 从标签框里移除某个已选样品（× 按钮）
   const removeSample = (sid) => setEntries((p) => p.filter((e) => e.sampleId !== sid))
+  // 出单数量加减（行内 − N ＋）
+  const bumpQty = (idx, delta) => setEntries((p) => p.map((e, i) => (
+    i === idx ? { ...e, qty: String(Math.max(1, (Number(e.qty) || 1) + delta)) } : e
+  )))
   // 选样品：**点一下=勾选，再点=取消**（用户要求「勾选多个打钩，不是消失」）——
   // 勾上就立刻占一条（当前行空着就填当前行，否则再加一行），
   // 列表里保持打钩可见，账号 tab 的条数实时跟着变，不需要点「确定」。
@@ -96,9 +104,9 @@ export function OrderDialog({ prefill, onClose }) {
       setEntries((p) => {
         const next = [...p]
         if (pickIdx >= 0 && pickIdx < next.length && !next[pickIdx].sampleId) {
-          next[pickIdx] = { ...(next[pickIdx] || {}), sampleId: sid }
+          next[pickIdx] = { ...(next[pickIdx] || { qty: '1' }), sampleId: sid, qty: next[pickIdx]?.qty || '1' }
         } else {
-          next.push({ sampleId: sid })
+          next.push({ sampleId: sid, qty: '1' })
         }
         return next
       })
@@ -116,6 +124,23 @@ export function OrderDialog({ prefill, onClose }) {
 
   const save = () => {
     if (total === 0) { show('请至少选 1 个产品', 'error'); return }
+    // 编辑：只改这一条（账号 / 日期 / 产品 / 数量 / 备注）
+    if (isEditing) {
+      const e = (byAcc[account] || []).find((x) => x.sampleId)
+      const sm = (samples || []).find((s) => s.id === e?.sampleId)
+      updateOrder(editing.id, {
+        name: (sm?.name || editing.name || '').trim(),
+        date,
+        account,
+        sampleId: e?.sampleId || editing.sampleId || '',
+        productId: sm?.productId || editing.productId || '',
+        qty: Math.max(1, Number(e?.qty) || 1),
+        remark,
+      })
+      show('已保存', 'success')
+      onClose()
+      return
+    }
     let n = 0
     for (const a of ACCOUNTS) {
       for (const e of (byAcc[a] || []).filter((x) => x.sampleId)) {
@@ -126,8 +151,9 @@ export function OrderDialog({ prefill, onClose }) {
           account: a,
           sampleId: e.sampleId,
           productId: sm?.productId || '',
-          qty: 1,
-          remark: '',
+          // 出单数量按条目里填的写（用户要求「出单填写出单数量」），默认 1
+          qty: Math.max(1, Number(e.qty) || 1),
+          remark,
         })
         n++
       }
@@ -140,31 +166,38 @@ export function OrderDialog({ prefill, onClose }) {
     <div className="pcv-overlay" onClick={onClose}>
       <div className="pcv-dialog pcv-dialog--tall" style={{ maxWidth: 620 }} onClick={(e) => e.stopPropagation()}>
         <div className="pcv-dialog-h">
-          <span>记出单</span>
+          <span>{isEditing ? '编辑出单' : '记出单'}</span>
           <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>
-            切账号分别填，保存时一次记完
+            {isEditing ? '改完点保存' : '切账号分别填，保存时一次记完'}
           </span>
           <div className="pcv-spacer" />
           <button className="pcv-dialog-x" title="关闭" onClick={onClose}>×</button>
         </div>
 
         <div className="pcv-dialog-b">
-          <div className="pcv-field-label">出单日期</div>
-          <input
-            className="pcv-input"
-            style={{ width: 180 }}
-            type="date"
-            value={date}
-            onChange={(e) => { if (e.target.value) setDate(e.target.value) }}
-          />
-
-          <div className="pcv-field-label" style={{ marginTop: 18 }}>账号</div>
-          <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} />
+          {/* 出单日期 + 账号放同一行（用户要求「一行显示」，与总结页新建计划弹窗一致） */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+            <div style={{ flexShrink: 0 }}>
+              <div className="pcv-field-label">出单日期</div>
+              <input
+                className="pcv-input"
+                style={{ width: 150 }}
+                type="date"
+                value={date}
+                onChange={(e) => { if (e.target.value) setDate(e.target.value) }}
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="pcv-field-label">账号</div>
+              <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} />
+            </div>
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', marginTop: 18, marginBottom: 6 }}>
             <span className="pcv-field-label" style={{ margin: 0 }}>关联产品（可多选）</span>
             <div className="pcv-spacer" />
-            <button className="pcv-btn pcv-btn-ghost" onClick={addEntry}>＋ 添加</button>
+            {/* 编辑时只有这一条，不需要「＋ 添加」 */}
+            {!isEditing && <button className="pcv-btn pcv-btn-ghost" onClick={addEntry}>＋ 添加</button>}
           </div>
           <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>只能选「{account}」已发布的样品</div>
 
@@ -176,7 +209,7 @@ export function OrderDialog({ prefill, onClose }) {
             >
               {entries.filter((e) => e.sampleId).map((e) => (
                 <span key={e.sampleId} className="pcv-tag">
-                  {nameOf(e.sampleId)}
+                  {nameOf(e.sampleId)} ×{Number(e.qty) > 0 ? Number(e.qty) : 1}
                   <button
                     type="button"
                     title="移除这条"
@@ -219,17 +252,32 @@ export function OrderDialog({ prefill, onClose }) {
                       ) : filtered.length === 0 ? (
                         <div className="pcv-drop-hint">没有匹配的样品</div>
                       ) : filtered.map((s) => {
-                        const on = entries.some((e) => e.sampleId === s.id)
+                        const idx = entries.findIndex((e) => e.sampleId === s.id)
+                        const on = idx >= 0
+                        const qty = on ? (Number(entries[idx].qty) > 0 ? Number(entries[idx].qty) : 1) : 1
                         return (
-                          <button
+                          <div
                             key={s.id}
                             className={`pcv-drop-row${on ? ' on' : ''}`}
                             title={on ? '已勾选，再点一下取消' : '点一下勾选（可多选）'}
                             onClick={() => pickSample(s.id)}
                           >
                             <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
-                            {on && <span className="pcv-drop-check">✓</span>}
-                          </button>
+                            {on && (
+                              <>
+                                {/* 出单数量：行内直接加减（用户要求「出单填写出单数量」） */}
+                                <span
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                  onClick={(ev) => ev.stopPropagation()}
+                                >
+                                  <button type="button" className="pcv-qty-mini" onClick={() => bumpQty(idx, -1)}>−</button>
+                                  <span style={{ minWidth: 18, textAlign: 'center', fontWeight: 700 }}>{qty}</span>
+                                  <button type="button" className="pcv-qty-mini" onClick={() => bumpQty(idx, 1)}>＋</button>
+                                </span>
+                                <span className="pcv-drop-check">✓</span>
+                              </>
+                            )}
+                          </div>
                         )
                       })}
                     </div>
@@ -249,6 +297,16 @@ export function OrderDialog({ prefill, onClose }) {
               </div>
             )}
           </div>
+
+          {/* 备注（选填）：编辑时能改原来的备注 */}
+          <div className="pcv-field-label" style={{ marginTop: 14 }}>备注（选填）</div>
+          <input
+            className="pcv-input"
+            style={{ width: '100%' }}
+            placeholder="平台 / 链接 / 说明…"
+            value={remark}
+            onChange={(e) => setRemark(e.target.value)}
+          />
         </div>
 
         <div className="pcv-dialog-f">

@@ -398,18 +398,20 @@ export function PcFinance() {
                     onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
                   />
                 </div>
+                {/* 账号与金额/日期放同一行（与其他记录弹窗统一：「一行显示」） */}
+                <div style={{ width: 170 }}>
+                  <div className="pcv-field-label">账号</div>
+                  <select
+                    className="pcv-input"
+                    style={{ width: '100%' }}
+                    value={form.account}
+                    onChange={(e) => setForm((f) => ({ ...f, account: e.target.value }))}
+                  >
+                    <option value="">不指定账号</option>
+                    {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
               </div>
-
-              <div className="pcv-field-label" style={{ marginTop: 16 }}>账号</div>
-              <select
-                className="pcv-input"
-                style={{ width: '100%' }}
-                value={form.account}
-                onChange={(e) => setForm((f) => ({ ...f, account: e.target.value }))}
-              >
-                <option value="">不指定账号</option>
-                {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
-              </select>
 
               {form.type === 'income' && (
                 <>
