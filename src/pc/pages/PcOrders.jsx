@@ -4,6 +4,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { OrderDialog } from '../components/OrderDialog'
 import { ResetButton } from '../components/ResetButton'
+import QtyDetailModal from '../components/QtyDetailModal'
 import { dateBounds } from '../../components/DateFilterBar'
 import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 
@@ -38,8 +39,8 @@ export function PcOrders() {
   const [accountFilter, setAccountFilter] = useState('')
   const [dateRange, setDateRange] = useState('yesterday') // 与手机版同默认值
   const [sortKey, setSortKey] = useState('dateDesc')
-  // 「出单数量」默认只显示总数，点开才列出每个账号（用户要求）
-  const [qtyOpen, setQtyOpen] = useState('')
+  // 「出单数量」默认只显示总数，点数字弹出明细弹窗（用户要求）
+  const [qtyOpen, setQtyOpen] = useState(null)
   const [productFilter, setProductFilter] = useState('')
   const [expanded, setExpanded] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -236,6 +237,18 @@ export function PcOrders() {
           />
           {/* 「重置」靠左：紧跟日期选择器之后（去掉 spacer，不再顶到行尾） */}
           <ResetButton active={hasFilter} onClick={resetFilters} />
+          {/* 合计提到顶部（用户要求「在顶部显示合计」），跟随筛选实时变化 */}
+          <span style={{ marginLeft: 10, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ background: '#faf3f6', borderRadius: 999, padding: '3px 12px', fontSize: 12, color: '#6b7280' }}>
+              出单数量合计 <b style={{ color: '#b8517f', fontSize: 14 }}>{totalQty}</b> 件
+            </span>
+            <span style={{ background: '#f4f4f8', borderRadius: 999, padding: '3px 12px', fontSize: 12, color: '#6b7280' }}>
+              笔数 <b style={{ color: '#334155', fontSize: 13 }}>{totalCount}</b>
+            </span>
+            <span style={{ background: '#f4f4f8', borderRadius: 999, padding: '3px 12px', fontSize: 12, color: '#6b7280' }}>
+              产品 <b style={{ color: '#334155', fontSize: 13 }}>{groups.length}</b> 个
+            </span>
+          </span>
         </div>
 
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
@@ -324,35 +337,41 @@ export function PcOrders() {
                           ))
                         )}
                       </td>
-                      {/* 出单数量：默认只显示**总数**，点一下再展开每个账号的明细（用户要求） */}
+                      {/* 出单数量：默认只显示**总数**（带下划线提示可点），
+                          点数字弹出各账号明细弹窗（用户要求「点击了弹出弹窗」） */}
                       <td
                         style={{ whiteSpace: 'nowrap' }}
-                        title={`合计 ${g.qty} 件 · 点数字展开每个账号`}
+                        title={`合计 ${g.qty} 件 · 点数字查看各账号明细`}
                       >
                         {g.qtyByAccount.length === 0 ? (
                           <span style={{ color: '#c9cdd4' }}>—</span>
                         ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => setQtyOpen((v) => (v === g.name ? '' : g.name))}
-                              style={{
-                                border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                                fontSize: 14, fontWeight: 700, color: '#b8517f',
-                              }}
-                            >{g.qty}</button>
-                            {qtyOpen === g.name && (
-                              <div style={{ marginTop: 4 }}>
-                                {g.qtyByAccount.map(([a, v]) => (
-                                  <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.7 }}>
-                                    <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c1c7cf' }} />
-                                    <span style={{ color: '#4b5563' }}>{maskAccount(a, hiddenAccounts)}</span>
-                                    <span style={{ marginLeft: 6, fontWeight: 700, color: '#b8517f' }}>{v}</span>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </>
+                          <button
+                            type="button"
+                            onClick={() => setQtyOpen({ name: g.name })}
+                            style={{
+                              border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
+                              fontSize: 14, fontWeight: 700, color: '#b8517f',
+                              textDecoration: 'underline', textUnderlineOffset: 3,
+                              textDecorationColor: 'rgba(184,81,127,0.45)',
+                            }}
+                          >{g.qty}</button>
+                        )}
+                        {qtyOpen && qtyOpen.name === g.name && (
+                          <QtyDetailModal
+                            title={qtyOpen.name}
+                            total={g.qty}
+                            count={g.count}
+                            accounts={g.qtyByAccount.map(([a, v]) => ({
+                              name: maskAccount(a, hiddenAccounts),
+                              color: (ACCOUNT_COLOR[a] || {}).c || '#c1c7cf',
+                              qty: v,
+                            }))}
+                            lines={[...g.entries]
+                              .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
+                              .map((e) => `${e.account || '未指定'}　${e.date ? dispDate(e.date) : '未填日期'}　×${Number(e.qty) > 0 ? Number(e.qty) : 1}`)}
+                            onClose={() => setQtyOpen(null)}
+                          />
                         )}
                       </td>
                       {/* 笔数：常规字重、不加粗 */}
@@ -446,19 +465,6 @@ export function PcOrders() {
                 )
               })}
             </tbody>
-            {/* 合计行：跟着筛选变化（用户要求「加个总数」） */}
-            {groups.length > 0 && (
-              <tfoot>
-                <tr style={{ background: '#faf7fb' }}>
-                  <td style={{ fontWeight: 700, color: '#334155' }}>合计（{groups.length} 个产品）</td>
-                  <td />
-                  <td style={{ fontWeight: 700, color: '#b8517f', fontSize: 14 }}>{totalQty}</td>
-                  <td style={{ fontWeight: 700 }}>{totalCount}</td>
-                  <td />
-                  <td />
-                </tr>
-              </tfoot>
-            )}
           </table>
         </div>
       </div>

@@ -12,6 +12,7 @@ import { CATEGORY_STYLE } from '../../utils/productDisplay'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
 import { SampleDialog } from '../components/SampleDialog'
 import { ResetButton } from '../components/ResetButton'
+import QtyDetailModal from '../components/QtyDetailModal'
 
 // 状态色调只用三档 + 一档淡出：
 //   中性（未到货）/ 待办（未拍、已拍未发）/ 完成（已发布）/ 淡出（已放弃）
@@ -48,8 +49,8 @@ export function PcSamples() {
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('all')
-  // 「出单数量」默认只显示总数，点开才按账号展开（用户要求）
-  const [qtyOpen, setQtyOpen] = useState('')
+  // 「出单数量」默认只显示总数，点数字弹出明细弹窗（用户要求）
+  const [qtyOpen, setQtyOpen] = useState(null)
   // 是否出单筛选：all=全部 / yes=已出单 / no=未出单（口径同「是否出单」列，以出单记录表为准）
   const [orderFilter, setOrderFilter] = useState('all')
   const [hideAccount, setHideAccount] = useState(() => isAccountsHidden())
@@ -467,32 +468,36 @@ export function PcSamples() {
                       )}
                     </td>
                     <td className="pcv-num">
-                      {/* 出单数量：默认只显示**总数**，点数字再展开每个账号（用户要求） */}
+                      {/* 出单数量：默认只显示**总数**（带下划线提示可点），
+                          点数字弹出各账号明细弹窗（用户要求「点击了弹出弹窗」） */}
                       {(orderQtyBySampleAccount.get(s.id) || []).length === 0 ? (
                         <span style={{ color: '#c9cdd4' }}>—</span>
                       ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setQtyOpen((v) => (v === s.id ? '' : s.id))}
-                            title={`合计 ${orderQtyBySample.get(s.id) || 0} 件 · 点数字展开每个账号`}
-                            style={{
-                              border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
-                              fontSize: 14, fontWeight: 700, color: '#b8517f',
-                            }}
-                          >{orderQtyBySample.get(s.id) || 0}</button>
-                          {qtyOpen === s.id && (
-                            <div style={{ marginTop: 4 }}>
-                              {(orderQtyBySampleAccount.get(s.id) || []).map(([a, v]) => (
-                                <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.7, whiteSpace: 'nowrap' }}>
-                                  <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
-                                  <span style={{ color: '#4b5563' }}>{maskAccount(a, hiddenAccounts)}</span>
-                                  <span style={{ marginLeft: 6, fontWeight: 700, color: '#b8517f' }}>{v}</span>
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </>
+                        <button
+                          type="button"
+                          onClick={() => setQtyOpen({ id: s.id, name: s.name })}
+                          title={`合计 ${orderQtyBySample.get(s.id) || 0} 件 · 点数字查看各账号明细`}
+                          style={{
+                            border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
+                            fontSize: 14, fontWeight: 700, color: '#b8517f',
+                            textDecoration: 'underline', textUnderlineOffset: 3,
+                            textDecorationColor: 'rgba(184,81,127,0.45)',
+                          }}
+                        >{orderQtyBySample.get(s.id) || 0}</button>
+                      )}
+                      {qtyOpen && qtyOpen.id === s.id && (
+                        <QtyDetailModal
+                          title={qtyOpen.name}
+                          total={orderQtyBySample.get(qtyOpen.id) || 0}
+                          count={orderCountBySample.get(qtyOpen.id) || 0}
+                          accounts={(orderQtyBySampleAccount.get(qtyOpen.id) || []).map(([a, v]) => ({
+                            name: maskAccount(a, hiddenAccounts),
+                            color: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4',
+                            qty: v,
+                          }))}
+                          lines={orderDetailText.get(qtyOpen.id) || []}
+                          onClose={() => setQtyOpen(null)}
+                        />
                       )}
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
