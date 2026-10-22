@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount } from '../../utils/accounts'
 import { getCounts, hasPublished, isArchivedSample } from '../../utils/sampleStatus'
 
 // 总览「待投流」卡片（对齐手机端 DashboardPage 的那个板块）：
@@ -16,13 +16,14 @@ const AD_STATUS_COLOR = {
 }
 
 export function AdQueueCard() {
-  const { samples, adQueue, addAdQueue, updateAdQueue, deleteAdQueue } = useStore()
+  const { samples, adQueue, addAdQueue, updateAdQueue, deleteAdQueue, hiddenAccounts } = useStore()
   const { show } = useToast()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [search, setSearch] = useState('')
   // 弹窗里按账号切换（用户要求）：'' = 全部账号
   const [pickAccount, setPickAccount] = useState('')
 
+  // 「隐藏账号」= 名字打星号，不做筛选
   const list = adQueue || []
   const doneCount = list.filter((a) => a.status === '已投流').length
   // 卡片内的账号筛选 + 默认只列 5 条（用户要求，与「待办清单 / 发布计划」一致）
@@ -185,7 +186,7 @@ export function AdQueueCard() {
                     background: on ? col : '#fff',
                     color: on ? '#fff' : col,
                   }}
-                >{a}</button>
+                >{maskAccount(a, hiddenAccounts)}</button>
               )
             })}
           </div>
@@ -239,7 +240,7 @@ export function AdQueueCard() {
                       flexShrink: 0, maxWidth: 76, fontSize: 11, fontWeight: 600, color: col.c,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}
-                  >{a.account}</span>
+                  >{maskAccount(a.account, hiddenAccounts)}</span>
                   <span style={{ flexShrink: 0, fontSize: 11, color: '#b0b6bf', fontVariantNumeric: 'tabular-nums' }}>
                     {(a.publishDate || '').slice(5) || '—'}
                   </span>
@@ -331,7 +332,7 @@ export function AdQueueCard() {
                         background: on ? col : '#fff',
                         color: on ? '#fff' : col,
                       }}
-                    >{a}</button>
+                    >{maskAccount(a, hiddenAccounts)}</button>
                   )
                 })}
                 <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9aa0a9' }}>

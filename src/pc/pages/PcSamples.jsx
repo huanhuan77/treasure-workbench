@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
-import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 import {
   SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter,
   getAccounts, getCounts, getTopStatus,
@@ -42,7 +42,9 @@ const SORT_DEFAULT_DIR = { receiveDate: 'desc', deadline: 'asc' }
 // 这里只把「卡片 + 一堆彩色标签」重排成「筛选条 + 紧凑表格」。
 export function PcSamples() {
   const navigate = useNavigate()
-  const { samples, orders } = useStore()
+  const { samples, orders, hiddenAccounts } = useStore()
+  // 「隐藏账号」= 名字打星号，不筛选（用户明确「是账号显示星号，不是筛选」）
+  const visAcc = useCallback((arr) => (arr || []), [])
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('all')
@@ -166,7 +168,7 @@ export function PcSamples() {
 
   const usedAccounts = useMemo(() => {
     const set = new Set()
-    for (const s of samples) for (const a of getAccounts(s)) set.add(a)
+    for (const s of samples) for (const a of visAcc(getAccounts(s))) set.add(a)
     return [...set].sort((x, y) => {
       const ix = ACCOUNTS.indexOf(x)
       const iy = ACCOUNTS.indexOf(y)
@@ -271,7 +273,7 @@ export function PcSamples() {
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
           <button className={accountFilter === 'all' ? 'on' : ''} onClick={() => setAccountFilter('all')}>全部账号</button>
           {usedAccounts.map((a) => (
-            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
+            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{maskAccount(a, hiddenAccounts)}</button>
           ))}
           {/* 竖线把两组筛选分开，避免读成一长串同类按钮 */}
           <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
@@ -333,7 +335,7 @@ export function PcSamples() {
               ) : displayed.map((s) => {
                 const top = getTopStatus(s)
                 const st = SAMPLE_STATUS_LIST.find((x) => x.key === top) || {}
-                const accounts = getAccounts(s)
+                const accounts = visAcc(getAccounts(s))
                 const dl = deadlineDesc(s.deadline)
                 // 「发布」列取样品合计（各账号 publishCount 相加），与「发布不足 5 条」提醒同一口径；
                 // 各账号的明细留在 title 里，不占版面（多账号样品原来挤在一格里会溢出到隔壁列）。
@@ -393,7 +395,7 @@ export function PcSamples() {
                                 background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4',
                               }} />
                               {/* 账号名不加粗（用户要求）：原来 600 字重在一片正文里太跳，靠圆点区分归属即可 */}
-                              <span style={{ color: '#333a45' }}>{a}</span>
+                              <span style={{ color: '#333a45' }}>{maskAccount(a, hiddenAccounts)}</span>
                             </span>
                           ))}
                         </span>

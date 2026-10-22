@@ -18,6 +18,7 @@ const mainTabs = [
 // 「收支」「追剧」原先在总览页，按用户要求移到此处，总览不再占位
 const sideTabs = [
   { to: '/finance', label: '收支', icon: '💰' },
+  { to: '/summary', label: '周月总结', icon: '📊' },
   { to: '/dramas', label: '追剧', icon: '📺' },
   { to: '/calendar', label: '日历', icon: '📅' },
   { to: '/daily', label: '每日计划', icon: '📋' },

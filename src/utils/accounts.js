@@ -24,3 +24,18 @@ export function getAccounts(sample) {
 export function hasAccount(sample, account) {
   return getAccounts(sample).includes(account)
 }
+
+// ── 隐藏账号 = **打星号**（不是筛选掉，用户明确「是账号显示星号，不是筛选」）──
+// 规则：保留首字 + 其余用 * 代替（广东刘亦菲 → 广****），既能区分不同账号，
+// 又不会把名字露出来。传入 hidden 列表，命中即打码。
+export function maskAccount(name, hidden) {
+  if (!name) return name
+  if (!Array.isArray(hidden) || !hidden.includes(name)) return name
+  const s = String(name)
+  return s.slice(0, 1) + '*'.repeat(Math.max(2, s.length - 1))
+}
+
+// 便捷版：直接拿到用于展示的账号名
+export function accountLabel(name, hidden) {
+  return maskAccount(name, hidden)
+}

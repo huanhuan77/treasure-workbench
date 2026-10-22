@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
-import { ACCOUNTS, getAccounts } from '../../utils/accounts'
+import { ACCOUNTS, getAccounts, maskAccount } from '../../utils/accounts'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
 import { ResetButton } from '../components/ResetButton'
@@ -33,7 +33,7 @@ function parseTs(v) {
 export function PcPublishRecords() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { publishRecords, samples, deletePublishRecord, updatePublishRecord } = useStore()
+  const { publishRecords, samples, deletePublishRecord, updatePublishRecord, hiddenAccounts } = useStore()
   // 修改发布日期 / 发布数量：{ group, date } —— 点日期胶囊打开，
   // 保存时改这一组里同一天的全部记录（日期），数量写进第一条。
   const [dateEdit, setDateEdit] = useState(null)
@@ -248,7 +248,7 @@ export function PcPublishRecords() {
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
           <button className={account === '' ? 'on' : ''} onClick={() => setAccount('')}>全部账号</button>
           {accountOptions.map((a) => (
-            <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{a}</button>
+            <button key={a} className={account === a ? 'on' : ''} onClick={() => setAccount(a)}>{maskAccount(a, hiddenAccounts)}</button>
           ))}
         </div>
 
@@ -309,7 +309,7 @@ export function PcPublishRecords() {
                       {g.account ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                           {/* 账号名不标账号主题色 —— 与样品页同样的偏好（用户要求「账号不要标记颜色」） */}
-                          <span style={{ color: '#333a45' }}>{g.account}</span>
+                          <span style={{ color: '#333a45' }}>{maskAccount(g.account, hiddenAccounts)}</span>
                         </span>
                       ) : (
                         <span style={{ color: '#9aa0a9' }}>—</span>
@@ -357,7 +357,7 @@ export function PcPublishRecords() {
                 <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
                   {[
                     { label: '产品', value: g.name, color: '#333a45' },
-                    { label: '账号', value: g.account || '—', color: '#333a45' },
+                    { label: '账号', value: maskAccount(g.account, hiddenAccounts) || '—', color: '#333a45' },
                     { label: '发布数量', value: g.qty, color: '#b8517f' },
                   ].map((m) => (
                     <div key={m.label} style={{ flex: 1, minWidth: 0, background: '#fafbfc', borderRadius: 10, padding: '9px 12px' }}>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount } from '../../utils/accounts'
 import { isArchivedSample } from '../../utils/sampleStatus'
 import { AccountTabs } from './AccountTabs'
 
@@ -32,7 +32,7 @@ const newEntry = () => ({ name: '', qty: '1' })
 const DATE_TONES = ['#fdf6fa', '#f5f8fd', '#fbfaf2']
 
 export function PublishPlanCard() {
-  const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan, addPublishRecord } = useStore()
+  const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan, addPublishRecord, hiddenAccounts } = useStore()
   const { show } = useToast()
   const [editing, setEditing] = useState(null)   // null=关闭 / 'new' / 条目对象
   const [account, setAccount] = useState(ACCOUNTS[0] || '')
@@ -48,6 +48,7 @@ export function PublishPlanCard() {
   const [picked, setPicked] = useState([])
   const [flashId, setFlashId] = useState('')     // 刚保存的那条：滚动定位 + 高亮 4 秒
 
+  // 「隐藏账号」= 名字打星号，不做筛选（用户明确「是账号显示星号，不是筛选」）
   const list = publishPlans || []
 
   // 先按账号分组（同账号排在一起，账号之间按 ACCOUNTS 固定顺序），
@@ -352,7 +353,7 @@ export function PublishPlanCard() {
                     background: on ? col : '#fff',
                     color: on ? '#fff' : col,
                   }}
-                >{a}</button>
+                >{maskAccount(a, hiddenAccounts)}</button>
               )
             })}
           </div>
@@ -411,7 +412,7 @@ export function PublishPlanCard() {
                       flexShrink: 0, maxWidth: 76, fontSize: 11, fontWeight: 600, color: col.c,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}
-                  >{p.account || '—'}</span>
+                  >{maskAccount(p.account, hiddenAccounts) || '—'}</span>
                   <span style={{
                     flexShrink: 0, fontSize: 11, fontVariantNumeric: 'tabular-nums',
                     color: overdue ? '#b96a66' : (isToday ? '#4f5fbb' : '#b0b6bf'),

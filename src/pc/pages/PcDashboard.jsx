@@ -6,7 +6,7 @@ import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 
 import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
-import { getAccounts, ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
+import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 import { SAMPLE_STATUS } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
 import { AdQueueCard } from '../components/AdQueueCard'
@@ -46,7 +46,7 @@ function statusTone(status) {
 // 「每个账号多少天没发」的小胶囊：左半段用账号主题色底，右半段浅琥珀底放天数。
 // 两块底色不同 → 一眼分得清「哪个账号 / 多少天」，也不会像同色 chip 那样糊成一片
 // （用户先后反馈「颜色重叠了」「加背景色区分」）。
-function AccountDays({ sample, list }) {
+function AccountDays({ sample, list, hidden }) {
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 11 }}>
       {list.map((x) => {
@@ -55,16 +55,17 @@ function AccountDays({ sample, list }) {
         // 超过阈值（该提醒了）的天数用红色，其余用灰 —— 用户要求「过期天数改为红色」
         const due = days === Infinity || days >= th
         const col = ACCOUNT_COLOR[x] || { c: '#8a8f98', bg: 'rgba(148,163,184,0.16)' }
+        const label = maskAccount(x, hidden)
         return (
           <span
             key={x}
-            title={`${x}：${days === Infinity ? '从未发布' : `${days} 天没发`}（阈值 ${th} 天）`}
+            title={`${label}：${days === Infinity ? '从未发布' : `${days} 天没发`}（阈值 ${th} 天）`}
             style={{
               display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
               borderRadius: 6, overflow: 'hidden', lineHeight: '16px',
             }}
           >
-            <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{x}</span>
+            <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{label}</span>
             <span
               style={{
                 padding: '0 5px', fontWeight: 700,
@@ -210,15 +211,18 @@ export function PcDashboard() {
   // 避免整页因为 spec[tab] 为 undefined 直接崩掉（reading 'items'）。
   const cur = spec[tab] || spec.reminders
 
-  const visAcc = useCallback((arr) => (arr || []).filter((a) => !(hiddenAccounts || []).includes(a)), [hiddenAccounts])
+  // 「隐藏账号」= 名字打星号（用户明确「是账号显示星号，不是筛选」）：
+  // 不再从列表里剔除，数据照旧显示，只是把账号名换成「广****」这个样子。
+  const visAcc = useCallback((arr) => (arr || []), [])
+  const maskAcc = useCallback((a) => maskAccount(a, hiddenAccounts), [hiddenAccounts])
 
   const items = useMemo(
     () => {
       let list = cur.items
       if (account) list = list.filter((it) => cur.accountsOf(it).includes(account))
-      return list.filter((it) => visAcc(cur.accountsOf(it)).length > 0)
+      return list
     },
-    [cur, account, visAcc],
+    [cur, account],
   )
 
   // Tab 上的数字要跟着账号筛选变（与手机端一致）：
@@ -376,21 +380,32 @@ export function PcDashboard() {
               background: '#fff', border: '1px solid #eadfe8', borderRadius: 10,
               boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 10, minWidth: 200,
             }}>
-              <div style={{ fontSize: 12, color: '#8a8f98', margin: '0 4px 8px' }}>勾选要隐藏的账号（全站生效）</div>
+              {/* 不用勾选框：**点账号名直接隐藏/恢复**（用户要求「隐藏账号不需要勾选，直接隐藏」） */}
+              <div style={{ fontSize: 12, color: '#8a8f98', margin: '0 4px 8px' }}>
+                点账号名 → 全站把这个账号显示成 * 号（数据不隐藏，照常统计）
+              </div>
               {ACCOUNTS.map((a) => {
                 const on = (hiddenAccounts || []).includes(a)
                 const col = ACCOUNT_COLOR[a] || { c: '#7c3aed' }
                 return (
-                  <label key={a} style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '7px 6px',
-                    borderRadius: 8, cursor: 'pointer', fontSize: 13, color: '#222',
-                    background: on ? '#f5f0f8' : 'transparent',
-                  }}>
-                    <input type="checkbox" checked={on} onChange={() => toggleHiddenAccount(a)} />
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
+                  <button
+                    key={a}
+                    onClick={() => toggleHiddenAccount(a)}
+                    title={on ? `恢复显示「${a}」` : `隐藏「${a}」（全站生效）`}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', width: '100%',
+                      borderRadius: 8, cursor: 'pointer', fontSize: 13, textAlign: 'left',
+                      border: 'none', color: on ? '#9aa0a9' : '#222',
+                      background: on ? '#f5f0f8' : 'transparent',
+                      textDecoration: on ? 'line-through' : 'none',
+                    }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: on ? '#c9cdd4' : col.c, flexShrink: 0 }} />
                     <span>{a}</span>
-                    {on && <span style={{ marginLeft: 'auto', fontSize: 11, color: '#a06' }}>已隐藏</span>}
-                  </label>
+                    <span style={{ marginLeft: 'auto', fontSize: 11, color: on ? '#a06' : '#b0b6bf' }}>
+                      {on ? '已打码，点一下恢复' : '点击打码'}
+                    </span>
+                  </button>
                 )
               })}
             </div>
@@ -545,7 +560,7 @@ export function PcDashboard() {
                         background: on ? col : '#fff',
                         color: on ? '#fff' : col,
                       }}
-                    >{a}</button>
+                    >{maskAcc(a)}</button>
                   )
                 })}
               </div>
@@ -588,7 +603,7 @@ export function PcDashboard() {
                             其它 tab 仍是圆点 + 名字 */}
                         {tab === 'hot' || tab === 'reminders' ? (
                           <td style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                            <AccountDays sample={s} list={accs} />
+                            <AccountDays sample={s} list={accs} hidden={hiddenAccounts} />
                           </td>
                         ) : (
                           <td style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
@@ -597,7 +612,7 @@ export function PcDashboard() {
                                 <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                                   {k > 0 && <span style={{ width: 8 }} />}
                                   <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, opacity: 0.75, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
-                                  <span style={{ color: '#333a45' }}>{a}</span>
+                                  <span style={{ color: '#333a45' }}>{maskAcc(a)}</span>
                                 </span>
                               ))}
                             </span>
@@ -670,7 +685,7 @@ export function PcDashboard() {
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                             {accs.map((x) => (
                               <span key={x.a} style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
-                                <span style={{ color: (ACCOUNT_COLOR[x.a] || {}).c || '#8a8f98', fontWeight: 600 }}>{x.a}</span>
+                                <span style={{ color: (ACCOUNT_COLOR[x.a] || {}).c || '#8a8f98', fontWeight: 600 }}>{maskAcc(x.a)}</span>
                                 <span style={{ color: x.due ? '#c2410c' : '#94a3b8', marginLeft: 4, fontWeight: x.due ? 700 : 400 }}>
                                   {x.days === Infinity ? '从未发布' : `已${x.days}天`}
                                   {` / 阈值${x.th}`}

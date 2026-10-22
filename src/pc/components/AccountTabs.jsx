@@ -1,11 +1,11 @@
-import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 import { useStore } from '../../store'
 
 // PC 版账号 Tab（「记出单」与「记录发布」两个弹窗共用）。
-// 全局「隐藏账号」选中后，该账号不出现在这里（全站生效）。
+// 全局「隐藏账号」选中后，账号名显示为星号（不筛掉，用户明确「是账号显示星号，不是筛选」）。
 export function AccountTabs({ value, onChange, counts = {} }) {
   const { hiddenAccounts } = useStore()
-  const list = ACCOUNTS.filter((a) => !(hiddenAccounts || []).includes(a))
+  const list = ACCOUNTS
   return (
     <div className="pcv-acctabs">
       {list.map((a) => {
@@ -20,7 +20,7 @@ export function AccountTabs({ value, onChange, counts = {} }) {
             style={on ? { background: col.bg, color: col.c } : undefined}
             onClick={() => onChange(a)}
           >
-            <span>{a}</span>
+            <span>{maskAccount(a, hiddenAccounts)}</span>
             {cnt > 0 && (
               <span className="pcv-acctabs-cnt" style={on ? { background: col.c, color: '#fff' } : undefined}>{cnt}</span>
             )}

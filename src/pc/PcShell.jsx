@@ -27,6 +27,7 @@ const NAV = [
   { to: '/pc/publish-records', label: '发布', Icon: VideoIcon, color: '#3f6fa8' },
   { to: '/pc/orders', label: '出单', Icon: MoneyIcon, color: '#4f8a6d' },
   { to: '/pc/finance', label: '收支', Icon: WalletIcon, color: '#a97c46' },
+  { to: '/pc/summary', label: '周月总结', Icon: ChartIcon, color: '#4f7f8f' },
   { to: '/pc/dramas', label: '追剧', Icon: TvIcon, color: '#b96a66' },
   // 这一页已从「日历」改成日记本（用户要求），菜单名跟着改
   { to: '/pc/calendar', label: '日记', Icon: CalendarIcon, color: '#4f7f8f' },

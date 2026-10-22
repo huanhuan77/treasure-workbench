@@ -5,6 +5,7 @@ import { ToastProvider, useToast } from './components/Toast'
 import { GlobalKeyboardFix } from './components/GlobalKeyboardFix'
 import { BottomNav } from './components/BottomNav'
 import { DashboardPage } from './pages/DashboardPage'
+import SummaryPage from './pages/SummaryPage'
 import { HomePage } from './pages/HomePage'
 import { SamplesPage } from './pages/SamplesPage'
 import { OrdersPage } from './pages/OrdersPage'
@@ -56,6 +57,7 @@ import { PcReading } from './pc/pages/PcReading'
 import { PcFinance } from './pc/pages/PcFinance'
 import { PcDaily } from './pc/pages/PcDaily'
 import { PcInvestment } from './pc/pages/PcInvestment'
+import { PcSummary } from './pc/pages/PcSummary'
 
 // 路由表（data 形式，供 KeepAliveRoutes 内的 useRoutes 使用）
 const routes = [
@@ -80,10 +82,12 @@ const routes = [
       { path: 'finance', element: <PcFinance /> },
       { path: 'daily', element: <PcDaily /> },
       { path: 'investment', element: <PcInvestment /> },
+      { path: 'summary', element: <PcSummary /> },
       { path: 'backup', element: <PcBackup /> },
     ],
   },
   { path: '/', element: <DashboardPage /> },
+  { path: '/summary', element: <SummaryPage /> },
   { path: '/products', element: <HomePage /> },
   { path: '/samples', element: <SamplesPage /> },
   { path: '/orders', element: <OrdersPage /> },

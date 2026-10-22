@@ -7,7 +7,7 @@ import { OrderDialog } from '../components/OrderDialog'
 import { ResetButton } from '../components/ResetButton'
 import { SearchSelect } from '../components/SearchSelect'
 import { dateBounds } from '../../components/DateFilterBar'
-import { ACCOUNT_COLOR } from '../../utils/accounts'
+import { ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 
 const RANGES = [
   { key: '', label: '全部' },
@@ -36,7 +36,7 @@ const dispDate = (v) => (v ? String(v).replace(/-/g, '/') : '未填日期')
 // 每天的明细、单条编辑/删除、按天删除、以及「继续新增一单」。
 export function PcOrders() {
   const { show } = useToast()
-  const { orders, addOrder, updateOrder, deleteOrder } = useStore()
+  const { orders, addOrder, updateOrder, deleteOrder, hiddenAccounts } = useStore()
   const [accountFilter, setAccountFilter] = useState('')
   const [dateRange, setDateRange] = useState('yesterday') // 与手机版同默认值
   const [sortKey, setSortKey] = useState('dateDesc')
@@ -228,7 +228,7 @@ export function PcOrders() {
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
           <button className={accountFilter === '' ? 'on' : ''} onClick={() => setAccountFilter('')}>全部账号</button>
           {accountOptions.map((a) => (
-            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{a}</button>
+            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{maskAccount(a, hiddenAccounts)}</button>
           ))}
         </div>
 
@@ -301,7 +301,7 @@ export function PcOrders() {
                                 }}
                               />
                               {/* 圆点带色，账号名本身仍保持中性色（与样品页/发布记录页一致） */}
-                              <span style={{ color: '#333a45' }}>{a}</span>
+                              <span style={{ color: '#333a45' }}>{maskAccount(a, hiddenAccounts)}</span>
                             </span>
                           ))
                         )}
