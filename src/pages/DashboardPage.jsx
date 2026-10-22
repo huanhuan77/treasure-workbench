@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
-import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
+import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 import { SampleForm } from '../components/SampleForm'
@@ -181,6 +181,7 @@ export function DashboardPage() {
     samples, transactions, orders, publishRecords, todos, applySyncResult, updateSample,
     adQueue, addAdQueue, updateAdQueue, deleteAdQueue,
     publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan, addPublishRecord,
+    hiddenAccounts,
     settings,
   } = useStore()
   const { show } = useToast()
@@ -334,34 +335,6 @@ export function DashboardPage() {
   }, [publishPlans])
   const planUpcoming = planSorted.filter((p) => !p.planDate || p.planDate >= todayPlan).length
 
-  // 「已建计划」标记索引（与 PC 总览一致，用户要求手机端也加）：按产品名关联、排除已完成的计划，
-  // name -> [{ account, planDate, qty }]，行内查这个名字有没有未完成的排期
-  const planNameSet = useMemo(() => {
-    const m = new Map()
-    for (const p of publishPlans || []) {
-      if (p.done) continue
-      const n = String(p.name || '').trim()
-      if (!n) continue
-      if (!m.has(n)) m.set(n, [])
-      m.get(n).push({ account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 })
-    }
-    return m
-  }, [publishPlans])
-  // 行内复用：未建计划返回 null；否则紫色小标，悬停看计划详情
-  const planBadge = (name) => {
-    const arr = planNameSet.get(String(name || '').trim()) || []
-    if (!arr.length) return null
-    return (
-      <span
-        title={`已在发布计划：${arr.map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`).join('；')}`}
-        style={{
-          display: 'inline-block', fontSize: 10, fontWeight: 700, lineHeight: '15px',
-          padding: '0 6px', borderRadius: 999, background: '#f3ecfd', color: '#7a5ea8',
-          border: '1px solid rgba(122,94,168,0.35)', flexShrink: 0,
-        }}
-      >已建计划</span>
-    )
-  }
   // 新增/编辑弹层：null=关闭 / 'new' / 条目
   // 形态与 PC 一致（照「记录发布」弹窗）：切账号分别填、每行「产品 + 数量」可加减，
   // 一次保存写成多条计划；编辑已有计划时只保留一行。
@@ -664,6 +637,38 @@ export function DashboardPage() {
   // 不影响上方「出单 / 待办」两张卡。
   const [remindAccount, setRemindAccount] = useState('all')
   const ACC_META = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
+
+  // 「已建计划」标记索引（与 PC 总览一致，用户要求手机端也加）：按产品名关联、排除已完成的计划，
+  // 且**跟着账号筛选走**（用户要求：筛了账号就只认该账号的计划，别的账号排的不算）
+  const planNameSet = useMemo(() => {
+    const m = new Map()
+    for (const p of publishPlans || []) {
+      if (p.done) continue
+      if (remindAccount !== 'all' && p.account !== remindAccount) continue
+      const n = String(p.name || '').trim()
+      if (!n) continue
+      if (!m.has(n)) m.set(n, [])
+      m.get(n).push({ account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 })
+    }
+    return m
+  }, [publishPlans, remindAccount])
+  // 行内复用：未建计划返回 null；否则粉色小标，标出**哪些账号**已排（去重，超过 2 个收「等N个」）
+  const planBadge = (name) => {
+    const arr = planNameSet.get(String(name || '').trim()) || []
+    if (!arr.length) return null
+    const accs = [...new Set(arr.map((p) => maskAccount(p.account || '未指定', hiddenAccounts)))]
+    const label = `已建计划·${accs.length <= 2 ? accs.join('、') : `${accs[0]} 等${accs.length}个`}`
+    return (
+      <span
+        title={`已在发布计划：${arr.map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`).join('；')}`}
+        style={{
+          display: 'inline-block', fontSize: 10, fontWeight: 700, lineHeight: '15px',
+          padding: '0 6px', borderRadius: 999, background: '#fce7f0', color: '#b8517f',
+          border: '1px solid rgba(184,81,127,0.35)', flexShrink: 0,
+        }}
+      >{label}</span>
+    )
+  }
 
   // 样品是否命中当前账号筛选：
   // - 未筛时全部通过

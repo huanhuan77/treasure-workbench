@@ -286,13 +286,15 @@ export function PcDashboard() {
   const planIndex = useMemo(() => {
     const m = new Map()
     for (const p of publishPlans || []) {
+      // 用户要求：筛了账号就只认该账号的计划（其他账号排的计划不算「已建计划」）
+      if (account && p.account !== account) continue
       const n = String(p.name || '').trim()
       if (!n) continue
       if (!m.has(n)) m.set(n, [])
       m.get(n).push({ account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 })
     }
     return m
-  }, [publishPlans])
+  }, [publishPlans, account])
 
   // 当前 Tab 涉及到的账号（供筛选条）
   const accountOptions = useMemo(() => {
@@ -654,8 +656,8 @@ export function PcDashboard() {
                           style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
                         >
                           {s.name}
-                          {/* 已建计划标记（用户要求）：这个产品名在「发布计划」里排过就亮紫色小标，
-                              悬停可看计划详情（账号 / 日期 / 数量） */}
+                          {/* 已建计划标记（用户要求）：这个产品名在「发布计划」里排过就亮粉色小标，
+                              标上**哪些账号**已排（去重，超过 2 个收「等N个」），悬停看计划详情 */}
                           {(planIndex.get(s.name) || []).length > 0 && (
                             <span
                               title={`已在发布计划：${(planIndex.get(s.name) || [])
@@ -665,10 +667,15 @@ export function PcDashboard() {
                                 display: 'inline-block', marginLeft: 6, verticalAlign: '1px',
                                 fontSize: 10, fontWeight: 700, lineHeight: '16px',
                                 padding: '0 6px', borderRadius: 999,
-                                background: '#f3ecfd', color: '#7a5ea8',
-                                border: '1px solid rgba(122,94,168,0.35)',
+                                background: '#fce7f0', color: '#b8517f',
+                                border: '1px solid rgba(184,81,127,0.35)',
                               }}
-                            >已建计划</span>
+                            >
+                              {(() => {
+                                const accs = [...new Set((planIndex.get(s.name) || []).map((p) => maskAcc(p.account || '未指定')))]
+                                return `已建计划·${accs.length <= 2 ? accs.join('、') : `${accs[0]} 等${accs.length}个`}`
+                              })()}
+                            </span>
                           )}
                         </td>
                         <td>{cur.actions(it, acc, accs)}</td>
