@@ -126,27 +126,7 @@ export default function SummaryPage() {
         </div>
       </div>
 
-      {/* 按天明细 */}
-      <div style={{ margin: '0 16px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
-        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
-          按天明细 <span style={{ fontWeight: 400, color: '#9aa0a9', fontSize: 12 }}>（{sum.days.length} 天有数据）</span>
-        </div>
-        {sum.days.length === 0 ? (
-          <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
-        ) : sum.days.map((d) => {
-          const wd = ['日', '一', '二', '三', '四', '五', '六'][new Date(d.date).getDay()]
-          return (
-            <div key={d.date} style={{
-              padding: '9px 12px', borderTop: '0.5px solid rgba(15,23,42,0.05)',
-              display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-            }}>
-              <span style={{ fontSize: 12, fontWeight: 600, minWidth: 96 }}>{d.date.slice(5)} <span style={{ color: '#9aa0a9', fontWeight: 400 }}>周{wd}</span></span>
-              <span style={{ fontSize: 12, color: '#3f6fa8' }}>发 {fmtInt(d.publish)}</span>
-              <span style={{ fontSize: 12, color: '#4f8a6d' }}>单 {fmtInt(d.orderQty)}</span>
-            </div>
-          )
-        })}
-      </div>
+      {/* 「按天明细」按用户要求去掉（保留分账号 / 按产品 / 新增样品三块） */}
     </div>
   )
 }

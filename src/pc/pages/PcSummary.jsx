@@ -151,42 +151,7 @@ export function PcSummary() {
           </div>
         </div>
 
-        {/* 按天明细 */}
-        <div className="pcv-card" style={{ marginTop: 12 }}>
-          <div className="pcv-card-h">
-            <span style={{ fontWeight: 600 }}>按天明细</span>
-            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
-              只列有数据的日期（{sum.days.length} 天）
-            </span>
-          </div>
-          <table className="pcv-table">
-            <thead>
-              <tr>
-                <th style={{ width: 150 }}>日期</th>
-                <th style={{ width: 110 }}>发布</th>
-                <th style={{ width: 110 }}>出单件数</th>
-                <th style={{ width: 100 }}>出单笔数</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {sum.days.length === 0 ? (
-                <tr><td colSpan={5} className="pcv-empty">这个区间没有数据</td></tr>
-              ) : sum.days.map((d) => {
-                const wd = ['日', '一', '二', '三', '四', '五', '六'][new Date(d.date).getDay()]
-                return (
-                  <tr key={d.date}>
-                    <td>{d.date}<span style={{ color: '#9aa0a9', marginLeft: 6, fontSize: 12 }}>周{wd}</span></td>
-                    <td className="pcv-num">{fmtInt(d.publish)}</td>
-                    <td className="pcv-num">{fmtInt(d.orderQty)}</td>
-                    <td className="pcv-num">{fmtInt(d.orderCount)}</td>
-                    <td />
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+        {/* 「按天明细」按用户要求去掉（保留分账号 / 按产品 / 新增样品三块） */}
       </div>
     </>
   )
