@@ -92,6 +92,8 @@ export function PcDashboard() {
   const { samples, todos, orders, hiddenAccounts, setHiddenAccounts, updateTodo } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [account, setAccount] = useState('')
+  // 提醒中心表格的产品名搜索（用户要求「加个搜索条件」）
+  const [kw, setKw] = useState('')
   // 「为什么没提醒」诊断弹窗
   const [whyOpen, setWhyOpen] = useState(false)
   // 「隐藏账号」是否处于全站打码状态（全部账号都打码了才算开启）
@@ -293,10 +295,13 @@ export function PcDashboard() {
   // 选定了某个账号时只保留包含该账号的行，筛选依旧生效。
   const rows = useMemo(() => {
     const out = []
+    const k = kw.trim().toLowerCase()
     for (const it of items) {
       const accs = visAcc(cur.accountsOf(it)).filter((a) => !account || a === account)
       if (accs.length === 0) continue
       const s = it.sample || it
+      // 产品名搜索（用户要求）：不区分大小写，名称或品类命中即保留
+      if (k && !`${s.name || ''} ${s.category || ''}`.toLowerCase().includes(k)) continue
       // 天数 / 条数这类数字按「最严重的那一个账号」展示（与手机端一致：取最大值）
       const worst = (tab === 'reminders' || tab === 'hot')
         ? accs.reduce((w, a) => (daysSincePublishByAccount(s, a) > daysSincePublishByAccount(s, w) ? a : w), accs[0])
@@ -329,7 +334,7 @@ export function PcDashboard() {
       out.sort((x, y) => accRank(x.acc) - accRank(y.acc))
     }
     return out
-  }, [items, cur, account, tab])
+  }, [items, cur, account, tab, kw])
 
   // ── 「为什么没提醒」诊断数据 ────────────────────────────────
   // 列出**全部样品**（不再只列已超期的），每个账号给出「已N天 / 阈值」和是否判为超期，
@@ -585,6 +590,20 @@ export function PcDashboard() {
                   )
                 })}
               </div>
+              {/* 产品名搜索（用户要求「加个搜索条件」）：靠右，当前 Tab 的表格实时过滤 */}
+              <input
+                className="pcv-input"
+                value={kw}
+                onChange={(e) => setKw(e.target.value)}
+                placeholder="🔍 搜索产品名…"
+                title="按产品名/品类搜索当前列表"
+                style={{
+                  marginLeft: 'auto', flexShrink: 0, width: 150,
+                  padding: '5px 10px', fontSize: 12,
+                  background: kw ? '#fdf3f8' : '#fff',
+                  borderColor: kw ? 'rgba(184,81,127,0.55)' : undefined,
+                }}
+              />
             </div>
 
             {rows.length === 0 ? (

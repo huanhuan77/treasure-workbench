@@ -237,28 +237,6 @@ export function PcOrders() {
           />
           {/* 「重置」靠左：紧跟日期选择器之后（去掉 spacer，不再顶到行尾） */}
           <ResetButton active={hasFilter} onClick={resetFilters} />
-          {/* 合计提到顶部（用户要求「在顶部显示合计」），样式做成指标卡那种（用户要求「要这种统计」） */}
-          <span style={{ marginLeft: 10, display: 'inline-flex', alignItems: 'stretch', gap: 10 }}>
-            {[
-              { label: '出单数量合计', value: totalQty, unit: '件', color: '#b8517f' },
-              { label: '笔数', value: totalCount, unit: '笔', color: '#b96a66' },
-              { label: '产品', value: groups.length, unit: '个', color: '#7a5ea8' },
-            ].map((c) => (
-              <span
-                key={c.label}
-                style={{
-                  display: 'inline-flex', flexDirection: 'column', justifyContent: 'center',
-                  background: '#fff', border: '1px solid #f0e2ea', borderLeft: `3px solid ${c.color}`,
-                  borderRadius: 10, padding: '5px 18px', minWidth: 120, minHeight: 40,
-                }}
-              >
-                <span style={{ fontSize: 11.5, color: '#8a8f98', lineHeight: 1.6 }}>{c.label}</span>
-                <span style={{ fontSize: 19, fontWeight: 700, color: c.color, lineHeight: 1.3 }}>
-                  {c.value}<span style={{ fontSize: 11, fontWeight: 400, color: '#9aa1ab', marginLeft: 3 }}>{c.unit}</span>
-                </span>
-              </span>
-            ))}
-          </span>
         </div>
 
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
@@ -475,6 +453,19 @@ export function PcOrders() {
                 )
               })}
             </tbody>
+            {/* 合计行放回表底（用户要求「还是放底部合计吧」），跟随筛选实时变化 */}
+            {groups.length > 0 && (
+              <tfoot>
+                <tr style={{ background: '#faf7fb' }}>
+                  <td style={{ fontWeight: 700, color: '#334155' }}>合计（{groups.length} 个产品）</td>
+                  <td />
+                  <td style={{ fontWeight: 700, color: '#b8517f', fontSize: 14 }}>{totalQty}</td>
+                  <td style={{ fontWeight: 700 }}>{totalCount}</td>
+                  <td />
+                  <td />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>
