@@ -3294,6 +3294,24 @@ function loadData() {
     // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
     const backfilled = backfillPublishedStatus(aggregated)
     const categorized = backfillSampleCategories(backfilled, productsFinal) // 空分类样品按产品名回填
+    // 发布计划补 sampleId（一次性，每次加载都过）：老计划只存了产品名，样品改名后
+    // 提醒中心「已建计划」会对不上。这里按「归一化名称 + 账号」回填，找不到就留空
+    // （留空的仍按名称匹配，不影响老数据）。
+    const planNameAcc = new Map()
+    for (const s of categorized || []) {
+      const n = String((s && s.name) || '').replace(/\s+/g, '')
+      if (!n) continue
+      for (const a of getAccounts(s)) {
+        const k = `${n}|${a}`
+        if (!planNameAcc.has(k)) planNameAcc.set(k, s.id)
+      }
+    }
+    const plansWithId = (Array.isArray(old.publishPlans) ? old.publishPlans : []).map((p) => {
+      if (!p || p.sampleId) return p
+      const k = `${String(p.name || '').replace(/\s+/g, '')}|${p.account || ''}`
+      const sid = planNameAcc.get(k)
+      return sid ? { ...p, sampleId: sid } : p
+    })
     return normalizeDates({
       products: productsFinal,
       samples: categorized,
@@ -3318,7 +3336,7 @@ function loadData() {
       // 随后 useEffect 又把「缺字段的 data」写回 localStorage → 数据永久消失。
       // 待投流（adQueue）就是这样丢的（用户反馈「刚加的怎么不见了」）。
       adQueue: Array.isArray(old.adQueue) ? old.adQueue : [],
-      publishPlans: Array.isArray(old.publishPlans) ? old.publishPlans : [],
+      publishPlans: plansWithId,
     })
   } catch (e) {
     console.warn('[loadData] 加载数据异常，使用默认值:', e)

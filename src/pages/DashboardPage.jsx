@@ -421,7 +421,7 @@ export function DashboardPage() {
   const openPlanEdit = (p) => {
     setPlanAccount(p.account || ACCOUNTS[0] || '')
     setPlanDate(p.planDate || tomorrowPlan)
-    setPlanEditEntry({ name: p.name || '', qty: String(p.qty || 1) })
+    setPlanEditEntry({ name: p.name || '', qty: String(p.qty || 1), sampleId: p.sampleId || '' })
     setPlanPickIdx(-1)
     setPlanQuery('')
     setPlanLockProduct(false)
@@ -440,7 +440,7 @@ export function DashboardPage() {
     }
     const o = {}
     for (const a of ACCOUNTS) o[a] = []
-    o[acc] = [{ name, qty: '1' }]
+    o[acc] = [{ name, qty: '1', sampleId: (s && s.id) || '' }]
     setPlanByAcc(o)
     setPlanAccount(acc)
     setPlanDate(tomorrowPlan)
@@ -488,6 +488,7 @@ export function DashboardPage() {
         account: planAccount,
         qty: Math.max(1, Number(planEditEntry.qty) || 1),
         planDate: planDate || '',
+        sampleId: planEditEntry.sampleId || planEdit.sampleId || '',
       })
       show('已保存', 'success')
       setPlanEdit(null)
@@ -501,6 +502,7 @@ export function DashboardPage() {
           account: a,
           qty: Math.max(1, Number(e.qty) || 1),
           planDate: planDate || '',
+          sampleId: e.sampleId || '',
         })
         n++
       }
@@ -651,16 +653,27 @@ export function DashboardPage() {
       if (p.done) continue
       const pa = normPlanAcc(p.account)
       if (remindAccount !== 'all' && pa && pa !== remindAccount) continue
+      const rec = { account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 }
       const n = normPlanName(p.name)
-      if (!n) continue
-      if (!m.has(n)) m.set(n, [])
-      m.get(n).push({ account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 })
+      if (n) {
+        if (!m.has(n)) m.set(n, [])
+        m.get(n).push(rec)
+      }
+      // 同时按 sampleId 建索引：样品改名后旧名称对不上，靠 ID 仍能标上
+      if (p.sampleId) {
+        const k = `id:${p.sampleId}`
+        if (!m.has(k)) m.set(k, [])
+        m.get(k).push(rec)
+      }
     }
     return m
   }, [publishPlans, remindAccount])
   // 行内复用：未建计划返回 null；否则灰色小标（只写「已建计划」，账号靠筛选自己判断）
-  const planBadge = (name) => {
-    const arr = planNameSet.get(normPlanName(name)) || []
+  const planBadge = (name, sampleId) => {
+    const arr = [
+      ...(planNameSet.get(`id:${sampleId}`) || []),
+      ...(planNameSet.get(normPlanName(name)) || []),
+    ]
     if (!arr.length) return null
     return (
       <span
@@ -1632,7 +1645,7 @@ export function DashboardPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            {planBadge(s.name)}
+                            {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
@@ -1749,7 +1762,7 @@ export function DashboardPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            {planBadge(s.name)}
+                            {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                             {/* 「每N天提醒」紧跟状态标签（用户要求「几天提醒放在状态后面」） */}
                             <span style={{ fontSize: '9px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '1px 6px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>每{hotReminderDays(s)}天提醒</span>
@@ -1834,7 +1847,7 @@ export function DashboardPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            {planBadge(s.name)}
+                            {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
                               还差 {it.minLack} 条{it.accounts.length > 1 ? ` · ${it.accounts.length} 个账号` : ''}
                             </span>
@@ -1915,7 +1928,7 @@ export function DashboardPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
-                            {planBadge(s.name)}
+                            {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                             {getAccounts(s).map((a) => (
                               <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
