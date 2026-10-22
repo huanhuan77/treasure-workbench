@@ -1829,8 +1829,43 @@ export function DashboardPage() {
                       卡片里列出各账号的条数分布供参考，标题的「还差 N」按合计算。 */}
                   {fLowPublish.map((it) => {
                     const s = it.sample
+                    const swiped = swipedHotId === s.id
                     return (
-                      <div key={s.id} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+                        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
+                          <button
+                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
+                            style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >调整状态</button>
+                        </div>
+                        <div
+                          onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
+                          onTouchMove={(e) => {
+                            const t = e.touches[0]
+                            const sx = Number(e.currentTarget.dataset.sx)
+                            const sy = Number(e.currentTarget.dataset.sy)
+                            if (!sx) return
+                            const dx = t.clientX - sx
+                            const dy = t.clientY - sy
+                            if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                              e.currentTarget.dataset.swiping = 'true'
+                              e.currentTarget.dataset.dir = dx < 0 ? 'left' : 'right'
+                            }
+                          }}
+                          onTouchEnd={(e) => {
+                            if (e.currentTarget.dataset.swiping !== 'true') return
+                            const dir = e.currentTarget.dataset.dir
+                            swipeGuardRef.current = Date.now()
+                            setSwipedHotId((prev) => (dir === 'left' ? (prev === s.id ? null : s.id) : null))
+                          }}
+                          onClick={() => { if (swiped) setSwipedHotId(null) }}
+                          style={{
+                            position: 'relative', zIndex: 1,
+                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px',
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
+                          }}
+                        >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
@@ -1856,17 +1891,11 @@ export function DashboardPage() {
                               })}
                           </div>
                         </div>
-                        <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
-                          <button onClick={() => { if (!tapOK()) return; navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } }) }} style={{
-                            padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
-                            fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
-                          }}>补发布</button>
-                          <button onClick={() => { if (!tapOK()) return; setEditingSample(s) }} style={{
-                            padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                            color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
-                          }}>调整状态</button>
-                        </div>
-                        {/* 预选这些账号：与卡片展示的分布一致，不用用户再手选 */}
+                        <button
+                          onClick={() => { if (!tapOK()) return; navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } }) }}
+                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >补发布</button>
+                        </div>{/* /左滑卡片内容 */}
                       </div>
                     )
                   })}
