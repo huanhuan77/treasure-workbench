@@ -578,7 +578,6 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
                       <span key={a.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                         {a.name}
                         {stat && <span style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: statBg, color: statColor, fontWeight: 700 }}>{stat}</span>}
-                        {c.orderCount > 0 && <span title="已出单件数" style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: 'rgba(225,29,72,0.10)', color: '#e11d48', fontWeight: 700 }}>📦{c.orderCount}</span>}
                       </span>
                     )
                   })
