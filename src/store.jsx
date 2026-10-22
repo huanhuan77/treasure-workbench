@@ -4817,9 +4817,15 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
+  // 一次性设置要打码的账号（用户要求「不用选择账号，默认全部打码」）
+  const setHiddenAccounts = useCallback((list) => {
+    setData((d) => ({ ...d, hiddenAccounts: Array.isArray(list) ? [...list] : [] }))
+  }, [])
+
   const value = {
     ...data,
     toggleHiddenAccount,
+    setHiddenAccounts,
     addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
     addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics,

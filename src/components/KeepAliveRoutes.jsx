@@ -18,6 +18,8 @@ const KEEP_ALIVE = {
   '/daily': 'daily',
   '/calendar': 'calendar',
 }
+// PC 版的多标签保活放在 PcShell 里（缓存 Outlet 子页面），
+// 不能在这里按整个 /pc/* 缓存 —— 否则会把侧边栏一起复制一份。
 
 // 跨渲染缓存：cacheKey -> 上一次渲染的 element（保持挂载以保留状态/滚动）
 const aliveMap = new Map()

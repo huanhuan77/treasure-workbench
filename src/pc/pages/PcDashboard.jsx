@@ -88,12 +88,13 @@ function AccountDays({ sample, list, hidden }) {
 export function PcDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { samples, todos, orders, hiddenAccounts, toggleHiddenAccount } = useStore()
-  const [hiddenOpen, setHiddenOpen] = useState(false)
+  const { samples, todos, orders, hiddenAccounts, setHiddenAccounts } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [account, setAccount] = useState('')
   // 「为什么没提醒」诊断弹窗
   const [whyOpen, setWhyOpen] = useState(false)
+  // 「隐藏账号」是否处于全站打码状态（全部账号都打码了才算开启）
+  const allHidden = ACCOUNTS.length > 0 && ACCOUNTS.every((a) => (hiddenAccounts || []).includes(a))
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
   // 「补记发布」入口已按用户要求去掉（总览不再用 PublishDialog，记录发布走「视频发布记录」页）
@@ -367,50 +368,13 @@ export function PcDashboard() {
           title="列出已超阈值、但没出现的样品，并说明原因"
           style={{ marginLeft: 'auto', flexShrink: 0, color: '#b8517f', borderColor: 'rgba(184,81,127,0.55)' }}
         >为什么没提醒</button>
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <button
-            className="pcv-btn pcv-btn-ghost"
-            onClick={() => setHiddenOpen((v) => !v)}
-            title="隐藏后，整个系统所有界面都不再显示该账号"
-            style={{ color: '#7a5ea8', borderColor: 'rgba(122,94,168,0.55)' }}
-          >隐藏账号{hiddenAccounts?.length ? `（${hiddenAccounts.length}）` : ''}</button>
-          {hiddenOpen && (
-            <div style={{
-              position: 'absolute', right: 0, top: 'calc(100% + 8px)', zIndex: 50,
-              background: '#fff', border: '1px solid #eadfe8', borderRadius: 10,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.12)', padding: 10, minWidth: 200,
-            }}>
-              {/* 不用勾选框：**点账号名直接隐藏/恢复**（用户要求「隐藏账号不需要勾选，直接隐藏」） */}
-              <div style={{ fontSize: 12, color: '#8a8f98', margin: '0 4px 8px' }}>
-                点账号名 → 全站把这个账号显示成 * 号（数据不隐藏，照常统计）
-              </div>
-              {ACCOUNTS.map((a) => {
-                const on = (hiddenAccounts || []).includes(a)
-                const col = ACCOUNT_COLOR[a] || { c: '#7c3aed' }
-                return (
-                  <button
-                    key={a}
-                    onClick={() => toggleHiddenAccount(a)}
-                    title={on ? `恢复显示「${a}」` : `隐藏「${a}」（全站生效）`}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '7px 8px', width: '100%',
-                      borderRadius: 8, cursor: 'pointer', fontSize: 13, textAlign: 'left',
-                      border: 'none', color: on ? '#9aa0a9' : '#222',
-                      background: on ? '#f5f0f8' : 'transparent',
-                      textDecoration: on ? 'line-through' : 'none',
-                    }}
-                  >
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: on ? '#c9cdd4' : col.c, flexShrink: 0 }} />
-                    <span>{a}</span>
-                    <span style={{ marginLeft: 'auto', fontSize: 11, color: on ? '#a06' : '#b0b6bf' }}>
-                      {on ? '已打码，点一下恢复' : '点击打码'}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
+        {/* 隐藏账号：**一键全部打码**，不再逐个选择（用户要求「不用选择账号 默认全部打码」） */}
+        <button
+          className="pcv-btn pcv-btn-ghost"
+          onClick={() => setHiddenAccounts(allHidden ? [] : [...ACCOUNTS])}
+          title={allHidden ? '点击恢复显示全部账号' : '一键把全部账号显示成 * 号（数据不隐藏，照常统计）'}
+          style={{ flexShrink: 0, color: allHidden ? '#9aa0a9' : '#7a5ea8', borderColor: allHidden ? 'rgba(148,163,184,0.5)' : 'rgba(122,94,168,0.55)' }}
+        >{allHidden ? '账号已打码（点此恢复）' : '隐藏账号'}</button>
       </div>
 
       <div className="pcv-body">

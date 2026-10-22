@@ -131,6 +131,75 @@
   position: relative;
 }
 
+/* ── 多标签（打开过的页面）─────────────────────────────────
+   每个标签对应一个页面实例，切换只切 display，页面里的筛选/滚动/展开状态都保留 */
+.pcv-tabbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px 14px 0;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.pcv-tabbar::-webkit-scrollbar {
+  display: none;
+}
+.pcv-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  padding: 6px 10px;
+  border-radius: 9px 9px 0 0;
+  background: #f1f2f4;
+  color: #6b7280;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-bottom: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pcv-tab:hover {
+  background: #e9ebef;
+}
+.pcv-tab.on {
+  background: #fff;
+  color: #b8517f;
+  border-color: rgba(15, 23, 42, 0.08);
+}
+.pcv-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcv-tab-x {
+  border: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.5;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.pcv-tab-x:hover {
+  opacity: 1;
+}
+.pcv-tabpages {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.pcv-tabpage {
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  overflow: auto;
+}
+
 /* 全站云备份按钮：由 PcShell 用 portal 插进当前页顶栏（.pcv-bar）的标题组之后，
    和标题、搜索框排在同一行 —— 不再单独占一条横条，也不会顶出空白带。
    .pcv-cloudhost 是插进顶栏的挂载点，本身不占额外高度。 */
