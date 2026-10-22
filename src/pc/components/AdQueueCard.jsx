@@ -66,7 +66,15 @@ export function AdQueueCard() {
     () => (accFilter ? visible.filter((a) => a.account === accFilter) : visible),
     [visible, accFilter],
   )
-  const shown = expanded ? accFiltered : accFiltered.slice(0, 5)
+  const shown = useMemo(() => {
+    if (expanded) return accFiltered
+    // 折叠态默认只列前 5 条；但若「暂停」项被挤到 5 条之后会"看不见"，
+    // 所以优先把暂停项放进前 5，其余位置用未投流/其他补满（用户反馈「暂停的怎么不见了」）
+    const paused = accFiltered.filter((a) => a.status === '暂停')
+    const others = accFiltered.filter((a) => a.status !== '暂停')
+    if (paused.length >= 5) return paused.slice(0, 5)
+    return [...paused, ...others].slice(0, 5)
+  }, [expanded, accFiltered])
   const pendingCount = accFiltered.filter((a) => a.status === '未投流').length
 
   const [flashId, setFlashId] = useState('')   // 刚加入的那条：滚动定位 + 高亮 4 秒
