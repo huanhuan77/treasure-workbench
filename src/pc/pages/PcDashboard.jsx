@@ -361,12 +361,13 @@ export function PcDashboard() {
           <div className="pcv-title">工作台总览</div>
           <div className="pcv-sub">{greeting()} · {todayLabel}</div>
         </div>
-        {/* 诊断入口：页面标题栏右上角，粉色描边按钮（用户要求「放在标题顶部右边 粉色边框」） */}
+        {/* 诊断入口：紧跟在标题后面的左侧（不再 marginLeft:auto 顶到最右，
+            否则会和右上角的多标签挤在一起 —— 用户反馈「标签和按钮重叠/被挤」） */}
         <button
           className="pcv-btn pcv-btn-ghost"
           onClick={() => setWhyOpen(true)}
           title="列出已超阈值、但没出现的样品，并说明原因"
-          style={{ marginLeft: 'auto', flexShrink: 0, color: '#b8517f', borderColor: 'rgba(184,81,127,0.55)' }}
+          style={{ flexShrink: 0, color: '#b8517f', borderColor: 'rgba(184,81,127,0.55)' }}
         >为什么没提醒</button>
         {/* 隐藏账号：**一键全部打码**，不再逐个选择（用户要求「不用选择账号 默认全部打码」） */}
         <button
