@@ -99,11 +99,11 @@ export function makeAccountOption(accounts = [], maskFn = (x) => x) {
   }
 }
 
-// 按账号出单数量对比：横向条形图（账号在左、件数在右，柱尾标数值）
+// 按账号出单量对比：**竖向柱状图**（账号在 X 轴、柱顶标数值）
 export function makeAccountOrderOption(accounts = [], maskFn = (x) => x) {
   const rows = [...accounts].sort((a, b) => (b.orderQty || 0) - (a.orderQty || 0))
   return {
-    grid: { left: 8, right: 48, top: 10, bottom: 6, containLabel: true },
+    grid: { left: 8, right: 12, top: 28, bottom: 6, containLabel: true },
     tooltip: {
       trigger: 'axis', axisPointer: { type: 'shadow' },
       formatter: (ps) => {
@@ -112,21 +112,21 @@ export function makeAccountOrderOption(accounts = [], maskFn = (x) => x) {
       },
     },
     xAxis: {
-      type: 'value',
-      splitLine: { lineStyle: { color: 'rgba(15,23,42,0.06)' } },
-      axisLabel: { color: AXIS, fontSize: 10 },
-    },
-    yAxis: {
       type: 'category',
       data: rows.map((r) => maskFn(r.account)),
       axisLine: { lineStyle: { color: 'rgba(15,23,42,0.12)' } },
       axisTick: { show: false },
-      axisLabel: { color: '#4b5563', fontSize: 11 },
+      axisLabel: { color: '#4b5563', fontSize: 11, interval: 0 },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: 'rgba(15,23,42,0.06)' } },
+      axisLabel: { color: AXIS, fontSize: 10 },
     },
     series: [{
-      name: '出单件数', type: 'bar', barMaxWidth: 18,
-      itemStyle: { color: ORD, borderRadius: [0, 4, 4, 0] },
-      label: { show: true, position: 'right', fontSize: 11, color: ORD, fontWeight: 700 },
+      name: '出单件数', type: 'bar', barMaxWidth: 42,
+      itemStyle: { color: ORD, borderRadius: [4, 4, 0, 0] },
+      label: { show: true, position: 'top', fontSize: 11, color: ORD, fontWeight: 700 },
       data: rows.map((r) => r.orderQty || 0),
     }],
   }
