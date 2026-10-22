@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 import { PERIODS, periodRange, buildSummary, buildTrendFor, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../../utils/summary'
-import { makePeriodOption, makeMonthlyOption, makePieOption, makeAccountOption } from '../../utils/chartOptions'
+import { makePeriodOption, makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../../utils/chartOptions'
 import { EChart } from '../../components/EChart'
+import { DateRangePicker } from '../components/DateRangePicker'
 
 // PC 版「周 / 月总结」：只做**数据**（用户要求「只要数据表格，不需要文案」）。
 // 口径见 utils/summary.js：周=周一~周日、月=自然月；发布/出单/收支/样品/待办各自按区间取数。
@@ -50,6 +51,8 @@ export function PcSummary() {
   const periodOption = useMemo(() => makePeriodOption(trend.bars), [trend])
   // 分账号对比柱状图（账号名跟随「隐藏账号」打码）
   const accountOption = useMemo(() => makeAccountOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
+  // 按账号出单数量对比（横向条形）
+  const accountOrderOption = useMemo(() => makeAccountOrderOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
 
   // 按产品明细的排序：默认「出单件数」降序（用户要求），点表头可切换列与升降序
   const [prodSort, setProdSort] = useState({ key: 'order', dir: 'desc' })
@@ -91,31 +94,15 @@ export function PcSummary() {
               onClick={() => { setCustomStart(''); setCustomEnd(''); setPeriod(p.key) }}
             >{p.label}</button>
           ))}
-          {/* 自定义区间：两个日期框，选完立刻生效；右侧「清空」回到预设 */}
-          <input
-            className="pcv-input"
-            type="date"
-            style={{ width: 150, marginLeft: 6 }}
-            value={customStart}
-            onChange={(e) => setCustomStart(e.target.value)}
-            title="开始日期"
-          />
-          <span style={{ color: '#9aa0a9' }}>~</span>
-          <input
-            className="pcv-input"
-            type="date"
-            style={{ width: 150 }}
-            value={customEnd}
-            onChange={(e) => setCustomEnd(e.target.value)}
-            title="结束日期"
-          />
-          {(customStart || customEnd) && (
-            <button
-              className="pcv-btn-text"
-              style={{ fontSize: 12, color: '#9aa0a9' }}
-              onClick={() => { setCustomStart(''); setCustomEnd('') }}
-            >清空</button>
-          )}
+          {/* 自定义区间：日期范围选择器（左侧快捷区间 + 双月日历，用户要求「时间范围选择用这种」） */}
+          <div style={{ marginLeft: 6 }}>
+            <DateRangePicker
+              start={customStart}
+              end={customEnd}
+              onChange={({ start, end }) => { setCustomStart(start); setCustomEnd(end) }}
+              onClear={() => { setCustomStart(''); setCustomEnd('') }}
+            />
+          </div>
         </div>
       </div>
 
@@ -201,6 +188,23 @@ export function PcSummary() {
           ) : (
             <div style={{ padding: '10px 12px 12px' }}>
               <EChart option={accountOption} height={260} />
+            </div>
+          )}
+        </div>
+
+        {/* 按账号出单数量对比（用户要求）：横向条形，一眼看出哪个账号出得多 */}
+        <div className="pcv-card" style={{ marginTop: 12 }}>
+          <div className="pcv-card-h">
+            <span style={{ fontWeight: 600 }}>按账号出单数量对比</span>
+            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
+              出单件数 · {range.label}
+            </span>
+          </div>
+          {sum.accounts.length === 0 ? (
+            <div className="pcv-empty">这个区间没有数据</div>
+          ) : (
+            <div style={{ padding: '10px 12px 12px' }}>
+              <EChart option={accountOrderOption} height={Math.max(160, sum.accounts.length * 46 + 40)} />
             </div>
           )}
         </div>

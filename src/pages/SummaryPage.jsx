@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
 import { PERIODS, periodRange, buildSummary, buildTrendFor, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../utils/summary'
-import { makePeriodOption, makeMonthlyOption, makePieOption, makeAccountOption } from '../utils/chartOptions'
+import { makePeriodOption, makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../utils/chartOptions'
 import { EChart } from '../components/EChart'
 
 // 手机版「周 / 月总结」：只做数据展示（用户要求「只要数据表格」）。
@@ -54,6 +54,7 @@ export default function SummaryPage() {
   const pieOption = useMemo(() => makePieOption(catShare), [catShare])
   // 分账号对比柱状图（账号名跟随隐藏账号打码）
   const accountOption = useMemo(() => makeAccountOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
+  const accountOrderOption = useMemo(() => makeAccountOrderOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
 
   // 只留「发布 / 出单 / 样品」（用户要求去掉收入、净收入、完成待办）
   const cards = [
@@ -188,6 +189,20 @@ export default function SummaryPage() {
         ) : (
           <div style={{ padding: '8px 8px 10px' }}>
             <EChart option={accountOption} height={220} />
+          </div>
+        )}
+      </div>
+
+      {/* 按账号出单数量对比 */}
+      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
+        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
+          按账号出单数量对比
+        </div>
+        {sum.accounts.length === 0 ? (
+          <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
+        ) : (
+          <div style={{ padding: '8px 8px 10px' }}>
+            <EChart option={accountOrderOption} height={Math.max(150, sum.accounts.length * 40 + 30)} />
           </div>
         )}
       </div>

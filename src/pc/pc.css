@@ -1587,6 +1587,46 @@ select.pcv-input {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 标签里的「产品名 + 数量加减」：数量可直接在标签上改，不用打开面板 */
+.pcv-tag-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pcv-tag-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 2px;
+  padding: 0 2px;
+  border-radius: 5px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+}
+.pcv-tag-qty > button {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+.pcv-tag-qty > button:hover {
+  background: #fdf1f6;
+  color: #b8517f;
+}
+.pcv-tag-qty > span {
+  min-width: 14px;
+  text-align: center;
+  font-weight: 700;
+  color: #333a45;
+}
+
 .pcv-tag > button {
   border: none;
   background: none;
