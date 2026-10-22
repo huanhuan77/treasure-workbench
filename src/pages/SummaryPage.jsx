@@ -90,6 +90,42 @@ export default function SummaryPage() {
         })}
       </div>
 
+      {/* 按产品明细 */}
+      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
+        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
+          按产品明细 <span style={{ fontWeight: 400, color: '#9aa0a9', fontSize: 12 }}>（{sum.products.length} 个）</span>
+        </div>
+        {sum.products.length === 0 ? (
+          <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
+        ) : sum.products.map((r) => (
+          <div key={r.name} style={{
+            padding: '9px 12px', borderTop: '0.5px solid rgba(15,23,42,0.05)',
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span style={{ fontSize: 13, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+            <span style={{ fontSize: 12, color: '#3f6fa8' }}>发 {fmtInt(r.publish)}</span>
+            <span style={{ fontSize: 12, color: '#4f8a6d' }}>单 {fmtInt(r.orderQty)}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 新增样品清单 */}
+      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
+        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
+          区间内新增的样品 <span style={{ fontWeight: 400, color: '#9aa0a9', fontSize: 12 }}>（{sum.newSamples} 个）</span>
+        </div>
+        <div style={{ padding: '10px 12px', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {sum.newSampleList.length === 0 ? (
+            <span style={{ fontSize: 12, color: '#9aa0a9' }}>这个区间没有新增样品</span>
+          ) : sum.newSampleList.map((s, i) => (
+            <span key={`${s.name}-${i}`} style={{
+              fontSize: 12, padding: '3px 9px', borderRadius: 999,
+              background: '#f3f4f6', color: '#4b5563', whiteSpace: 'nowrap',
+            }}>{s.name}</span>
+          ))}
+        </div>
+      </div>
+
       {/* 按天明细 */}
       <div style={{ margin: '0 16px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
         <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>

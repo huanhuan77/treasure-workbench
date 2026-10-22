@@ -118,7 +118,10 @@ export function buildSummary(data, range) {
   }
 
   // 样品 / 待办
-  const newSamples = samples.filter((s) => inRange(String(s.createdAt ? ymd(new Date(s.createdAt)) : ''), start, end)).length
+  const newSampleList = samples
+    .filter((s) => inRange(String(s.createdAt ? ymd(new Date(s.createdAt)) : ''), start, end))
+    .map((s) => ({ name: s.name || '（未命名）', status: s.status || '' }))
+  const newSamples = newSampleList.length
   const today = ymd(new Date())
   const overdueSamples = samples.filter((s) => {
     if (!s || s.archived || s.status === 'abandoned' || s.status === 'published') return false
@@ -126,6 +129,27 @@ export function buildSummary(data, range) {
     return !!dl && dl < today
   }).length
   const todosDone = todos.filter((t) => t.done && inRange(t.updatedAt ? ymd(new Date(t.updatedAt)) : '', start, end)).length
+
+  // ── 按产品明细（用户要求「要统计具体的」：哪个品发了多少、出了多少单）──
+  const prodMap = new Map()
+  const prodOf = (name) => {
+    const key = String(name || '（未命名）')
+    if (!prodMap.has(key)) prodMap.set(key, { name: key, publish: 0, orderQty: 0 })
+    return prodMap.get(key)
+  }
+  const sampleName = new Map((samples || []).map((s) => [s.id, String(s.name || '')]))
+  for (const r of pubRecs) {
+    if (!inRange(String(r.publishDate || ''), start, end)) continue
+    const nm = sampleName.get(r.sampleId) || r.name || '（样品已删除）'
+    prodOf(nm).publish += Number(r.qty) > 0 ? Number(r.qty) : 1
+  }
+  for (const o of orders) {
+    if (!inRange(String(o.date || ''), start, end)) continue
+    prodOf(o.name).orderQty += Number(o.qty) > 0 ? Number(o.qty) : 1
+  }
+  const products = [...prodMap.values()]
+    .filter((r) => r.publish > 0 || r.orderQty > 0)
+    .sort((a, b) => (b.publish + b.orderQty) - (a.publish + a.orderQty))
 
   // ── 按天明细（只列有数据的日期，日期升序）──
   const dayMap = new Map()
@@ -169,10 +193,12 @@ export function buildSummary(data, range) {
     expense,
     net: income - expense,
     newSamples,
+    newSampleList,
     overdueSamples,
     todosDone,
     accounts,
     days,
+    products,
   }
 }
 

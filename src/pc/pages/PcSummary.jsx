@@ -97,6 +97,60 @@ export function PcSummary() {
           </table>
         </div>
 
+        {/* 按产品明细：哪个品发了多少、出了多少单（用户要求「要统计具体的」） */}
+        <div className="pcv-card" style={{ marginTop: 12 }}>
+          <div className="pcv-card-h">
+            <span style={{ fontWeight: 600 }}>按产品明细</span>
+            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
+              {sum.products.length} 个产品 · 按「发布+出单」合计降序
+            </span>
+          </div>
+          <table className="pcv-table">
+            <thead>
+              <tr>
+                <th style={{ width: 320 }}>产品</th>
+                <th style={{ width: 110 }}>发布条数</th>
+                <th style={{ width: 110 }}>出单件数</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {sum.products.length === 0 ? (
+                <tr><td colSpan={4} className="pcv-empty">这个区间没有数据</td></tr>
+              ) : sum.products.map((r) => (
+                <tr key={r.name}>
+                  <td className="pcv-name" title={r.name}>{r.name}</td>
+                  <td className="pcv-num">{fmtInt(r.publish)}</td>
+                  <td className="pcv-num">{fmtInt(r.orderQty)}</td>
+                  <td />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* 新增样品清单：卡片上的数字对应到具体是哪几个品 */}
+        <div className="pcv-card" style={{ marginTop: 12 }}>
+          <div className="pcv-card-h">
+            <span style={{ fontWeight: 600 }}>区间内新增的样品</span>
+            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>{sum.newSamples} 个</span>
+          </div>
+          <div style={{ padding: '10px 14px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {sum.newSampleList.length === 0 ? (
+              <span style={{ fontSize: 12, color: '#9aa0a9' }}>这个区间没有新增样品</span>
+            ) : sum.newSampleList.map((s, i) => (
+              <span
+                key={`${s.name}-${i}`}
+                style={{
+                  fontSize: 12, padding: '3px 9px', borderRadius: 999,
+                  background: '#f3f4f6', color: '#4b5563', whiteSpace: 'nowrap',
+                }}
+                title={s.status}
+              >{s.name}</span>
+            ))}
+          </div>
+        </div>
+
         {/* 按天明细 */}
         <div className="pcv-card" style={{ marginTop: 12 }}>
           <div className="pcv-card-h">
