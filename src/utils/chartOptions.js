@@ -100,15 +100,18 @@ export function makeAccountOption(accounts = [], maskFn = (x) => x) {
 }
 
 // 按账号出单量对比：**竖向柱状图**（账号在 X 轴、柱顶标数值）
-export function makeAccountOrderOption(accounts = [], maskFn = (x) => x) {
-  const rows = [...accounts].sort((a, b) => (b.orderQty || 0) - (a.orderQty || 0))
+// metric: 'qty' = 出单件数（qty 合计）｜'count' = 出单笔数（记录条数）
+export function makeAccountOrderOption(accounts = [], maskFn = (x) => x, metric = 'qty') {
+  const val = (r) => (metric === 'count' ? (r.orderCount || 0) : (r.orderQty || 0))
+  const rows = [...accounts].sort((a, b) => val(b) - val(a))
   return {
     grid: { left: 8, right: 12, top: 28, bottom: 6, containLabel: true },
     tooltip: {
       trigger: 'axis', axisPointer: { type: 'shadow' },
       formatter: (ps) => {
         const p = ps[0]
-        return `${p.name}<br/>${p.marker}出单件数：${p.value}`
+        const d = p.data || {}
+        return `${p.name}<br/>${p.marker}出单件数：${d.qty != null ? d.qty : p.value}<br/>出单笔数：${d.count != null ? d.count : '-'}`
       },
     },
     xAxis: {
@@ -124,10 +127,10 @@ export function makeAccountOrderOption(accounts = [], maskFn = (x) => x) {
       axisLabel: { color: AXIS, fontSize: 10 },
     },
     series: [{
-      name: '出单件数', type: 'bar', barMaxWidth: 42,
+      name: metric === 'count' ? '出单笔数' : '出单件数', type: 'bar', barMaxWidth: 42,
       itemStyle: { color: ORD, borderRadius: [4, 4, 0, 0] },
       label: { show: true, position: 'top', fontSize: 11, color: ORD, fontWeight: 700 },
-      data: rows.map((r) => r.orderQty || 0),
+      data: rows.map((r) => ({ value: val(r), qty: r.orderQty || 0, count: r.orderCount || 0 })),
     }],
   }
 }

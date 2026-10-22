@@ -18,12 +18,15 @@ const parseDay = (s) => {
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
 }
 
-// 期间列表：本周 / 上周 / 本月 / 上月
+// 期间列表：本周 / 上周 / 本月 / 上月 + 近 30 / 60 / 90 天（滚动窗口，含今天）
 export const PERIODS = [
   { key: 'week', label: '本周' },
   { key: 'lastWeek', label: '上周' },
   { key: 'month', label: '本月' },
   { key: 'lastMonth', label: '上月' },
+  { key: 'd30', label: '近30天' },
+  { key: 'd60', label: '近60天' },
+  { key: 'd90', label: '近90天' },
 ]
 
 // 返回 { start, end, label, key }（start/end 都是 'YYYY-MM-DD'，含首含尾）
@@ -46,6 +49,15 @@ export function periodRange(key, base = new Date()) {
     const s = new Date(base.getFullYear(), base.getMonth() - 1, 1)
     const e = new Date(base.getFullYear(), base.getMonth(), 0)
     return { key, start: ymd(s), end: ymd(e), label: `${s.getFullYear()} 年 ${s.getMonth() + 1} 月` }
+  }
+  // 近 N 天（滚动窗口，含今天）
+  const rolling = /^d(\d+)$/.exec(String(key || ''))
+  if (rolling) {
+    const n = Number(rolling[1]) || 30
+    const e = new Date(base)
+    const s = new Date(base)
+    s.setDate(s.getDate() - (n - 1))
+    return { key, start: ymd(s), end: ymd(e), label: `近 ${n} 天（${ymd(s)} ~ ${ymd(e)}）` }
   }
   const s = new Date(base.getFullYear(), base.getMonth(), 1)
   const e = new Date(base.getFullYear(), base.getMonth() + 1, 0)

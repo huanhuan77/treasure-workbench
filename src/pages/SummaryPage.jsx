@@ -45,7 +45,10 @@ export default function SummaryPage() {
   const pieOption = useMemo(() => makePieOption(catShare), [catShare])
   // 分账号对比柱状图（账号名跟随隐藏账号打码）
   const accountOption = useMemo(() => makeAccountOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
-  const accountOrderOption = useMemo(() => makeAccountOrderOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
+  const accountOrderOption = useMemo(
+    () => makeAccountOrderOption(sum.accounts, mask, 'qty'),
+    [sum.accounts, hiddenAccounts],
+  )
 
   // 只留「发布 / 出单 / 样品」（用户要求去掉收入、净收入、完成待办）
   const cards = [

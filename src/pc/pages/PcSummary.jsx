@@ -45,8 +45,11 @@ export function PcSummary() {
 
   // 分账号对比柱状图（账号名跟随「隐藏账号」打码）
   const accountOption = useMemo(() => makeAccountOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
-  // 按账号出单数量对比（横向条形）
-  const accountOrderOption = useMemo(() => makeAccountOrderOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
+  // 按账号出单量对比：固定按「出单件数」（qty 合计，用户确认不需要笔数切换）
+  const accountOrderOption = useMemo(
+    () => makeAccountOrderOption(sum.accounts, mask, 'qty'),
+    [sum.accounts, hiddenAccounts],
+  )
 
   // 按产品明细的排序：默认「出单件数」降序（用户要求），点表头可切换列与升降序
   const [prodSort, setProdSort] = useState({ key: 'order', dir: 'desc' })

@@ -177,35 +177,36 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
           <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>只能选「{account}」已拍的样品</div>
 
           <div className="pcv-entrylist">
-            {/* 与「记出单」统一：已选样品是可删除的标签（带数量 ×N），点框展开选样面板 */}
-            <div className="pcv-tagbox" onClick={() => { if (pickIdx < 0) { setPickIdx(0); setQuery('') } }}>
-              {entries.filter((e) => e.sampleId).map((e) => {
-                const idx = entries.findIndex((x) => x.sampleId === e.sampleId)
-                const qty = Number(e.qty) > 0 ? Number(e.qty) : 1
-                return (
-                  <span key={e.sampleId} className="pcv-tag" onClick={(ev) => ev.stopPropagation()}>
-                    <span className="pcv-tag-name">{nameOf(e.sampleId)}</span>
-                    <span className="pcv-tag-qty">
-                      <button type="button" title="减 1" onClick={(ev) => { ev.stopPropagation(); bumpQty(idx, -1) }}>−</button>
-                      <span>{qty}</span>
-                      <button type="button" title="加 1" onClick={(ev) => { ev.stopPropagation(); bumpQty(idx, 1) }}>＋</button>
-                    </span>
-                    <button
-                      type="button"
-                      title="移除这条"
-                      onClick={(ev) => {
-                        ev.stopPropagation()
-                        removeEntry(idx)
-                      }}
-                    >×</button>
-                  </span>
-                )
-              })}
-              {entries.filter((e) => e.sampleId).length === 0 && (
-                <span className="pcv-tagbox-hint">点击选择样品</span>
-              )}
-              <span className="pcv-tagbox-caret">▾</span>
-            </div>
+            {/* 与「记出单」统一：每条样品一行（名称在左、数量 − N ＋ 在右），点名称展开选样面板 */}
+            {entries.filter((e) => e.sampleId).length === 0 && (
+              <button className="pcv-entry-empty" onClick={addEntry}>
+                ＋ 点这里选择样品
+              </button>
+            )}
+            {entries.filter((e) => e.sampleId).map((e) => {
+              const idx = entries.findIndex((x) => x.sampleId === e.sampleId)
+              const qty = Number(e.qty) > 0 ? Number(e.qty) : 1
+              return (
+                <div key={e.sampleId} className="pcv-entry" style={{ marginBottom: 8 }}>
+                  <button
+                    className="pcv-entry-pick"
+                    title="点一下换样品 / 继续多选"
+                    onClick={() => { setPickIdx(pickIdx === 0 ? -1 : 0); setQuery('') }}
+                  >{nameOf(e.sampleId)}</button>
+                  <div className="pcv-qty">
+                    <button type="button" title="减 1" onClick={() => bumpQty(idx, -1)}>−</button>
+                    <input value={qty} readOnly tabIndex={-1} />
+                    <button type="button" title="加 1" onClick={() => bumpQty(idx, 1)}>＋</button>
+                  </div>
+                  <button
+                    type="button"
+                    className="pcv-x"
+                    title="移除这条"
+                    onClick={() => removeEntry(idx)}
+                  >×</button>
+                </div>
+              )
+            })}
 
             {/* 样品选择面板：勾选即生效，数量在行内直接加减 */}
             {pickIdx >= 0 && (
