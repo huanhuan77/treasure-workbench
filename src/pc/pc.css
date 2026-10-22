@@ -2145,3 +2145,15 @@ tr:hover .pcv-x--soft {
 .pcv-rtab.on::after {
   background: #b8517f;
 }
+/* 页面顶栏给右上角的标签让位：--pcv-tabs-w 由 PcShell 实时写入标签栏宽度，
+   这样标签和「为什么没提醒 / 隐藏账号」等右侧按钮不会重叠（用户反馈「样式重合了」） */
+.pcv-main .pcv-bar {
+  padding-right: calc(38px + var(--pcv-tabs-w, 0px));
+}
+/* 文案列表卡片：产品名 / 话题 / 筛选三行合成一个固定区，滚列表时钉在顶部 */
+.pcv-copys-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #fff;
+}

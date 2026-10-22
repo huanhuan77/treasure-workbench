@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate, useOutlet } from 'react-router-dom'
 import { useStore } from '../store'
 import { useIsDesktop } from '../utils/useIsDesktop'
@@ -74,6 +74,7 @@ export function PcShell() {
     return []
   })
   const [pages, setPages] = useState(() => new Map())
+  const tabbarRef = useRef(null)
 
   // 访问新页面 → 补一个 tab + 把它的元素存起来（只存第一次，保持组件实例）
   useEffect(() => {
@@ -114,6 +115,26 @@ export function PcShell() {
 
   // 云备份按钮已改为直接渲染在侧边栏底部，不再需要往页面顶栏插挂载点
 
+  // 标签栏宽度 → CSS 变量：页面顶栏右侧留出同样宽度，标签就不会压在「为什么没提醒 / 隐藏账号」这些按钮上
+  useEffect(() => {
+    const el = tabbarRef.current
+    if (!el) return undefined
+    const apply = () => {
+      const w = el.offsetWidth || 0
+      document.documentElement.style.setProperty('--pcv-tabs-w', `${w}px`)
+    }
+    apply()
+    let ro = null
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(apply)
+      ro.observe(el)
+    }
+    return () => {
+      if (ro) ro.disconnect()
+      document.documentElement.style.setProperty('--pcv-tabs-w', '0px')
+    }
+  }, [tabs.length])
+
   // 样品角标口径与手机版底部导航一致：未到货 + 已到货未拍 + 已拍未发
   const samplesBadge = (samples || []).filter(
     (s) => s.status === 'un_arrived' || s.status === 'arrived' || s.status === 'shot',
@@ -151,8 +172,10 @@ export function PcShell() {
         </div>
       </aside>
       <main className="pcv-main">
-        {/* 打开过的页面：多标签，点标签切换；切换只改 display，页面状态（筛选/滚动/展开）全保留 */}
-        <div className="pcv-tabbar">
+        {/* 打开过的页面：多标签，点标签切换；切换只改 display，页面状态（筛选/滚动/展开）全保留。
+            tabbarRef 用来量宽度 → 写进 CSS 变量 --pcv-tabs-w，
+            让页面顶栏（.pcv-bar）自动让出这段空间，避免标签和右上角按钮重叠。 */}
+        <div className="pcv-tabbar" ref={tabbarRef}>
           {tabs.map((t) => {
             const on = t.path === location.pathname
             return (

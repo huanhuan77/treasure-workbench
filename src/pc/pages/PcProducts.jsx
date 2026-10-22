@@ -451,6 +451,9 @@ export function PcProducts() {
               <div className="pcv-empty">左侧选一个产品，这里显示它的文案</div>
             ) : (
               <>
+                {/* 顶部三行（产品名 / 话题 / 筛选）整体固定在卡片顶部，不随文案列表滚动
+                    —— 用户要求「这部分固定住」 */}
+                <div className="pcv-copys-head">
                 <div className="pcv-card-h">
                   <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {displayTitle(active)}
@@ -485,7 +488,12 @@ export function PcProducts() {
                       }
                     }}
                   />
-                  <button className="pcv-btn-text" onClick={() => { if (copyFileRef.current) copyFileRef.current.click() }}>
+                  <button
+                    className="pcv-btn pcv-btn-ghost"
+                    onClick={() => { if (copyFileRef.current) copyFileRef.current.click() }}
+                    title="导入 txt / md 文档，自动识别编码与分段"
+                    style={{ color: '#7a5ea8', borderColor: 'rgba(122,94,168,0.75)', background: '#f7f2fc', fontWeight: 600 }}
+                  >
                     📄 导入 txt
                   </button>
                   <button className="pcv-btn pcv-btn-ghost" onClick={() => { setImportText(''); setImportOpen(true) }}>＋ 新增文案</button>
@@ -528,6 +536,8 @@ export function PcProducts() {
                     ))}
                   </div>
                 )}
+
+                </div>{/* /pcv-copys-head 固定区结束 */}
 
                 {activeCopies.length === 0 ? (
                   <div className="pcv-empty">这个产品还没有文案，点右上角「＋ 新增文案」粘贴一批</div>
