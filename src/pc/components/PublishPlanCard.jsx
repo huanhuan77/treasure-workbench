@@ -168,21 +168,23 @@ export function PublishPlanCard() {
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
-  // 点一条产品即勾选（可多选）：编辑态只能选一个（该态只有一行），新增态可连着勾多个
+  // 点一条产品即勾选（可多选）：编辑态只能选一个（该态只有一行），新增态可连着勾多个。
+  // 勾选时把样品 ID 一起带上（按名称兜底解析），供保存后关联
   const pickProduct = (name) => {
-    if (isEditing) { setPicked([name]); return }
-    setPicked((p) => (p.includes(name) ? p.filter((x) => x !== name) : [...p, name]))
+    const sid = (candidates.find((c) => c.name === name) || {}).id || ''
+    if (isEditing) { setPicked([{ name, sampleId: sid }]); return }
+    setPicked((p) => (p.some((x) => x.name === name) ? p.filter((x) => x.name !== name) : [...p, { name, sampleId: sid }]))
   }
   // 确定：第一个勾的填进当前行，其余各自动占一行（数量默认 1）
   const confirmPicked = () => {
     if (picked.length > 0) {
       setEntries((p) => {
         const next = [...p]
-        picked.forEach((name, i) => {
+        picked.forEach((it, i) => {
           if (i === 0 && pickIdx >= 0 && pickIdx < next.length) {
-            next[pickIdx] = { ...(next[pickIdx] || { qty: '1' }), name }
+            next[pickIdx] = { ...(next[pickIdx] || { qty: '1' }), name: it.name, sampleId: it.sampleId || '' }
           } else {
-            next.push({ name, qty: '1' })
+            next.push({ name: it.name, qty: '1', sampleId: it.sampleId || '' })
           }
         })
         return next
