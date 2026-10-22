@@ -1741,7 +1741,7 @@ export function DashboardPage() {
                           onClick={() => { if (swiped) setSwipedHotId(null) }}
                           style={{
                             position: 'relative', zIndex: 1,
-                            background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px',
+                            background: '#fff', border: '1px solid #f0edf2', borderRadius: '10px', padding: '9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
                             transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
                           }}
