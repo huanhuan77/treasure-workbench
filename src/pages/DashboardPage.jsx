@@ -696,6 +696,11 @@ export function DashboardPage() {
     const ob = (b.status !== 'published' && isOverdue(b)) ? 0 : 1
     if (oa !== ob) return oa - ob
     const days = (s) => {
+      // 筛了账号时只按该账号的天数排，否则跨账号 max 会看着乱序
+      if (remindAccount !== 'all') {
+        const d = daysSincePublishByAccount(s, remindAccount)
+        return d === Infinity ? Number.MAX_SAFE_INTEGER : d
+      }
       const accs = reminderAccounts(s)
       const d = accs.length ? Math.max(...accs.map((x) => daysSincePublishByAccount(s, x))) : daysSincePublish(s)
       return d === Infinity ? Number.MAX_SAFE_INTEGER : d
@@ -1720,7 +1725,10 @@ export function DashboardPage() {
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fHot.map((s) => {
                     // 与 PC 一致：列出**所有到该发**的账号（不再只挑从未发布的那个）
-                    const showAccounts = pendingAccounts(s)
+                    // 筛了账号时只保留当前账号
+                    const showAccounts = remindAccount === 'all'
+                      ? pendingAccounts(s)
+                      : pendingAccounts(s).filter((a) => a === remindAccount)
                     const swiped = swipedHotId === s.id
                     return (
                       // 左滑露出操作（用户要求「操作放到左滑操作」）：操作条固定在底层，卡片整体左移
