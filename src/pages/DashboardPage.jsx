@@ -1599,9 +1599,12 @@ export function DashboardPage() {
                     if (remindAccount !== 'all' && pendingAccounts(s).includes(remindAccount) && !showAccounts.includes(remindAccount)) {
                       showAccounts = [remindAccount, ...showAccounts]
                     }
-                    const daysText = showAccounts.length
-                      ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
-                      : daysSincePublish(s)
+                    // 筛了账号时，天数/状态只按当前账号算，不要混进别的账号（如别的号从未发布）
+                    const daysText = remindAccount !== 'all'
+                      ? daysSincePublishByAccount(s, remindAccount)
+                      : (showAccounts.length
+                          ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
+                          : daysSincePublish(s))
                     const swiped = swipedHotId === s.id
                     return (
                       // 与「高频出单」一致：操作收到左滑里（用户要求「发布提醒也一样」）
