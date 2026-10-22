@@ -89,7 +89,7 @@ function AccountDays({ sample, list, hidden }) {
 export function PcDashboard() {
   const navigate = useNavigate()
   const { show } = useToast()
-  const { samples, todos, orders, hiddenAccounts, setHiddenAccounts, updateTodo } = useStore()
+  const { samples, todos, orders, publishPlans, hiddenAccounts, setHiddenAccounts, updateTodo } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [account, setAccount] = useState('')
   // 提醒中心表格的产品名搜索（用户要求「加个搜索条件」）
@@ -280,6 +280,19 @@ export function PcDashboard() {
     if (!account) return sp.items.length
     return sp.items.filter((it) => sp.accountsOf(it).includes(account)).length
   }
+
+  // 「已建计划」标记索引（用户要求）：发布计划按产品名关联（store.publishPlans 无 sampleId），
+  // name -> [{ account, planDate, qty }]，行内查这个名字有没有排过计划
+  const planIndex = useMemo(() => {
+    const m = new Map()
+    for (const p of publishPlans || []) {
+      const n = String(p.name || '').trim()
+      if (!n) continue
+      if (!m.has(n)) m.set(n, [])
+      m.get(n).push({ account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 })
+    }
+    return m
+  }, [publishPlans])
 
   // 当前 Tab 涉及到的账号（供筛选条）
   const accountOptions = useMemo(() => {
@@ -639,7 +652,25 @@ export function PcDashboard() {
                           className="pcv-name"
                           title={s.name}
                           style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
-                        >{s.name}</td>
+                        >
+                          {s.name}
+                          {/* 已建计划标记（用户要求）：这个产品名在「发布计划」里排过就亮紫色小标，
+                              悬停可看计划详情（账号 / 日期 / 数量） */}
+                          {(planIndex.get(s.name) || []).length > 0 && (
+                            <span
+                              title={`已在发布计划：${(planIndex.get(s.name) || [])
+                                .map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`)
+                                .join('；')}`}
+                              style={{
+                                display: 'inline-block', marginLeft: 6, verticalAlign: '1px',
+                                fontSize: 10, fontWeight: 700, lineHeight: '16px',
+                                padding: '0 6px', borderRadius: 999,
+                                background: '#f3ecfd', color: '#7a5ea8',
+                                border: '1px solid rgba(122,94,168,0.35)',
+                              }}
+                            >已建计划</span>
+                          )}
+                        </td>
                         <td>{cur.actions(it, acc, accs)}</td>
                         {/* 账号列：高频出单 / 发布提醒里显示「账号 + 已N天」（用户要求合并到这里）；
                             其它 tab 仍是圆点 + 名字 */}
