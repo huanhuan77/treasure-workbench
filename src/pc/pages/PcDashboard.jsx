@@ -656,8 +656,8 @@ export function PcDashboard() {
                           style={overdue ? { boxShadow: 'inset 3px 0 0 #dd9a95' } : undefined}
                         >
                           {s.name}
-                          {/* 已建计划标记（用户要求）：这个产品名在「发布计划」里排过就亮粉色小标，
-                              标上**哪些账号**已排（去重，超过 2 个收「等N个」），悬停看计划详情 */}
+                          {/* 已建计划标记（用户要求）：只显示「已建计划」四个字（账号靠筛选自己判断，
+                              筛了账号就只认该账号的计划），悬停可看计划详情 */}
                           {(planIndex.get(s.name) || []).length > 0 && (
                             <span
                               title={`已在发布计划：${(planIndex.get(s.name) || [])
@@ -670,12 +670,7 @@ export function PcDashboard() {
                                 background: '#fce7f0', color: '#b8517f',
                                 border: '1px solid rgba(184,81,127,0.35)',
                               }}
-                            >
-                              {(() => {
-                                const accs = [...new Set((planIndex.get(s.name) || []).map((p) => maskAcc(p.account || '未指定')))]
-                                return `已建计划·${accs.length <= 2 ? accs.join('、') : `${accs[0]} 等${accs.length}个`}`
-                              })()}
-                            </span>
+                            >已建计划</span>
                           )}
                         </td>
                         <td>{cur.actions(it, acc, accs)}</td>

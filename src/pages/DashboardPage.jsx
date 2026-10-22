@@ -652,12 +652,10 @@ export function DashboardPage() {
     }
     return m
   }, [publishPlans, remindAccount])
-  // 行内复用：未建计划返回 null；否则粉色小标，标出**哪些账号**已排（去重，超过 2 个收「等N个」）
+  // 行内复用：未建计划返回 null；否则粉色小标（只写「已建计划」，账号靠筛选自己判断）
   const planBadge = (name) => {
     const arr = planNameSet.get(String(name || '').trim()) || []
     if (!arr.length) return null
-    const accs = [...new Set(arr.map((p) => maskAccount(p.account || '未指定', hiddenAccounts)))]
-    const label = `已建计划·${accs.length <= 2 ? accs.join('、') : `${accs[0]} 等${accs.length}个`}`
     return (
       <span
         title={`已在发布计划：${arr.map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`).join('；')}`}
@@ -666,7 +664,7 @@ export function DashboardPage() {
           padding: '0 6px', borderRadius: 999, background: '#fce7f0', color: '#b8517f',
           border: '1px solid rgba(184,81,127,0.35)', flexShrink: 0,
         }}
-      >{label}</span>
+      >已建计划</span>
     )
   }
 
