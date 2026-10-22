@@ -234,7 +234,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
                         title={on ? '已勾选，再点一下取消' : '点一下勾选（可多选）'}
                         onClick={() => pickSample(s.id)}
                       >
-                        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
                         {on && (
                           <>
                             {/* 数量直接在行内加减（不用回到上面那条目行） */}

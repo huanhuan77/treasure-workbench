@@ -262,7 +262,7 @@ export function OrderDialog({ prefill, onClose, editing }) {
                             title={on ? '已勾选，再点一下取消' : '点一下勾选（可多选）'}
                             onClick={() => pickSample(s.id)}
                           >
-                            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
                             {on && (
                               <>
                                 {/* 出单数量：行内直接加减（用户要求「出单填写出单数量」） */}
