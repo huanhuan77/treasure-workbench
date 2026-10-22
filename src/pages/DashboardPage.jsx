@@ -1894,7 +1894,7 @@ export function DashboardPage() {
                         <button
                           onClick={() => { if (!tapOK()) return; navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } }) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                        >补发布</button>
+                        >新建计划</button>
                         </div>{/* /左滑卡片内容 */}
                       </div>
                     )
