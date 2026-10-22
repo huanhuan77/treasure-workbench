@@ -393,6 +393,7 @@ export function SamplesPage() {
                   const acList = getAccounts(s).map(a => ({ name: a, ...(ACCOUNT_COLOR[a] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }) }))
 
                   return                   <SampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
+                    orderQty={orderQtyBySample.get(s.id) || 0}
                     swipedId={swipedId} setSwipedId={setSwipedId}
                     hideAccount={hideAccount}
                     show={show}
@@ -537,7 +538,7 @@ export function SamplesPage() {
 }
 
 // 可拖拽排序的样品卡片
-function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickShot }) {
+function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAccount, show, onEdit, onDelete, onQuickShot, orderQty = 0 }) {
   const logistics = getLogistics(s)
   const logInfo = LOGISTICS_STATUS[logistics]
   const logColor = logInfo ? logInfo.color : '#94a3b8'
@@ -569,7 +570,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
           {/* 第一行：产品名 + 分类 + 代表状态 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '40px' }}>{s.name}</h3>
-            {(() => { const totalQty = orderQtyBySample.get(s.id) || 0; return totalQty > 0 ? <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>×{totalQty}</span> : null })()}
+            {orderQty > 0 ? <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>×{orderQty}</span> : null}
             {s.category && <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: 'rgba(109,40,217,0.12)', color: '#6d28d9', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.category}</span>}
             {repInfo && <span style={{ fontSize: '11px', color: '#fff', background: repInfo.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{repInfo.label}</span>}
           </div>
