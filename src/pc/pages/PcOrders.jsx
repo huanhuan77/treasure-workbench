@@ -249,7 +249,7 @@ export function PcOrders() {
                 style={{
                   display: 'inline-flex', flexDirection: 'column', justifyContent: 'center',
                   background: '#fff', border: '1px solid #f0e2ea', borderLeft: `3px solid ${c.color}`,
-                  borderRadius: 10, padding: '10px 16px', minWidth: 84, minHeight: 56,
+                  borderRadius: 10, padding: '5px 18px', minWidth: 120, minHeight: 40,
                 }}
               >
                 <span style={{ fontSize: 11.5, color: '#8a8f98', lineHeight: 1.6 }}>{c.label}</span>
