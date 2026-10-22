@@ -333,6 +333,35 @@ export function DashboardPage() {
     })
   }, [publishPlans])
   const planUpcoming = planSorted.filter((p) => !p.planDate || p.planDate >= todayPlan).length
+
+  // 「已建计划」标记索引（与 PC 总览一致，用户要求手机端也加）：按产品名关联、排除已完成的计划，
+  // name -> [{ account, planDate, qty }]，行内查这个名字有没有未完成的排期
+  const planNameSet = useMemo(() => {
+    const m = new Map()
+    for (const p of publishPlans || []) {
+      if (p.done) continue
+      const n = String(p.name || '').trim()
+      if (!n) continue
+      if (!m.has(n)) m.set(n, [])
+      m.get(n).push({ account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 })
+    }
+    return m
+  }, [publishPlans])
+  // 行内复用：未建计划返回 null；否则紫色小标，悬停看计划详情
+  const planBadge = (name) => {
+    const arr = planNameSet.get(String(name || '').trim()) || []
+    if (!arr.length) return null
+    return (
+      <span
+        title={`已在发布计划：${arr.map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`).join('；')}`}
+        style={{
+          display: 'inline-block', fontSize: 10, fontWeight: 700, lineHeight: '15px',
+          padding: '0 6px', borderRadius: 999, background: '#f3ecfd', color: '#7a5ea8',
+          border: '1px solid rgba(122,94,168,0.35)', flexShrink: 0,
+        }}
+      >已建计划</span>
+    )
+  }
   // 新增/编辑弹层：null=关闭 / 'new' / 条目
   // 形态与 PC 一致（照「记录发布」弹窗）：切账号分别填、每行「产品 + 数量」可加减，
   // 一次保存写成多条计划；编辑已有计划时只保留一行。
@@ -1594,6 +1623,7 @@ export function DashboardPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {planBadge(s.name)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
@@ -1710,6 +1740,7 @@ export function DashboardPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {planBadge(s.name)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                             {/* 「每N天提醒」紧跟状态标签（用户要求「几天提醒放在状态后面」） */}
                             <span style={{ fontSize: '9px', fontWeight: 600, color: '#6b7280', background: '#f1f2f4', padding: '1px 6px', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}>每{hotReminderDays(s)}天提醒</span>
@@ -1794,6 +1825,7 @@ export function DashboardPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {planBadge(s.name)}
                             <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
                               还差 {it.minLack} 条{it.accounts.length > 1 ? ` · ${it.accounts.length} 个账号` : ''}
                             </span>
@@ -1874,6 +1906,7 @@ export function DashboardPage() {
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                            {planBadge(s.name)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                             {getAccounts(s).map((a) => (
                               <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
