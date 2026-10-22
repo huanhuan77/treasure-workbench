@@ -249,11 +249,11 @@ export function PcOrders() {
                 style={{
                   display: 'inline-flex', flexDirection: 'column', justifyContent: 'center',
                   background: '#fff', border: '1px solid #f0e2ea', borderLeft: `3px solid ${c.color}`,
-                  borderRadius: 10, padding: '4px 14px', minWidth: 74,
+                  borderRadius: 10, padding: '10px 16px', minWidth: 84, minHeight: 56,
                 }}
               >
-                <span style={{ fontSize: 11, color: '#8a8f98', lineHeight: 1.4 }}>{c.label}</span>
-                <span style={{ fontSize: 17, fontWeight: 700, color: c.color, lineHeight: 1.3 }}>
+                <span style={{ fontSize: 11.5, color: '#8a8f98', lineHeight: 1.6 }}>{c.label}</span>
+                <span style={{ fontSize: 19, fontWeight: 700, color: c.color, lineHeight: 1.3 }}>
                   {c.value}<span style={{ fontSize: 11, fontWeight: 400, color: '#9aa1ab', marginLeft: 3 }}>{c.unit}</span>
                 </span>
               </span>

@@ -398,6 +398,18 @@
   background: #fff;
 }
 
+/* 文案卡固定头（产品名 / 话题 / 筛选三行整体吸顶，内容区滚动）。
+   之前类名加了但样式漏写，且嵌套后上面的 `>` 直接子级选择器不再命中 —— 用户反馈「这部分固定 内容滚动」 */
+.pcv-copys-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+}
+.pcv-copys-head .pcv-card-h {
+  border-bottom: 0.5px solid rgba(15, 23, 42, 0.06);
+}
+
 .pcv-card-h {
   display: flex;
   align-items: center;
