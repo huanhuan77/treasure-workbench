@@ -680,9 +680,9 @@ export function DashboardPage() {
   //   避免多账号样品中，是别的账号需要发、但本账号刚发过的情况被错误列出
   const matchAcct = (s, a) => {
     if (a === 'all') return true
-    // 与卡片上显示的账号标签同一口径（reminderAccounts），
-    // 否则「发过但超 7 天没发」的账号会被过滤算进来，却不在标签上显示。
-    return reminderAccounts(s).includes(a)
+    // 该账号自己确实"该发了"（从未发过 或 超期没发）才列出，
+    // 多账号样品中每个到点的账号都应能被筛到，不能只挂在"从未发"的那个账号名下。
+    return pendingAccounts(s).includes(a)
   }
 
   // 筛选后的三组数据 —— 列表渲染与 Tab 气泡计数都读它们，保证「气泡数 = 点进去的条数」。
