@@ -1464,6 +1464,65 @@ select.pcv-input {
   flex-direction: column;
   gap: 6px;
 }
+/* 「记出单」关联产品：多选标签框（用户要求「改成这种」——已选是可删除的标签 + 右侧下拉箭头） */
+.pcv-tagbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-height: 40px;
+  padding: 6px 30px 6px 8px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+.pcv-tagbox:hover {
+  border-color: rgba(184, 81, 127, 0.45);
+}
+.pcv-tagbox-hint {
+  font-size: 13px;
+  color: #b0b6bf;
+  padding-left: 2px;
+}
+.pcv-tagbox-caret {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #b0b6bf;
+  font-size: 11px;
+  pointer-events: none;
+}
+.pcv-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 8px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pcv-tag > button {
+  border: none;
+  background: none;
+  padding: 0 2px;
+  color: #9aa0a9;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+.pcv-tag > button:hover {
+  color: #b96a66;
+}
+
 .pcv-entry {
   display: flex;
   align-items: center;

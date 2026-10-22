@@ -102,8 +102,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
         return next
       })
     }
-    setQuery('')
-    setCatFilter('')
+    // 勾选后保留分类筛选与搜索词（与「记出单」一致：选完不会跳回「全部」）
   }
 
   const setQty = (idx, v) => setEntries((p) => p.map((e, k) => (k === idx ? { ...e, qty: v } : e)))

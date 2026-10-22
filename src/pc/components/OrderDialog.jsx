@@ -83,6 +83,8 @@ export function OrderDialog({ prefill, onClose }) {
     if (pickIdx === i) setPickIdx(-1)
     else if (pickIdx > i) setPickIdx(pickIdx - 1)
   }
+  // 从标签框里移除某个已选样品（× 按钮）
+  const removeSample = (sid) => setEntries((p) => p.filter((e) => e.sampleId !== sid))
   // 选样品：**点一下=勾选，再点=取消**（用户要求「勾选多个打钩，不是消失」）——
   // 勾上就立刻占一条（当前行空着就填当前行，否则再加一行），
   // 列表里保持打钩可见，账号 tab 的条数实时跟着变，不需要点「确定」。
@@ -101,8 +103,8 @@ export function OrderDialog({ prefill, onClose }) {
         return next
       })
     }
-    setQuery('')
-    setCatFilter('')
+    // 勾选后**保留分类筛选和搜索词**（用户反馈「点击筛选，选择之后又回到了全部」）：
+    // 连续挑同一个分类下的多个产品时不用每次重新点分类
   }
 
   const total = useMemo(
@@ -167,26 +169,32 @@ export function OrderDialog({ prefill, onClose }) {
           <div style={{ fontSize: 11, color: '#9aa0a9', marginBottom: 6 }}>只能选「{account}」已发布的样品</div>
 
           <div className="pcv-entrylist">
-            {/* 空态整块可点：新增一行并直接展开选样面板（与记录发布弹窗一致） */}
-            {entries.length === 0 && (
-              <button className="pcv-entry-empty" onClick={addEntry}>
-                ＋ 点这里新增一条产品
-              </button>
-            )}
-            {entries.map((e, idx) => (
-              <div key={idx}>
-                <div className="pcv-entry">
+            {/* 多选标签框（用户要求「改成这种」：已选产品是可删除的标签，点框展开选样面板） */}
+            <div
+              className="pcv-tagbox"
+              onClick={() => { if (pickIdx < 0) { setPickIdx(0); setQuery('') } }}
+            >
+              {entries.filter((e) => e.sampleId).map((e) => (
+                <span key={e.sampleId} className="pcv-tag">
+                  {nameOf(e.sampleId)}
                   <button
-                    className={`pcv-entry-pick${e.sampleId ? '' : ' empty'}`}
-                    onClick={() => { setPickIdx(pickIdx === idx ? -1 : idx); setQuery('') }}
-                  >
-                    {e.sampleId ? nameOf(e.sampleId) : '点击选择产品'}
-                  </button>
-                  <button className="pcv-x" title="删除该条" onClick={() => removeEntry(idx)}>×</button>
-                </div>
+                    type="button"
+                    title="移除这条"
+                    onClick={(ev) => {
+                      ev.stopPropagation()
+                      removeSample(e.sampleId)
+                    }}
+                  >×</button>
+                </span>
+              ))}
+              {entries.filter((e) => e.sampleId).length === 0 && (
+                <span className="pcv-tagbox-hint">点击选择产品</span>
+              )}
+              <span className="pcv-tagbox-caret">▾</span>
+            </div>
 
-                {/* 样品选择面板：内联展开在该行下面 */}
-                {pickIdx === idx && (
+            {/* 样品选择面板：内联展开在标签框下面（勾选即生效，再点取消） */}
+            {pickIdx >= 0 && (
                   <div className="pcv-drop">
                     {/* 分类筛选：只列当前账号候选样品里出现过的分类，一个分类都没有时整行不显示 */}
                     {catOptions.length > 1 && (
@@ -238,10 +246,8 @@ export function OrderDialog({ prefill, onClose }) {
                         onClick={() => { setPickIdx(-1); setQuery(''); setCatFilter('') }}
                       >收起</button>
                     </div>
-                  </div>
-                )}
               </div>
-            ))}
+            )}
           </div>
         </div>
 

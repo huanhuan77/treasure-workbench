@@ -5,7 +5,6 @@ import { PERIODS, periodRange, buildSummary, daysBetween } from '../utils/summar
 
 // 手机版「周 / 月总结」：只做数据展示（用户要求「只要数据表格」）。
 // 口径与 PC 完全一致（共用 utils/summary.js）：周=周一~周日、月=自然月。
-const fmtMoney = (n) => (Number(n) || 0).toFixed(2)
 const fmtInt = (n) => String(Number(n) || 0)
 
 export default function SummaryPage() {
@@ -86,8 +85,6 @@ export default function SummaryPage() {
               <span style={{ color: col.c, fontWeight: 700, fontSize: 13 }}>{mask(r.account)}</span>
               <span style={{ fontSize: 12, color: '#64748b' }}>发布 {fmtInt(r.publish)}</span>
               <span style={{ fontSize: 12, color: '#64748b' }}>出单 {fmtInt(r.orderQty)} 件 / {fmtInt(r.orderCount)} 笔</span>
-              <span style={{ fontSize: 12, color: '#b96a66' }}>收 ¥{fmtMoney(r.income)}</span>
-              <span style={{ fontSize: 12, color: '#5f8a74' }}>支 ¥{fmtMoney(r.expense)}</span>
             </div>
           )
         })}
@@ -101,7 +98,6 @@ export default function SummaryPage() {
         {sum.days.length === 0 ? (
           <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
         ) : sum.days.map((d) => {
-          const net = d.income - d.expense
           const wd = ['日', '一', '二', '三', '四', '五', '六'][new Date(d.date).getDay()]
           return (
             <div key={d.date} style={{
@@ -111,9 +107,6 @@ export default function SummaryPage() {
               <span style={{ fontSize: 12, fontWeight: 600, minWidth: 96 }}>{d.date.slice(5)} <span style={{ color: '#9aa0a9', fontWeight: 400 }}>周{wd}</span></span>
               <span style={{ fontSize: 12, color: '#3f6fa8' }}>发 {fmtInt(d.publish)}</span>
               <span style={{ fontSize: 12, color: '#4f8a6d' }}>单 {fmtInt(d.orderQty)}</span>
-              <span style={{ fontSize: 12, color: '#b96a66' }}>收 ¥{fmtMoney(d.income)}</span>
-              <span style={{ fontSize: 12, color: '#5f8a74' }}>支 ¥{fmtMoney(d.expense)}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: net >= 0 ? '#5f8a74' : '#b96a66' }}>净 ¥{fmtMoney(net)}</span>
             </div>
           )
         })}

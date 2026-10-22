@@ -5,7 +5,6 @@ import { PERIODS, periodRange, buildSummary, daysBetween } from '../../utils/sum
 
 // PC 版「周 / 月总结」：只做**数据**（用户要求「只要数据表格，不需要文案」）。
 // 口径见 utils/summary.js：周=周一~周日、月=自然月；发布/出单/收支/样品/待办各自按区间取数。
-const fmtMoney = (n) => (Number(n) || 0).toFixed(2)
 const fmtInt = (n) => String(Number(n) || 0)
 
 export function PcSummary() {
@@ -74,14 +73,12 @@ export function PcSummary() {
                 <th style={{ width: 110 }}>发布条数</th>
                 <th style={{ width: 110 }}>出单件数</th>
                 <th style={{ width: 100 }}>出单笔数</th>
-                <th style={{ width: 130 }}>收入</th>
-                <th style={{ width: 130 }}>支出</th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {sum.accounts.length === 0 ? (
-                <tr><td colSpan={7} className="pcv-empty">这个区间没有数据</td></tr>
+                <tr><td colSpan={5} className="pcv-empty">这个区间没有数据</td></tr>
               ) : sum.accounts.map((r) => {
                 const col = ACCOUNT_COLOR[r.account] || { c: '#6b7280' }
                 return (
@@ -92,8 +89,6 @@ export function PcSummary() {
                     <td className="pcv-num">{fmtInt(r.publish)}</td>
                     <td className="pcv-num">{fmtInt(r.orderQty)}</td>
                     <td className="pcv-num">{fmtInt(r.orderCount)}</td>
-                    <td className="pcv-num" style={{ color: '#b96a66' }}>¥{fmtMoney(r.income)}</td>
-                    <td className="pcv-num" style={{ color: '#5f8a74' }}>¥{fmtMoney(r.expense)}</td>
                     <td />
                   </tr>
                 )
@@ -117,16 +112,13 @@ export function PcSummary() {
                 <th style={{ width: 110 }}>发布</th>
                 <th style={{ width: 110 }}>出单件数</th>
                 <th style={{ width: 100 }}>出单笔数</th>
-                <th style={{ width: 130 }}>收入</th>
-                <th style={{ width: 130 }}>支出</th>
-                <th>净额</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {sum.days.length === 0 ? (
-                <tr><td colSpan={7} className="pcv-empty">这个区间没有数据</td></tr>
+                <tr><td colSpan={5} className="pcv-empty">这个区间没有数据</td></tr>
               ) : sum.days.map((d) => {
-                const net = d.income - d.expense
                 const wd = ['日', '一', '二', '三', '四', '五', '六'][new Date(d.date).getDay()]
                 return (
                   <tr key={d.date}>
@@ -134,9 +126,7 @@ export function PcSummary() {
                     <td className="pcv-num">{fmtInt(d.publish)}</td>
                     <td className="pcv-num">{fmtInt(d.orderQty)}</td>
                     <td className="pcv-num">{fmtInt(d.orderCount)}</td>
-                    <td className="pcv-num" style={{ color: '#b96a66' }}>¥{fmtMoney(d.income)}</td>
-                    <td className="pcv-num" style={{ color: '#5f8a74' }}>¥{fmtMoney(d.expense)}</td>
-                    <td className="pcv-num" style={{ color: net >= 0 ? '#5f8a74' : '#b96a66', fontWeight: 600 }}>¥{fmtMoney(net)}</td>
+                    <td />
                   </tr>
                 )
               })}
