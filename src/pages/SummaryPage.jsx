@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
-import { PERIODS, periodRange, buildSummary, daysBetween } from '../utils/summary'
+import { PERIODS, periodRange, buildSummary, buildTrend, daysBetween } from '../utils/summary'
+import { TrendBars } from '../components/TrendBars'
 
 // 手机版「周 / 月总结」：只做数据展示（用户要求「只要数据表格」）。
 // 口径与 PC 完全一致（共用 utils/summary.js）：周=周一~周日、月=自然月。
@@ -17,6 +18,12 @@ export default function SummaryPage() {
     [samples, publishRecords, orders, transactions, todos, range],
   )
   const mask = (a) => maskAccount(a, hiddenAccounts)
+
+  // 近 4 周趋势（柱状图）
+  const trend = useMemo(
+    () => buildTrend({ samples, publishRecords, orders, transactions, todos }, 4),
+    [samples, publishRecords, orders, transactions, todos],
+  )
 
   // 只留「发布 / 出单 / 样品」（用户要求去掉收入、净收入、完成待办）
   const cards = [
@@ -68,6 +75,16 @@ export default function SummaryPage() {
         ))}
       </div>
 
+      {/* 近 4 周柱状图 */}
+      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
+        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
+          近 4 周趋势
+        </div>
+        <div style={{ padding: '10px 12px 12px' }}>
+          <TrendBars data={trend} height={140} barWidth={14} />
+        </div>
+      </div>
+
       {/* 分账号明细 */}
       <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
         <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
@@ -85,6 +102,7 @@ export default function SummaryPage() {
               <span style={{ color: col.c, fontWeight: 700, fontSize: 13 }}>{mask(r.account)}</span>
               <span style={{ fontSize: 12, color: '#64748b' }}>发布 {fmtInt(r.publish)}</span>
               <span style={{ fontSize: 12, color: '#64748b' }}>出单 {fmtInt(r.orderQty)} 件 / {fmtInt(r.orderCount)} 笔</span>
+              <span style={{ fontSize: 12, color: '#7a5ea8' }}>新增产品 {fmtInt(r.newProducts)}</span>
             </div>
           )
         })}
@@ -103,6 +121,9 @@ export default function SummaryPage() {
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <span style={{ fontSize: 13, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+            <span style={{ fontSize: 11, color: '#8a8f98', whiteSpace: 'nowrap' }}>
+              {(r.accounts || []).map((a) => mask(a)).join(' / ') || '—'}
+            </span>
             <span style={{ fontSize: 12, color: '#3f6fa8' }}>发 {fmtInt(r.publish)}</span>
             <span style={{ fontSize: 12, color: '#4f8a6d' }}>单 {fmtInt(r.orderQty)}</span>
           </div>

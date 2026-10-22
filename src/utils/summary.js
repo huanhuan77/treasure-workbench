@@ -66,7 +66,7 @@ export function buildSummary(data, range) {
   // ── 分账号累计 ──
   const accMap = new Map()
   const accOf = (a) => {
-    if (!accMap.has(a)) accMap.set(a, { account: a, publish: 0, orderQty: 0, orderCount: 0, income: 0, expense: 0 })
+    if (!accMap.has(a)) accMap.set(a, { account: a, publish: 0, orderQty: 0, orderCount: 0, income: 0, expense: 0, newProducts: 0 })
     return accMap.get(a)
   }
   ACCOUNTS.forEach((a) => accOf(a))
@@ -118,10 +118,14 @@ export function buildSummary(data, range) {
   }
 
   // 样品 / 待办
-  const newSampleList = samples
-    .filter((s) => inRange(String(s.createdAt ? ymd(new Date(s.createdAt)) : ''), start, end))
-    .map((s) => ({ name: s.name || '（未命名）', status: s.status || '' }))
+  const newSampleObjs = samples.filter((s) => inRange(String(s.createdAt ? ymd(new Date(s.createdAt)) : ''), start, end))
+  const newSampleList = newSampleObjs.map((s) => ({ name: s.name || '（未命名）', status: s.status || '' }))
   const newSamples = newSampleList.length
+  // 分账号的「新增产品数」：区间内新建、且归属该账号的样品数量
+  for (const s of newSampleObjs) {
+    const accs = Array.isArray(s.accounts) && s.accounts.length ? s.accounts : (s.account ? [s.account] : [])
+    for (const a of accs) accOf(a).newProducts += 1
+  }
   const today = ymd(new Date())
   const overdueSamples = samples.filter((s) => {
     if (!s || s.archived || s.status === 'abandoned' || s.status === 'published') return false
@@ -134,22 +138,41 @@ export function buildSummary(data, range) {
   const prodMap = new Map()
   const prodOf = (name) => {
     const key = String(name || '（未命名）')
-    if (!prodMap.has(key)) prodMap.set(key, { name: key, publish: 0, orderQty: 0 })
+    if (!prodMap.has(key)) prodMap.set(key, { name: key, publish: 0, orderQty: 0, accounts: new Set() })
     return prodMap.get(key)
   }
   const sampleName = new Map((samples || []).map((s) => [s.id, String(s.name || '')]))
+  // 产品名 → 归属账号（用于「按产品明细」里的账号列）
+  const sampleAccs = new Map()
+  for (const s of samples || []) {
+    const nm = String(s.name || '')
+    const accs = Array.isArray(s.accounts) && s.accounts.length ? s.accounts : (s.account ? [s.account] : [])
+    if (!sampleAccs.has(nm)) sampleAccs.set(nm, new Set())
+    for (const a of accs) sampleAccs.get(nm).add(a)
+  }
   for (const r of pubRecs) {
     if (!inRange(String(r.publishDate || ''), start, end)) continue
     const nm = sampleName.get(r.sampleId) || r.name || '（样品已删除）'
-    prodOf(nm).publish += Number(r.qty) > 0 ? Number(r.qty) : 1
+    const row = prodOf(nm)
+    row.publish += Number(r.qty) > 0 ? Number(r.qty) : 1
+    for (const a of (r.accounts || [])) row.accounts.add(a)
+    for (const a of (sampleAccs.get(nm) || [])) row.accounts.add(a)
   }
   for (const o of orders) {
     if (!inRange(String(o.date || ''), start, end)) continue
-    prodOf(o.name).orderQty += Number(o.qty) > 0 ? Number(o.qty) : 1
+    const row = prodOf(o.name)
+    row.orderQty += Number(o.qty) > 0 ? Number(o.qty) : 1
+    if (o.account) row.accounts.add(o.account)
+    for (const a of (sampleAccs.get(String(o.name || '')) || [])) row.accounts.add(a)
+  }
+  const accOrder = (a) => {
+    const i = ACCOUNTS.indexOf(a)
+    return i === -1 ? 999 : i
   }
   const products = [...prodMap.values()]
     .filter((r) => r.publish > 0 || r.orderQty > 0)
     .sort((a, b) => (b.publish + b.orderQty) - (a.publish + a.orderQty))
+    .map((r) => ({ ...r, accounts: [...r.accounts].sort((x, y) => accOrder(x) - accOrder(y)) }))
 
   // ── 按天明细（只列有数据的日期，日期升序）──
   const dayMap = new Map()
@@ -180,7 +203,7 @@ export function buildSummary(data, range) {
 
   const days = [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date))
   const accounts = [...accMap.values()].filter(
-    (r) => r.publish > 0 || r.orderQty > 0 || r.orderCount > 0 || r.income > 0 || r.expense > 0,
+    (r) => r.publish > 0 || r.orderQty > 0 || r.orderCount > 0 || r.income > 0 || r.expense > 0 || r.newProducts > 0,
   )
 
   return {
@@ -200,6 +223,29 @@ export function buildSummary(data, range) {
     days,
     products,
   }
+}
+
+// 近 N 周趋势（含本周，周一起算）：每周返回 { label, start, end, publish, orderQty, newSamples }
+// 用户要求「我想做成柱状图，4 周的都列出来」，所以默认取 4 周。
+export function buildTrend(data, weeks = 4, base = new Date()) {
+  const out = []
+  for (let i = weeks - 1; i >= 0; i--) {
+    const d = new Date(base)
+    d.setDate(base.getDate() - i * 7)
+    const r = periodRange('week', d)
+    const sum = buildSummary(data, r)
+    out.push({
+      key: r.key + '_' + r.start,
+      start: r.start,
+      end: r.end,
+      label: `${r.start.slice(5)} ~ ${r.end.slice(5)}`,
+      isThisWeek: i === 0,
+      publish: sum.publish,
+      orderQty: sum.orderQty,
+      newSamples: sum.newSamples,
+    })
+  }
+  return out
 }
 
 // 粗略天数（用于展示「共 N 天」）

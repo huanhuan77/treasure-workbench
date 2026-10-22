@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
-import { PERIODS, periodRange, buildSummary, daysBetween } from '../../utils/summary'
+import { PERIODS, periodRange, buildSummary, buildTrend, daysBetween } from '../../utils/summary'
+import { TrendBars } from '../../components/TrendBars'
 
 // PC 版「周 / 月总结」：只做**数据**（用户要求「只要数据表格，不需要文案」）。
 // 口径见 utils/summary.js：周=周一~周日、月=自然月；发布/出单/收支/样品/待办各自按区间取数。
@@ -17,6 +18,25 @@ export function PcSummary() {
     [samples, publishRecords, orders, transactions, todos, range],
   )
   const mask = (a) => maskAccount(a, hiddenAccounts)
+
+  // 近 4 周趋势（柱状图）：与上面的期间切换无关，固定展示最近四周
+  const trend = useMemo(
+    () => buildTrend({ samples, publishRecords, orders, transactions, todos }, 4),
+    [samples, publishRecords, orders, transactions, todos],
+  )
+
+  // 按产品明细的排序：默认「出单件数」降序（用户要求），点表头可切换列与升降序
+  const [prodSort, setProdSort] = useState({ key: 'order', dir: 'desc' })
+  const toggleProdSort = (key) => {
+    setProdSort((p) => (p.key === key ? { key, dir: p.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }))
+  }
+  const sortedProducts = useMemo(() => {
+    const arr = [...(sum.products || [])]
+    const val = (r) => (prodSort.key === 'publish' ? r.publish : r.orderQty)
+    arr.sort((a, b) => (prodSort.dir === 'desc' ? val(b) - val(a) : val(a) - val(b)))
+    return arr
+  }, [sum.products, prodSort])
+  const sortMark = (key) => (prodSort.key === key ? (prodSort.dir === 'desc' ? ' ↓' : ' ↑') : '')
 
   // 顶部指标：只留「发布 / 出单 / 样品」这三类（用户要求去掉收入、净收入、完成待办）
   const metrics = [
@@ -60,6 +80,19 @@ export function PcSummary() {
           ))}
         </div>
 
+        {/* 近 4 周柱状图（用户要求「做成柱状图，4 周的都列出来」） */}
+        <div className="pcv-card" style={{ marginTop: 12 }}>
+          <div className="pcv-card-h">
+            <span style={{ fontWeight: 600 }}>近 4 周趋势</span>
+            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
+              发布条数 / 出单件数（周一起算，含本周）
+            </span>
+          </div>
+          <div style={{ padding: '12px 16px 16px' }}>
+            <TrendBars data={trend} height={170} barWidth={22} />
+          </div>
+        </div>
+
         {/* 分账号明细 */}
         <div className="pcv-card" style={{ marginTop: 12 }}>
           <div className="pcv-card-h">
@@ -73,12 +106,13 @@ export function PcSummary() {
                 <th style={{ width: 110 }}>发布条数</th>
                 <th style={{ width: 110 }}>出单件数</th>
                 <th style={{ width: 100 }}>出单笔数</th>
+                <th style={{ width: 110 }}>新增产品数</th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {sum.accounts.length === 0 ? (
-                <tr><td colSpan={5} className="pcv-empty">这个区间没有数据</td></tr>
+                <tr><td colSpan={6} className="pcv-empty">这个区间没有数据</td></tr>
               ) : sum.accounts.map((r) => {
                 const col = ACCOUNT_COLOR[r.account] || { c: '#6b7280' }
                 return (
@@ -89,6 +123,7 @@ export function PcSummary() {
                     <td className="pcv-num">{fmtInt(r.publish)}</td>
                     <td className="pcv-num">{fmtInt(r.orderQty)}</td>
                     <td className="pcv-num">{fmtInt(r.orderCount)}</td>
+                    <td className="pcv-num">{fmtInt(r.newProducts)}</td>
                     <td />
                   </tr>
                 )
@@ -102,24 +137,38 @@ export function PcSummary() {
           <div className="pcv-card-h">
             <span style={{ fontWeight: 600 }}>按产品明细</span>
             <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
-              {sum.products.length} 个产品 · 按「发布+出单」合计降序
+              {sum.products.length} 个产品 · 按{prodSort.key === 'order' ? '出单件数' : '发布条数'}{prodSort.dir === 'desc' ? '降序' : '升序'}
             </span>
           </div>
           <table className="pcv-table">
             <thead>
               <tr>
-                <th style={{ width: 320 }}>产品</th>
-                <th style={{ width: 110 }}>发布条数</th>
-                <th style={{ width: 110 }}>出单件数</th>
+                <th style={{ width: 300 }}>产品</th>
+                <th style={{ width: 230 }}>账号</th>
+                <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleProdSort('publish')}>
+                  发布条数{sortMark('publish')}
+                </th>
+                <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleProdSort('order')}>
+                  出单件数{sortMark('order')}
+                </th>
                 <th />
               </tr>
             </thead>
             <tbody>
               {sum.products.length === 0 ? (
-                <tr><td colSpan={4} className="pcv-empty">这个区间没有数据</td></tr>
-              ) : sum.products.map((r) => (
+                <tr><td colSpan={5} className="pcv-empty">这个区间没有数据</td></tr>
+              ) : sortedProducts.map((r) => (
                 <tr key={r.name}>
                   <td className="pcv-name" title={r.name}>{r.name}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    {(r.accounts || []).length === 0 ? (
+                      <span style={{ color: '#c9cdd4' }}>—</span>
+                    ) : (r.accounts || []).map((a, k) => (
+                      <span key={a} style={{ marginRight: k < r.accounts.length - 1 ? 10 : 0, whiteSpace: 'nowrap' }}>
+                        <span style={{ color: (ACCOUNT_COLOR[a] || {}).c || '#8a8f98', fontWeight: 600, fontSize: 12 }}>{mask(a)}</span>
+                      </span>
+                    ))}
+                  </td>
                   <td className="pcv-num">{fmtInt(r.publish)}</td>
                   <td className="pcv-num">{fmtInt(r.orderQty)}</td>
                   <td />
