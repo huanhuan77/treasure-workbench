@@ -225,6 +225,53 @@ export function buildSummary(data, range) {
   }
 }
 
+// 趋势柱：跟随当前选中的期间
+//   · 本周 / 上周 → **按天**对比（周一~周日，7 根柱，用户要求「点本周是天数对比」）
+//   · 本月 / 上月 → **按周**对比（自然周切分，通常 4~5 根柱，用户要求「本月是 4 周对比」）
+export function buildTrendFor(data, range) {
+  const isDay = range.key === 'week' || range.key === 'lastWeek'
+  const today = ymd(new Date())
+  if (isDay) {
+    const bars = []
+    for (let d = new Date(range.start); ymd(d) <= range.end; d.setDate(d.getDate() + 1)) {
+      const day = ymd(d)
+      const s = buildSummary(data, { start: day, end: day })
+      const wd = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()]
+      bars.push({
+        key: day,
+        label: `${day.slice(5)} 周${wd}`,
+        mark: day === today ? '今天' : '',
+        publish: s.publish,
+        orderQty: s.orderQty,
+      })
+    }
+    return { mode: 'day', bars }
+  }
+  // 按周切分：从区间第一天所在周开始，末日裁剪到区间末尾
+  const bars = []
+  let cur = new Date(range.start)
+  let guard = 0
+  while (ymd(cur) <= range.end && guard < 40) {
+    guard += 1
+    const offsetToSunday = 6 - ((cur.getDay() + 6) % 7)
+    const wEnd = new Date(cur)
+    wEnd.setDate(cur.getDate() + offsetToSunday)
+    const segStart = ymd(cur)
+    const segEnd = ymd(wEnd) > range.end ? range.end : ymd(wEnd)
+    const s = buildSummary(data, { start: segStart, end: segEnd })
+    bars.push({
+      key: segStart,
+      label: `${segStart.slice(5)} ~ ${segEnd.slice(5)}`,
+      mark: today >= segStart && today <= segEnd ? '本周' : '',
+      publish: s.publish,
+      orderQty: s.orderQty,
+    })
+    cur = new Date(wEnd)
+    cur.setDate(cur.getDate() + 1)
+  }
+  return { mode: 'week', bars }
+}
+
 // 近 N 周趋势（含本周，周一起算）：每周返回 { label, start, end, publish, orderQty, newSamples }
 // 用户要求「我想做成柱状图，4 周的都列出来」，所以默认取 4 周。
 export function buildTrend(data, weeks = 4, base = new Date()) {

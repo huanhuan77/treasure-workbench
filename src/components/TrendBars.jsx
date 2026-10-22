@@ -44,8 +44,8 @@ export function TrendBars({ data = [], height = 130, barWidth = 18 }) {
               </div>
             </div>
             <div style={{ fontSize: 10, color: '#8a8f98', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.label}</div>
-            <div style={{ fontSize: 10, color: d.isThisWeek ? '#b8517f' : '#c9cdd4', fontWeight: d.isThisWeek ? 700 : 400 }}>
-              {d.isThisWeek ? '本周' : ''}
+            <div style={{ fontSize: 10, color: d.mark ? '#b8517f' : '#c9cdd4', fontWeight: d.mark ? 700 : 400 }}>
+              {d.mark || ''}
             </div>
           </div>
         ))}

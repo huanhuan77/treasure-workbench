@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
-import { PERIODS, periodRange, buildSummary, buildTrend, daysBetween } from '../../utils/summary'
+import { PERIODS, periodRange, buildSummary, buildTrendFor, daysBetween } from '../../utils/summary'
 import { TrendBars } from '../../components/TrendBars'
 
 // PC 版「周 / 月总结」：只做**数据**（用户要求「只要数据表格，不需要文案」）。
@@ -19,10 +19,10 @@ export function PcSummary() {
   )
   const mask = (a) => maskAccount(a, hiddenAccounts)
 
-  // 近 4 周趋势（柱状图）：与上面的期间切换无关，固定展示最近四周
+  // 趋势柱：本周/上周 → 按天（7 根）；本月/上月 → 按周（自然周切分）
   const trend = useMemo(
-    () => buildTrend({ samples, publishRecords, orders, transactions, todos }, 4),
-    [samples, publishRecords, orders, transactions, todos],
+    () => buildTrendFor({ samples, publishRecords, orders, transactions, todos }, range),
+    [samples, publishRecords, orders, transactions, todos, range],
   )
 
   // 按产品明细的排序：默认「出单件数」降序（用户要求），点表头可切换列与升降序
@@ -83,13 +83,13 @@ export function PcSummary() {
         {/* 近 4 周柱状图（用户要求「做成柱状图，4 周的都列出来」） */}
         <div className="pcv-card" style={{ marginTop: 12 }}>
           <div className="pcv-card-h">
-            <span style={{ fontWeight: 600 }}>近 4 周趋势</span>
+            <span style={{ fontWeight: 600 }}>{trend.mode === 'day' ? '本周按天对比' : '本月按周对比'}</span>
             <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
-              发布条数 / 出单件数（周一起算，含本周）
+              发布条数 / 出单件数 · {range.label}
             </span>
           </div>
           <div style={{ padding: '12px 16px 16px' }}>
-            <TrendBars data={trend} height={170} barWidth={22} />
+            <TrendBars data={trend.bars} height={170} barWidth={trend.mode === 'day' ? 18 : 22} />
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
 import { ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
-import { PERIODS, periodRange, buildSummary, buildTrend, daysBetween } from '../utils/summary'
+import { PERIODS, periodRange, buildSummary, buildTrendFor, daysBetween } from '../utils/summary'
 import { TrendBars } from '../components/TrendBars'
 
 // 手机版「周 / 月总结」：只做数据展示（用户要求「只要数据表格」）。
@@ -19,10 +19,10 @@ export default function SummaryPage() {
   )
   const mask = (a) => maskAccount(a, hiddenAccounts)
 
-  // 近 4 周趋势（柱状图）
+  // 趋势柱：本周/上周 → 按天；本月/上月 → 按周
   const trend = useMemo(
-    () => buildTrend({ samples, publishRecords, orders, transactions, todos }, 4),
-    [samples, publishRecords, orders, transactions, todos],
+    () => buildTrendFor({ samples, publishRecords, orders, transactions, todos }, range),
+    [samples, publishRecords, orders, transactions, todos, range],
   )
 
   // 只留「发布 / 出单 / 样品」（用户要求去掉收入、净收入、完成待办）
@@ -78,10 +78,10 @@ export default function SummaryPage() {
       {/* 近 4 周柱状图 */}
       <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
         <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
-          近 4 周趋势
+          {trend.mode === 'day' ? '本周按天对比' : '本月按周对比'}
         </div>
         <div style={{ padding: '10px 12px 12px' }}>
-          <TrendBars data={trend} height={140} barWidth={14} />
+          <TrendBars data={trend.bars} height={130} barWidth={trend.mode === 'day' ? 10 : 14} />
         </div>
       </div>
 
