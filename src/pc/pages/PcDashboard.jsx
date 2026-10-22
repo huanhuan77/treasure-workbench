@@ -377,6 +377,8 @@ export function PcDashboard() {
   // 待办清单默认只列 5 条，卡片底部「查看全部 N 条」再展开剩余（用户要求）。
   // 不再用卡内滚动：滚动条在小卡片里不好点，展开/收起更直观。
   const [todoExpanded, setTodoExpanded] = useState(false)
+  // 「出单数量」默认只显示总数，点开才按账号展开（用户要求）
+  const [qtyOpen, setQtyOpen] = useState('')
   // 未完成的待办，**新加的排最前**（用户要求）：按创建时间倒序，
   // 刚记的一条立刻出现在卡片顶部，不用滚到底去找
   const todoAll = useMemo(
@@ -637,21 +639,36 @@ export function PcDashboard() {
                             </span>
                           </td>
                         )}
-                        {/* 出单数量：**按账号分别列出**（用户要求「列出每个账号是多少」），
-                            合计与每笔明细放悬停提示 */}
+                        {/* 出单数量：默认只显示**总数**，点数字再展开每个账号（用户要求） */}
                         <td
-                          style={{ cursor: 'help', whiteSpace: 'nowrap' }}
-                          title={`合计 ${orderQtyBySample.get(s.id) || 0} 件\n${(orderDetailText.get(s.id) || []).join('\n')}`}
+                          style={{ whiteSpace: 'nowrap' }}
+                          title={`合计 ${orderQtyBySample.get(s.id) || 0} 件 · 点数字展开每个账号\n${(orderDetailText.get(s.id) || []).join('\n')}`}
                         >
                           {(orderQtyBySampleAccount.get(s.id) || []).length === 0 ? (
                             <span style={{ color: '#c9cdd4' }}>—</span>
-                          ) : orderQtyBySampleAccount.get(s.id).map(([a, v]) => (
-                            <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.6 }}>
-                              <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
-                              <span style={{ color: '#4b5563' }}>{maskAcc(a)}</span>
-                              <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#b8517f' }}>{v}</span>
-                            </span>
-                          ))}
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setQtyOpen((v) => (v === s.id ? '' : s.id))}
+                                style={{
+                                  border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
+                                  fontSize: 14, fontWeight: 700, color: '#b8517f',
+                                }}
+                              >{orderQtyBySample.get(s.id) || 0}</button>
+                              {qtyOpen === s.id && (
+                                <div style={{ marginTop: 4 }}>
+                                  {orderQtyBySampleAccount.get(s.id).map(([a, v]) => (
+                                    <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.7 }}>
+                                      <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
+                                      <span style={{ color: '#4b5563' }}>{maskAcc(a)}</span>
+                                      <span style={{ marginLeft: 6, fontWeight: 700, color: '#b8517f' }}>{v}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          )}
                         </td>
                         {/* 提醒天数（每N天提醒 / 已逾期）单独一列 */}
                         <td>{cur.mid(it, acc, accs)}</td>

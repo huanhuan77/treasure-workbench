@@ -38,6 +38,8 @@ export function PcOrders() {
   const [accountFilter, setAccountFilter] = useState('')
   const [dateRange, setDateRange] = useState('yesterday') // 与手机版同默认值
   const [sortKey, setSortKey] = useState('dateDesc')
+  // 「出单数量」默认只显示总数，点开才列出每个账号（用户要求）
+  const [qtyOpen, setQtyOpen] = useState('')
   const [productFilter, setProductFilter] = useState('')
   const [expanded, setExpanded] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
@@ -192,13 +194,15 @@ export function PcOrders() {
   }
 
   const totalQty = filtered.reduce((s, o) => s + (Number(o.qty) || 0), 0)
+  // 表格底部合计行（用户要求「加个总数」）
+  const totalCount = filtered.length
 
   return (
     <>
       <div className="pcv-bar">
         <div>
           <div className="pcv-title">出单记录</div>
-          <div className="pcv-sub">{filtered.length} 笔 · 共 {totalQty} 单 · {groups.length} 个产品</div>
+          <div className="pcv-sub">{filtered.length} 笔 · 共 {totalQty} 件 · {groups.length} 个产品</div>
         </div>
         <div className="pcv-spacer" />
         {/* 产品筛选：直接一个搜索框（用户要求「改成搜索框」），边输边筛，不用展开下拉 */}
@@ -320,26 +324,36 @@ export function PcOrders() {
                           ))
                         )}
                       </td>
-                      {/* 出单数量：**按账号分别列出**（用户要求「列出每个账号是多少」），
-                          合计与每笔明细都放在悬停提示里 */}
+                      {/* 出单数量：默认只显示**总数**，点一下再展开每个账号的明细（用户要求） */}
                       <td
-                        style={{ cursor: 'help', whiteSpace: 'nowrap' }}
-                        title={`合计 ${g.qty} 件\n${[...g.entries]
-                          .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
-                          .map((e) => `${e.account || '未指定'}　${e.date ? dispDate(e.date) : '未填日期'}　×${Number(e.qty) > 0 ? Number(e.qty) : 1}`)
-                          .join('\n')}`}
+                        style={{ whiteSpace: 'nowrap' }}
+                        title={`合计 ${g.qty} 件 · 点数字展开每个账号`}
                       >
                         {g.qtyByAccount.length === 0 ? (
                           <span style={{ color: '#c9cdd4' }}>—</span>
-                        ) : g.qtyByAccount.map(([a, v]) => (
-                          <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.6 }}>
-                            <span
-                              style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c1c7cf' }}
-                            />
-                            <span style={{ color: '#4b5563' }}>{maskAccount(a, hiddenAccounts)}</span>
-                            <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#b8517f' }}>{v}</span>
-                          </span>
-                        ))}
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setQtyOpen((v) => (v === g.name ? '' : g.name))}
+                              style={{
+                                border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
+                                fontSize: 14, fontWeight: 700, color: '#b8517f',
+                              }}
+                            >{g.qty}</button>
+                            {qtyOpen === g.name && (
+                              <div style={{ marginTop: 4 }}>
+                                {g.qtyByAccount.map(([a, v]) => (
+                                  <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.7 }}>
+                                    <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c1c7cf' }} />
+                                    <span style={{ color: '#4b5563' }}>{maskAccount(a, hiddenAccounts)}</span>
+                                    <span style={{ marginLeft: 6, fontWeight: 700, color: '#b8517f' }}>{v}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
                       </td>
                       {/* 笔数：常规字重、不加粗 */}
                       <td className="pcv-num" style={{ fontWeight: 400 }}>{g.count}</td>
@@ -432,6 +446,19 @@ export function PcOrders() {
                 )
               })}
             </tbody>
+            {/* 合计行：跟着筛选变化（用户要求「加个总数」） */}
+            {groups.length > 0 && (
+              <tfoot>
+                <tr style={{ background: '#faf7fb' }}>
+                  <td style={{ fontWeight: 700, color: '#334155' }}>合计（{groups.length} 个产品）</td>
+                  <td />
+                  <td style={{ fontWeight: 700, color: '#b8517f', fontSize: 14 }}>{totalQty}</td>
+                  <td style={{ fontWeight: 700 }}>{totalCount}</td>
+                  <td />
+                  <td />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>

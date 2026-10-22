@@ -48,6 +48,8 @@ export function PcSamples() {
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('all')
+  // 「出单数量」默认只显示总数，点开才按账号展开（用户要求）
+  const [qtyOpen, setQtyOpen] = useState('')
   // 是否出单筛选：all=全部 / yes=已出单 / no=未出单（口径同「是否出单」列，以出单记录表为准）
   const [orderFilter, setOrderFilter] = useState('all')
   const [hideAccount, setHideAccount] = useState(() => isAccountsHidden())
@@ -465,19 +467,33 @@ export function PcSamples() {
                       )}
                     </td>
                     <td className="pcv-num">
-                      {/* 出单数量：**按账号分别列出**（用户要求「列出每个账号是多少」） */}
+                      {/* 出单数量：默认只显示**总数**，点数字再展开每个账号（用户要求） */}
                       {(orderQtyBySampleAccount.get(s.id) || []).length === 0 ? (
                         <span style={{ color: '#c9cdd4' }}>—</span>
-                      ) : (orderQtyBySampleAccount.get(s.id) || []).map(([a, v]) => (
-                        <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.6, whiteSpace: 'nowrap' }}>
-                          <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
-                          <span style={{ color: '#4b5563' }}>{maskAccount(a, hiddenAccounts)}</span>
-                          <span
-                            style={{ marginLeft: 'auto', fontWeight: 700, color: '#b8517f', cursor: 'help' }}
-                            title={(orderDetailText.get(s.id) || []).join('\n')}
-                          >{v}</span>
-                        </span>
-                      ))}
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setQtyOpen((v) => (v === s.id ? '' : s.id))}
+                            title={`合计 ${orderQtyBySample.get(s.id) || 0} 件 · 点数字展开每个账号`}
+                            style={{
+                              border: 'none', background: 'transparent', cursor: 'pointer', padding: 0,
+                              fontSize: 14, fontWeight: 700, color: '#b8517f',
+                            }}
+                          >{orderQtyBySample.get(s.id) || 0}</button>
+                          {qtyOpen === s.id && (
+                            <div style={{ marginTop: 4 }}>
+                              {(orderQtyBySampleAccount.get(s.id) || []).map(([a, v]) => (
+                                <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.7, whiteSpace: 'nowrap' }}>
+                                  <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
+                                  <span style={{ color: '#4b5563' }}>{maskAccount(a, hiddenAccounts)}</span>
+                                  <span style={{ marginLeft: 6, fontWeight: 700, color: '#b8517f' }}>{v}</span>
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天）。
