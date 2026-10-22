@@ -11,6 +11,7 @@ import { CopyImportDialog } from '../components/CopyImportDialog'
 import { TopicDialog, allTopicTags } from '../components/TopicDialog'
 import { ResetButton } from '../components/ResetButton'
 import { todayStr } from '../../utils/helpers'
+import { readTextFiles } from '../../utils/readTextFile'
 import {
   DndContext, PointerSensor, useSensor, useSensors, closestCenter,
 } from '@dnd-kit/core'
@@ -144,6 +145,9 @@ export function PcProducts() {
   const [copyDialog, setCopyDialog] = useState(undefined)
   // 批量导入文案弹窗 / 话题管理弹窗（用户要求：PC 端都要有，且都不跳页面）
   const [importOpen, setImportOpen] = useState(false)
+  // 「📄 导入 txt」：读文件 → 预填进导入弹窗预览 → 确认后入库（入口在卡片头，与「# 话题 / ＋ 新增文案」同一排）
+  const [importText, setImportText] = useState('')
+  const copyFileRef = useRef(null)
   const [topicOpen, setTopicOpen] = useState(false)
 
   // 左右分栏宽度可拖动（用户要求），并记住上次的宽度。
@@ -460,7 +464,31 @@ export function PcProducts() {
                   <button className="pcv-btn-text" onClick={() => setTopicOpen(true)}>
                     # 话题{topics.length > 0 ? ` ${topics.length}` : ''}
                   </button>
-                  <button className="pcv-btn pcv-btn-ghost" onClick={() => setImportOpen(true)}>＋ 新增文案</button>
+                  {/* 导入 txt：选文件 → 读内容 → 打开导入弹窗预览（用户要求放在这一排） */}
+                  <input
+                    ref={copyFileRef}
+                    type="file"
+                    accept=".txt,.md,text/plain"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const files = [...(e.target.files || [])]
+                      e.target.value = ''
+                      if (!files.length) return
+                      try {
+                        const merged = await readTextFiles(files)
+                        if (!merged) { show('文件是空的', 'error'); return }
+                        setImportText(merged)
+                        setImportOpen(true)
+                      } catch (err) {
+                        show('读取文件失败，请确认是文本文件', 'error')
+                      }
+                    }}
+                  />
+                  <button className="pcv-btn-text" onClick={() => { if (copyFileRef.current) copyFileRef.current.click() }}>
+                    📄 导入 txt
+                  </button>
+                  <button className="pcv-btn pcv-btn-ghost" onClick={() => { setImportText(''); setImportOpen(true) }}>＋ 新增文案</button>
                 </div>
 
                 {/* 话题行：常驻显示（产品级 ∪ 文案自带，去重），右侧给一个复制全部话题的快捷入口。
@@ -620,7 +648,13 @@ export function PcProducts() {
       )}
 
       {/* 批量导入文案：弹窗（手机版是 /batch-import 整页，PC 不跳页面） */}
-      {importOpen && active && <CopyImportDialog product={active} onClose={() => setImportOpen(false)} />}
+      {importOpen && active && (
+        <CopyImportDialog
+          product={active}
+          initialText={importText}
+          onClose={() => { setImportOpen(false); setImportText('') }}
+        />
+      )}
 
       {/* 话题管理：弹窗 */}
       {topicOpen && active && <TopicDialog product={active} onClose={() => setTopicOpen(false)} />}

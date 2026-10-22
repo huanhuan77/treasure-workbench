@@ -1,8 +1,7 @@
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { parseBulkCopies } from '../../utils/helpers'
-import { readTextFiles } from '../../utils/readTextFile'
 
 // PC 版「批量导入文案」弹窗。
 // 逻辑照抄手机版 BatchImportPage：同一套 parseBulkCopies 解析、同一个话题优先级、
@@ -13,27 +12,11 @@ import { readTextFiles } from '../../utils/readTextFile'
 // 即「未填话题不会默认填充，留空白」，保持一致）。
 const DEFAULT_IMPORT_TOPICS = []
 
-export function CopyImportDialog({ product, onClose }) {
+export function CopyImportDialog({ product, onClose, initialText = '' }) {
   const { addCopies } = useStore()
   const { show } = useToast()
-  const [text, setText] = useState('')
-  const fileRef = useRef(null)
-
-
-  // 导入 .txt / .md：内容追加到输入框，走同一套 parseBulkCopies 解析 + 预览，确认后再入库
-  const onPickFiles = async (e) => {
-    const files = [...(e.target.files || [])]
-    e.target.value = ''   // 允许连续导入同一个文件
-    if (!files.length) return
-    try {
-      const merged = await readTextFiles(files)
-      if (!merged) { show('文件是空的', 'error'); return }
-      setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${merged}` : merged))
-      show(`已读取 ${files.length} 个文件，可检查下方预览后导入`, 'success')
-    } catch (err) {
-      show('读取文件失败，请确认是文本文件', 'error')
-    }
-  }
+  // 卡片头「导入 txt」读到的内容会通过 initialText 预填进来（保持预览再确认的流程）
+  const [text, setText] = useState(initialText)
 
   const list = useMemo(() => parseBulkCopies(text), [text])
   const ordered = list.filter((i) => i.hasOrder).length
@@ -67,21 +50,9 @@ export function CopyImportDialog({ product, onClose }) {
         </div>
 
         <div className="pcv-dialog-b">
-          {/* 支持直接导入 txt 文档（用户要求「支持导入txt文档识别」）：读完走同一套解析 + 预览 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 12, color: '#8a8f98' }}>粘贴文案，或导入 txt / md 文件（支持多选）</span>
-            <div className="pcv-spacer" />
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".txt,.md,text/plain"
-              multiple
-              style={{ display: 'none' }}
-              onChange={onPickFiles}
-            />
-            <button className="pcv-btn pcv-btn-ghost" onClick={() => fileRef.current && fileRef.current.click()}>
-              📄 导入 txt 文件
-            </button>
+          {/* 导入 txt 的入口在卡片头（用户要求「放到…话题 / 新增文案 那一排」），这里只留说明 */}
+          <div style={{ fontSize: 12, color: '#8a8f98', marginBottom: 8 }}>
+            粘贴文案，或用卡片头的「📄 导入 txt」选文件（读取后也会填进这里预览）
           </div>
 
           <textarea
