@@ -111,6 +111,38 @@ export function PcDashboard() {
     return m
   }, [orders])
 
+  // 每个样品「按账号」的出单数量（用户要求「列出每个账号是多少」）
+  const orderQtyBySampleAccount = useMemo(() => {
+    const tmp = new Map()   // sampleId -> Map(account -> qty)
+    for (const o of orders || []) {
+      if (!o || !o.sampleId) continue
+      const a = o.account || '未指定'
+      if (!tmp.has(o.sampleId)) tmp.set(o.sampleId, new Map())
+      const m = tmp.get(o.sampleId)
+      m.set(a, (m.get(a) || 0) + (Number(o.qty) > 0 ? Number(o.qty) : 1))
+    }
+    const rank = (x) => {
+      const i = ACCOUNTS.indexOf(x)
+      return i === -1 ? 999 : i
+    }
+    const out = new Map()
+    for (const [sid, m] of tmp.entries()) {
+      out.set(sid, [...m.entries()].sort((p, q) => rank(p[0]) - rank(q[0]) || q[1] - p[1]))
+    }
+    return out
+  }, [orders])
+
+  // 悬停明细：账号 / 日期 / 数量
+  const orderDetailText = useMemo(() => {
+    const m = new Map()
+    for (const o of orders || []) {
+      if (!o || !o.sampleId) continue
+      if (!m.has(o.sampleId)) m.set(o.sampleId, [])
+      m.get(o.sampleId).push(`${o.account || '未指定'}　${o.date || '未填日期'}　×${Number(o.qty) > 0 ? Number(o.qty) : 1}`)
+    }
+    return m
+  }, [orders])
+
   // 「新建计划」按钮：**打开「新增发布计划」弹窗**，并带上该行的产品名 + 账号
   // （用户要求「点击新建计划要弹出这个，带上产品名」），数量/日期/多选都在弹窗里改。
   const quickPlan = useCallback((s, acc) => {
@@ -564,7 +596,7 @@ export function PcDashboard() {
                     {/* 账号列：高频出单 / 发布提醒里是「账号 + 已N天」双色胶囊，需要更宽 */}
                     <th style={{ width: 340 }}>账号</th>
                     {/* 出单数量：该样品出单记录的件数合计（用户要求） */}
-                    <th style={{ width: 96 }}>出单数量</th>
+                    <th style={{ width: 170 }}>出单数量</th>
                     {/* 提醒天数单独一列（只有「每N天提醒」/「已逾期」这些标签） */}
                     <th style={{ width: 130 }}>{cur.header}</th>
                     <th style={{ width: 90 }}>状态</th>
@@ -605,13 +637,21 @@ export function PcDashboard() {
                             </span>
                           </td>
                         )}
-                        {/* 出单数量（件数合计） */}
-                        <td className="pcv-num">
-                          {orderQtyBySample.get(s.id) ? (
-                            <span style={{ fontWeight: 600, color: '#5f8a74' }}>{orderQtyBySample.get(s.id)}</span>
-                          ) : (
+                        {/* 出单数量：**按账号分别列出**（用户要求「列出每个账号是多少」），
+                            合计与每笔明细放悬停提示 */}
+                        <td
+                          style={{ cursor: 'help', whiteSpace: 'nowrap' }}
+                          title={`合计 ${orderQtyBySample.get(s.id) || 0} 件\n${(orderDetailText.get(s.id) || []).join('\n')}`}
+                        >
+                          {(orderQtyBySampleAccount.get(s.id) || []).length === 0 ? (
                             <span style={{ color: '#c9cdd4' }}>—</span>
-                          )}
+                          ) : orderQtyBySampleAccount.get(s.id).map(([a, v]) => (
+                            <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.6 }}>
+                              <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
+                              <span style={{ color: '#4b5563' }}>{maskAcc(a)}</span>
+                              <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#b8517f' }}>{v}</span>
+                            </span>
+                          ))}
                         </td>
                         {/* 提醒天数（每N天提醒 / 已逾期）单独一列 */}
                         <td>{cur.mid(it, acc, accs)}</td>

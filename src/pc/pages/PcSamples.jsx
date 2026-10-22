@@ -129,6 +129,30 @@ export function PcSamples() {
     return m
   }, [orders])
 
+  // 每个样品「按账号」的出单数量（用户要求「列出每个账号是多少」）
+  const orderQtyBySampleAccount = useMemo(() => {
+    const tmp = new Map()
+    for (const o of orders || []) {
+      if (!o || !o.sampleId) continue
+      const a = o.account || '未指定'
+      if (!tmp.has(o.sampleId)) tmp.set(o.sampleId, new Map())
+      const m = tmp.get(o.sampleId)
+      m.set(a, (m.get(a) || 0) + (Number(o.qty) > 0 ? Number(o.qty) : 1))
+    }
+    return new Map([...tmp.entries()].map(([sid, m]) => [sid, [...m.entries()].sort((p, q) => q[1] - p[1])]))
+  }, [orders])
+
+  // 悬停明细：账号 / 日期 / 数量
+  const orderDetailText = useMemo(() => {
+    const m = new Map()
+    for (const o of orders || []) {
+      if (!o || !o.sampleId) continue
+      if (!m.has(o.sampleId)) m.set(o.sampleId, [])
+      m.get(o.sampleId).push(`${o.account || '未指定'}　${o.date || '未填日期'}　×${Number(o.qty) > 0 ? Number(o.qty) : 1}`)
+    }
+    return m
+  }, [orders])
+
   const accountFiltered = useMemo(() => {
     let list = samples
     if (accountFilter !== 'all') list = list.filter((s) => getAccounts(s).includes(accountFilter))
@@ -328,7 +352,7 @@ export function PcSamples() {
                 <th style={{ width: 70 }}>发布</th>
                 <th style={{ width: 70 }}>是否出单</th>
                 {/* 出单数量：该样品在出单记录里的件数合计（用户要求「加上出单数量」） */}
-                <th style={{ width: 90 }}>出单数量</th>
+                <th style={{ width: 160 }}>出单数量</th>
                 {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天），与提醒中心同一套算 */}
                 <th style={{ width: 78 }}>提醒天数</th>
                 <th style={{ width: 107 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
@@ -441,15 +465,19 @@ export function PcSamples() {
                       )}
                     </td>
                     <td className="pcv-num">
-                      {/* 出单数量：出单记录里的件数合计（用户要求「加上出单数量」） */}
-                      {orderQtyBySample.has(s.id) ? (
-                        <span
-                          style={{ fontWeight: 600, color: '#5f8a74' }}
-                          title={`共 ${orderCountBySample.get(s.id) || 0} 笔出单`}
-                        >{orderQtyBySample.get(s.id)}</span>
-                      ) : (
+                      {/* 出单数量：**按账号分别列出**（用户要求「列出每个账号是多少」） */}
+                      {(orderQtyBySampleAccount.get(s.id) || []).length === 0 ? (
                         <span style={{ color: '#c9cdd4' }}>—</span>
-                      )}
+                      ) : (orderQtyBySampleAccount.get(s.id) || []).map(([a, v]) => (
+                        <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.6, whiteSpace: 'nowrap' }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4' }} />
+                          <span style={{ color: '#4b5563' }}>{maskAccount(a, hiddenAccounts)}</span>
+                          <span
+                            style={{ marginLeft: 'auto', fontWeight: 700, color: '#b8517f', cursor: 'help' }}
+                            title={(orderDetailText.get(s.id) || []).join('\n')}
+                          >{v}</span>
+                        </span>
+                      ))}
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天）。

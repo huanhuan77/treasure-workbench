@@ -4,9 +4,8 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { OrderDialog } from '../components/OrderDialog'
 import { ResetButton } from '../components/ResetButton'
-import { SearchSelect } from '../components/SearchSelect'
 import { dateBounds } from '../../components/DateFilterBar'
-import { ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 
 const RANGES = [
   { key: '', label: '全部' },
@@ -70,14 +69,19 @@ export function PcOrders() {
   // 排序改成**点表头**（用户要求，把原来那排「日期 ↓ / 出单 ↓」按钮去掉）。
   // 只有「出单量」和「最近出单」两列可排 —— 正好对应原有的两个排序维度，没有新增口径。
   // 首次点某列 → 默认降序；再点同一列 → 切升序。
-  const sortDirOf = (field) => {
-    if (field === 'date') return sortKey === 'dateDesc' ? 'desc' : sortKey === 'dateAsc' ? 'asc' : null
-    return sortKey === 'mostDesc' ? 'desc' : sortKey === 'mostAsc' ? 'asc' : null
-  }
+    // 可排序的列：最近出单 / 出单数量 / 笔数（用户要求「点击可以排序」）
+  // 首次点某列 → 默认降序；再点同一列 → 切升序。
+  const SORT_FIELDS = ['date', 'qty', 'count']
+  const sortField = (() => {
+    const m = /^(date|qty|count)(Desc|Asc)$/.exec(String(sortKey || ''))
+    return m ? m[1] : 'date'
+  })()
+  const sortDir = /Asc$/.test(String(sortKey || '')) ? 'asc' : 'desc'
+  const sortDirOf = (field) => (sortField === field ? sortDir : null)
   const toggleSort = (field) => {
+    if (!SORT_FIELDS.includes(field)) return
     const cur = sortDirOf(field)
-    if (field === 'date') setSortKey(cur === 'desc' ? 'dateAsc' : 'dateDesc')
-    else setSortKey(cur === 'desc' ? 'mostAsc' : 'mostDesc')
+    setSortKey(cur === 'desc' ? `${field}Asc` : `${field}Desc`)
   }
 
   const list = useMemo(() => {
@@ -92,7 +96,8 @@ export function PcOrders() {
   const filtered = useMemo(() => {
     let arr = list
     if (accountFilter) arr = arr.filter((o) => o.account === accountFilter)
-    if (productFilter) arr = arr.filter((o) => (o.name || '') === productFilter)
+    // 搜索框：按产品名「包含」匹配（不再是精确等于）
+    if (productFilter.trim()) arr = arr.filter((o) => (o.name || '').includes(productFilter.trim()))
     const bounds = dateBounds(dateRange)
     if (bounds) {
       const [s, e] = bounds
@@ -118,6 +123,19 @@ export function PcOrders() {
         entries,
         count: entries.length,
         qty: entries.reduce((s, e) => s + (Number(e.qty) || 0), 0),
+        // 每个账号各出了多少（用户要求「列出每个账号是多少」）
+        qtyByAccount: (() => {
+          const m = new Map()
+          for (const e of entries) {
+            const a = e.account || '未指定'
+            m.set(a, (m.get(a) || 0) + (Number(e.qty) > 0 ? Number(e.qty) : 1))
+          }
+          const rank = (x) => {
+            const i = ACCOUNTS.indexOf(x)
+            return i === -1 ? 999 : i
+          }
+          return [...m.entries()].sort((p, q) => rank(p[0]) - rank(q[0]) || q[1] - p[1])
+        })(),
         latest: entries.find((e) => e.date)?.date || '',
         accounts: [...new Set(entries.map((e) => e.account).filter(Boolean))],
       })
@@ -129,26 +147,22 @@ export function PcOrders() {
       if (ta === null) return 1
       if (tb === null) return -1
       if (ta === tb) return a.name.localeCompare(b.name, 'zh')
-      return sortKey === 'dateAsc' ? ta - tb : tb - ta
+      return sortDirOf('date') === 'asc' ? ta - tb : tb - ta
     }
     arr.sort((a, b) => {
-      if (sortKey === 'dateDesc' || sortKey === 'dateAsc') return byDate(a, b)
-      const dir = sortKey === 'mostAsc' ? 1 : -1
-      if (a.qty !== b.qty) return (a.qty - b.qty) * dir
-      if (a.count !== b.count) return (a.count - b.count) * dir
+      if (sortField === 'date') return byDate(a, b)
+      const dir = sortDir === 'asc' ? 1 : -1
+      const key = sortField === 'count' ? 'count' : 'qty'
+      if (a[key] !== b[key]) return (a[key] - b[key]) * dir
+      // 数值相同 → 按最近出单倒序兜底，结果稳定
       const ta = a.latest ? parseTs(a.latest) : null
       const tb = b.latest ? parseTs(b.latest) : null
-      if (ta !== null && tb !== null) return (tb - ta) * dir
-      if (ta === null && tb === null) return a.name.localeCompare(b.name, 'zh')
-      return ta === null ? 1 : -1
+      if (ta !== null && tb !== null && ta !== tb) return tb - ta
+      return a.name.localeCompare(b.name, 'zh')
     })
     return arr
   }, [filtered, sortKey])
 
-  const productOptions = useMemo(
-    () => [...new Set((orders || []).map((o) => o.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh')),
-    [orders],
-  )
   const accountOptions = useMemo(
     () => [...new Set((orders || []).map((o) => o.account).filter(Boolean))],
     [orders],
@@ -187,16 +201,20 @@ export function PcOrders() {
           <div className="pcv-sub">{filtered.length} 笔 · 共 {totalQty} 单 · {groups.length} 个产品</div>
         </div>
         <div className="pcv-spacer" />
-        {/* 产品筛选改成可搜索下拉（用户要求「可以搜索」）：几十个产品靠滚动太难找 */}
-        <SearchSelect
-          value={productFilter}
-          options={productOptions}
-          onChange={setProductFilter}
-          allLabel="全部产品"
-          placeholder="搜索产品名…"
-          width={180}
-          title="按产品筛选"
-        />
+        {/* 产品筛选：直接一个搜索框（用户要求「改成搜索框」），边输边筛，不用展开下拉 */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <input
+            className="pcv-input"
+            style={{ width: 200 }}
+            placeholder="搜索产品名…"
+            value={productFilter}
+            onChange={(e) => setProductFilter(e.target.value)}
+            title="按产品名搜索（包含匹配）"
+          />
+          {productFilter && (
+            <button className="pcv-btn-text" onClick={() => setProductFilter('')} title="清空搜索">×</button>
+          )}
+        </div>
         {/* 主操作紧跟产品下拉（与发布记录页一致，不再贴最右） */}
         <button className="pcv-btn" onClick={() => { setPrefill(null); setOrderOpen(true) }}>记出单</button>
       </div>
@@ -229,9 +247,14 @@ export function PcOrders() {
               <tr>
                 <th style={{ width: 260 }}>产品</th>
                 <th style={{ width: 200 }}>账号</th>
-                {/* 出单数量（qty 合计）与笔数分开显示（用户要求「加一列出单数量」） */}
-                <th style={{ width: 110 }}>出单数量</th>
-                <th style={{ width: 90 }}>笔数</th>
+                {/* 出单数量（qty 合计）与笔数分开显示（用户要求「加一列出单数量」）；
+                    两列都可点表头排序（用户要求「点击可以排序」） */}
+                <th style={{ width: 190 }} className="pcv-th-sort" onClick={() => toggleSort('qty')}>
+                  出单数量{sortDirOf('qty') ? (sortDirOf('qty') === 'desc' ? ' ↓' : ' ↑') : ''}
+                </th>
+                <th style={{ width: 90 }} className="pcv-th-sort" onClick={() => toggleSort('count')}>
+                  笔数{sortDirOf('count') ? (sortDirOf('count') === 'desc' ? ' ↓' : ' ↑') : ''}
+                </th>
                 <th style={{ width: 150 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
                   最近出单{sortDirOf('date') ? (sortDirOf('date') === 'desc' ? ' ↓' : ' ↑') : ''}
                 </th>
@@ -297,8 +320,27 @@ export function PcOrders() {
                           ))
                         )}
                       </td>
-                      {/* 出单数量：该产品在区间内所有出单的件数合计 */}
-                      <td className="pcv-num" style={{ fontWeight: 600 }}>{g.qty}</td>
+                      {/* 出单数量：**按账号分别列出**（用户要求「列出每个账号是多少」），
+                          合计与每笔明细都放在悬停提示里 */}
+                      <td
+                        style={{ cursor: 'help', whiteSpace: 'nowrap' }}
+                        title={`合计 ${g.qty} 件\n${[...g.entries]
+                          .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
+                          .map((e) => `${e.account || '未指定'}　${e.date ? dispDate(e.date) : '未填日期'}　×${Number(e.qty) > 0 ? Number(e.qty) : 1}`)
+                          .join('\n')}`}
+                      >
+                        {g.qtyByAccount.length === 0 ? (
+                          <span style={{ color: '#c9cdd4' }}>—</span>
+                        ) : g.qtyByAccount.map(([a, v]) => (
+                          <span key={a} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, lineHeight: 1.6 }}>
+                            <span
+                              style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[a] || {}).c || '#c1c7cf' }}
+                            />
+                            <span style={{ color: '#4b5563' }}>{maskAccount(a, hiddenAccounts)}</span>
+                            <span style={{ marginLeft: 'auto', fontWeight: 700, color: '#b8517f' }}>{v}</span>
+                          </span>
+                        ))}
+                      </td>
                       {/* 笔数：常规字重、不加粗 */}
                       <td className="pcv-num" style={{ fontWeight: 400 }}>{g.count}</td>
                       <td style={{ color: g.latest ? '#4b5563' : '#c9cdd4' }}>{g.latest ? dispDate(g.latest) : '未填日期'}</td>
@@ -326,7 +368,7 @@ export function PcOrders() {
                               全在一个流里，行与行之间还对不齐，用户反馈「不好看」。
                               「删除该天」放在条目后面而不是推到表格最右 —— 表格很宽时它会孤零零浮在右边。 */}
                           <div className="pcv-detaillist">
-                            {byDay(g.entries).map(([date, entries]) => (
+                            {byDay(g.entries).map(([date, entries], di, allDays) => (
                               <div key={date} className="pcv-detailrow">
                                 <span className="pcv-detaildate">{dispDate(date)}</span>
                                 <span className="pcv-detailentries">
@@ -342,8 +384,15 @@ export function PcOrders() {
                                         }}
                                       />
                                       <span className="pcv-detailacct">{e.account || '未指定'}</span>
-                                      {/* fmtQty 已经带「单」后缀，别再加 */}
-                                      <span className="pcv-detailqty">{fmtQty(e.qty)}</span>
+                                      {/* 数量显示成醒目的「×2」小胶囊（用户要求更醒目） */}
+                                      <span
+                                        className="pcv-detailqty"
+                                        title={`这一笔 ${Number(e.qty) > 0 ? Number(e.qty) : 1} 件`}
+                                        style={{
+                                          fontWeight: 700, color: '#5f8a74',
+                                          background: 'rgba(95,138,116,0.12)', borderRadius: 6, padding: '0 6px',
+                                        }}
+                                      >×{Number(e.qty) > 0 ? Number(e.qty) : 1}</span>
                                       <button className="pcv-detailact" onClick={() => openEdit(e)}>编辑</button>
                                       <button
                                         className="pcv-detailact pcv-detailact--danger"
@@ -353,8 +402,19 @@ export function PcOrders() {
                                     </span>
                                   ))}
                                 </span>
-                                {/* 「删除该天」放行尾右对齐，和单笔的编辑/删除分开，不会读成一串 */}
-                                <span className="pcv-detailrowend">
+                                {/* 行尾：「＋ 继续新增一单」与「删除该天」同一行（用户要求「一行显示」） */}
+                                <span className="pcv-detailrowend" style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                                  {di === allDays.length - 1 && (
+                                    <button
+                                      className="pcv-detailact"
+                                      onClick={() => {
+                                        const acc = g.entries.find((e) => e.account)?.account || ''
+                                        const sid = g.entries.find((e) => e.sampleId)?.sampleId || ''
+                                        setPrefill({ account: acc, sampleId: sid })
+                                        setOrderOpen(true)
+                                      }}
+                                    >＋ 继续新增一单</button>
+                                  )}
                                   <button
                                     className="pcv-detailact pcv-detailact--danger"
                                     title="删除这一天的全部记录"
@@ -365,17 +425,6 @@ export function PcOrders() {
                             ))}
                           </div>
                           {/* 「继续新增一单」放在明细右下角，用文字按钮，不占一整行 */}
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 6 }}>
-                            <button
-                              className="pcv-detailact"
-                              onClick={() => {
-                                const acc = g.entries.find((e) => e.account)?.account || ''
-                                const sid = g.entries.find((e) => e.sampleId)?.sampleId || ''
-                                setPrefill({ account: acc, sampleId: sid })
-                                setOrderOpen(true)
-                              }}
-                            >＋ 继续新增一单</button>
-                          </div>
                         </td>
                       </tr>
                     )}
