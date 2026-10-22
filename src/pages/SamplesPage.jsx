@@ -560,7 +560,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
           {/* 第一行：产品名 + 分类 + 代表状态 */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: '1', minWidth: '40px' }}>{s.name}</h3>
-            {(() => { const totalQty = getAccounts(s).reduce((sum, a) => sum + (getCounts(s, a).orderCount || 0), 0); return totalQty > 0 ? <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: '#fce7f3', color: '#db2777', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>×{totalQty}</span> : null })()}
+            {(() => { const totalQty = getAccounts(s).reduce((sum, a) => sum + (getCounts(s, a).orderCount || 0), 0); return totalQty > 0 ? <span style={{ flexShrink: 0, fontSize: '11px', fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#f472b6,#ec4899)', padding: '1px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>×{totalQty}</span> : null })()}
             {s.category && <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: 'rgba(109,40,217,0.12)', color: '#6d28d9', fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>{s.category}</span>}
             {repInfo && <span style={{ fontSize: '11px', color: '#fff', background: repInfo.color, padding: '2px 8px', borderRadius: '8px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{repInfo.label}</span>}
           </div>
