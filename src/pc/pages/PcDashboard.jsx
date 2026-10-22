@@ -101,6 +101,16 @@ export function PcDashboard() {
 
   const all = useMemo(() => selectAllReminders(samples), [samples])
 
+  // 每个样品的「出单数量」= 出单记录里 qty 合计（用户要求提醒中心加这一列）
+  const orderQtyBySample = useMemo(() => {
+    const m = new Map()
+    for (const o of orders || []) {
+      if (!o || !o.sampleId) continue
+      m.set(o.sampleId, (m.get(o.sampleId) || 0) + (Number(o.qty) > 0 ? Number(o.qty) : 1))
+    }
+    return m
+  }, [orders])
+
   // 「新建计划」按钮：**打开「新增发布计划」弹窗**，并带上该行的产品名 + 账号
   // （用户要求「点击新建计划要弹出这个，带上产品名」），数量/日期/多选都在弹窗里改。
   const quickPlan = useCallback((s, acc) => {
@@ -390,7 +400,8 @@ export function PcDashboard() {
             { label: '样品总数', value: samples.length, accent: '#b8517f', addLabel: '新增样品', onAdd: () => navigate('/pc/samples?add=1') },
             { label: '待办未完成', value: todoUndone, accent: '#a97c46', addLabel: '新增待办', onAdd: () => navigate('/pc/todos') },
             { label: '发布提醒', value: all.reminders.length, accent: '#b96a66', addLabel: '记一条发布', onAdd: () => navigate('/pc/publish-records?add=1') },
-            { label: '出单记录', value: orders.length, accent: '#5f8a74', addLabel: '记出单', onAdd: () => navigate('/pc/orders?add=1') },
+            // 出单数量（件数合计），不是记录条数（用户要求「改成出单数量」）
+            { label: '出单数量', value: (orders || []).reduce((n, o) => n + (Number(o.qty) > 0 ? Number(o.qty) : 1), 0), accent: '#5f8a74', addLabel: '记出单', onAdd: () => navigate('/pc/orders?add=1') },
           ].map((m) => {
             const on = m.value > 0
             return (
@@ -552,6 +563,8 @@ export function PcDashboard() {
                     <th style={{ width: 180 }}>操作</th>
                     {/* 账号列：高频出单 / 发布提醒里是「账号 + 已N天」双色胶囊，需要更宽 */}
                     <th style={{ width: 340 }}>账号</th>
+                    {/* 出单数量：该样品出单记录的件数合计（用户要求） */}
+                    <th style={{ width: 96 }}>出单数量</th>
                     {/* 提醒天数单独一列（只有「每N天提醒」/「已逾期」这些标签） */}
                     <th style={{ width: 130 }}>{cur.header}</th>
                     <th style={{ width: 90 }}>状态</th>
@@ -592,6 +605,14 @@ export function PcDashboard() {
                             </span>
                           </td>
                         )}
+                        {/* 出单数量（件数合计） */}
+                        <td className="pcv-num">
+                          {orderQtyBySample.get(s.id) ? (
+                            <span style={{ fontWeight: 600, color: '#5f8a74' }}>{orderQtyBySample.get(s.id)}</span>
+                          ) : (
+                            <span style={{ color: '#c9cdd4' }}>—</span>
+                          )}
+                        </td>
                         {/* 提醒天数（每N天提醒 / 已逾期）单独一列 */}
                         <td>{cur.mid(it, acc, accs)}</td>
                         <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>

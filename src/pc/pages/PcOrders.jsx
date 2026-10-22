@@ -229,8 +229,8 @@ export function PcOrders() {
               <tr>
                 <th style={{ width: 260 }}>产品</th>
                 <th style={{ width: 200 }}>账号</th>
-                {/* 「出单量」列去掉（用户要求）：本页每笔出单数量固定按 1 条记，
-                    它和「笔数」永远是同一个数，纯冗余 */}
+                {/* 出单数量（qty 合计）与笔数分开显示（用户要求「加一列出单数量」） */}
+                <th style={{ width: 110 }}>出单数量</th>
                 <th style={{ width: 90 }}>笔数</th>
                 <th style={{ width: 150 }} className="pcv-th-sort" onClick={() => toggleSort('date')}>
                   最近出单{sortDirOf('date') ? (sortDirOf('date') === 'desc' ? ' ↓' : ' ↑') : ''}
@@ -241,7 +241,7 @@ export function PcOrders() {
             <tbody>
               {groups.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="pcv-empty">当前筛选下暂无出单</td>
+                  <td colSpan={6} className="pcv-empty">当前筛选下暂无出单</td>
                 </tr>
               ) : groups.map((g) => {
                 const open = expanded === g.name
@@ -297,6 +297,8 @@ export function PcOrders() {
                           ))
                         )}
                       </td>
+                      {/* 出单数量：该产品在区间内所有出单的件数合计 */}
+                      <td className="pcv-num" style={{ fontWeight: 600 }}>{g.qty}</td>
                       {/* 笔数：常规字重、不加粗 */}
                       <td className="pcv-num" style={{ fontWeight: 400 }}>{g.count}</td>
                       <td style={{ color: g.latest ? '#4b5563' : '#c9cdd4' }}>{g.latest ? dispDate(g.latest) : '未填日期'}</td>

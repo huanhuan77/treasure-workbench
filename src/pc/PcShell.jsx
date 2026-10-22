@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { NavLink, useLocation, useNavigate, useOutlet } from 'react-router-dom'
+﻿import { useEffect } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useIsDesktop } from '../utils/useIsDesktop'
 import {
@@ -54,86 +54,12 @@ function NavItem({ to, label, end, Icon, emoji, badge, color }) {
 
 export function PcShell() {
   const navigate = useNavigate()
-  const location = useLocation()
-  const outlet = useOutlet()
   const isDesktop = useIsDesktop()
   const { samples } = useStore()
   // 全站弹窗可拖动：文档级委托，挂一次对所有 .pcv-dialog 生效
   useDialogDrag()
 
-  // ── 多标签（用户要求「增加 tab 显示打开过的页面 可切换 切换保留页面状态」）──
-  // tabs：{ path, label } 列表；pages：path -> 该页面的 React 元素（常驻挂载，切走只改 display）。
-  // 不用路由级 KeepAlive —— 那会把侧边栏一起复制一份。
-  const [tabs, setTabs] = useState(() => {
-    try {
-      const raw = sessionStorage.getItem('pc_tabs_v1')
-      const arr = raw ? JSON.parse(raw) : null
-      if (Array.isArray(arr) && arr.length) return arr
-    } catch (e) { /* 忽略 */ }
-    // 不预置「总览」：首次进入哪个页面就只开哪个标签，避免出现一个点不开的空白标签
-    return []
-  })
-  const [pages, setPages] = useState(() => new Map())
-  const tabbarRef = useRef(null)
-
-  // 访问新页面 → 补一个 tab + 把它的元素存起来（只存第一次，保持组件实例）
-  useEffect(() => {
-    const p = location.pathname
-    if (!p.startsWith('/pc')) return
-    setTabs((prev) => {
-      if (prev.some((t) => t.path === p)) return prev
-      const label = (NAV.find((n) => n.to === p) || {}).label || p.split('/').filter(Boolean).pop() || p
-      return [...prev, { path: p, label }]
-    })
-    setPages((prev) => {
-      if (prev.has(p)) return prev
-      const next = new Map(prev)
-      next.set(p, outlet)
-      return next
-    })
-  }, [location.pathname, outlet])
-
-  useEffect(() => {
-    try { sessionStorage.setItem('pc_tabs_v1', JSON.stringify(tabs)) } catch (e) { /* 忽略 */ }
-  }, [tabs])
-
-  const closeTab = (e, path) => {
-    e.stopPropagation()
-    setTabs((prev) => {
-      if (prev.length <= 1) return prev
-      const idx = prev.findIndex((t) => t.path === path)
-      const next = prev.filter((t) => t.path !== path)
-      if (path === location.pathname) {
-        const to = next[Math.min(idx, next.length - 1)]
-        if (to) navigate(to.path)
-      }
-      // 关掉的页面从缓存里移除，释放状态
-      setPages((pg) => { const m = new Map(pg); m.delete(path); return m })
-      return next
-    })
-  }
-
   // 云备份按钮已改为直接渲染在侧边栏底部，不再需要往页面顶栏插挂载点
-
-  // 标签栏宽度 → CSS 变量：页面顶栏右侧留出同样宽度，标签就不会压在「为什么没提醒 / 隐藏账号」这些按钮上
-  useEffect(() => {
-    const el = tabbarRef.current
-    if (!el) return undefined
-    const apply = () => {
-      const w = el.offsetWidth || 0
-      document.documentElement.style.setProperty('--pcv-tabs-w', `${w}px`)
-    }
-    apply()
-    let ro = null
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(apply)
-      ro.observe(el)
-    }
-    return () => {
-      if (ro) ro.disconnect()
-      document.documentElement.style.setProperty('--pcv-tabs-w', '0px')
-    }
-  }, [tabs.length])
 
   // 样品角标口径与手机版底部导航一致：未到货 + 已到货未拍 + 已拍未发
   const samplesBadge = (samples || []).filter(
@@ -172,39 +98,7 @@ export function PcShell() {
         </div>
       </aside>
       <main className="pcv-main">
-        {/* 打开过的页面：多标签，点标签切换；切换只改 display，页面状态（筛选/滚动/展开）全保留。
-            tabbarRef 用来量宽度 → 写进 CSS 变量 --pcv-tabs-w，
-            让页面顶栏（.pcv-bar）自动让出这段空间，避免标签和右上角按钮重叠。 */}
-        <div className="pcv-tabbar" ref={tabbarRef}>
-          {tabs.map((t) => {
-            const on = t.path === location.pathname
-            return (
-              <div
-                key={t.path}
-                className={`pcv-tab${on ? ' on' : ''}`}
-                onClick={() => { if (!on) navigate(t.path) }}
-                title={t.label}
-              >
-                <span className="pcv-tab-label">{t.label}</span>
-                {tabs.length > 1 && (
-                  <button className="pcv-tab-x" title="关闭标签" onClick={(e) => closeTab(e, t.path)}>×</button>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="pcv-tabpages">
-          {tabs.map((t) => (
-            <div
-              key={t.path}
-              className="pcv-tabpage"
-              style={{ display: t.path === location.pathname ? 'flex' : 'none' }}
-            >
-              {pages.get(t.path) || null}
-            </div>
-          ))}
-        </div>
+        <Outlet />
       </main>
     </div>
   )

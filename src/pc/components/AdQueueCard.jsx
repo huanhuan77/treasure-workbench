@@ -29,6 +29,8 @@ export function AdQueueCard() {
   // 卡片内的账号筛选 + 默认只列 5 条（用户要求，与「待办清单 / 发布计划」一致）
   const [accFilter, setAccFilter] = useState('')
   const [expanded, setExpanded] = useState(false)
+  // 状态筛选（用户反馈「暂停的怎么不见了」）：默认全部，可只看「未投流 / 暂停」
+  const [statusFilter, setStatusFilter] = useState('')
   // 改成「已投流」= 从列表消失（用户要求「就像删除了一样，不需要了」）：
   // 不再提供「已投流 N」查看入口，也不需要找回来。底层数据保留（不会真删，
   // 免得误点后不可恢复），只是不再参与展示。
@@ -40,14 +42,15 @@ export function AdQueueCard() {
       return i === -1 ? 999 : i
     }
     return list
-      .filter((a) => a.status !== '已投流')
+      // 默认隐藏「已投流」；显式选了「已投流」筛选时才展示（这样"不见了"也能找回来）
+      .filter((a) => (statusFilter ? a.status === statusFilter : a.status !== '已投流'))
       .sort((x, y) => {
         const d = rank(x.account) - rank(y.account)
         if (d !== 0) return d
         return String(y.publishDate || '').localeCompare(String(x.publishDate || ''))
           || (y.createdAt || 0) - (x.createdAt || 0)
       })
-  }, [list])
+  }, [list, statusFilter])
 
   // 只列卡里真实出现过的账号（按 ACCOUNTS 固定顺序，未在册的排后面）
   const accOptions = useMemo(() => {
@@ -155,6 +158,41 @@ export function AdQueueCard() {
           >新增</button>
           <div className="pcv-spacer" />
         </div>
+
+        {/* 状态筛选：全部 / 未投流 / 暂停（「已投流」按设计不进列表） */}
+        {list.some((a) => a.status === '暂停' || a.status === '已投流') && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px 8px' }}>
+            {(() => {
+              const chip = (key, label, n) => {
+                const on = statusFilter === key
+                return (
+                  <button
+                    key={key || 'all'}
+                    onClick={() => setStatusFilter(key)}
+                    style={{
+                      padding: '3px 10px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
+                      fontSize: 12, fontWeight: 600,
+                      border: on ? 'none' : '1px solid rgba(15,23,42,0.14)',
+                      background: on ? '#b8517f' : '#fff',
+                      color: on ? '#fff' : '#6b7280',
+                    }}
+                  >{label}{n != null ? ` ${n}` : ''}</button>
+                )
+              }
+              const pend = list.filter((a) => a.status === '未投流').length
+              const paused = list.filter((a) => a.status === '暂停').length
+              const done = list.filter((a) => a.status === '已投流').length
+              return (
+                <>
+                  {chip('', '全部')}
+                  {chip('未投流', '未投流', pend)}
+                  {chip('暂停', '暂停', paused)}
+                  {done > 0 && chip('已投流', '已投流', done)}
+                </>
+              )
+            })()}
+          </div>
+        )}
 
         {/* 账号筛选胶囊：只在「展开」时显示（与「发布计划」一致） */}
         {expanded && accOptions.length > 1 && (

@@ -118,6 +118,17 @@ export function PcSamples() {
     return m
   }, [orders])
 
+  // 出单数量：同一个样品所有出单记录的 qty 合计（老数据没有 qty 时按 1 算）
+  const orderQtyBySample = useMemo(() => {
+    const m = new Map()
+    for (const o of orders || []) {
+      const sid = o && o.sampleId
+      if (!sid) continue
+      m.set(sid, (m.get(sid) || 0) + (Number(o.qty) > 0 ? Number(o.qty) : 1))
+    }
+    return m
+  }, [orders])
+
   const accountFiltered = useMemo(() => {
     let list = samples
     if (accountFilter !== 'all') list = list.filter((s) => getAccounts(s).includes(accountFilter))
@@ -316,6 +327,8 @@ export function PcSamples() {
                 <th style={{ width: 260 }}>账号</th>
                 <th style={{ width: 70 }}>发布</th>
                 <th style={{ width: 70 }}>是否出单</th>
+                {/* 出单数量：该样品在出单记录里的件数合计（用户要求「加上出单数量」） */}
+                <th style={{ width: 90 }}>出单数量</th>
                 {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天），与提醒中心同一套算 */}
                 <th style={{ width: 78 }}>提醒天数</th>
                 <th style={{ width: 107 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
@@ -423,6 +436,17 @@ export function PcSamples() {
                           style={TONE.good}
                           title={`出单记录 ${orderCountBySample.get(s.id)} 条`}
                         >已出单</span>
+                      ) : (
+                        <span style={{ color: '#c9cdd4' }}>—</span>
+                      )}
+                    </td>
+                    <td className="pcv-num">
+                      {/* 出单数量：出单记录里的件数合计（用户要求「加上出单数量」） */}
+                      {orderQtyBySample.has(s.id) ? (
+                        <span
+                          style={{ fontWeight: 600, color: '#5f8a74' }}
+                          title={`共 ${orderCountBySample.get(s.id) || 0} 笔出单`}
+                        >{orderQtyBySample.get(s.id)}</span>
                       ) : (
                         <span style={{ color: '#c9cdd4' }}>—</span>
                       )}
