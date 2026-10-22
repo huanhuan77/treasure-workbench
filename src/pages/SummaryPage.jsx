@@ -16,6 +16,7 @@ export default function SummaryPage() {
   // 自定义日期区间
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
+  const [showCustom, setShowCustom] = useState(false)
 
   const range = useMemo(() => {
     if (customStart && customEnd) {
@@ -87,34 +88,44 @@ export default function SummaryPage() {
         })}
       </div>
 
-      {/* 自定义日期区间 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px 10px' }}>
-        <input
-          type="date"
-          value={customStart}
-          onChange={(e) => setCustomStart(e.target.value)}
-          style={{
-            flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
-            border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
-          }}
-        />
-        <span style={{ color: '#9aa0a9', fontSize: 12 }}>~</span>
-        <input
-          type="date"
-          value={customEnd}
-          onChange={(e) => setCustomEnd(e.target.value)}
-          style={{
-            flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
-            border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
-          }}
-        />
-        {(customStart || customEnd) && (
-          <button
-            onClick={() => { setCustomStart(''); setCustomEnd('') }}
-            style={{ border: 'none', background: 'transparent', color: '#9aa0a9', fontSize: 12, cursor: 'pointer' }}
-          >清空</button>
-        )}
+      {/* 自定义日期区间：默认只在右边放日历图标，点开才展开两个日期框 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, padding: '0 16px 8px' }}>
+        {customStart && customEnd && <span style={{ fontSize: 11, color: '#9aa0a9' }}>{customStart} ~ {customEnd}</span>}
+        <button
+          onClick={() => setShowCustom((v) => !v)}
+          style={{ border: '1px solid rgba(15,23,42,0.14)', background: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 13, cursor: 'pointer' }}
+          title="自定义日期"
+        >📅</button>
       </div>
+      {showCustom && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px 10px' }}>
+          <input
+            type="date"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            style={{
+              flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
+              border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
+            }}
+          />
+          <span style={{ color: '#9aa0a9', fontSize: 12 }}>~</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            style={{
+              flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
+              border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
+            }}
+          />
+          {(customStart || customEnd) && (
+            <button
+              onClick={() => { setCustomStart(''); setCustomEnd('') }}
+              style={{ border: 'none', background: 'transparent', color: '#9aa0a9', fontSize: 12, cursor: 'pointer' }}
+            >清空</button>
+          )}
+        </div>
+      )}
 
       {/* 指标卡：两列 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '0 16px 12px' }}>
