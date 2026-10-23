@@ -253,6 +253,10 @@ export function DashboardPage() {
   const tapOK = () => !movedRef.current && Date.now() - swipeGuardRef.current > 400
   const pickTab = (id) => {
     setRemindTab(id)
+    // 高频出单/发布不足5条 首次进入默认选中第一个账号，不看"全部账号"
+    if ((id === 'hot' || id === 'low') && remindAccount === 'all' && ACCOUNTS[0]) {
+      setRemindAccount(ACCOUNTS[0])
+    }
     try { sessionStorage.setItem('dash_remind_tab', id) } catch { /* 忽略隐私模式写入失败 */ }
   }
   const handleCheckUpdate = async () => {
@@ -645,7 +649,12 @@ export function DashboardPage() {
   // ── 提醒中心的账号筛选（三个 Tab 共用一排胶囊）
   // 'all' = 全部账号。筛选只作用于下方列表与 Tab 气泡计数，
   // 不影响上方「出单 / 待办」两张卡。
-  const [remindAccount, setRemindAccount] = useState('all')
+  const [remindAccount, setRemindAccount] = useState(() => {
+    // 高频出单/发布不足5条 首次进入默认选中第一个账号
+    const v = sessionStorage.getItem('dash_remind_tab')
+    const t = v === 'low' || v === 'expiring' || v === 'reminders' ? v : 'hot'
+    return (t === 'hot' || t === 'low') && ACCOUNTS[0] ? ACCOUNTS[0] : 'all'
+  })
   const ACC_META = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
 
   // 「已建计划」标记索引（与 PC 总览一致，用户要求手机端也加）：按产品名关联、排除已完成的计划，
