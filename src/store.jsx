@@ -3346,7 +3346,10 @@ function loadData() {
       // ⚠️ 这里的返回对象是**白名单式重建**：没列出来的字段会在每次加载时被丢掉，
       // 随后 useEffect 又把「缺字段的 data」写回 localStorage → 数据永久消失。
       // 待投流（adQueue）就是这样丢的（用户反馈「刚加的怎么不见了」）。
-      adQueue: Array.isArray(old.adQueue) ? old.adQueue : [],
+      // 待投流也按合并后的 idMap 重定向：同名样品合并后，挂在被删那条上的待投流跟着保留的实体走
+      adQueue: (Array.isArray(old.adQueue) ? old.adQueue : []).map((a) => (
+        a && a.sampleId && migrated.idMap[a.sampleId] ? { ...a, sampleId: migrated.idMap[a.sampleId] } : a
+      )),
       publishPlans: plansDedup,
     })
   } catch (e) {
@@ -3442,9 +3445,11 @@ function loadPublishRecords(old) {
 }
 
 // 样品归属多账号 → 合并为一条实体（物流共享、执行状态按账号独立）。
-// 历史版本曾把多账号样品拆成多条，这里在首次启动时一次性合并回去（先写备份，再合并，
+// 历史版本曾把多账号样品拆成多条，这里合并回去（先写备份，再合并，
 // 并把发布/出单记录的 sampleId 重定向到保留的实体 id），之后数据即为合并后的形态。
-// 合并完成后每启动一次都只做结构规整（normalizeSample），不再拆分。
+// ⚠️ 现在**每次加载都跑**（幂等）：v4 之后用户仍可能重复创建同名样品、或同步带进来重复项，
+//    用户要求「重复创建的话删掉一条」——保留一条实体，其余合并掉，记录/出单/待投流全部重定向。
+//    合并后数据里同名只剩一条，重复执行不会再有变化。
 function migrateSamples(samples, publishRecords, orders) {
   // v1：按「名称 + productId」合并（历史按账号拆分的样品）
   // v2：改按「名称」合并（历史数据 productId 常为空/不一致，v1 会漏合并）
@@ -3453,34 +3458,17 @@ function migrateSamples(samples, publishRecords, orders) {
   //     并增加孤儿记录回收。升版本号是为了让已经跑过 v3 的设备重新合并一次修正数值。
   let marker = '0'
   try { marker = localStorage.getItem('mig_merge_accounts_v4') || '0' } catch (e) {}
-  if (marker === '1') {
-    return { samples: (samples || []).map(normalizeSample), publishRecords: publishRecords || [], orders: orders || [] }
+  // 首次跑（或从没跑过）才写备份：合并后数据已是干净形态，重复覆盖备份会把还原点冲掉
+  if (marker !== '1') {
+    try {
+      localStorage.setItem('mig_merge_accounts_backup_v4', JSON.stringify({
+        samples, publishRecords, orders, at: Date.now(),
+      }))
+    } catch (e) {}
   }
-  // v3 的缺陷会把 countsByAccount 里较大的数值覆盖成较小的（发布次数凭空变少），
-  // 且写入后的数据已无法反推。好在那次合并前留了完整备份，这里优先从备份取原始数据重做一次。
-  let baseSamples = samples || []
-  let baseRecords = publishRecords || []
-  let baseOrders = orders || []
-  try {
-    const raw = localStorage.getItem('mig_merge_accounts_backup_v3')
-    if (raw) {
-      const bk = JSON.parse(raw)
-      if (Array.isArray(bk.samples) && bk.samples.length) {
-        baseSamples = bk.samples
-        baseRecords = Array.isArray(bk.publishRecords) ? bk.publishRecords : baseRecords
-        baseOrders = Array.isArray(bk.orders) ? bk.orders : baseOrders
-      }
-    }
-  } catch (e) {}
-  // 合并前先完整备份，极端情况下可回退
-  try {
-    localStorage.setItem('mig_merge_accounts_backup_v4', JSON.stringify({
-      samples: baseSamples, publishRecords: baseRecords, orders: baseOrders, at: Date.now(),
-    }))
-  } catch (e) {}
-  const { merged, idMap } = mergeSplitSamples(baseSamples)
-  const newRecords = baseRecords.map((r) => (idMap[r.sampleId] ? { ...r, sampleId: idMap[r.sampleId] } : r))
-  const newOrders = baseOrders.map((o) => (idMap[o.sampleId] ? { ...o, sampleId: idMap[o.sampleId] } : o))
+  const { merged, idMap } = mergeSplitSamples(samples || [])
+  const newRecords = (publishRecords || []).map((r) => (idMap[r.sampleId] ? { ...r, sampleId: idMap[r.sampleId] } : r))
+  const newOrders = (orders || []).map((o) => (idMap[o.sampleId] ? { ...o, sampleId: idMap[o.sampleId] } : o))
   // 孤儿记录回收：样品被删除时其发布记录/出单没跟着清，sampleId 指向了不存在的样品，
   // 这些记录在列表里查不到样品名（显示为空）也会让统计对不上。按「名称」重新挂回同类样品。
   const reclaimed = reclaimOrphanRecords(merged, newRecords, newOrders)
@@ -3489,6 +3477,7 @@ function migrateSamples(samples, publishRecords, orders) {
     samples: merged.map(normalizeSample),
     publishRecords: reclaimed.publishRecords,
     orders: reclaimed.orders,
+    idMap,
   }
 }
 
@@ -3732,16 +3721,34 @@ function mergeSplitSamples(samples) {
   return { merged: out, idMap }
 }
 
-// 由发布记录重算样品按账号统计（发布条数/最近发布），并同步顶层聚合字段，纯函数
-function aggregatePublish(samples, records) {
-  const bySample = {}
+// 发布记录 → 样品 的归属索引。记录本身只存 sampleId，但历史上同名样品可能被重复创建
+// （记录挂在其中一条上），另一条同名样品就「明明发布过却显示从未发布」（用户反馈）。
+// 这里额外建一份「同名样品」兜底索引：**只收录自己就有记录的样品**，
+// 没有记录的同名样品按名字继承，保证提醒/统计口径正确；有自己记录的仍按 ID 精确取，不会串。
+const normSampleName = (v) => String(v || '').replace(/\s+/g, '')
+function buildPublishIndex(samples, records) {
+  const byId = {}
   for (const r of (records || [])) {
     if (!r.sampleId) continue
-    if (!bySample[r.sampleId]) bySample[r.sampleId] = []
-    bySample[r.sampleId].push(r)
+    if (!byId[r.sampleId]) byId[r.sampleId] = []
+    byId[r.sampleId].push(r)
   }
+  const byName = {}
+  for (const s of (samples || [])) {
+    const n = normSampleName(s && s.name)
+    if (!n || byName[n]) continue
+    const own = byId[s.id]
+    if (own && own.length) byName[n] = own
+  }
+  return { byId, byName }
+}
+
+// 由发布记录重算样品按账号统计（发布条数/最近发布），并同步顶层聚合字段，纯函数
+function aggregatePublish(samples, records) {
+  const { byId, byName } = buildPublishIndex(samples, records)
   return (samples || []).map((s) => {
-    const list = bySample[s.id]
+    // 自己有记录按 ID 精确取；没有记录的同名样品按名字继承（重复创建的样品不会再「从未发布」）
+    const list = (byId[s.id] && byId[s.id].length) ? byId[s.id] : (byName[normSampleName(s.name)] || byId[s.id])
     const accounts = getAccounts(s)
     const countsByAccount = { ...(s.countsByAccount || {}) }
     let changed = false
@@ -4469,14 +4476,10 @@ export function StoreProvider({ children }) {
 
   // 由发布记录重算样品按账号统计（发布历史/最近发布/发布条数），保留各账号出单数
   const recomputeSamplePublish = (samples, records) => {
-    const bySample = {}
-    for (const r of (records || [])) {
-      if (!r.sampleId) continue
-      if (!bySample[r.sampleId]) bySample[r.sampleId] = []
-      bySample[r.sampleId].push(r)
-    }
+    const { byId, byName } = buildPublishIndex(samples, records)
     return (samples || []).map((sm) => {
-      const list = bySample[sm.id]
+      // 自己有记录按 ID 精确取；没有记录的同名样品按名字继承（重复创建的样品不会再「从未发布」）
+      const list = (byId[sm.id] && byId[sm.id].length) ? byId[sm.id] : (byName[normSampleName(sm.name)] || byId[sm.id])
       const accounts = getAccounts(sm)
       const countsByAccount = { ...(sm.countsByAccount || {}) }
       let changed = false
