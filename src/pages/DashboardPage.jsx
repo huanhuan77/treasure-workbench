@@ -656,7 +656,7 @@ export function DashboardPage() {
       if (p.planDate && p.planDate < todayPlan) continue
       const pa = normPlanAcc(p.account)
       if (remindAccount !== 'all' && pa && pa !== remindAccount) continue
-      const rec = { account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 }
+      const rec = { id: p.id, account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 }
       const n = normPlanName(p.name)
       if (n) {
         if (!m.has(n)) m.set(n, [])
@@ -675,10 +675,22 @@ export function DashboardPage() {
   // 悬停是**竖向排列**的明细卡，组件内部按日期升序 + 账号顺序排）
   const planBadge = (name, sampleId) => (
     <PlanBadge
-      plans={[
-        ...(planNameSet.get(`id:${sampleId}`) || []),
-        ...(planNameSet.get(normPlanName(name)) || []),
-      ]}
+      plans={(() => {
+        // 同一条计划可能既命中 sampleId 又命中名称（老数据回填过 ID），按计划 id 去重，
+        // 否则悬停里会出现两条一模一样的（用户反馈「为何会有重复的」）
+        const seen = new Set()
+        const out = []
+        for (const p of [
+          ...(planNameSet.get(`id:${sampleId}`) || []),
+          ...(planNameSet.get(normPlanName(name)) || []),
+        ]) {
+          const k = p.id || `${p.account}|${p.planDate}|${p.qty}`
+          if (seen.has(k)) continue
+          seen.add(k)
+          out.push(p)
+        }
+        return out
+      })()}
     />
   )
 
