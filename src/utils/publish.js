@@ -106,12 +106,12 @@ export function sampleDays(sample, account) {
 }
 
 // 该账号的天数是不是「单独手动设过的」（用于高频出单 tab 判定）
+// 只有账号级单独设了 ≤5 天才算高频；账号没设就走默认7天，不算高频，
+// 不能兜底读产品级 reminderDays（否则给刘亦菲设5天会把同品的晚梨也带进高频tab）
 export function isHotAccount(sample, account) {
   const ard = sample?.accountReminderDays || {}
   const av = Number(ard[account])
-  if (Number.isFinite(av) && av >= 1) return av <= 5
-  const pv = Number(sample?.reminderDays)
-  return Number.isFinite(pv) && pv >= 1 && pv <= 5
+  return Number.isFinite(av) && av >= 1 && av <= 5
 }
 
 // 发布提醒的唯一锚点：**距离上一次发布**（用户要求「不要出单后 7 天提醒了，改为距离上一次发布提醒」）。
