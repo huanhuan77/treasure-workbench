@@ -768,6 +768,23 @@ export function DashboardPage() {
     }).sort(sortByShownDays),
     [hotCadence, remindAccount],
   )
+  // 每个账号在当前 tab 下的数量（用于账号角标）
+  const acctCounts = useMemo(() => {
+    const c = {}
+    for (const a of ACCOUNTS) {
+      if (remindTab === 'hot') {
+        c[a] = hotCadence.filter((s) => pendingAccounts(s).includes(a) && isHotAccount(s, a)).length
+      } else if (remindTab === 'reminders') {
+        c[a] = reminders.filter((s) => pendingAccounts(s).includes(a)).length
+      } else if (remindTab === 'low') {
+        c[a] = lowPublish.filter((it) => it.accounts.some((x) => x.account === a && x.publishCount < LOW_PUBLISH_LIMIT)).length
+      } else {
+        c[a] = expiringSoon.filter((s) => getAccounts(s).includes(a)).length
+      }
+    }
+    return c
+  }, [remindTab, hotCadence, reminders, lowPublish, expiringSoon])
+
   // 近 7 天发布条数（按 qty 累加）
   const last7Count = useMemo(() => {
     const from = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10)
@@ -1585,8 +1602,13 @@ export function DashboardPage() {
                   border: sel ? 'none' : `1px solid ${col.c}`,
                   background: sel ? col.c : '#fff',
                   color: sel ? '#fff' : col.c,
+                  display: 'inline-flex', alignItems: 'center', gap: '4px',
                 }}
-              >{a}</button>
+              >{a}{!sel && acctCounts[a] > 0 && <span style={{
+                fontSize: '9px', fontWeight: 700, padding: '0 5px', borderRadius: '8px',
+                background: sel ? 'rgba(255,255,255,0.25)' : `${col.c}1f`,
+                color: sel ? '#fff' : col.c,
+              }}>{acctCounts[a]}</span>}</button>
             )
           })}
         </div>
