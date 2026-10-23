@@ -7,6 +7,7 @@ import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../util
 
 import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount, mapAccount } from '../../utils/accounts'
+import { todayStr } from '../../utils/helpers'
 import { SAMPLE_STATUS, getTopStatus } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
 import { AdQueueCard } from '../components/AdQueueCard'
@@ -291,7 +292,10 @@ export function PcDashboard() {
   const normPlanAcc = (a) => mapAccount(String(a || '').trim())
   const planIndex = useMemo(() => {
     const m = new Map()
+    const today = todayStr()
     for (const p of publishPlans || []) {
+      // 用户要求：日期已过去的计划不算「已建计划」（比如今天 10-23，10-21 的那条不该再标）
+      if (p.planDate && p.planDate < today) continue
       // 用户要求：筛了账号就只认该账号的计划（其他账号排的计划不算「已建计划」）；
       // 但计划本身没填账号（老数据/未指定）时不过滤，否则会莫名其妙不标
       const pa = normPlanAcc(p.account)

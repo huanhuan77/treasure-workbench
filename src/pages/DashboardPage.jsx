@@ -651,6 +651,8 @@ export function DashboardPage() {
     const m = new Map()
     for (const p of publishPlans || []) {
       if (p.done) continue
+      // 用户要求：日期已过去的计划不算「已建计划」（今天 10-23，10-21 那条不该再标）
+      if (p.planDate && p.planDate < todayPlan) continue
       const pa = normPlanAcc(p.account)
       if (remindAccount !== 'all' && pa && pa !== remindAccount) continue
       const rec = { account: p.account || '', planDate: p.planDate || '', qty: p.qty || 1 }
