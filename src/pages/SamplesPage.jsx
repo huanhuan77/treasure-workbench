@@ -133,15 +133,15 @@ export function SamplesPage() {
     let r = filtered
     if (accountFilter !== 'all') r = r.filter((s) => getAccounts(s).includes(accountFilter))
     if (searchKeyword.trim()) r = r.filter((s) => s.name.toLowerCase().includes(searchKeyword.trim().toLowerCase()))
-    // 已出单/未出单筛选（仅在已发布tab下生效）
+    // 已出单/未出单筛选（仅在已发布tab下生效）：与 ×N 同一口径，从出单台账算
     if (filter === 'published' && orderFilter !== 'all') {
       r = r.filter((s) => {
-        const hasOrder = getAccounts(s).some((a) => (getCounts(s, a).orderCount || 0) > 0)
+        const hasOrder = (orderQtyBySample.get(s.id) || 0) > 0
         return orderFilter === 'has' ? hasOrder : !hasOrder
       })
     }
     return r
-  }, [filtered, accountFilter, searchKeyword, filter, orderFilter])
+  }, [filtered, accountFilter, searchKeyword, filter, orderFilter, orderQtyBySample])
 
   // 按所选方式排序；custom 时保持 store 顺序（可拖动自定义）
   const displayed = useMemo(() => {
@@ -342,8 +342,8 @@ export function SamplesPage() {
           ].map((o) => {
             const active = orderFilter === o.key
             const cnt = o.key === 'all' ? filtered.length :
-              o.key === 'has' ? filtered.filter((s) => getAccounts(s).some((a) => (getCounts(s, a).orderCount || 0) > 0)).length :
-              filtered.filter((s) => !getAccounts(s).some((a) => (getCounts(s, a).orderCount || 0) > 0)).length
+              o.key === 'has' ? filtered.filter((s) => (orderQtyBySample.get(s.id) || 0) > 0).length :
+              filtered.filter((s) => (orderQtyBySample.get(s.id) || 0) === 0).length
             return (
               <button key={o.key} onClick={() => setOrderFilter(o.key)} style={{
                 flex: '0 0 auto', padding: '5px 14px', borderRadius: '999px', fontSize: '12px', fontWeight: 600,
