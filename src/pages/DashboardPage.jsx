@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays, isHotAccount } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
@@ -752,7 +752,11 @@ export function DashboardPage() {
     [expiringSoon, remindAccount],
   )
   const fHot = useMemo(
-    () => hotCadence.filter((s) => matchAcct(s, remindAccount)).sort(sortByShownDays),
+    () => hotCadence.filter((s) => {
+      if (remindAccount === 'all') return true
+      // 筛了账号：该号必须自己是高频(≤5天)且到点，不能因为别的号高频就把这个号带进来
+      return pendingAccounts(s).includes(remindAccount) && isHotAccount(s, remindAccount)
+    }).sort(sortByShownDays),
     [hotCadence, remindAccount],
   )
   // 近 7 天发布条数（按 qty 累加）
