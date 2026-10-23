@@ -940,7 +940,7 @@ export function DashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
               {planExpanded && (
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
-                  {['all', ...ACCOUNTS].map((a) => {
+                  {ACCOUNTS.map((a) => {
                     const on = planAcct === a
                     const c = a === 'all' ? null : (ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' })
                     return (
