@@ -13,6 +13,7 @@ import { SampleDialog } from '../components/SampleDialog'
 import { AdQueueCard } from '../components/AdQueueCard'
 import { PublishPlanCard } from '../components/PublishPlanCard'
 import QtyDetailModal from '../components/QtyDetailModal'
+import PlanBadge from '../../components/PlanBadge'
 
 // 顶部问候（按时段）
 function greeting() {
@@ -677,29 +678,14 @@ export function PcDashboard() {
                         >
                           {s.name}
                           {/* 已建计划标记（用户要求）：只显示「已建计划」四个字（账号靠筛选自己判断，
-                              筛了账号就只认该账号的计划），悬停可看计划详情 */}
-                          {(() => {
-                            // 先按样品 ID 找（改名也对得上），再按归一化名称兜底（老计划没有 ID）
-                            const plans = [
+                              筛了账号就只认该账号的计划），悬停看**竖向排列**的计划明细 */}
+                          <PlanBadge
+                            plans={[
                               ...(planIndex.get(`id:${s.id}`) || []),
                               ...(planIndex.get(normPlanName(s.name)) || []),
-                            ]
-                            if (plans.length === 0) return null
-                            return (
-                              <span
-                                title={`已在发布计划：${plans
-                                  .map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`)
-                                  .join('；')}`}
-                                style={{
-                                  display: 'inline-block', marginLeft: 6, verticalAlign: '1px',
-                                  fontSize: 10, fontWeight: 700, lineHeight: '16px',
-                                  padding: '0 6px', borderRadius: 999,
-                                  background: '#f3f4f6', color: '#6b7280',
-                                  border: '1px solid rgba(107,114,128,0.35)',
-                                }}
-                              >已建计划</span>
-                            )
-                          })()}
+                            ]}
+                            style={{ marginLeft: 6, verticalAlign: '1px' }}
+                          />
                         </td>
                         <td>{cur.actions(it, acc, accs)}</td>
                         {/* 账号列：高频出单 / 发布提醒里显示「账号 + 已N天」（用户要求合并到这里）；

@@ -8,6 +8,7 @@ import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
+import PlanBadge from '../components/PlanBadge'
 import { SampleForm } from '../components/SampleForm'
 import { useIsDesktop } from '../utils/useIsDesktop'
 import { syncAll } from '../utils/sync'
@@ -670,24 +671,16 @@ export function DashboardPage() {
     }
     return m
   }, [publishPlans, remindAccount])
-  // 行内复用：未建计划返回 null；否则灰色小标（只写「已建计划」，账号靠筛选自己判断）
-  const planBadge = (name, sampleId) => {
-    const arr = [
-      ...(planNameSet.get(`id:${sampleId}`) || []),
-      ...(planNameSet.get(normPlanName(name)) || []),
-    ]
-    if (!arr.length) return null
-    return (
-      <span
-        title={`已在发布计划：${arr.map((p) => `${p.account || '未指定'}${p.planDate ? ` ${p.planDate}` : ''} ×${p.qty}`).join('；')}`}
-        style={{
-          display: 'inline-block', fontSize: 10, fontWeight: 700, lineHeight: '15px',
-          padding: '0 6px', borderRadius: 999, background: '#f3f4f6', color: '#6b7280',
-          border: '1px solid rgba(107,114,128,0.35)', flexShrink: 0,
-        }}
-      >已建计划</span>
-    )
-  }
+  // 行内复用：未建计划返回 null；否则灰色小标（只写「已建计划」，账号靠筛选自己判断；
+  // 悬停是**竖向排列**的明细卡，组件内部按日期升序 + 账号顺序排）
+  const planBadge = (name, sampleId) => (
+    <PlanBadge
+      plans={[
+        ...(planNameSet.get(`id:${sampleId}`) || []),
+        ...(planNameSet.get(normPlanName(name)) || []),
+      ]}
+    />
+  )
 
   // 样品是否命中当前账号筛选：
   // - 未筛时全部通过
