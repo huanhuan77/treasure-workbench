@@ -208,7 +208,7 @@ export function DashboardPage() {
   const [adSearch, setAdSearch] = useState('')
   // 列表默认只显示前 3 条，点「展开全部」才显示其余
   const [planExpanded, setPlanExpanded] = useState(false)
-  const [planAcct, setPlanAcct] = useState('all')
+  const [planAcct, setPlanAcct] = useState(ACCOUNTS[0] || 'all')
   const [adExpanded, setAdExpanded] = useState(false)
   const PREVIEW_COUNT = 3
   // 「已投流」的从列表隐藏（与 PC 一致）：数据保留，不提供查看入口
