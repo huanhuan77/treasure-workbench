@@ -326,20 +326,20 @@ export function BottomNav() {
                   width: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
-                  padding: '14px 12px',
-                  marginBottom: '4px',
+                  gap: '10px',
+                  padding: '12px 12px',
+                  marginBottom: '2px',
                   border: 'none',
                   borderRadius: '10px',
                   background: isActive ? 'rgba(244, 114, 182, 0.10)' : 'transparent',
                   color: isActive ? 'var(--primary)' : 'var(--text-main)',
-                  fontSize: '15px',
+                  fontSize: '14px',
                   fontWeight: isActive ? 600 : 500,
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
               >
-                <span style={{ fontSize: '20px' }}>{tab.icon}</span>
+                <span style={{ fontSize: '17px' }}>{tab.icon}</span>
                 <span>{tab.label}</span>
                 {isActive && (
                   <span style={{ marginLeft: 'auto', fontSize: '12px', color: 'var(--primary)' }}>●</span>

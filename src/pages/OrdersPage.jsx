@@ -288,7 +288,9 @@ export function OrdersPage() {
                   }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px' }}>共记 {g.count} 笔{dispDate(g.latest) && ` · 最近 ${dispDate(g.latest)}`}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px' }}>
+                        共记 {g.count} 笔 · <span style={{ color: '#ec4899', fontWeight: 700 }}>出单 {g.qty} 件</span>{dispDate(g.latest) && ` · 最近 ${dispDate(g.latest)}`}
+                      </div>
                       {g.accounts.length > 0 && (
                         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '6px' }}>
                           {g.accounts.map((a) => {

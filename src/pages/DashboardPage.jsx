@@ -695,9 +695,9 @@ export function DashboardPage() {
   //   避免多账号样品中，是别的账号需要发、但本账号刚发过的情况被错误列出
   const matchAcct = (s, a) => {
     if (a === 'all') return true
-    // 与卡片上显示的账号标签同一口径（reminderAccounts），
-    // 否则「发过但超 7 天没发」的账号会被过滤算进来，却不在标签上显示。
-    return reminderAccounts(s).includes(a)
+    // 该账号自己确实"该发了"（从未发过 或 超期没发）才列出，
+    // 多账号样品中每个到点的账号都应能被筛到，不能只挂在"从未发"的那个账号名下。
+    return pendingAccounts(s).includes(a)
   }
 
   // 筛选后的三组数据 —— 列表渲染与 Tab 气泡计数都读它们，保证「气泡数 = 点进去的条数」。
@@ -711,6 +711,11 @@ export function DashboardPage() {
     const ob = (b.status !== 'published' && isOverdue(b)) ? 0 : 1
     if (oa !== ob) return oa - ob
     const days = (s) => {
+      // 筛了账号时只按该账号的天数排，否则跨账号 max 会看着乱序
+      if (remindAccount !== 'all') {
+        const d = daysSincePublishByAccount(s, remindAccount)
+        return d === Infinity ? Number.MAX_SAFE_INTEGER : d
+      }
       const accs = reminderAccounts(s)
       const d = accs.length ? Math.max(...accs.map((x) => daysSincePublishByAccount(s, x))) : daysSincePublish(s)
       return d === Infinity ? Number.MAX_SAFE_INTEGER : d
@@ -839,7 +844,7 @@ export function DashboardPage() {
       {/* 收支卡片已移到「更多」侧边栏（/finance），总览不再占位 */}
 
       {/* 待办清单（独立事项池：截止日期可有可无；管理入口 /todos） */}
-      <div style={{ padding: '12px 8px 4px' }}>
+      <div style={{ padding: '6px 8px 0' }}>
         <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           {/* 标题行 */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -898,7 +903,7 @@ export function DashboardPage() {
       </div>
 
       {/* 发布计划：产品 / 账号 / 数量 / 时间（与 PC 同一份数据） */}
-      <div style={{ padding: '12px 8px 4px' }}>
+      <div style={{ padding: '6px 8px 0' }}>
         <div className="pc-card" style={{ background: '#fff', border: '1px solid #e6e6ef', borderRadius: '10px', padding: '12px 12px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1197,7 +1202,7 @@ export function DashboardPage() {
       )}
 
       {/* 待投流：从已发布样品挑选，带出账号与发布时间，状态可改 */}
-      <div style={{ padding: '12px 8px 4px' }}>
+      <div style={{ padding: '6px 8px 0' }}>
         <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1310,7 +1315,7 @@ export function DashboardPage() {
 
       {/* 自动放弃提醒：发布满 10 条仍 0 出单，已自动置为「放弃」 */}
       {autoAbandoned.length > 0 && (
-        <div style={{ padding: '12px 8px 4px' }}>
+        <div style={{ padding: '6px 8px 0' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
             <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ef4444' }} />
             未出单已自动放弃
@@ -1357,7 +1362,7 @@ export function DashboardPage() {
         const suggested = (samples || []).filter((s) => s.suggestAbandonedByAccount && Object.keys(s.suggestAbandonedByAccount).length > 0)
         if (!suggested.length) return null
         return (
-          <div style={{ padding: '12px 8px 4px' }}>
+          <div style={{ padding: '6px 8px 0' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
               <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#f59e0b' }} />
               建议放弃
@@ -1577,7 +1582,13 @@ export function DashboardPage() {
                 <ReminderTable
                   items={fReminders}
                   onlyAccount={remindAccount === 'all' ? '' : remindAccount}
-                  accountsOf={(s) => reminderAccounts(s)}
+                  accountsOf={(s) => {
+                    const list = reminderAccounts(s)
+                    if (remindAccount !== 'all' && pendingAccounts(s).includes(remindAccount) && !list.includes(remindAccount)) {
+                      return [remindAccount, ...list]
+                    }
+                    return list
+                  }}
                   midHeader="未发布天数"
                   renderMid={(s, account) => {
                     const days = daysSincePublishByAccount(s, account)
@@ -1602,10 +1613,18 @@ export function DashboardPage() {
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fReminders.map((s) => {
                     // 只显示**真正还需要发**的账号（与 PC 总览、提醒页同一口径）
-                    const showAccounts = reminderAccounts(s)
-                    const daysText = showAccounts.length
-                      ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
-                      : daysSincePublish(s)
+                    let showAccounts = reminderAccounts(s)
+                    // 筛了账号时：该账号虽已发过但超期没发（不在"从未发过"列表里），
+                    // 也要把它显示出来，否则卡片像是"别的账号冒出来"
+                    if (remindAccount !== 'all' && pendingAccounts(s).includes(remindAccount) && !showAccounts.includes(remindAccount)) {
+                      showAccounts = [remindAccount, ...showAccounts]
+                    }
+                    // 筛了账号时，天数/状态只按当前账号算，不要混进别的账号（如别的号从未发布）
+                    const daysText = remindAccount !== 'all'
+                      ? daysSincePublishByAccount(s, remindAccount)
+                      : (showAccounts.length
+                          ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
+                          : daysSincePublish(s))
                     const swiped = swipedHotId === s.id
                     return (
                       // 与「高频出单」一致：操作收到左滑里（用户要求「发布提醒也一样」）
@@ -1721,7 +1740,10 @@ export function DashboardPage() {
                 <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
                   {fHot.map((s) => {
                     // 与 PC 一致：列出**所有到该发**的账号（不再只挑从未发布的那个）
-                    const showAccounts = pendingAccounts(s)
+                    // 筛了账号时只保留当前账号
+                    const showAccounts = remindAccount === 'all'
+                      ? pendingAccounts(s)
+                      : pendingAccounts(s).filter((a) => a === remindAccount)
                     const swiped = swipedHotId === s.id
                     return (
                       // 左滑露出操作（用户要求「操作放到左滑操作」）：操作条固定在底层，卡片整体左移
@@ -1756,7 +1778,7 @@ export function DashboardPage() {
                           onClick={() => { if (swiped) setSwipedHotId(null) }}
                           style={{
                             position: 'relative', zIndex: 1,
-                            background: '#fff5f6', border: '1px solid #fbd5db', borderRadius: '10px', padding: '9px 12px',
+                            background: '#fff', border: '1px solid #f0edf2', borderRadius: '10px', padding: '9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
                             transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
                           }}
@@ -1844,8 +1866,43 @@ export function DashboardPage() {
                       卡片里列出各账号的条数分布供参考，标题的「还差 N」按合计算。 */}
                   {fLowPublish.map((it) => {
                     const s = it.sample
+                    const swiped = swipedHotId === s.id
                     return (
-                      <div key={s.id} style={{ background: '#faf8ff', border: '1px solid #f0edfe', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+                        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
+                          <button
+                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
+                            style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >调整状态</button>
+                        </div>
+                        <div
+                          onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
+                          onTouchMove={(e) => {
+                            const t = e.touches[0]
+                            const sx = Number(e.currentTarget.dataset.sx)
+                            const sy = Number(e.currentTarget.dataset.sy)
+                            if (!sx) return
+                            const dx = t.clientX - sx
+                            const dy = t.clientY - sy
+                            if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                              e.currentTarget.dataset.swiping = 'true'
+                              e.currentTarget.dataset.dir = dx < 0 ? 'left' : 'right'
+                            }
+                          }}
+                          onTouchEnd={(e) => {
+                            if (e.currentTarget.dataset.swiping !== 'true') return
+                            const dir = e.currentTarget.dataset.dir
+                            swipeGuardRef.current = Date.now()
+                            setSwipedHotId((prev) => (dir === 'left' ? (prev === s.id ? null : s.id) : null))
+                          }}
+                          onClick={() => { if (swiped) setSwipedHotId(null) }}
+                          style={{
+                            position: 'relative', zIndex: 1,
+                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px',
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
+                          }}
+                        >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
@@ -1871,17 +1928,11 @@ export function DashboardPage() {
                               })}
                           </div>
                         </div>
-                        <div style={{ display:'flex', gap:'6px', flexShrink:0, alignItems:'center' }}>
-                          <button onClick={() => { if (!tapOK()) return; navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } }) }} style={{
-                            padding: '6px 12px', borderRadius: '9px', border: 'none', background: '#ec4899', color: '#fff',
-                            fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace:'nowrap',
-                          }}>补发布</button>
-                          <button onClick={() => { if (!tapOK()) return; setEditingSample(s) }} style={{
-                            padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                            color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
-                          }}>调整状态</button>
-                        </div>
-                        {/* 预选这些账号：与卡片展示的分布一致，不用用户再手选 */}
+                        <button
+                          onClick={() => { if (!tapOK()) return; navigate('/publish-record/new', { state: { sampleId: s.id, accounts: it.accounts.map((x) => x.account) } }) }}
+                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >新建计划</button>
+                        </div>{/* /左滑卡片内容 */}
                       </div>
                     )
                   })}
@@ -1932,7 +1983,9 @@ export function DashboardPage() {
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                             {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
-                            {getAccounts(s).map((a) => (
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                            {(remindAccount !== 'all' ? [remindAccount] : getAccounts(s)).map((a) => (
                               <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                             ))}
                           </div>

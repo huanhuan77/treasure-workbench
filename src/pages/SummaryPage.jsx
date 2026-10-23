@@ -16,6 +16,7 @@ export default function SummaryPage() {
   // 自定义日期区间
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
+  const [showCustom, setShowCustom] = useState(false)
 
   const range = useMemo(() => {
     if (customStart && customEnd) {
@@ -87,34 +88,44 @@ export default function SummaryPage() {
         })}
       </div>
 
-      {/* 自定义日期区间 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px 10px' }}>
-        <input
-          type="date"
-          value={customStart}
-          onChange={(e) => setCustomStart(e.target.value)}
-          style={{
-            flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
-            border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
-          }}
-        />
-        <span style={{ color: '#9aa0a9', fontSize: 12 }}>~</span>
-        <input
-          type="date"
-          value={customEnd}
-          onChange={(e) => setCustomEnd(e.target.value)}
-          style={{
-            flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
-            border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
-          }}
-        />
-        {(customStart || customEnd) && (
-          <button
-            onClick={() => { setCustomStart(''); setCustomEnd('') }}
-            style={{ border: 'none', background: 'transparent', color: '#9aa0a9', fontSize: 12, cursor: 'pointer' }}
-          >清空</button>
-        )}
+      {/* 自定义日期区间：默认只在右边放日历图标，点开才展开两个日期框 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, padding: '0 16px 8px' }}>
+        {customStart && customEnd && <span style={{ fontSize: 11, color: '#9aa0a9' }}>{customStart} ~ {customEnd}</span>}
+        <button
+          onClick={() => setShowCustom((v) => !v)}
+          style={{ border: '1px solid rgba(15,23,42,0.14)', background: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 13, cursor: 'pointer' }}
+          title="自定义日期"
+        >📅</button>
       </div>
+      {showCustom && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px 10px' }}>
+          <input
+            type="date"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            style={{
+              flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
+              border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
+            }}
+          />
+          <span style={{ color: '#9aa0a9', fontSize: 12 }}>~</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            style={{
+              flex: 1, minWidth: 0, padding: '6px 8px', borderRadius: 8, fontSize: 12,
+              border: '1px solid rgba(15,23,42,0.14)', background: '#fff', color: '#4b5563',
+            }}
+          />
+          {(customStart || customEnd) && (
+            <button
+              onClick={() => { setCustomStart(''); setCustomEnd('') }}
+              style={{ border: 'none', background: 'transparent', color: '#9aa0a9', fontSize: 12, cursor: 'pointer' }}
+            >清空</button>
+          )}
+        </div>
+      )}
 
       {/* 指标卡：两列 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '0 16px 12px' }}>
@@ -188,28 +199,6 @@ export default function SummaryPage() {
             <EChart option={accountOption} height={220} />
           </div>
         )}
-      </div>
-
-      {/* 按产品明细 */}
-      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
-        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
-          按产品明细 <span style={{ fontWeight: 400, color: '#9aa0a9', fontSize: 12 }}>（{sum.products.length} 个）</span>
-        </div>
-        {sum.products.length === 0 ? (
-          <div style={{ padding: 14, fontSize: 12, color: '#9aa0a9' }}>这个区间没有数据</div>
-        ) : sum.products.map((r) => (
-          <div key={r.name} style={{
-            padding: '9px 12px', borderTop: '0.5px solid rgba(15,23,42,0.05)',
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            <span style={{ fontSize: 13, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
-            <span style={{ fontSize: 11, color: '#8a8f98', whiteSpace: 'nowrap' }}>
-              {(r.accounts || []).map((a) => mask(a)).join(' / ') || '—'}
-            </span>
-            <span style={{ fontSize: 12, color: '#3f6fa8' }}>发 {fmtInt(r.publish)}</span>
-            <span style={{ fontSize: 12, color: '#4f8a6d' }}>单 {fmtInt(r.orderQty)}</span>
-          </div>
-        ))}
       </div>
 
       {/* 新增样品清单 */}
