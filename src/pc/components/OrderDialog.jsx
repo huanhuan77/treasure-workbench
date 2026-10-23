@@ -93,6 +93,8 @@ export function OrderDialog({ prefill, onClose, editing }) {
   const bumpQty = (idx, delta) => setEntries((p) => p.map((e, i) => (
     i === idx ? { ...e, qty: String(Math.max(1, (Number(e.qty) || 1) + delta)) } : e
   )))
+  // 直接输入数量（用户要求「可以输入数字」）：只留数字、清空时允许临时为空，失焦后兜底回 1
+  const setQty = (idx, v) => setEntries((p) => p.map((e, i) => (i === idx ? { ...e, qty: v } : e)))
   // 选样品：**点一下=勾选，再点=取消**（用户要求「勾选多个打钩，不是消失」）——
   // 勾上就立刻占一条（当前行空着就填当前行，否则再加一行），
   // 列表里保持打钩可见，账号 tab 的条数实时跟着变，不需要点「确定」。
@@ -211,7 +213,6 @@ export function OrderDialog({ prefill, onClose, editing }) {
             )}
             {entries.filter((e) => e.sampleId).map((e) => {
               const idx = entries.findIndex((x) => x.sampleId === e.sampleId)
-              const qty = Number(e.qty) > 0 ? Number(e.qty) : 1
               return (
                 <div key={e.sampleId} className="pcv-entry" style={{ marginBottom: 8 }}>
                   <button
@@ -221,7 +222,15 @@ export function OrderDialog({ prefill, onClose, editing }) {
                   >{nameOf(e.sampleId)}</button>
                   <div className="pcv-qty">
                     <button type="button" title="减 1" onClick={() => bumpQty(idx, -1)}>−</button>
-                    <input value={qty} readOnly tabIndex={-1} />
+                    {/* 可直接键盘输入数量（原来 readOnly 只能点加减）；输入时显示原值，失焦兜底 1 */}
+                    <input
+                      value={e.qty}
+                      inputMode="numeric"
+                      title="直接输入数量"
+                      onChange={(ev) => { const v = ev.target.value.replace(/[^\d]/g, '').slice(0, 4); setQty(idx, v) }}
+                      onBlur={() => { if (!(Number(e.qty) > 0)) setQty(idx, '1') }}
+                      onKeyDown={(ev) => { if (ev.key === 'Enter') ev.currentTarget.blur() }}
+                    />
                     <button type="button" title="加 1" onClick={() => bumpQty(idx, 1)}>＋</button>
                   </div>
                   <button

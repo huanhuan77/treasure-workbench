@@ -340,6 +340,8 @@ export function DashboardPage() {
   // 形态与 PC 一致（照「记录发布」弹窗）：切账号分别填、每行「产品 + 数量」可加减，
   // 一次保存写成多条计划；编辑已有计划时只保留一行。
   const [planEdit, setPlanEdit] = useState(null)
+  // 防重复提交锁：连点「保存」只写入一次（用户反馈出现两条一模一样的计划）
+  const planSavingRef = useRef(false)
   // 从提醒中心「新建计划」进来：产品已预填、锁定，不显示「发布产品 & 数量 / ＋添加 / 提示」
   const [planLockProduct, setPlanLockProduct] = useState(false)
   const [planAccount, setPlanAccount] = useState(ACCOUNTS[0] || '')
@@ -481,9 +483,12 @@ export function DashboardPage() {
   }
 
   const savePlan = () => {
+    // 防重复提交：连点两下「保存」会写入两条一模一样的计划（用户反馈「重复了」）
+    if (planSavingRef.current) return
+    planSavingRef.current = true
     if (planIsEditing) {
       const name = planEditEntry.name.trim()
-      if (!name) { show('请选择发布产品', 'error'); return }
+      if (!name) { show('请选择发布产品', 'error'); planSavingRef.current = false; return }
       updatePublishPlan(planEdit.id, {
         name,
         account: planAccount,
@@ -493,6 +498,7 @@ export function DashboardPage() {
       })
       show('已保存', 'success')
       setPlanEdit(null)
+      planSavingRef.current = false
       return
     }
     let n = 0
@@ -508,9 +514,10 @@ export function DashboardPage() {
         n++
       }
     }
-    if (n === 0) { show('请先添加产品并填写数量', 'error'); return }
+    if (n === 0) { show('请先添加产品并填写数量', 'error'); planSavingRef.current = false; return }
     show(`已加入 ${n} 条发布计划`, 'success')
     setPlanEdit(null)
+    planSavingRef.current = false
   }
 
   // ── 待投流：从「已发布」样品里挑（样品 × 账号），带出该账号最新发布时间

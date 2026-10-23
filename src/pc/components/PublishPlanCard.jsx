@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount } from '../../utils/accounts'
@@ -48,6 +48,8 @@ export function PublishPlanCard() {
   // 选品面板里勾选的产品名（可多选，保留点击顺序）
   const [picked, setPicked] = useState([])
   const [flashId, setFlashId] = useState('')     // 刚保存的那条：滚动定位 + 高亮 4 秒
+  // 防重复提交锁：连点「保存」只写入一次（用户反馈出现两条一模一样的计划）
+  const savingRef = useRef(false)
 
   // 「隐藏账号」= 名字打星号，不做筛选（用户明确「是账号显示星号，不是筛选」）
   const list = publishPlans || []
@@ -265,9 +267,12 @@ export function PublishPlanCard() {
   }
 
   const save = () => {
+    // 防重复提交：连点两下「保存」会写入两条一模一样的计划（用户反馈「重复了」）
+    if (savingRef.current) return
+    savingRef.current = true
     if (isEditing) {
       const name = editEntry.name.trim()
-      if (!name) { show('请选择发布产品', 'error'); return }
+      if (!name) { show('请选择发布产品', 'error'); savingRef.current = false; return }
       updatePublishPlan(editing.id, {
         name,
         account,
@@ -279,6 +284,7 @@ export function PublishPlanCard() {
       setFlashId(editing.id)
       setExpanded(true)   // 展开，保证刚改的那条不被折叠隐藏
       setEditing(null)
+      savingRef.current = false
       return
     }
     let n = 0
@@ -297,13 +303,14 @@ export function PublishPlanCard() {
         n++
       }
     }
-    if (n === 0) { show('请先添加产品并填写数量', 'error'); return }
+    if (n === 0) { show('请先添加产品并填写数量', 'error'); savingRef.current = false; return }
     show(`已加入 ${n} 条发布计划`, 'success')
     // 新增后滚到这一行并高亮（用户反馈「新增了一条消失不见了」：
     // 条目其实加进去了，但按时间排序可能落在卡片下方，一屏看不到）
     setFlashId(lastId)
     setExpanded(true)
     setEditing(null)
+    savingRef.current = false
   }
 
   useEffect(() => {

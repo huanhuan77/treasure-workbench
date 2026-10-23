@@ -1670,10 +1670,15 @@ select.pcv-input {
   border-radius: 7px;
   background: #fff;
   color: #333a45;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 14px;  font-weight: 700;
   box-sizing: border-box;
   font-variant-numeric: tabular-nums;
+}
+/* 可直接输入数量（用户要求）：聚焦时给个粉色描边，明确「这里能打字」 */
+.pcv-qty input:focus {
+  outline: none;
+  border-color: #b8517f;
+  box-shadow: 0 0 0 2px rgba(184, 81, 127, 0.12);
 }
 
 /* 条目下方内联展开的样品选择面板 */

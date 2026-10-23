@@ -3312,6 +3312,17 @@ function loadData() {
       const sid = planNameAcc.get(k)
       return sid ? { ...p, sampleId: sid } : p
     })
+    // 去掉**完全重复**的计划（同产品+账号+日期+数量）：双击「保存」或重复同步会产生
+    // 一模一样的两条，列表和「已建计划」悬停里看着就重复了。只删完全相同的，保留更早那条
+    const seenPlan = new Set()
+    const plansDedup = []
+    for (const p of plansWithId) {
+      if (!p) continue
+      const k = `${String(p.name || '').replace(/\s+/g, '')}|${p.account || ''}|${p.planDate || ''}|${Number(p.qty) || 1}`
+      if (seenPlan.has(k)) continue
+      seenPlan.add(k)
+      plansDedup.push(p)
+    }
     return normalizeDates({
       products: productsFinal,
       samples: categorized,
@@ -3336,7 +3347,7 @@ function loadData() {
       // 随后 useEffect 又把「缺字段的 data」写回 localStorage → 数据永久消失。
       // 待投流（adQueue）就是这样丢的（用户反馈「刚加的怎么不见了」）。
       adQueue: Array.isArray(old.adQueue) ? old.adQueue : [],
-      publishPlans: plansWithId,
+      publishPlans: plansDedup,
     })
   } catch (e) {
     console.warn('[loadData] 加载数据异常，使用默认值:', e)
