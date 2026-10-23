@@ -141,11 +141,12 @@ export function hotReminderDays(sample) {
 
 // 「发布提醒」这一行该显示哪些账号（以及按谁算未发布天数）。
 //
-// 口径（用户反馈「晚梨已经发过了，应该只提醒一个账号吧」）：
-//   ① 有账号**从未发过**这个品 → 只列这些账号。真正需要动手的就是它们；
-//      已经发过的账号（哪怕它自己 49 天没发）不该被挂在这一行里，
-//      否则看起来像「发过还要再发」，与手机端的展示也对不上。
-//   ② 都发过 → 退回「超 N 天没发」的账号（这是「已出单样品催更」的场景）；
+// 口径：
+//   ① **从未发过**这个品的账号 → 一定要列（真正需要动手的就是它们）；
+//   ② **已到该发天数**（超 N 天没发）的账号 → 也要列。
+//      原来是「只要有没有发过的账号就只列它」，会把同样到天数的其他账号漏掉，
+//      用户反馈「另外的账号怎么没提醒呢」——所以改成两者的并集。
+//      （副作用：某个账号刚在 N 天内发过就不在其中，不会出现「发过还要再发」。）
 //   ③ 都不满足 → 退回全部账号，避免账号列空着。
 export function reminderAccounts(sample) {
   const accs = getAccounts(sample)
@@ -153,9 +154,9 @@ export function reminderAccounts(sample) {
   const counts = (sample && sample.countsByAccount) || {}
   // 同上：不再按 execByAccount='abandoned' 过滤（那个老字段界面上看不到也改不了）
   const never = accs.filter((a) => (Number(counts[a]?.publishCount) || 0) === 0)
-  if (never.length) return never
   const stale = pendingAccounts(sample)
-  return stale.length ? stale : accs
+  const due = accs.filter((a) => never.includes(a) || stale.includes(a))
+  return due.length ? due : accs
 }
 
 // 是否逾期（有截止时间且已过今天）
