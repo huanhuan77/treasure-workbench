@@ -1568,7 +1568,9 @@ export function DashboardPage() {
         {/* 账号筛选：三个 Tab 共用一排胶囊，作用于下方列表与 Tab 气泡计数。
             样式与「出单记录」页的账号筛选保持一致（同色描边 / 选中填充同色），
             让同一套筛选在两处看起来是同一个东西。
-            横向可滚，账号变多也不会挤成两行。 */}
+            横向可滚，账号变多也不会挤成两行。
+            即将到期 tab 不需要账号筛选。 */}
+        {remindTab !== 'expiring' && (
         <div
           className="hide-scrollbar"
           style={{
@@ -1612,6 +1614,7 @@ export function DashboardPage() {
             )
           })}
         </div>
+        )}
 
         {/* Tab 内容区：左右 16px 内边距放这里，与上方 Tab 的左右对齐；只渲染当前选中项。
             paddingTop 5px 是给吸顶条与首张卡片留的呼吸位 —— 原来为 0，卡片直接贴着
