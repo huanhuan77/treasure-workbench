@@ -1604,7 +1604,7 @@ export function DashboardPage() {
                   color: sel ? '#fff' : col.c,
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                 }}
-              >{a}{!sel && acctCounts[a] > 0 && <span style={{
+              >{a}{acctCounts[a] > 0 && <span style={{
                 fontSize: '9px', fontWeight: 700, padding: '0 5px', borderRadius: '8px',
                 background: sel ? 'rgba(255,255,255,0.25)' : `${col.c}1f`,
                 color: sel ? '#fff' : col.c,
