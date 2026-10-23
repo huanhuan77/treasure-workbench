@@ -1547,6 +1547,7 @@ export function DashboardPage() {
             overflowX: 'auto', WebkitOverflowScrolling: 'touch',
           }}
         >
+          {remindTab === 'expiring' && (
           <button
             onClick={() => setRemindAccount('all')}
             style={{
@@ -1557,6 +1558,7 @@ export function DashboardPage() {
               color: remindAccount === 'all' ? '#fff' : 'var(--text-main)',
             }}
           >全部账号</button>
+          )}
           {ACCOUNTS.map((a) => {
             const col = ACC_META(a)
             const sel = remindAccount === a
