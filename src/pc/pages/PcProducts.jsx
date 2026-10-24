@@ -11,6 +11,7 @@ import { CopyImportDialog } from '../components/CopyImportDialog'
 import { TopicDialog, allTopicTags } from '../components/TopicDialog'
 import { ResetButton } from '../components/ResetButton'
 import { todayStr } from '../../utils/helpers'
+import { generateSimilarCopy, getStyles } from '../../utils/copyGenerator'
 import { readTextFiles } from '../../utils/readTextFile'
 import {
   DndContext, PointerSensor, useSensor, useSensors, closestCenter,
@@ -131,7 +132,7 @@ const ICON_TRASH = 'M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h
 // 数据全部来自同一个 store（与手机版完全一致），这里只重排展示。
 export function PcProducts() {
   const { show } = useToast()
-  const { products, updateCopy, deleteCopy, deleteProduct, updateProduct, reorderProducts } = useStore()
+  const { products, updateCopy, deleteCopy, deleteProduct, updateProduct, reorderProducts, addCopy } = useStore()
   const [keyword, setKeyword] = useState('')
   const [category, setCategory] = useState('')
   const [activeId, setActiveId] = useState('')
@@ -143,6 +144,10 @@ export function PcProducts() {
   const [editing, setEditing] = useState(null)
   // 文案编辑弹窗：undefined=关闭、文案对象=打开
   const [copyDialog, setCopyDialog] = useState(undefined)
+  // 相似文案生成弹窗
+  const [simOpen, setSimOpen] = useState(null) // {copy}
+  const [simResults, setSimResults] = useState([])
+  const [simLoading, setSimLoading] = useState(false)
   // 批量导入文案弹窗 / 话题管理弹窗（用户要求：PC 端都要有，且都不跳页面）
   const [importOpen, setImportOpen] = useState(false)
   // 「📄 导入 txt」：读文件 → 预填进导入弹窗预览 → 确认后入库（入口在卡片头，与「# 话题 / ＋ 新增文案」同一排）
@@ -272,6 +277,29 @@ export function PcProducts() {
       show(ok ? '文案已复制' : '复制失败', ok ? 'success' : 'error')
       if (ok && active) updateCopy(active.id, c.id, { used: true, usedDate: todayStr() })
     })
+  }
+
+  // 生成相似文案
+  const openSimilar = (c) => {
+    setSimOpen({ copy: c })
+    setSimResults([])
+    setSimLoading(true)
+    setTimeout(() => {
+      const styles = getStyles()
+      setSimResults(styles.map((s) => ({
+        id: Date.now() + Math.random(),
+        style: s,
+        content: generateSimilarCopy(c.content, active?.name, active?.brand, s),
+        collected: false,
+      })))
+      setSimLoading(false)
+    }, 500)
+  }
+  const collectSimilar = (r) => {
+    addCopy(active.id, { content: r.content })
+    setSimResults((rs) => rs.map((x) => x.id === r.id ? { ...x, collected: true } : x))
+    show('已收藏到文案库', 'success')
+    setTimeout(() => setSimOpen(null), 400)
   }
 
   // 三个标记的切换语义与手机版 ProductDetailPage 完全对齐：
@@ -608,6 +636,7 @@ export function PcProducts() {
                             {c.pinned ? '已置顶' : '置顶'}
                           </button>
                           {/* 编辑 / 删除：次要操作，保持描边样式，紧跟标记与用过时间之后 */}
+                          <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => openSimilar(c)}>✨相似</button>
                           <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => setCopyDialog(c)}>编辑</button>
                           <button
                             className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"
@@ -655,6 +684,39 @@ export function PcProducts() {
       {/* 编辑文案：弹窗，不跳页面 */}
       {copyDialog !== undefined && (
         <CopyDialog product={active} copy={copyDialog} onClose={() => setCopyDialog(undefined)} />
+      )}
+
+      {/* 相似文案弹窗 */}
+      {simOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSimOpen(null)}>
+          <div style={{ background: '#fff', borderRadius: 14, width: 560, maxWidth: '92vw', maxHeight: '86vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <strong style={{ fontSize: 16 }}>生成相似文案</strong>
+              <button onClick={() => setSimOpen(null)} style={{ border: 'none', background: '#f1f5f9', borderRadius: 8, width: 28, height: 28, cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+              <div style={{ background: '#f8fafc', borderRadius: 10, padding: 12, marginBottom: 14 }}>
+                <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>原文案</div>
+                <div style={{ fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{simOpen.copy.content}</div>
+              </div>
+              {simLoading ? (
+                <div style={{ textAlign: 'center', color: '#94a3b8', padding: 30 }}>生成中…</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {simResults.map((r) => (
+                    <div key={r.id} style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: 12 }}>
+                      <div style={{ fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap', marginBottom: 10 }}>{r.content}</div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => writeClipboard(r.content)} style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid #c4b5fd', background: '#fff', color: '#6d28d9', fontWeight: 600, cursor: 'pointer' }}>复制</button>
+                        <button onClick={() => collectSimilar(r)} disabled={r.collected} style={{ flex: 1, padding: 8, borderRadius: 8, border: 'none', background: r.collected ? '#10b981' : '#8b5cf6', color: '#fff', fontWeight: 600, cursor: r.collected ? 'default' : 'pointer' }}>{r.collected ? '已收藏' : '收藏'}</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* 批量导入文案：弹窗（手机版是 /batch-import 整页，PC 不跳页面） */}
