@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
-import { copyText, todayStr, daysDiff } from '../utils/helpers'
+import { copyText, todayStr, daysDiff, parseBulkCopies } from '../utils/helpers'
+import { readTextFiles } from '../utils/readTextFile'
 import {
   generateTopics, generateSimilarCopy,
   getStyles, rewriteSimilar,
@@ -32,8 +33,9 @@ function displayTitle(p) {
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { products, addCopy, deleteCopy, updateCopy, clearCopies, updateProduct, sensitiveWords } = useStore()
+  const { products, addCopy, addCopies, deleteCopy, updateCopy, clearCopies, updateProduct, sensitiveWords } = useStore()
   const { show } = useToast()
+  const txtFileRef = useRef(null)
   const product = products.find((p) => p.id === id)
 
   const [delCopyId, setDelCopyId] = useState(null)
@@ -350,6 +352,48 @@ export function ProductDetailPage() {
                 whiteSpace: 'nowrap',
               }}
             >批量导入</button>
+            <input
+              ref={txtFileRef}
+              type="file"
+              accept=".txt,.md,text/plain"
+              multiple
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const files = [...(e.target.files || [])]
+                e.target.value = ''
+                if (!files.length) return
+                try {
+                  const merged = await readTextFiles(files)
+                  if (!merged) { show('文件是空的', 'error'); return }
+                  const list = parseBulkCopies(merged)
+                  if (!list.length) { show('没解析到文案，多条用空行分隔', 'error'); return }
+                  const baseTopics = product.topics && product.topics.length ? product.topics : []
+                  const enriched = list.map((item) => ({
+                    content: item.content,
+                    topics: item.topics && item.topics.length ? item.topics : baseTopics,
+                    hasOrder: item.hasOrder,
+                  }))
+                  addCopies(product.id, enriched)
+                  show(`已从 txt 导入 ${enriched.length} 条`, 'success')
+                } catch (err) {
+                  show('读取文件失败', 'error')
+                }
+              }}
+            />
+            <button
+              onClick={() => txtFileRef.current && txtFileRef.current.click()}
+              style={{
+                background: '#fff',
+                color: '#16a34a',
+                border: '1px solid rgba(22, 163, 74, 0.35)',
+                padding: '6px 12px',
+                borderRadius: '10px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >导入txt</button>
             <button
               onClick={() => setShowClear(true)}
               style={{
