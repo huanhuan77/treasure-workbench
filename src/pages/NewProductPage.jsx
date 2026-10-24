@@ -24,11 +24,13 @@ export function NewProductPage() {
   const [brand, setBrand] = useState('')
   const [category, setCategory] = useState('')
   const [showSamplePicker, setShowSamplePicker] = useState(false)
-  // 样品库中"非放弃状态"的样品名（去重）
+  // 样品库中"非放弃状态"的样品名（去重）；选了分类后只显示该分类下的样品
   const sampleOptions = (() => {
     const set = new Set()
     for (const s of samples || []) {
-      if (getTopStatus(s) !== 'abandoned' && s.name) set.add(s.name)
+      if (getTopStatus(s) !== 'abandoned' && s.name) {
+        if (!category || s.category === category) set.add(s.name)
+      }
     }
     return [...set].sort((a, b) => a.localeCompare(b, 'zh'))
   })()
