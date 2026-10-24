@@ -423,7 +423,7 @@ export function ProductDetailPage() {
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
                 onTogglePin={() => togglePinCopy(copy.id, copy.pinned)}
                 onDelete={() => setDelCopyId(copy.id)}
-                onSimilar={() => { setGenModal({ open: true, copy }); setGenResults([]); setGenLoading(true); setTimeout(() => { const rs = rewriteSimilar(copy.content, 4, sensitiveWords).map((content, i) => ({ id: Date.now() + i, content, collected: false })); setGenResults(rs); setGenLoading(false) }, 500) }}
+                onSimilar={() => { setGenModal({ open: true, copy }); setGenResults([]); setGenLoading(true); setTimeout(() => { try { const rs = rewriteSimilar(copy.content, 4, sensitiveWords).map((content, i) => ({ id: Date.now() + i, content, collected: false })); setGenResults(rs) } catch(e) { console.error(e) } setGenLoading(false) }, 500) }}
               />
             ))}
           </div>

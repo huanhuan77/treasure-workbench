@@ -264,8 +264,10 @@ export function rewriteSimilar(content, n = 4, sensitiveWords) {
     }
   }
   // 兜底：如果还是没改出 4 条（原文太短），手动加语气词变体
-  while (out.length < n) {
-    const t = content + (out.length % 2 === 0 ? '～' : '！')
+  let fb = 0
+  while (out.length < n && fb < 10) {
+    fb++
+    const t = content + (fb % 2 === 0 ? '～' : '！')
     const cleaned = sanitizeText(t, sensitiveWords).clean
     if (!out.includes(cleaned)) out.push(cleaned)
   }
