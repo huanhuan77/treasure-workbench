@@ -1662,7 +1662,7 @@ export function DashboardPage() {
                   )}
                 />
               ) : (
-                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
+                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {fReminders.map((s) => {
                     // 只显示**真正还需要发**的账号（与 PC 总览、提醒页同一口径）
                     let showAccounts = reminderAccounts(s)
@@ -1789,7 +1789,7 @@ export function DashboardPage() {
                   )}
                 />
               ) : (
-                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '4px' }}>
+                <div className="pc-grid" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {fHot.map((s) => {
                     // 与 PC 一致：列出**所有到该发**的账号（不再只挑从未发布的那个）
                     // 筛了账号时只保留当前账号
