@@ -197,7 +197,7 @@ export function ProductDetailPage() {
 
   const handleCopyContent = async (content, copyId) => {
     const ok = await copyText(content)
-    show(ok ? '文案已复制' : '复制失败', ok ? 'success' : 'error')
+    show(ok ? '文案已复制，已标记用过' : '复制失败，但已标记用过', ok ? 'success' : 'error')
     // 点了复制就标记用过（即使剪贴板被浏览器拒绝，意图也是要发这条）
     if (copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
   }
