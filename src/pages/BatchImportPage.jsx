@@ -1,9 +1,8 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { parseBulkCopies } from '../utils/helpers'
-import { readTextFiles } from '../utils/readTextFile'
 import { inputStyle, btnPrimary, btnGhost } from '../components/Modal'
 
 // 导入时自动套用的兜底话题（产品未单独配置话题时使用）
@@ -16,7 +15,6 @@ export function BatchImportPage() {
   const { show } = useToast()
   const product = products.find(p => p.id === id)
   const [text, setText] = useState('')
-  const fileRef = useRef(null)   // 导入 txt / md 文件用
 
   if (!product) {
     return (
@@ -58,29 +56,7 @@ export function BatchImportPage() {
       <div style={{ padding: '12px 8px', display: 'flex', flexDirection: 'column', flex: 1, gap: '8px', minHeight: 0 }}>
         {/* 支持导入 txt 文档（用户要求）：读进来走同一套解析 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>粘贴文案，或导入 txt / md 文件</span>
-          <div style={{ flex: 1 }} />
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".txt,.md,text/plain"
-            multiple
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const files = [...(e.target.files || [])]
-              e.target.value = ''
-              if (!files.length) return
-              try {
-                const merged = await readTextFiles(files)
-                if (!merged) { show('文件是空的', 'error'); return }
-                setText((prev) => (prev.trim() ? `${prev.trim()}\n\n${merged}` : merged))
-                show(`已读取 ${files.length} 个文件`, 'success')
-              } catch (err) {
-                show('读取文件失败，请确认是文本文件', 'error')
-              }
-            }}
-          />
-          <button onClick={() => { if (fileRef.current) fileRef.current.click() }} style={btnGhost}>📄 导入 txt</button>
+          <span style={{ fontSize: '12px', color: 'var(--text-sub)' }}>粘贴文案，多条之间用空行分隔</span>
         </div>
         <textarea
           placeholder="格式：多条文案之间用空行分隔；&#10;👍=出单、✅=用过（标记会自动去掉）"
