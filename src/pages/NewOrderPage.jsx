@@ -300,9 +300,23 @@ export function NewOrderPage() {
                           fontSize: '14px', lineHeight: 1, cursor: 'pointer',
                         }}
                       >−</button>
-                      <span style={{ minWidth: '18px', textAlign: 'center', fontSize: '14px', fontWeight: 700 }}>
-                        {Number(e.qty) > 0 ? Number(e.qty) : 1}
-                      </span>
+                      <input
+                        inputMode="numeric"
+                        value={e.qty}
+                        onChange={(ev) => {
+                          const v = ev.target.value.replace(/[^0-9]/g, '')
+                          updateEntry(idx, { qty: v })
+                        }}
+                        onBlur={() => {
+                          const n = Number(e.qty)
+                          updateEntry(idx, { qty: String(n >= 1 ? n : 1) })
+                        }}
+                        style={{
+                          width: '44px', minWidth: '44px', textAlign: 'center',
+                          fontSize: '14px', fontWeight: 700, border: '1px solid rgba(0,0,0,0.10)',
+                          borderRadius: '7px', padding: '3px 0', background: '#fff', color: 'var(--text-main)',
+                        }}
+                      />
                       <button
                         type="button"
                         onClick={() => updateEntry(idx, { qty: String((Number(e.qty) || 1) + 1) })}
