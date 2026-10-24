@@ -4259,6 +4259,7 @@ export function StoreProvider({ children }) {
   }, [forceSyncAfterDelete])
 
   const updateCopy = useCallback((productId, copyId, patch) => {
+    if (!copyId) return
     setData((d) => ({
       ...d,
       products: d.products.map((p) => {
