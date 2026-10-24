@@ -37,6 +37,7 @@ export default function PlanBadge({ plans, style }) {
           padding: '0 6px', borderRadius: 999, cursor: 'default',
           background: '#f3f4f6', color: '#6b7280',
           border: '1px solid rgba(107,114,128,0.35)',
+          whiteSpace: 'nowrap',
         }}
       >已建计划</span>
       {pos && createPortal(
