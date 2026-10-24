@@ -578,6 +578,13 @@ export function ProductDetailPage() {
 
           {/* 可滚动内容区 */}
           <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
+            {/* 原文案 */}
+            {genModal.copy && (
+              <div style={{ ...glassStyle, padding: '12px 14px', marginBottom: '14px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>原文案</div>
+                <div style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>{genModal.copy.content}</div>
+              </div>
+            )}
             {/* 风格选择区 */}
             <div style={{
               ...glassStyle,
