@@ -191,8 +191,6 @@ export function ProductDetailPage() {
   const handleCollectResult = (result) => {
     addCopy(id, {
       content: result.content,
-      topics: result.topics,
-      style: result.style,
     })
     setGenResults(genResults.map((r) =>
       r.id === result.id ? { ...r, collected: true } : r
@@ -686,34 +684,6 @@ export function ProductDetailPage() {
                       padding: '14px',
                       borderLeft: `4px solid ${STYLE_OPTIONS.find(s => s.key === result.style)?.color || '#a78bfa'}`,
                     }}>
-                      {/* 风格标签 */}
-                      <div style={{ marginBottom: '8px' }}>
-                        <span style={{
-                          fontSize: '11px',
-                          color: STYLE_OPTIONS.find(s => s.key === result.style)?.color || '#a78bfa',
-                          background: `${(STYLE_OPTIONS.find(s => s.key === result.style)?.color || '#a78bfa')}12`,
-                          padding: '3px 10px',
-                          borderRadius: '8px',
-                          fontWeight: 600,
-                        }}>
-                          {STYLE_OPTIONS.find(s => s.key === result.style)?.emoji || '📝'} {result.style}
-                        </span>
-                      </div>
-
-                      {/* 热门话题 */}
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginBottom: '10px' }}>
-                        {result.topics.map((t, i) => (
-                          <span key={i} style={{
-                            fontSize: '11px',
-                            color: 'var(--primary-dark)',
-                            background: 'rgba(252, 231, 243, 0.7)',
-                            padding: '2px 8px',
-                            borderRadius: '7px',
-                            fontWeight: 500,
-                          }}>{t}</span>
-                        ))}
-                      </div>
-
                       {/* 文案内容 */}
                       <div style={{
                         fontSize: '14px',
@@ -728,7 +698,7 @@ export function ProductDetailPage() {
                       {/* 操作按钮 */}
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
-                          onClick={() => handleCopyContent(result.topics.join(' ') + '\n\n' + result.content)}
+                          onClick={() => handleCopyContent(result.content)}
                           style={{
                             flex: 1,
                             padding: '9px',
