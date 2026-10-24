@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
@@ -123,6 +123,27 @@ export function ProductDetailPage() {
     scrollTopicsToEnd()   // 关弹窗后让新话题出现在话题行可视区内
     show(`话题已更新，${(product.copies || []).length} 条文案已同步`, 'success')
   }
+
+  // 进入页面时强制修复文案重复/缺失 ID，防止点「用过」时 c.id === copyId 匹配到多条
+  const idFixedRef = useRef(false)
+  useEffect(() => {
+    if (!product || idFixedRef.current) return
+    idFixedRef.current = true
+    const copies = product.copies || []
+    const seen = new Set()
+    let changed = false
+    const fixed = copies.map((c) => {
+      let cid = c.id
+      if (!cid || seen.has(cid)) {
+        cid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+        changed = true
+      }
+      seen.add(cid)
+      return c.id === cid ? c : { ...c, id: cid }
+    })
+    if (changed) updateProduct(product.id, { copies: fixed })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id])
 
   // 文案编辑
   const openEditCopy = (c) => navigate(`/copy-edit/${product.id}/${c.id}`)
