@@ -568,15 +568,18 @@ export function ProductDetailPage() {
             </span>
           </div>
 
-          {/* 可滚动内容区 */}
-          <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
-            {/* 原文案 */}
-            {genModal.copy && (
-              <div style={{ ...glassStyle, padding: '12px 14px', marginBottom: '14px' }}>
+          {/* 原文案固定区（不随内容滚动） */}
+          {genModal.copy && (
+            <div style={{ flexShrink: 0, padding: '12px 16px 0', background: 'var(--bg)' }}>
+              <div style={{ ...glassStyle, padding: '12px 14px' }}>
                 <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sub)', marginBottom: '6px' }}>原文案</div>
                 <div style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>{genModal.copy.content}</div>
               </div>
-            )}
+            </div>
+          )}
+
+          {/* 可滚动内容区 */}
+          <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
             {/* 生成结果区 */}
             {genLoading && <div style={{ textAlign: 'center', color: 'var(--text-sub)', padding: 30 }}>生成中…</div>}
             {!genLoading && genResults.length === 0 && <div style={{ textAlign: 'center', color: 'var(--text-sub)', padding: 30 }}>没有相似变体</div>}
