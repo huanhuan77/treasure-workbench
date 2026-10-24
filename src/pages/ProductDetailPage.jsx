@@ -141,6 +141,7 @@ export function ProductDetailPage() {
     let list = product.copies
     if (copyFilter === '出单') list = list.filter((c) => c.hasOrder)
     else if (copyFilter === '爆单') list = list.filter((c) => c.hasHot)
+    else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder && !c.used)
     return [...list].sort((a, b) => {
       // 置顶的最前（与 PC 文案库同一字段 pinned）
       if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
@@ -372,6 +373,7 @@ export function ProductDetailPage() {
             { key: '全部', label: '全部' },
             { key: '出单', label: '出单文案' },
             { key: '爆单', label: '爆单文案' },
+            { key: '未出单', label: '未出单' },
           ].map((f) => {
             const active = copyFilter === f.key
             return (
