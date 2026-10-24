@@ -198,6 +198,8 @@ export function ProductDetailPage() {
       r.id === result.id ? { ...r, collected: true } : r
     ))
     show('已收藏到文案库', 'success')
+    // 收藏后关闭弹窗，回到文案列表即可看到新文案
+    setTimeout(() => setGenModal({ open: false, copy: null }), 400)
   }
 
   const handleCopyContent = async (content, copyId) => {
