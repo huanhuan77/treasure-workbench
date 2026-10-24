@@ -207,7 +207,7 @@ export function DashboardPage() {
   const [adPickerOpen, setAdPickerOpen] = useState(false)
   const [adSearch, setAdSearch] = useState('')
   // 列表默认只显示前 3 条，点「展开全部」才显示其余
-  const [planExpanded, setPlanExpanded] = useState(false)
+  const [planExpanded, setPlanExpanded] = useState(true)
   const [planAcct, setPlanAcct] = useState(ACCOUNTS[0] || 'all')
   const [adExpanded, setAdExpanded] = useState(false)
   const PREVIEW_COUNT = 3
