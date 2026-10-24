@@ -2028,8 +2028,43 @@ export function DashboardPage() {
                       ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
                       : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
                     const color = overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
+                    const swiped = swipedHotId === s.id
                     return (
-                      <div key={s.id} style={{ background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+                        <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', paddingRight: 4 }}>
+                          <button
+                            onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
+                            style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >调整状态</button>
+                        </div>
+                        <div
+                          onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
+                          onTouchMove={(e) => {
+                            const t = e.touches[0]
+                            const sx = Number(e.currentTarget.dataset.sx)
+                            const sy = Number(e.currentTarget.dataset.sy)
+                            if (!sx) return
+                            const dx = t.clientX - sx
+                            const dy = t.clientY - sy
+                            if (Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                              e.currentTarget.dataset.swiping = 'true'
+                              e.currentTarget.dataset.dir = dx < 0 ? 'left' : 'right'
+                            }
+                          }}
+                          onTouchEnd={(e) => {
+                            if (e.currentTarget.dataset.swiping !== 'true') return
+                            const dir = e.currentTarget.dataset.dir
+                            swipeGuardRef.current = Date.now()
+                            setSwipedHotId((prev) => (dir === 'left' ? (prev === s.id ? null : s.id) : null))
+                          }}
+                          onClick={() => { if (swiped) setSwipedHotId(null) }}
+                          style={{
+                            position: 'relative', zIndex: 1,
+                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 6px 9px 12px',
+                            display: 'flex', alignItems: 'center', gap: '8px',
+                            transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
+                          }}
+                        >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
@@ -2045,10 +2080,11 @@ export function DashboardPage() {
                             {text}
                           </div>
                         </div>
-                        <button onClick={() => { if (!tapOK()) return; setEditingSample(s) }} style={{
-                          flexShrink: 0, padding:'6px 10px', borderRadius:'9px', border:'1px solid #e2e8f0', background:'#fff',
-                          color:'#64748b', fontSize:'11px', fontWeight:600, cursor:'pointer', whiteSpace:'nowrap',
-                        }}>调整状态</button>
+                        <button
+                          onClick={() => { if (!tapOK()) return; quickPlan(s) }}
+                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        >新建计划</button>
+                        </div>
                       </div>
                     )
                   })}
