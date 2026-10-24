@@ -156,6 +156,51 @@ const styles = {
 
 export function getStyles() { return Object.keys(styles) }
 
+// 近义词替换表（口语化带货文案常用词互换，保持格式和字数基本一致）
+const SYNONYMS = [
+  ['真的', ['真的巨', ['巨', 0.5], ['真的', 0.5]]],
+]
+const REPLACE_MAP = [
+  [/真的/g, ['真的巨', '真的超', '真的太']],
+  [['超'], [['巨', 0.5], ['特别', 0.5]]],
+  [['巨好'], [['绝了', 0.5], ['超好', 0.5]]],
+]
+
+// 轻量改写：保持原文格式、换行、字数，只把个别口语词换成近义词
+// 生成 N 条轻微变体，用于快速过审/避免同质化
+export function rewriteSimilar(content, n = 3, sensitiveWords) {
+  if (!content) return []
+  const pool = [
+    ['真的巨', ['真的', '真的超', '真的太']],
+    ['超好用', ['巨好用', '太好用了', '特别好用']],
+    ['绝了', ['绝绝子', '太香了', '真的绝']],
+    ['姐妹们', ['宝子们', '家人们', '姐妹们']],
+    ['一定要试试', ['可以试试', '真心推荐', '闭眼入']],
+    ['太香了', ['巨香', '真的香', '太绝了']],
+    ['爱了', ['爱死', '回购', '锁死']],
+    ['闭眼入', ['冲就完事', '直接冲', '闭眼买']],
+    ['好用', ['好使', '能打', '在线']],
+    ['推荐', ['安利', '种草', '力推']],
+    ['便宜', ['划算', '性价比高', '值']],
+    ['好看', ['精致', '好看哭', '绝美']],
+  ]
+  const out = []
+  for (let i = 0; i < n; i++) {
+    let t = content
+    // 随机挑 1-3 个词替换
+    const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 2))
+    for (const [from, alts] of picks) {
+      if (t.includes(from)) {
+        const alt = alts[Math.floor(Math.random() * alts.length)]
+        t = t.replace(from, alt)
+      }
+    }
+    const cleaned = sanitizeText(t, sensitiveWords).clean
+    out.push(cleaned)
+  }
+  return [...new Set(out)]
+}
+
 // 生成相似文案（提及品牌 + 产品名）
 export function generateSimilarCopy(content, productName, brand, style = '种草', sensitiveWords) {
   if (!content) return ''

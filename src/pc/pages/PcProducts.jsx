@@ -11,7 +11,7 @@ import { CopyImportDialog } from '../components/CopyImportDialog'
 import { TopicDialog, allTopicTags } from '../components/TopicDialog'
 import { ResetButton } from '../components/ResetButton'
 import { todayStr } from '../../utils/helpers'
-import { generateSimilarCopy, getStyles } from '../../utils/copyGenerator'
+import { generateSimilarCopy, getStyles, rewriteSimilar } from '../../utils/copyGenerator'
 import { readTextFiles } from '../../utils/readTextFile'
 import {
   DndContext, PointerSensor, useSensor, useSensors, closestCenter,
@@ -279,21 +279,19 @@ export function PcProducts() {
     })
   }
 
-  // 生成相似文案
+  // 生成相似文案：保持原文格式/字数，只换几个词
   const openSimilar = (c) => {
     setSimOpen({ copy: c })
     setSimResults([])
     setSimLoading(true)
     setTimeout(() => {
-      const styles = getStyles()
-      setSimResults(styles.map((s) => ({
-        id: Date.now() + Math.random(),
-        style: s,
-        content: generateSimilarCopy(c.content, active?.name, active?.brand, s),
+      setSimResults(rewriteSimilar(c.content, 4).map((content, i) => ({
+        id: Date.now() + i,
+        content,
         collected: false,
       })))
       setSimLoading(false)
-    }, 500)
+    }, 400)
   }
   const collectSimilar = (r) => {
     addCopy(active.id, { content: r.content })

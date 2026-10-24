@@ -6,7 +6,7 @@ import { Modal, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } fro
 import { copyText, todayStr, daysDiff } from '../utils/helpers'
 import {
   generateTopics, generateSimilarCopy,
-  getStyles,
+  getStyles, rewriteSimilar,
 } from '../utils/copyGenerator'
 
 // 风格选项（带 emoji 和颜色，参考图二）
@@ -163,28 +163,20 @@ export function ProductDetailPage() {
     return [...set]
   })()
 
-  // 执行生成（多风格，结果不入库）
+  // 执行生成（轻微改写，保持原文格式/字数，只换几个词）
   const handleGenerate = () => {
     if (!genModal.copy) return
     setGenLoading(true)
-    // 模拟异步生成体验
     setTimeout(() => {
-      const stylesToUse = selectedStyles.includes('全部')
-        ? getStyles()
-        : selectedStyles.filter((s) => s !== '全部')
-
-      const results = stylesToUse.map((styleKey) => ({
-        id: Date.now() + Math.random(),
-        style: styleKey,
-        content: generateSimilarCopy(genModal.copy.content, product.name, product.brand, styleKey, sensitiveWords),
-        topics: generateTopics(genModal.copy.content, product.name, product.brand, sensitiveWords),
+      const results = rewriteSimilar(genModal.copy.content, 4, sensitiveWords).map((content, i) => ({
+        id: Date.now() + i,
+        content,
         collected: false,
       }))
-
       setGenResults(results)
       setGenLoading(false)
       show(`已生成 ${results.length} 条相似文案`, 'success')
-    }, 600)
+    }, 500)
   }
 
   // 收藏单条结果到文案库
@@ -431,7 +423,7 @@ export function ProductDetailPage() {
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
                 onTogglePin={() => togglePinCopy(copy.id, copy.pinned)}
                 onDelete={() => setDelCopyId(copy.id)}
-                onSimilar={() => setGenModal({ open: true, copy })}
+                onSimilar={() => { setGenModal({ open: true, copy }); setGenResults([]); setGenLoading(true); setTimeout(() => { const rs = rewriteSimilar(copy.content, 4, sensitiveWords).map((content, i) => ({ id: Date.now() + i, content, collected: false })); setGenResults(rs); setGenLoading(false) }, 500) }}
               />
             ))}
           </div>
@@ -585,80 +577,9 @@ export function ProductDetailPage() {
                 <div style={{ fontSize: '13px', lineHeight: 1.6, color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>{genModal.copy.content}</div>
               </div>
             )}
-            {/* 风格选择区 */}
-            <div style={{
-              ...glassStyle,
-              padding: '16px',
-              marginBottom: '14px',
-            }}>
-              <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px', color: 'var(--text-main)' }}>
-                文案风格 <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-sub)' }}>可多选</span>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {STYLE_OPTIONS.map((opt) => {
-                  const selected = selectedStyles.includes(opt.key)
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => {
-                        if (opt.key === '全部') {
-                          setSelectedStyles(selectedStyles.includes('全部') ? [] : ['全部'])
-                        } else {
-                          const next = selectedStyles.filter((s) => s !== '全部')
-                          if (selected) {
-                            setSelectedStyles(next.filter((s) => s !== opt.key))
-                          } else {
-                            setSelectedStyles([...next, opt.key])
-                          }
-                        }
-                      }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '9px 14px',
-                        borderRadius: '999px',
-                        border: `1.5px solid ${selected ? opt.color : 'rgba(0,0,0,0.08)'}`,
-                        background: selected ? `${opt.color}12` : '#fff',
-                        color: selected ? opt.color : 'var(--text-sub)',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <span>{opt.emoji}</span> {opt.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* 一键生成按钮 */}
-            <button
-              onClick={handleGenerate}
-              disabled={genLoading || !genModal.copy}
-              style={{
-                width: '100%',
-                padding: '14px',
-                borderRadius: '14px',
-                border: 'none',
-                background: genLoading
-                  ? 'linear-gradient(135deg, #c4b5fd, #a78bfa)'
-                  : 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 50%, #6d28d9 100%)',
-                color: '#fff',
-                fontSize: '16px',
-                fontWeight: 700,
-                boxShadow: '0 4px 20px rgba(124, 58, 237, 0.35)',
-                cursor: genLoading ? 'not-allowed' : 'pointer',
-                opacity: genLoading ? 0.85 : 1,
-                marginBottom: '16px',
-              }}
-            >
-              {genLoading ? '⏳ 生成中...' : '✨ 一键生成文案'}
-            </button>
-
             {/* 生成结果区 */}
+            {genLoading && <div style={{ textAlign: 'center', color: 'var(--text-sub)', padding: 30 }}>生成中…</div>}
+            {!genLoading && genResults.length === 0 && <div style={{ textAlign: 'center', color: 'var(--text-sub)', padding: 30 }}>没有相似变体</div>}
             {genResults.length > 0 && (
               <div>
                 <div style={{
