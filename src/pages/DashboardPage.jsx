@@ -1471,17 +1471,17 @@ export function DashboardPage() {
           background: 'rgba(255, 245, 249, 0.62)',
           backdropFilter: 'blur(12px) saturate(150%)',
           WebkitBackdropFilter: 'blur(12px) saturate(150%)',
-          padding: '7px 2px 8px',
+          padding: '7px 8px 8px',
           boxShadow: '0 1px 8px rgba(120,90,100,0.05)',
         }}>
           {/* 内层不再画白色胶囊底（原来是 rgba(255,255,255,0.6) + 白色描边），
               避免在吸顶条的半透明毛玻璃上再叠一层白，出现「白底套白边」的浑浊感。
               但**保留这一层 div** —— 它是 flex 布局的载体：高度 34px 由它钉死
               （按钮高度若由标签行高决定，三档标签行盒高不同会导致窄屏比宽屏矮 3px），
-              同时 padding 0 6px 让最外侧标签与吸顶条左右边留出内缩量。 */}
+              同时 padding 0 8px 让最外侧标签与卡片左右对齐。 */}
           <div style={{
             display: 'flex', flex: 1, minWidth: 0, height: '34px',
-            padding: '0 2px',
+            padding: '0 0px',
           }}>
           {REMIND_TABS.map((t) => {
             const active = remindTab === t.id
