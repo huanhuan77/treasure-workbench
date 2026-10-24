@@ -585,8 +585,9 @@ export function PcProducts() {
                       >
                         <div className="pcv-copytext">{c.content}</div>
                         <div className="pcv-copyfoot">
-                          {/* 相似放最前 */}
+                          {/* 相似按钮暂时隐藏
                           <button className="pcv-btn" style={{ padding: '7px 8px', fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(99,102,241,0.12)', color: '#4f46e5', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openSimilar(c)}>✨相似</button>
+                          */}
                           {/* 复制放最前（用户要求）：最常用的动作固定在行首，眼睛不用来回找 */}
                           <button
                             className="pcv-btn"
