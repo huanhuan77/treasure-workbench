@@ -267,8 +267,8 @@ export function NewOrderPage() {
           <div style={{ fontSize: '11px', color: '#9ca3af', marginBottom: '6px' }}>只能选「{activeAccount}」已发布的样品</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {currentEntries.length === 0 && (
-              <div style={{ fontSize: '12px', color: '#9ca3af', padding: '16px', textAlign: 'center', background: '#fff', border: '1.5px dashed rgba(0,0,0,0.10)', borderRadius: '10px' }}>
-                点上方「＋ 添加」新增一条产品
+              <div onClick={addEntry} style={{ fontSize: '12px', color: '#9ca3af', padding: '16px', textAlign: 'center', background: '#fff', border: '1.5px dashed rgba(0,0,0,0.10)', borderRadius: '10px', cursor: 'pointer' }}>
+                点这里或「＋ 添加」新增一条产品
               </div>
             )}
             {currentEntries.map((e, idx) => {
