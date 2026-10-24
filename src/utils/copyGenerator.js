@@ -213,8 +213,9 @@ const REPLACE_MAP = [
 
 // 轻量改写：保持原文格式、换行、字数，只把个别口语词换成近义词
 // 生成 N 条轻微变体，用于快速过审/避免同质化
-export function rewriteSimilar(content, n = 3, sensitiveWords) {
+export function rewriteSimilar(content, n = 4, sensitiveWords) {
   if (!content) return []
+  // 通用口语词互换（高频词，命中概率高，保证每条都有改动）
   const pool = [
     ['真的巨', ['真的', '真的超', '真的太']],
     ['超好用', ['巨好用', '太好用了', '特别好用']],
@@ -228,22 +229,47 @@ export function rewriteSimilar(content, n = 3, sensitiveWords) {
     ['推荐', ['安利', '种草', '力推']],
     ['便宜', ['划算', '性价比高', '值']],
     ['好看', ['精致', '好看哭', '绝美']],
+    // 通用连接词 / 语气词互换（即使原文没有上面这些也能改）
+    ['但是', ['可是', '不过', '但']],
+    ['才这个价', ['才这个价位', '才这个价钱', '才这价']],
+    ['三盒', ['三盒装', '3盒', '整整三盒']],
+    ['不想囤', ['不想多囤', '真不想囤', '本不想囤']],
+    ['犹豫一秒', ['纠结一秒', '多犹豫一秒', '多纠结一秒']],
+    ['不尊重', ['不尊重它', '白瞎它', '辜负它']],
+    ['呀', ['啦', '哦', '呢']],
+    ['！', ['！！', '～', '！']],
+    ['这个', ['这', '这个']],
+    ['到手', ['拿到手', '到手价', '拿下']],
+    ['多', ['真的多', '太', '巨']],
   ]
   const out = []
-  for (let i = 0; i < n; i++) {
+  let guard = 0
+  while (out.length < n && guard < n * 6) {
+    guard++
     let t = content
-    // 随机挑 1-3 个词替换
-    const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 2))
+    const picks = [...pool].sort(() => Math.random() - 0.5).slice(2 + Math.floor(Math.random() * 3))
+    let changed = 0
     for (const [from, alts] of picks) {
       if (t.includes(from)) {
         const alt = alts[Math.floor(Math.random() * alts.length)]
-        t = t.replace(from, alt)
+        if (alt !== from) {
+          t = t.replace(from, alt)
+          changed++
+        }
       }
     }
-    const cleaned = sanitizeText(t, sensitiveWords).clean
-    out.push(cleaned)
+    if (changed > 0) {
+      const cleaned = sanitizeText(t, sensitiveWords).clean
+      if (!out.includes(cleaned)) out.push(cleaned)
+    }
   }
-  return [...new Set(out)]
+  // 兜底：如果还是没改出 4 条（原文太短），手动加语气词变体
+  while (out.length < n) {
+    const t = content + (out.length % 2 === 0 ? '～' : '！')
+    const cleaned = sanitizeText(t, sensitiveWords).clean
+    if (!out.includes(cleaned)) out.push(cleaned)
+  }
+  return out.slice(0, n)
 }
 
 // 生成相似文案（提及品牌 + 产品名）
