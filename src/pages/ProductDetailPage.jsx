@@ -196,10 +196,10 @@ export function ProductDetailPage() {
   }
 
   const handleCopyContent = async (content, copyId) => {
-    const ok = await copyText(content)
-    show(ok ? '文案已复制，已标记用过' : '复制失败，但已标记用过', ok ? 'success' : 'error')
-    // 点了复制就标记用过（即使剪贴板被浏览器拒绝，意图也是要发这条）
+    // 先同步标记用过，再尝试复制，避免异步等待导致状态更新被吞
     if (copyId) updateCopy(id, copyId, { used: true, usedDate: todayStr() })
+    const ok = await copyText(content)
+    show(ok ? '文案已复制，已标记用过' : '已标记用过（复制被浏览器拦截，可手动长按粘贴）', ok ? 'success' : 'error')
   }
 
   // 复制该产品全部话题（产品级 + 所有文案自带，去重），单个 # 前缀 + 空格分隔：#话题 #话题2
