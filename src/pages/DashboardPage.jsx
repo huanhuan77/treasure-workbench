@@ -946,7 +946,7 @@ export function DashboardPage() {
 
       {/* 发布计划：产品 / 账号 / 数量 / 时间（与 PC 同一份数据） */}
       <div style={{ padding: '6px 8px 0' }}>
-        <div className="pc-card" style={{ background: '#fff', border: '1px solid #e6e6ef', borderRadius: '10px', padding: '12px 12px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
+        <div className="pc-card" style={{ background: '#fff', border: '1px solid #e6e6ef', borderRadius: '10px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: '#111' }}>发布计划</span>
