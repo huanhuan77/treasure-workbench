@@ -4836,6 +4836,21 @@ export function StoreProvider({ children }) {
       // 同步是「按 id 取并集」，云端残留的重复条目会把本地已删掉的再拉回来。
       // 这里在写入本地前再兜一次底，保证合并结果里同一产品下不出现重复内容。
       try { next.products = dedupeProducts(next.products) } catch (e) {}
+      // 同步回来的数据可能缺 id 或 id 重复，这里再修一遍，否则点「用过」会误标记多条
+      try {
+        next.products = (next.products || []).map((p) => {
+          const seen = new Set()
+          return {
+            ...p,
+            copies: (p.copies || []).map((c) => {
+              let id = c.id || uid()
+              while (seen.has(id)) id = uid()
+              seen.add(id)
+              return c.id === id ? c : { ...c, id }
+            }),
+          }
+        })
+      } catch(e) { console.warn('[applySyncResult] 修复文案ID失败:', e) }
       // 文案标题已废弃：同步合并回来的数据也统一去掉 title
       next.products = stripCopyTitles(next.products)
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch (e) {}
