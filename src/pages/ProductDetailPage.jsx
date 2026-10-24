@@ -33,7 +33,7 @@ function displayTitle(p) {
 export function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { products, addCopy, addCopies, deleteCopy, updateCopy, clearCopies, updateProduct, sensitiveWords } = useStore()
+  const { products, addCopy, addCopies, deleteCopy, updateCopy, updateProduct, sensitiveWords } = useStore()
   const { show } = useToast()
   const txtFileRef = useRef(null)
   const product = products.find((p) => p.id === id)
@@ -45,8 +45,6 @@ export function ProductDetailPage() {
   const [genResults, setGenResults] = useState([])
   const [genLoading, setGenLoading] = useState(false)
   const [copyFilter, setCopyFilter] = useState('全部')
-
-  const [showClear, setShowClear] = useState(false)
 
   // 标记出单/爆单后延时 1 秒再按爆单排序。必须在下方 if(!product) return 之前声明（rules of hooks），
   // 否则产品不存在提前 return 时本 hook 不执行，同一实例从有效切到无效 id 会报 "fewer hooks"。
@@ -416,20 +414,6 @@ export function ProductDetailPage() {
                 whiteSpace: 'nowrap',
               }}
             >导入txt</button>
-            <button
-              onClick={() => setShowClear(true)}
-              style={{
-                background: '#fff',
-                color: '#ef4444',
-                border: '1px solid rgba(239, 68, 68, 0.35)',
-                padding: '6px 12px',
-                borderRadius: '10px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >清空文案</button>
           </div>
         </div>
 
@@ -584,16 +568,6 @@ export function ProductDetailPage() {
         confirmText="删除"
         danger
         xs
-      />
-
-      <ConfirmModal
-        open={showClear}
-        onClose={() => setShowClear(false)}
-        onConfirm={() => { clearCopies(id); setShowClear(false); show('已清空，可重新导入', 'success') }}
-        title="清空文案"
-        message="将删除该产品下的全部文案，导入前用于全量替换。确定继续吗？"
-        confirmText="清空"
-        danger
       />
 
       {/* 生成相似弹窗（参考图二） */}
