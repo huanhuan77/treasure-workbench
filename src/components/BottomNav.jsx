@@ -238,8 +238,9 @@ export function BottomNav() {
         style={{
           position: 'fixed',
           bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
+          left: 0,
+          right: 0,
+          margin: '0 auto',
           width: '100%',
           maxWidth: '480px',
           background: 'rgba(255, 255, 255, 0.65)',
