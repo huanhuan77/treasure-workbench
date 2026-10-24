@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useIsDesktop } from '../utils/useIsDesktop'
@@ -231,7 +232,7 @@ export function BottomNav() {
   // 桌面端：所有分类都在侧边栏里，不需要底部导航和「更多」抽屉
   if (isDesktop) return <DesktopSidebar badgeFor={getBadge} />
 
-  return (
+  return createPortal(
     <>
       {/* 底部导航栏 */}
       <nav
@@ -350,6 +351,7 @@ export function BottomNav() {
           })}
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
