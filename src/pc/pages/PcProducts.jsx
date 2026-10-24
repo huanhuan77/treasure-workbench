@@ -585,6 +585,8 @@ export function PcProducts() {
                       >
                         <div className="pcv-copytext">{c.content}</div>
                         <div className="pcv-copyfoot">
+                          {/* 相似放最前 */}
+                          <button className="pcv-btn" style={{ padding: '7px 8px', fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'rgba(99,102,241,0.12)', color: '#4f46e5', border: '1px solid rgba(99,102,241,0.3)' }} onClick={() => openSimilar(c)}>✨相似</button>
                           {/* 复制放最前（用户要求）：最常用的动作固定在行首，眼睛不用来回找 */}
                           <button
                             className="pcv-btn"
@@ -634,7 +636,6 @@ export function PcProducts() {
                             {c.pinned ? '已置顶' : '置顶'}
                           </button>
                           {/* 编辑 / 删除：次要操作，保持描边样式，紧跟标记与用过时间之后 */}
-                          <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => openSimilar(c)}>✨相似</button>
                           <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => setCopyDialog(c)}>编辑</button>
                           <button
                             className="pcv-btn pcv-btn-ghost pcv-btn-ghost--danger"

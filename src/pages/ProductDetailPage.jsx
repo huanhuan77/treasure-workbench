@@ -686,8 +686,20 @@ function CopyCard({
       position: 'relative',
       ...cardAccent,
     }}>
-      {/* 右上角操作按钮：编辑 / 删除（按你要求放右上角，编辑 ✏️、删除 ❌） */}
+      {/* 右上角操作按钮：相似 / 置顶 / 编辑 / 删除 */}
       <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px', zIndex: 2 }}>
+        <button
+          onClick={onSimilar}
+          aria-label="生成相似文案"
+          title="生成相似文案"
+          style={{
+            height: '30px', padding: '0 10px', borderRadius: '15px',
+            border: 'none', background: 'rgba(99,102,241,0.12)',
+            color: '#4f46e5', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', whiteSpace: 'nowrap',
+          }}
+        >✨相似</button>
         {/* 置顶：已置顶时粉底白图标，未置顶为淡灰（与 PC 文案库同一字段 pinned） */}
         <button
           onClick={onTogglePin}
@@ -718,18 +730,6 @@ function CopyCard({
             boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
           }}
         >✏️</button>
-        <button
-          onClick={onSimilar}
-          aria-label="生成相似文案"
-          title="生成相似文案"
-          style={{
-            height: '30px', padding: '0 10px', borderRadius: '15px',
-            border: 'none', background: 'rgba(99,102,241,0.12)',
-            color: '#4f46e5', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', whiteSpace: 'nowrap',
-          }}
-        >✨相似</button>
         <button
           onClick={onDelete}
           aria-label="删除文案"
