@@ -431,6 +431,7 @@ export function ProductDetailPage() {
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
                 onTogglePin={() => togglePinCopy(copy.id, copy.pinned)}
                 onDelete={() => setDelCopyId(copy.id)}
+                onSimilar={() => setGenModal({ open: true, copy })}
               />
             ))}
           </div>
@@ -765,7 +766,7 @@ export function ProductDetailPage() {
 function CopyCard({
   copy,
   onCopyContent,
-  onEdit, onToggleOrder, onToggleHot, onToggleUsed, onTogglePin, onDelete,
+  onEdit, onToggleOrder, onToggleHot, onToggleUsed, onTogglePin, onDelete, onSimilar,
 }) {
   // 左侧强调条配色与 PC 文案库统一（用户指定）：置顶=粉 / 出单=绿 / 爆单=红 / 用过=黄
   const cardAccent = copy.pinned
@@ -817,6 +818,18 @@ function CopyCard({
             boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
           }}
         >✏️</button>
+        <button
+          onClick={onSimilar}
+          aria-label="生成相似文案"
+          title="生成相似文案"
+          style={{
+            height: '30px', padding: '0 10px', borderRadius: '15px',
+            border: 'none', background: 'rgba(99,102,241,0.12)',
+            color: '#4f46e5', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)', whiteSpace: 'nowrap',
+          }}
+        >✨相似</button>
         <button
           onClick={onDelete}
           aria-label="删除文案"
