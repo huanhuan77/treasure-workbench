@@ -438,13 +438,13 @@ export function DashboardPage() {
   // （用户要求「新建计划要弹计划弹窗」）；数量/日期都在弹窗里确认后再保存。
   const quickPlan = (s) => {
     const name = String((s && s.name) || '').trim()
-    // 优先用当前筛选账号；没筛账号时取该样品待发的第一个账号
+    // 优先用当前筛选账号；没筛账号时取待发账号，再不行取第一个挂的账号
     let acc = remindAccount && remindAccount !== 'all' ? remindAccount : ''
     if (!acc || !getAccounts(s).includes(acc)) {
-      acc = pendingAccounts(s)[0]
+      acc = pendingAccounts(s)[0] || getAccounts(s)[0] || ''
     }
     if (!name || !acc) {
-      show('这个产品还没有到该发的账号', 'error')
+      show('这个产品还没有关联账号', 'error')
       return
     }
     const o = {}
@@ -1983,7 +1983,7 @@ export function DashboardPage() {
                           </div>
                         </div>
                         <button
-                          onClick={() => { if (!tapOK()) return; navigate('/publish-record/new', { state: { sampleId: s.id, account: remindAccount !== 'all' ? remindAccount : '', accounts: it.accounts.map((x) => x.account) } }) }}
+                          onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                         >新建计划</button>
                         </div>{/* /左滑卡片内容 */}
