@@ -50,17 +50,20 @@ export function selectPublishReminders(samples) {
     // 到该发的账号里只要有一个是高频口径，这个样品就归「高频出单」，
     // 普通发布提醒里不再出现它，两个 tab 的条数加起来才是总数。
     if (due.some((a) => isHotAccount(s, a))) return false
-    // 与「发布不足10」互斥（按账号单独判定）：
-    // 如果所有到该发的账号都属于「发了1~9条、没出单」，归发布不足10，不重复进这里。
-    // 有账号从没发过（0条）→ 仍进发布提醒；有账号发满10条 → 也进发布提醒（催下一轮）。
+    // 与「发布不足10」互斥：
+    // 只有「整个样品从没出单」的才互斥——出过单的品归发布提醒催更。
+    // 从没出单的样品，如果所有到该发的账号都发了1~9条，归发布不足10；
+    // 有账号从没发过（0条）→ 仍进发布提醒；有账号发满10条 → 也进发布提醒。
     if (!isArchivedSample(s)) {
-      const counts = s.countsByAccount || {}
-      const dueAllLow = due.every((a) => {
-        const n = Number(counts[a]?.publishCount) || 0
-        const o = Number(counts[a]?.orderCount) || 0
-        return n > 0 && n < LOW_PUBLISH_LIMIT && o === 0
-      })
-      if (dueAllLow && due.length > 0) return false
+      const agg = getAggregateCounts(s)
+      if (agg.orderCount === 0) {
+        const counts = s.countsByAccount || {}
+        const dueAllLow = due.every((a) => {
+          const n = Number(counts[a]?.publishCount) || 0
+          return n > 0 && n < LOW_PUBLISH_LIMIT
+        })
+        if (dueAllLow && due.length > 0) return false
+      }
     }
     // **没拍过视频的（未到货 / 已到货未拍）不进发布提醒**（用户要求「未拍的不进入发布提醒」）：
     // 还没拍就没得发，催「该补发了」没有意义；这类样品由「即将到期」负责盯截止日
@@ -103,14 +106,17 @@ export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT) {
   for (const s of samples || []) {
     if (isArchivedSample(s)) continue
 
-    // 按账号单独判定：每个账号自己发了 1~9 条且没出单，就算「不足」
+    // 整个样品出过单的不在这里——出过单的品发不够量归「发布提醒」催更
+    const agg = getAggregateCounts(s)
+    if (agg.orderCount > 0) continue
+
+    // 按账号单独判定：每个账号自己发了 1~9 条，就算「不足」
     const allAccounts = getAccounts(s).map((a) => {
       const c = s?.countsByAccount?.[a]
       const n = Number(c?.publishCount) || 0
       return { account: a, publishCount: n, orderCount: Number(c?.orderCount) || 0, lack: limit - n }
     })
-    // 有发布记录的账号（>0条），且该账号没出单
-    const qualifying = allAccounts.filter((x) => x.publishCount > 0 && x.publishCount < limit && x.orderCount === 0)
+    const qualifying = allAccounts.filter((x) => x.publishCount > 0 && x.publishCount < limit)
     if (!qualifying.length) continue
 
     out.push({
