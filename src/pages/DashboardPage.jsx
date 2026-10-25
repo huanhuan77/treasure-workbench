@@ -438,9 +438,11 @@ export function DashboardPage() {
   // （用户要求「新建计划要弹计划弹窗」）；数量/日期都在弹窗里确认后再保存。
   const quickPlan = (s) => {
     const name = String((s && s.name) || '').trim()
-    const accs = pendingAccounts(s)
-    // 用账号固定顺序里的第一个（通常是「广东刘亦菲」），可预期；进弹窗后还能切账号
-    const acc = accs[0]
+    // 优先用当前筛选账号；没筛账号时取该样品待发的第一个账号
+    let acc = remindAccount && remindAccount !== 'all' ? remindAccount : ''
+    if (!acc || !getAccounts(s).includes(acc)) {
+      acc = pendingAccounts(s)[0]
+    }
     if (!name || !acc) {
       show('这个产品还没有到该发的账号', 'error')
       return
