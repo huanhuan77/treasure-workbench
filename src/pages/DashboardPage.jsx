@@ -806,16 +806,15 @@ export function DashboardPage() {
   // 标签与跳转目标来自 utils/reminders 的 REMINDER_TABS，这里只补上各自的计数，
   // 避免「标签/路径」在总览和列表页各写一份导致对不上
   const REMIND_TABS = useMemo(() => {
-    // 计数用**筛选后**的数据：筛了账号后气泡数字要跟着变，
-    // 否则「气泡 57」点进去只有 20 条，又是「卡片数字 ≠ 点进去的条数」那个老问题。
+    // 气泡数字显示全部账号的总数（不随筛选变），账号角标在下面单独看
     const counts = {
-      reminders: fReminders.length,
-      hot: fHot.length,
-      low: fLowPublish.length,
-      expiring: fExpiring.length,
+      reminders: reminders.length,
+      hot: hotCadence.length,
+      low: lowPublish.length,
+      expiring: expiringSoon.length,
     }
     return REMINDER_TABS.map((t) => ({ ...t, count: counts[t.id] }))
-  }, [fReminders.length, fHot.length, fLowPublish.length, fExpiring.length])
+  }, [reminders.length, hotCadence.length, lowPublish.length, expiringSoon.length])
   // 合并后的总数：不同区块可能命中同一产品，这里按 id 去重后再计
   const remindTotal = useMemo(() => {
     // 用筛选后的数据：筛选后三个 Tab 可能都空了，此时自动切换 Tab 的兜底逻辑
