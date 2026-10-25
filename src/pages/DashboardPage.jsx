@@ -1491,7 +1491,7 @@ export function DashboardPage() {
                 onClick={() => pickTab(t.id)}
                 style={{
                   flex: '1 1 0', minWidth: 0, position: 'relative',
-                  padding: '0 1px', border: 'none', background: 'transparent',
+                  padding: '0 0px', border: 'none', background: 'transparent',
                   cursor: 'pointer', display: 'flex',
                   alignItems: 'center', justifyContent: 'center',
                 }}
@@ -1542,7 +1542,7 @@ export function DashboardPage() {
                     fontSize: '10.5px', fontWeight: 800,
                     fontVariantNumeric: 'tabular-nums',
                     color: '#fff', background: t.count > 0 ? t.accent : '#d8c8ce',
-                    borderRadius: '999px', padding: '1px 4px 0', marginLeft: '3px',
+                    borderRadius: '999px', padding: '1px 4px 0', marginLeft: '2px',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     height: '15px', boxSizing: 'border-box',
                   }}>{t.count}</span>

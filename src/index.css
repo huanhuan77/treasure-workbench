@@ -235,11 +235,11 @@ a {
 .dashTabFull { display: inline-block; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .dashTabMid { display: none; }
 .dashTabShort { display: none; }
-@media (width <= 380px) {
+@media (width <= 360px) {
   .dashTabFull { display: none; }
   .dashTabMid { display: inline-block; }
 }
-@media (width <= 340px) {
+@media (width <= 320px) {
   .dashTabMid { display: none; }
   .dashTabShort { display: inline-block; }
 }
