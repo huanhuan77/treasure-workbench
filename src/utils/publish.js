@@ -184,12 +184,17 @@ export function needPublishReminder(sample) {
     if (anyUnpublished) return true
   }
   // 按账号判定「距上次发布是否超期」。
-  // ⚠️ 不再看 execByAccount === 'abandoned'（老的单账号兼容字段，UI 已经不展示/不能改）：
-  //    它会被「出单后又发满5条无新单」的自动放弃规则写入，导致样品在界面上看着正常
-  //    （状态=已拍/已发布、提示天数也都对），却永远不进提醒，用户完全无从修改
-  //    （用户反馈「没放弃啊」）。现在只有**样品级归档**(archived) 才排除提醒。
   for (const a of getAccounts(sample)) {
     if (accountDue(sample, a)) return true
+  }
+  // 出过单但某个账号发了1~9条还没到10条 → 催更（量不够，不等时间到）
+  const agg = getAggregateCounts(sample)
+  if (agg.orderCount > 0) {
+    const counts = sample.countsByAccount || {}
+    for (const a of getAccounts(sample)) {
+      const n = Number(counts[a]?.publishCount) || 0
+      if (n > 0 && n < 10) return true
+    }
   }
   return false
 }
