@@ -6,7 +6,7 @@ import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays, isHotAccount } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
-import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 import PlanBadge from '../components/PlanBadge'
 import { SampleForm } from '../components/SampleForm'
@@ -718,9 +718,16 @@ export function DashboardPage() {
   //   避免多账号样品中，是别的账号需要发、但本账号刚发过的情况被错误列出
   const matchAcct = (s, a) => {
     if (a === 'all') return true
-    // 该账号自己确实"该发了"（从未发过 或 超期没发）才列出，
-    // 多账号样品中每个到点的账号都应能被筛到，不能只挂在"从未发"的那个账号名下。
-    return pendingAccounts(s).includes(a)
+    // 该账号自己确实"该发了"（从未发过 / 超期没发 / 出过单但量不够）才列出
+    if (pendingAccounts(s).includes(a)) return true
+    // 出过单的样品：该账号发了1~9条也算待发
+    const agg = getAggregateCounts(s)
+    if (agg.orderCount > 0) {
+      const c = s?.countsByAccount?.[a]
+      const n = Number(c?.publishCount) || 0
+      if (n > 0 && n < 10) return true
+    }
+    return false
   }
 
   // 筛选后的三组数据 —— 列表渲染与 Tab 气泡计数都读它们，保证「气泡数 = 点进去的条数」。
