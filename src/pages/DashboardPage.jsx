@@ -1471,7 +1471,7 @@ export function DashboardPage() {
           background: 'rgba(255, 245, 249, 0.62)',
           backdropFilter: 'blur(12px) saturate(150%)',
           WebkitBackdropFilter: 'blur(12px) saturate(150%)',
-          padding: '7px 4px 8px',
+          padding: '7px 3px 8px',
           boxShadow: '0 1px 8px rgba(120,90,100,0.05)',
         }}>
           {/* 内层不再画白色胶囊底（原来是 rgba(255,255,255,0.6) + 白色描边），
