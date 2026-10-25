@@ -1481,7 +1481,7 @@ export function DashboardPage() {
               同时 padding 0 8px 让最外侧标签与卡片左右对齐。 */}
           <div style={{
             display: 'flex', flex: 1, minWidth: 0, height: '34px',
-            padding: '0 0px',
+            padding: '0 0px', gap: '2px',
           }}>
           {REMIND_TABS.map((t) => {
             const active = remindTab === t.id
@@ -1490,8 +1490,8 @@ export function DashboardPage() {
                 key={t.id}
                 onClick={() => pickTab(t.id)}
                 style={{
-                  flex: '1 1 0', minWidth: 0, position: 'relative',
-                  padding: '0 2px', border: 'none', background: 'transparent',
+                  flex: '0 0 auto', minWidth: 0, position: 'relative',
+                  padding: '0 6px', border: 'none', background: 'transparent',
                   cursor: 'pointer', display: 'flex',
                   alignItems: 'center', justifyContent: 'center',
                 }}
