@@ -64,9 +64,8 @@ export function selectPublishReminders(samples, orders = []) {
       const dueAllLow = due.every((a) => {
         const n = Number(counts[a]?.publishCount) || 0
         return n > 0 && n < LOW_PUBLISH_LIMIT
-        })
-        if (dueAllLow && due.length > 0) return false
-      }
+      })
+      if (dueAllLow && due.length > 0) return false
     }
     // **没拍过视频的（未到货 / 已到货未拍）不进发布提醒**（用户要求「未拍的不进入发布提醒」）：
     // 还没拍就没得发，催「该补发了」没有意义；这类样品由「即将到期」负责盯截止日
