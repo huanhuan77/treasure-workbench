@@ -50,6 +50,11 @@ export function selectPublishReminders(samples) {
     // 到该发的账号里只要有一个是高频口径，这个样品就归「高频出单」，
     // 普通发布提醒里不再出现它，两个 tab 的条数加起来才是总数。
     if (due.some((a) => isHotAccount(s, a))) return false
+    // 与「发布不足10」互斥：发了1~9条且没出单的样品归「发布不足10」，不重复进这里
+    if (!isArchivedSample(s)) {
+      const { publishCount, orderCount } = getAggregateCounts(s)
+      if (publishCount > 0 && publishCount < LOW_PUBLISH_LIMIT && orderCount === 0) return false
+    }
     // **没拍过视频的（未到货 / 已到货未拍）不进发布提醒**（用户要求「未拍的不进入发布提醒」）：
     // 还没拍就没得发，催「该补发了」没有意义；这类样品由「即将到期」负责盯截止日
     return isShotSample(s)
