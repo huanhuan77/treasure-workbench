@@ -44,7 +44,17 @@ export function isHotCadence(sample) {
 export function selectPublishReminders(samples) {
   return (samples || []).filter((s) => {
     if (!needPublishReminder(s)) return false
-    const due = pendingAccounts(s)
+    let due = pendingAccounts(s)
+    // 出过单的样品：账号发了1~9条但还没到10条，即使时间没超期也要催更
+    const agg = getAggregateCounts(s)
+    if (agg.orderCount > 0) {
+      const counts = s.countsByAccount || {}
+      for (const a of getAccounts(s)) {
+        if (due.includes(a)) continue
+        const n = Number(counts[a]?.publishCount) || 0
+        if (n > 0 && n < LOW_PUBLISH_LIMIT) due = [...due, a]
+      }
+    }
     if (!due.length) return false
     // 与「高频出单」互斥（用户要求「这 2 个状态的数据不能重复」）：
     // 到该发的账号里只要有一个是高频口径，这个样品就归「高频出单」，
