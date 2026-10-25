@@ -784,7 +784,7 @@ export function DashboardPage() {
       if (remindTab === 'hot') {
         c[a] = hotCadence.filter((s) => pendingAccounts(s).includes(a) && isHotAccount(s, a)).length
       } else if (remindTab === 'reminders') {
-        c[a] = reminders.filter((s) => pendingAccounts(s).includes(a)).length
+        c[a] = reminders.filter((s) => matchAcct(s, a)).length
       } else if (remindTab === 'low') {
         c[a] = lowPublish.filter((it) => it.accounts.some((x) => x.account === a && x.publishCount < LOW_PUBLISH_LIMIT)).length
       } else {
@@ -792,7 +792,7 @@ export function DashboardPage() {
       }
     }
     return c
-  }, [remindTab, hotCadence, reminders, lowPublish, expiringSoon])
+  }, [remindTab, hotCadence, reminders, lowPublish, expiringSoon, orderedSampleIds])
 
   // 近 7 天发布条数（按 qty 累加）
   const last7Count = useMemo(() => {
