@@ -1978,13 +1978,21 @@ export function DashboardPage() {
                               .filter(({ account: a }) => remindAccount === 'all' || a === remindAccount)
                               .map(({ account: a, publishCount: n }) => {
                                 const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+                                const d = daysSincePublishByAccount(s, a)
                                 return (
                                   <span key={a} style={{
-                                    fontSize: '10px', padding: '2px 8px', borderRadius: '6px',
-                                    background: col.bg, color: col.c, fontWeight: 600,
-                                    border: `1px solid ${col.c}`,
-                                    whiteSpace: 'nowrap', flexShrink: 0,
-                                  }}>{a}({n}条)</span>
+                                    display: 'inline-flex', alignItems: 'center', borderRadius: '6px',
+                                    overflow: 'hidden', whiteSpace: 'nowrap', flexShrink: 0,
+                                  }}>
+                                    <span style={{
+                                      fontSize: '10px', padding: '2px 8px', fontWeight: 600,
+                                      background: col.bg, color: col.c, border: `1px solid ${col.c}`,
+                                    }}>{a}({n}条)</span>
+                                    <span style={{
+                                      fontSize: '10px', padding: '2px 6px', fontWeight: 700,
+                                      background: 'rgba(148,163,184,0.16)', color: '#64748b',
+                                    }}>{d === Infinity ? '从未发布' : `已${d}天`}</span>
+                                  </span>
                                 )
                               })}
                           </div>
