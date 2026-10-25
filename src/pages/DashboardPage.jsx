@@ -1710,7 +1710,7 @@ export function DashboardPage() {
                           onClick={() => { if (swiped) setSwipedHotId(null) }}
                           style={{
                             position: 'relative', zIndex: 1,
-                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 6px 9px 12px',
+                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 10px 9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
                             transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
                           }}
@@ -1950,7 +1950,7 @@ export function DashboardPage() {
                           onClick={() => { if (swiped) setSwipedHotId(null) }}
                           style={{
                             position: 'relative', zIndex: 1,
-                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 6px 9px 12px',
+                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 10px 9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
                             transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
                           }}
@@ -2060,7 +2060,7 @@ export function DashboardPage() {
                           onClick={() => { if (swiped) setSwipedHotId(null) }}
                           style={{
                             position: 'relative', zIndex: 1,
-                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 6px 9px 12px',
+                            background: '#fdfafb', border: '1px solid #f5eef2', borderRadius: '10px', padding: '9px 10px 9px 12px',
                             display: 'flex', alignItems: 'center', gap: '8px',
                             transition: 'transform 0.2s ease', transform: swiped ? 'translateX(-74px)' : 'translateX(0)',
                           }}
