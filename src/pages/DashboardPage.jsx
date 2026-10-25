@@ -634,13 +634,13 @@ export function DashboardPage() {
 
   // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
   // 口径统一从 utils/reminders 取，保证与列表页「卡片数字 = 点进去的条数」
-  const allReminders = useMemo(() => selectPublishReminders(samples), [samples])
+  const allReminders = useMemo(() => selectPublishReminders(samples, orders), [samples, orders])
   // 总览页内直接展示全部，不再跳列表页（保留别名以免大范围改动下方渲染代码）
   const reminders = allReminders
 
   // 已发布但发布不足5条 —— 按「账号」粒度返回「样品×账号」条目数组，
   // 一个样品可能贡献多条（多个账号各自发布不足），计数与列表都基于它，保证同源。
-  const lowPublish = useMemo(() => selectLowPublish(samples), [samples])
+  const lowPublish = useMemo(() => selectLowPublish(samples, LOW_PUBLISH_LIMIT, orders), [samples, orders])
 
   // 即将到期：有截止日期、且未发布/未放弃、7 天内到期（含已逾期），按截止日期升序
   const expiringSoon = useMemo(() => selectExpiringSoon(samples), [samples])
@@ -716,13 +716,13 @@ export function DashboardPage() {
   // - 未筛时全部通过
   // - 筛了账号：只有该账号确实"需要发"（从未发过或超过7天没发）才显示
   //   避免多账号样品中，是别的账号需要发、但本账号刚发过的情况被错误列出
+  const orderedSampleIds = useMemo(() => new Set((orders || []).map((o) => o.sampleId).filter(Boolean)), [orders])
   const matchAcct = (s, a) => {
     if (a === 'all') return true
     // 该账号自己确实"该发了"（从未发过 / 超期没发 / 出过单但量不够）才列出
     if (pendingAccounts(s).includes(a)) return true
     // 出过单的样品：该账号发了1~9条也算待发
-    const agg = getAggregateCounts(s)
-    if (agg.orderCount > 0) {
+    if (orderedSampleIds.has(s.id)) {
       const c = s?.countsByAccount?.[a]
       const n = Number(c?.publishCount) || 0
       if (n > 0 && n < 10) return true

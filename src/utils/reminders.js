@@ -41,13 +41,13 @@ export function isHotCadence(sample) {
   // 有任意一个账号按 ≤5 天高频口径、且当前已到该发
   return pendingAccounts(sample).some((a) => isHotAccount(sample, a))
 }
-export function selectPublishReminders(samples) {
+export function selectPublishReminders(samples, orders = []) {
+  const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   return (samples || []).filter((s) => {
     if (!needPublishReminder(s)) return false
     let due = pendingAccounts(s)
     // 出过单的样品：账号发了1~9条但还没到10条，即使时间没超期也要催更
-    const agg = getAggregateCounts(s)
-    if (agg.orderCount > 0) {
+    if (orderedSampleIds.has(s.id)) {
       const counts = s.countsByAccount || {}
       for (const a of getAccounts(s)) {
         if (due.includes(a)) continue
@@ -56,21 +56,14 @@ export function selectPublishReminders(samples) {
       }
     }
     if (!due.length) return false
-    // 与「高频出单」互斥（用户要求「这 2 个状态的数据不能重复」）：
-    // 到该发的账号里只要有一个是高频口径，这个样品就归「高频出单」，
-    // 普通发布提醒里不再出现它，两个 tab 的条数加起来才是总数。
+    // 与「高频出单」互斥
     if (due.some((a) => isHotAccount(s, a))) return false
-    // 与「发布不足10」互斥：
-    // 只有「整个样品从没出单」的才互斥——出过单的品归发布提醒催更。
-    // 从没出单的样品，如果所有到该发的账号都发了1~9条，归发布不足10；
-    // 有账号从没发过（0条）→ 仍进发布提醒；有账号发满10条 → 也进发布提醒。
-    if (!isArchivedSample(s)) {
-      const agg = getAggregateCounts(s)
-      if (agg.orderCount === 0) {
-        const counts = s.countsByAccount || {}
-        const dueAllLow = due.every((a) => {
-          const n = Number(counts[a]?.publishCount) || 0
-          return n > 0 && n < LOW_PUBLISH_LIMIT
+    // 与「发布不足10」互斥：从没出单的样品才互斥
+    if (!isArchivedSample(s) && !orderedSampleIds.has(s.id)) {
+      const counts = s.countsByAccount || {}
+      const dueAllLow = due.every((a) => {
+        const n = Number(counts[a]?.publishCount) || 0
+        return n > 0 && n < LOW_PUBLISH_LIMIT
         })
         if (dueAllLow && due.length > 0) return false
       }
@@ -111,14 +104,15 @@ export function selectHotCadence(samples) {
 //   { sample, accounts: [{account, publishCount, orderCount, lack}], minPublishCount, minLack }
 //   注意 accounts 现在列的是**该样品所有有发布记录的账号**（供展示分布），
 //   不再是「未达标账号」——因为判定已经上移到样品级，账号本身不再单独判定。
-export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT) {
+export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []) {
   const out = []
+  // 出单集合：直接从 orders 列表建 sampleId 集合，不依赖 countsByAccount（历史数据可能没同步）
+  const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   for (const s of samples || []) {
     if (isArchivedSample(s)) continue
 
     // 整个样品出过单的不在这里——出过单的品发不够量归「发布提醒」催更
-    const agg = getAggregateCounts(s)
-    if (agg.orderCount > 0) continue
+    if (orderedSampleIds.has(s.id)) continue
 
     // 按账号单独判定：每个账号自己发了 1~9 条，就算「不足」
     const allAccounts = getAccounts(s).map((a) => {
