@@ -50,13 +50,17 @@ export function selectPublishReminders(samples) {
     // 到该发的账号里只要有一个是高频口径，这个样品就归「高频出单」，
     // 普通发布提醒里不再出现它，两个 tab 的条数加起来才是总数。
     if (due.some((a) => isHotAccount(s, a))) return false
-    // 与「发布不足10」互斥：发了1~9条且没出单的样品归「发布不足10」，不重复进这里。
-    // 但如果有账号从没发过（0条），仍要进发布提醒——「从没发」比「量不够」更紧急。
+    // 与「发布不足10」互斥（按账号单独判定）：
+    // 如果所有到该发的账号都属于「发了1~9条、没出单」，归发布不足10，不重复进这里。
+    // 有账号从没发过（0条）→ 仍进发布提醒；有账号发满10条 → 也进发布提醒（催下一轮）。
     if (!isArchivedSample(s)) {
-      const { publishCount, orderCount } = getAggregateCounts(s)
       const counts = s.countsByAccount || {}
-      const anyNeverPosted = due.some((a) => (Number(counts[a]?.publishCount) || 0) === 0)
-      if (!anyNeverPosted && publishCount > 0 && publishCount < LOW_PUBLISH_LIMIT && orderCount === 0) return false
+      const dueAllLow = due.every((a) => {
+        const n = Number(counts[a]?.publishCount) || 0
+        const o = Number(counts[a]?.orderCount) || 0
+        return n > 0 && n < LOW_PUBLISH_LIMIT && o === 0
+      })
+      if (dueAllLow && due.length > 0) return false
     }
     // **没拍过视频的（未到货 / 已到货未拍）不进发布提醒**（用户要求「未拍的不进入发布提醒」）：
     // 还没拍就没得发，催「该补发了」没有意义；这类样品由「即将到期」负责盯截止日
@@ -97,37 +101,25 @@ export function selectHotCadence(samples) {
 export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT) {
   const out = []
   for (const s of samples || []) {
-    // 已放弃/归档的样品不再提醒补发布 —— 它已经不做了，再提示「还差 N 条」是错的。
-    // 用 isArchivedSample 而非只看 s.status：它同时兼容 archived 布尔、
-    // execByAccount 全 abandoned、以及老的顶层 status 三种形态。
     if (isArchivedSample(s)) continue
 
-    const { publishCount, orderCount } = getAggregateCounts(s)
-    // 一条都没发不算「发布不足」，那是「还没发」（属于发布提醒的关注范围）
-    if (publishCount <= 0) continue
-    if (publishCount >= limit) continue
-    // 整个样品已出单就不算「发布不足」这个待办事项了
-    if (orderCount !== 0) continue
-
-    // 各账号的条数分布（仅供参考展示，不参与判定）
-    const accounts = getAccounts(s)
-      .map((a) => {
-        const c = s?.countsByAccount?.[a]
-        const n = Number(c?.publishCount) || 0
-        return { account: a, publishCount: n, orderCount: Number(c?.orderCount) || 0, lack: limit - n }
-      })
-      // 只展示有发布记录的账号，没发过的不用列出来占位置
-      .filter((x) => x.publishCount > 0)
-      .sort((x, y) => x.publishCount - y.publishCount)
+    // 按账号单独判定：每个账号自己发了 1~9 条且没出单，就算「不足」
+    const allAccounts = getAccounts(s).map((a) => {
+      const c = s?.countsByAccount?.[a]
+      const n = Number(c?.publishCount) || 0
+      return { account: a, publishCount: n, orderCount: Number(c?.orderCount) || 0, lack: limit - n }
+    })
+    // 有发布记录的账号（>0条），且该账号没出单
+    const qualifying = allAccounts.filter((x) => x.publishCount > 0 && x.publishCount < limit && x.orderCount === 0)
+    if (!qualifying.length) continue
 
     out.push({
       sample: s,
-      accounts,
-      publishCount,
-      orderCount,
-      minPublishCount: accounts.length ? accounts[0].publishCount : publishCount,
-      // 还差多少条：按样品合计算，这才是「补发布」的实际缺口
-      minLack: limit - publishCount,
+      accounts: qualifying.sort((x, y) => x.publishCount - y.publishCount),
+      publishCount: qualifying.reduce((sum, x) => sum + x.publishCount, 0),
+      orderCount: 0,
+      minPublishCount: qualifying[0].publishCount,
+      minLack: Math.min(...qualifying.map((x) => x.lack)),
     })
   }
   return out
