@@ -992,7 +992,7 @@ export function DashboardPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
-              {planExpanded && (
+              {(
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
                   {ACCOUNTS.map((a) => {
                     const on = planAcct === a
