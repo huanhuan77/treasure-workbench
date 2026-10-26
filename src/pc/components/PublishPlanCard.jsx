@@ -336,9 +336,8 @@ export function PublishPlanCard() {
           <div className="pcv-spacer" />
         </div>
 
-        {/* 账号筛选胶囊：只在「展开」时才显示（用户要求「没展开的时候不显示这个」），
-            收起状态下卡片保持紧凑，点「查看全部 N 条」才出现筛选 */}
-        {expanded && accOptions.length > 1 && (
+        {/* 账号筛选胶囊：始终显示，方便切换账号查看 */}
+        {accOptions.length > 1 && (
           <div style={{
             display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap',
             overflowX: 'auto', padding: '0 12px 8px',
