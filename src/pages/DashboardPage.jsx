@@ -1706,11 +1706,10 @@ export function DashboardPage() {
                   {fReminders.map((s) => {
                     // 只显示**真正还需要发**的账号（与 PC 总览、提醒页同一口径）
                     let showAccounts = reminderAccounts(s)
-                    // 筛了账号时：该账号虽已发过但超期没发（不在"从未发过"列表里），
-                    // 也要把它显示出来，否则卡片像是"别的账号冒出来"
-                    if (remindAccount !== 'all' && pendingAccounts(s).includes(remindAccount) && !showAccounts.includes(remindAccount)) {
-                      showAccounts = [remindAccount, ...showAccounts]
-                    }
+                    // 筛了账号时**只显示这个账号**（用户：「筛选哪个账号就显示哪个账号的状态」）。
+                    // 原来只是"保证包含它"，其它待发账号还挂在卡片上，看着像筛选没生效。
+                    // 卡片本身能出现在这里，说明 matchAcct 已确认该账号确实该发，所以直接取单元素即可。
+                    if (remindAccount !== 'all') showAccounts = [remindAccount]
                     // 这里不再需要区分「是不是靠催更进来的」——列表已经和 PC 同口径
                     // （selectPublishReminders 不传 orders），只剩「超过阈值 / 从未发过」两种。
                     const swiped = swipedHotId === s.id
