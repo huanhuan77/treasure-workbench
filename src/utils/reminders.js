@@ -1,9 +1,9 @@
-// 「提醒中心」三个口径的唯一真相源
+// 「提醒中心」四个口径的唯一真相源
 //
 // 总览页的 Tab 计数与三个列表页的列表内容都从这里取，
 // 避免同一个口径散落在多处、改一处漏一处导致「卡片数字 ≠ 点进去的条数」。
-import { needPublishReminder } from './publish'
-import { getAccounts, getAggregateCounts, isArchivedSample, isShotSample } from './sampleStatus'
+import { needPublishReminder, isHotAccount, pendingAccounts } from './publish'
+import { getAccounts, isArchivedSample, isShotSample } from './sampleStatus'
 
 // 发布不足的阈值：某产品发布数低于它即视为「发布不足」
 export const LOW_PUBLISH_LIMIT = 10
@@ -11,11 +11,7 @@ export const LOW_PUBLISH_LIMIT = 10
 // 即将到期的天数窗口
 export const EXPIRING_DAYS = 7
 
-// 三个 Tab 的标签与跳转目标。
-// label/mid/short 是同一标签的三档长度，供总览页按屏宽切换（见 index.css 的 .dashTab*），
-// 目的是让最长的「发布不足5条」+ 数量气泡在窄屏下不被省略号截断。
-// 注意：短标签不能以数字结尾。标签后紧跟数量气泡，「不足5」+「66」会连成「不足566」被读成千位数，
-// 所以 short 档改用「不足」「待发」这类不带尾随数字的写法。
+// 四个 Tab 的标签与跳转目标。
 export const REMINDER_TABS = [
   { id: 'hot', label: '高频出单', mid: '高频', short: '高频', accent: '#f43f5e', to: '/publish-reminders' },
   { id: 'reminders', label: '发布提醒', mid: '待发布', short: '待发', accent: '#ec4899', to: '/publish-reminders' },
@@ -33,43 +29,22 @@ export function daysUntilDeadline(deadline) {
   return Math.round((t - today) / 86400000)
 }
 
-// 1) 发布提醒：可发布状态但超阈值未发（含从未发布）。放弃的已被 needPublishReminder 排除
-//    「高频出单」（手动设了提醒天数且 ≤5 天）的账号单独成 tab，不再混在这里
-import { isHotAccount, sampleDays, pendingAccounts } from './publish'
-
+// 1) 发布提醒：从未发布过，或（出过单 + 超过阈值没发布）。
+//    「高频出单」（手动设了提醒天数且 ≤5 天）的账号单独成 tab，不混在这里。
 export function isHotCadence(sample) {
-  // 有任意一个账号按 ≤5 天高频口径、且当前已到该发
   return pendingAccounts(sample).some((a) => isHotAccount(sample, a))
 }
+
 export function selectPublishReminders(samples, orders = []) {
-  const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   return (samples || []).filter((s) => {
     if (!needPublishReminder(s)) return false
-    let due = pendingAccounts(s)
-    // 出过单的样品：账号发了1~9条但还没到10条，即使时间没超期也要催更
-    if (orderedSampleIds.has(s.id)) {
-      const counts = s.countsByAccount || {}
-      for (const a of getAccounts(s)) {
-        if (due.includes(a)) continue
-        const n = Number(counts[a]?.publishCount) || 0
-        if (n > 0 && n < LOW_PUBLISH_LIMIT) due = [...due, a]
-      }
-    }
+    const due = pendingAccounts(s)
     if (!due.length) return false
     // 与「高频出单」互斥
     if (due.some((a) => isHotAccount(s, a))) return false
-    // 与「发布不足10」互斥：从没出单的样品才互斥
-    if (!isArchivedSample(s) && !orderedSampleIds.has(s.id)) {
-      const counts = s.countsByAccount || {}
-      const dueAllLow = due.every((a) => {
-        const n = Number(counts[a]?.publishCount) || 0
-        return n > 0 && n < LOW_PUBLISH_LIMIT
-      })
-      if (dueAllLow && due.length > 0) return false
-    }
-    // **没拍过视频的（未到货 / 已到货未拍）不进发布提醒**（用户要求「未拍的不进入发布提醒」）：
-    // 还没拍就没得发，催「该补发了」没有意义；这类样品由「即将到期」负责盯截止日
-    return isShotSample(s)
+    // 没拍过视频的不进发布提醒（由「即将到期」盯截止日）
+    if (!isShotSample(s)) return false
+    return true
   })
 }
 
@@ -78,42 +53,18 @@ export function selectHotCadence(samples) {
   return (samples || []).filter((s) => !s.archived && needPublishReminder(s) && isHotCadence(s))
 }
 
-// 2) 发布不足5条：**按样品合计**判定，一个未达标样品占一条。
-//
-// 口径（2026-09-19 最终确定，用户拍板）：
-//   把样品**所有账号的发布数加在一起**看。合计 < 5 且没出单，才算「发布不足」。
-//   一个样品只占一条，卡片上标出各账号的条数分布，供参考该给谁补。
-//
-// 为什么不用「逐账号各算各的」（上一版的做法，已废弃）：
-//   那样每个账号自己够不够 5 条单独判定，会把「几个账号凑一凑合计够 5 条」的
-//   样品也全部捞出来（用户实测列表从 25 条涨到 40 条）。
-//   用户明确要的是**按样品合计**的口径，所以改回合计判定。
-//
-//   代价（已知并接受）：一个样品挂 A、B 两个账号、各发 3 条，合计 6 ≥ 5 →
-//   整个样品判为达标、不提醒，尽管 A、B 各自都没发满 5 条。这是合计口径的
-//   固有行为，不是 bug。用户知悉该取舍后仍选择合计口径。
-//
-// ⚠️ 合计用 getAggregateCounts（按账号求和），不用顶层 s.publishCount：
-//   顶层 publishCount 是 store 迁移维护的**影子字段**，历史数据可能没跟上；
-//   getAggregateCounts 现算各账号之和，更能反映真实分布。
-//   但老数据若只有顶层计数、没有 countsByAccount 明细，getCounts 会回退到顶层值，
-//   求和后也正确（单账号场景），所以两种形态都兜得住。
-//
-// 返回形状（保持与「逐账号判定」版一致，UI 无需再改）：
-//   { sample, accounts: [{account, publishCount, orderCount, lack}], minPublishCount, minLack }
-//   注意 accounts 现在列的是**该样品所有有发布记录的账号**（供展示分布），
-//   不再是「未达标账号」——因为判定已经上移到样品级，账号本身不再单独判定。
+// 2) 发布不足10：发布了没有出单，且发布数量 > 0 且 < 10（按账号粒度）。
+//    与「发布提醒」互斥：整个样品出过单的不在这里。
+//    从未发布过（0条）的归「发布提醒」，不在此处。
 export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []) {
   const out = []
-  // 出单集合：直接从 orders 列表建 sampleId 集合，不依赖 countsByAccount（历史数据可能没同步）
   const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   for (const s of samples || []) {
     if (isArchivedSample(s)) continue
-
-    // 整个样品出过单的不在这里——出过单的品发不够量归「发布提醒」催更
+    // 出过单的样品不在这里
     if (orderedSampleIds.has(s.id)) continue
 
-    // 按账号单独判定：每个账号自己发了 1~9 条，就算「不足」
+    // 按账号单独判定：每个账号自己发了 1~9 条
     const allAccounts = getAccounts(s).map((a) => {
       const c = s?.countsByAccount?.[a]
       const n = Number(c?.publishCount) || 0
@@ -138,8 +89,6 @@ export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []
 export function selectExpiringSoon(samples, days = EXPIRING_DAYS) {
   return (samples || [])
     .filter((s) => {
-      // 已放弃/归档的不提醒（原先只看顶层 status，漏掉了 archived 与
-      // execByAccount 形态的老数据，改用统一的 isArchivedSample 兜住）
       if (isArchivedSample(s)) return false
       if (!s.deadline || s.status === 'published') return false
       const d = daysUntilDeadline(s.deadline)
@@ -148,12 +97,12 @@ export function selectExpiringSoon(samples, days = EXPIRING_DAYS) {
     .sort((a, b) => (daysUntilDeadline(a.deadline) ?? 999) - (daysUntilDeadline(b.deadline) ?? 999))
 }
 
-// 一次性取出四组，供总览 Tab 与列表页共用
-export function selectAllReminders(samples) {
+// 一次性取出四组，供总览 Tab 与列表页共用（PC + H5 同口径）
+export function selectAllReminders(samples, orders = []) {
   return {
     hot: selectHotCadence(samples),
-    reminders: selectPublishReminders(samples),
-    low: selectLowPublish(samples),
+    reminders: selectPublishReminders(samples, orders),
+    low: selectLowPublish(samples, LOW_PUBLISH_LIMIT, orders),
     expiring: selectExpiringSoon(samples),
   }
 }

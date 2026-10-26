@@ -104,7 +104,7 @@ export function PcDashboard() {
   const [sampleDialog, setSampleDialog] = useState(undefined)
   // 「补记发布」入口已按用户要求去掉（总览不再用 PublishDialog，记录发布走「视频发布记录」页）
 
-  const all = useMemo(() => selectAllReminders(samples), [samples])
+  const all = useMemo(() => selectAllReminders(samples, orders), [samples, orders])
 
   // 每个样品的「出单数量」= 出单记录里 qty 合计（用户要求提醒中心加这一列）
   const orderQtyBySample = useMemo(() => {

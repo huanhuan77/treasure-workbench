@@ -200,15 +200,6 @@ export function needPublishReminder(sample) {
   for (const a of getAccounts(sample)) {
     if (accountDue(sample, a)) return true
   }
-  // 出过单但某个账号发了1~9条还没到10条 → 催更（量不够，不等时间到）
-  const agg = getAggregateCounts(sample)
-  if (agg.orderCount > 0) {
-    const counts = sample.countsByAccount || {}
-    for (const a of getAccounts(sample)) {
-      const n = Number(counts[a]?.publishCount) || 0
-      if (n > 0 && n < REMIND_PUBLISH_TARGET) return true
-    }
-  }
   return false
 }
 
