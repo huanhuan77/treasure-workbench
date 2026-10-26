@@ -236,6 +236,7 @@ export function DashboardPage() {
   const [planExpanded, setPlanExpanded] = useState(true)
   const [planAcct, setPlanAcct] = useState(ACCOUNTS[0] || 'all')
   const [adExpanded, setAdExpanded] = useState(false)
+  const [adStatusOpenId, setAdStatusOpenId] = useState(null)
   const PREVIEW_COUNT = 3
   // 「已投流」的从列表隐藏（与 PC 一致）：数据保留，不提供查看入口
   // 提醒中心 Tab：reminders（发布提醒）| low（发布不足5条）| expiring（即将到期）
@@ -1296,10 +1297,7 @@ export function DashboardPage() {
               {(adExpanded ? adVisible : adVisible.slice(0, PREVIEW_COUNT)).map((a) => {
                 const st = AD_STATUS_COLOR[a.status] || AD_STATUS_COLOR['未投流']
                 const col = ACCOUNT_COLOR[a.account] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
-                const cycleStatus = () => {
-                  const i = AD_STATUSES.indexOf(a.status)
-                  updateAdQueue(a.id, { status: AD_STATUSES[(i + 1) % AD_STATUSES.length] })
-                }
+                const statusOpen = adStatusOpenId === a.id
                 return (
                   <SwipeRow key={a.id} onDelete={() => { deleteAdQueue(a.id); show('已删除', 'success') }}>
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1309,14 +1307,37 @@ export function DashboardPage() {
                       </div>
                       {a.publishDate && <span style={{ fontSize: '10px', color: '#94a3b8', flexShrink: 0 }}>{a.publishDate}</span>}
                     </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); cycleStatus() }}
-                      title="点一下切换状态"
-                      style={{
-                        fontSize: '11px', padding: '3px 8px', borderRadius: '8px',
-                        border: `1px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer', flexShrink: 0,
-                      }}
-                    >{a.status}</button>
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setAdStatusOpenId(statusOpen ? null : a.id) }}
+                        style={{
+                          fontSize: '11px', padding: '3px 8px', borderRadius: '8px',
+                          border: `1px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer',
+                        }}
+                      >{a.status} ▾</button>
+                      {statusOpen && (
+                        <div style={{
+                          position: 'absolute', right: 0, top: '100%', marginTop: 4, zIndex: 50,
+                          background: '#fff', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                          border: '1px solid #f0f0f0', overflow: 'hidden', minWidth: 90,
+                        }}>
+                          {AD_STATUSES.map((opt) => {
+                            const osc = AD_STATUS_COLOR[opt]
+                            return (
+                              <button
+                                key={opt}
+                                onClick={(e) => { e.stopPropagation(); updateAdQueue(a.id, { status: opt }); setAdStatusOpenId(null) }}
+                                style={{
+                                  display: 'block', width: '100%', textAlign: 'left', border: 'none',
+                                  background: opt === a.status ? osc.bg : '#fff', color: osc.c,
+                                  fontSize: 12, padding: '8px 12px', cursor: 'pointer', fontWeight: opt === a.status ? 700 : 400,
+                                }}
+                              >{opt}{opt === a.status ? ' ✓' : ''}</button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </SwipeRow>
                 )
               })}
