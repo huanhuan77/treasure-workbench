@@ -1693,6 +1693,16 @@ export function DashboardPage() {
                     const byCountOnly = showAccounts.length > 0
                       && !showAccounts.some((a) => (Number(cntMap[a]?.publishCount) || 0) === 0)
                       && !showAccounts.some((a) => accountDue(s, a))
+                    // 天数归属到**具体账号**（用户反馈：「应该显示的是该账号的」）。
+                    // 选最该催的那个：从没发过的优先，其次是天数最大的。
+                    let worstAcc = null
+                    let worstDays = -1
+                    for (const a of showAccounts) {
+                      const d = daysSincePublishByAccount(s, a)
+                      const n = d === Infinity ? Number.MAX_SAFE_INTEGER : d
+                      if (n > worstDays) { worstDays = n; worstAcc = a }
+                    }
+                    const worstNever = worstAcc ? (Number(cntMap[worstAcc]?.publishCount) || 0) === 0 : false
                     const swiped = swipedHotId === s.id
                     return (
                       // 与「高频出单」一致：操作收到左滑里（用户要求「发布提醒也一样」）
@@ -1756,7 +1766,9 @@ export function DashboardPage() {
                               }}>
                                 {byCountOnly
                                   ? `出过单，还需补到 ${REMIND_PUBLISH_TARGET} 条`
-                                  : (daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`)}
+                                  : (worstAcc
+                                      ? `${worstAcc} ${worstNever ? '从未发过视频' : `已 ${worstDays} 天没发视频`}`
+                                      : (daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`))}
                               </span>
                             </div>
                           ) : null}

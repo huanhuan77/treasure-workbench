@@ -48,6 +48,10 @@ export function daysSincePublish(sample) {
 // 某账号距上次发布天数（基于该账号自己的发布统计）。无记录返回 Infinity
 export function daysSincePublishByAccount(sample, account) {
   const c = (sample && sample.countsByAccount && sample.countsByAccount[account]) || null
+  // publishCount 为 0 = 这个账号压根没发过 → 直接 Infinity。
+  // 不能只看 lastPublishAt：历史数据里可能有残留日期，会算出「已 1 天没发视频」这种
+  // 与「从未发过」自相矛盾的结果（用户反馈：这个账号应该显示它自己的情况）。
+  if (c && Number(c.publishCount) === 0) return Infinity
   const d = c && c.lastPublishAt
   if (!d) return Infinity
   const last = new Date(d)
