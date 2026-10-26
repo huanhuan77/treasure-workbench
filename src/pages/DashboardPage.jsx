@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays, isHotAccount } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays, isHotAccount, accountDue, REMIND_PUBLISH_TARGET } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
@@ -1685,6 +1685,14 @@ export function DashboardPage() {
                       : (showAccounts.length
                           ? Math.max(...showAccounts.map((a) => daysSincePublishByAccount(s, a)))
                           : daysSincePublish(s))
+                    // 这条到底为什么进来？（用户反馈「一天的也显示了」——不是天数判进来的）
+                    // 若 showAccounts 里既没有「从未发过」也没有「到天数」的账号，
+                    // 说明它是靠 needPublishReminder 最后一条「出过单但没发满 N 条」催更进来的。
+                    // 那种情况下 daysText 只是样品最近一次发布的天数，显示「已 1 天没发视频」纯属误导。
+                    const cntMap = s.countsByAccount || {}
+                    const byCountOnly = showAccounts.length > 0
+                      && !showAccounts.some((a) => (Number(cntMap[a]?.publishCount) || 0) === 0)
+                      && !showAccounts.some((a) => accountDue(s, a))
                     const swiped = swipedHotId === s.id
                     return (
                       // 与「高频出单」一致：操作收到左滑里（用户要求「发布提醒也一样」）
@@ -1743,9 +1751,13 @@ export function DashboardPage() {
                             <div style={{ marginTop: '4px' }}>
                               <span style={{
                                 fontSize: '10px', fontWeight: 700, color: '#fff',
-                                background: '#f59e0b',
+                                background: byCountOnly ? '#8b5cf6' : '#f59e0b',
                                 padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap',
-                              }}>{daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`}</span>
+                              }}>
+                                {byCountOnly
+                                  ? `出过单，还需补到 ${REMIND_PUBLISH_TARGET} 条`
+                                  : (daysText === Infinity ? '⚠ 从未发布过视频' : `已 ${daysText} 天没发视频`)}
+                              </span>
                             </div>
                           ) : null}
                         </div>

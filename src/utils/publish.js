@@ -5,6 +5,9 @@ import { getAggregateCounts } from './sampleStatus'
 
 // 提醒阈值：超过该天数未发视频即提醒（用户可在「设置」里改）
 export const N_PUBLISH_DAYS = 7
+// 「出过单就要发满 N 条」的目标条数（needPublishReminder 最后一条「催更」用它，
+// 提醒卡片上给用户看的文案也用同一个常量，避免两处数字漂移）。
+export const REMIND_PUBLISH_TARGET = 10
 let PUBLISH_DAYS = N_PUBLISH_DAYS
 export function setPublishDays(n) {
   const v = Number(n)
@@ -119,7 +122,9 @@ export function isHotAccount(sample, account) {
 // 天数按账号口径（账号单独设 > 产品设 > 默认 7）；从未发布过 → 也算该发。
 // 边界：隔 N 天（第 N 天）就提醒。
 export function accountDue(sample, account) {
-  const th = sampleDays(sample, account)
+  // 阈值下限：样品/账号上填的「提醒天数」可以比全局默认更**宽松**（>7 天仍生效），
+  // 但不允许更**短** —— 否则设了 1 天的账号会天天被催，用户反馈「一天的也显示了」。
+  const th = Math.max(sampleDays(sample, account), PUBLISH_DAYS)
   const d = daysSincePublishByAccount(sample, account)
   return d === Infinity || d >= th
 }
@@ -193,7 +198,7 @@ export function needPublishReminder(sample) {
     const counts = sample.countsByAccount || {}
     for (const a of getAccounts(sample)) {
       const n = Number(counts[a]?.publishCount) || 0
-      if (n > 0 && n < 10) return true
+      if (n > 0 && n < REMIND_PUBLISH_TARGET) return true
     }
   }
   return false
