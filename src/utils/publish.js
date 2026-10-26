@@ -133,8 +133,8 @@ export function accountDue(sample, account) {
   // daysSincePublishByAccount 里已经堵掉了。
   const th = sampleDays(sample, account)
   const d = daysSincePublishByAccount(sample, account)
-  // 严格「超过」阈值才提醒（原来是 >=，第 7 天当天就进列表，用户反馈不该出现）。
-  return d === Infinity || d > th
+  // 第 N 天就提醒（>=）：第 7 天当天进列表，不用等到第 8 天。
+  return d === Infinity || d >= th
 }
 
 export function pendingAccounts(sample) {
