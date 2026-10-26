@@ -36,6 +36,7 @@ export function isHotCadence(sample) {
 }
 
 export function selectPublishReminders(samples, orders = []) {
+  const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   return (samples || []).filter((s) => {
     if (!needPublishReminder(s)) return false
     const due = pendingAccounts(s)
@@ -44,7 +45,15 @@ export function selectPublishReminders(samples, orders = []) {
     if (due.some((a) => isHotAccount(s, a))) return false
     // 没拍过视频的不进发布提醒（由「即将到期」盯截止日）
     if (!isShotSample(s)) return false
-    return true
+
+    // 互斥口径：出过单的 → 进发布提醒；没出单的 → 归发布不足10
+    if (orderedSampleIds.has(s.id)) return true
+
+    // 没出单的：只有「从未发布过」（所有账号 publishCount=0）才进发布提醒
+    // 发了1~9条但没出单的，归发布不足10
+    const accs = getAccounts(s)
+    const allNeverPublished = accs.every((a) => (Number(s?.countsByAccount?.[a]?.publishCount) || 0) === 0)
+    return allNeverPublished
   })
 }
 
