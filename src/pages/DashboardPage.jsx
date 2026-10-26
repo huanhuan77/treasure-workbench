@@ -1969,29 +1969,26 @@ export function DashboardPage() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
                             {planBadge(s.name, s.id)}
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
                               还差 {it.minLack} 条{it.accounts.length > 1 ? ` · ${it.accounts.length} 个账号` : ''}
                             </span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {/* 列出各账号的条数分布；筛了具体账号时只显示该账号 */}
                             {it.accounts
                               .filter(({ account: a }) => remindAccount === 'all' || a === remindAccount)
                               .map(({ account: a, publishCount: n }) => {
-                                const col = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(0,0,0,0.06)' }
+                                const col = ACCOUNT_COLOR[a] || { c: '#8a8f98', bg: 'rgba(148,163,184,0.16)' }
                                 const d = daysSincePublishByAccount(s, a)
+                                const th = sampleDays(s, a)
+                                const due = d === Infinity || d >= th
                                 return (
-                                  <span key={a} style={{
-                                    display: 'inline-flex', alignItems: 'center', borderRadius: '6px',
-                                    overflow: 'hidden', whiteSpace: 'nowrap', flexShrink: 0,
-                                  }}>
+                                  <span key={a} style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 6, overflow: 'hidden', lineHeight: '16px', whiteSpace: 'nowrap', fontSize: 11 }}>
+                                    <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{a}({n}条)</span>
                                     <span style={{
-                                      fontSize: '10px', padding: '2px 8px', fontWeight: 600,
-                                      background: col.bg, color: col.c, border: `1px solid ${col.c}`,
-                                    }}>{a}({n}条)</span>
-                                    <span style={{
-                                      fontSize: '10px', padding: '2px 6px', fontWeight: 700,
-                                      background: 'rgba(148,163,184,0.16)', color: '#64748b',
+                                      padding: '0 5px', fontWeight: 700,
+                                      background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
+                                      color: due ? '#e11d48' : '#64748b',
                                     }}>{d === Infinity ? '从未发布' : `已${d}天`}</span>
                                   </span>
                                 )
