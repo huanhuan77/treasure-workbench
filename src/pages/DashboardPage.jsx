@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays, isHotAccount, accountDue, REMIND_PUBLISH_TARGET } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays, isHotAccount } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
@@ -13,6 +13,32 @@ import { SampleForm } from '../components/SampleForm'
 import { useIsDesktop } from '../utils/useIsDesktop'
 import { syncAll } from '../utils/sync'
 import { getStoredToken } from '../utils/cloudBackup'
+
+// 「账号 + 该账号多少天没发」的双段小胶囊 —— 与 PC 总览的 AccountDays 同一套观感：
+// 左半段用账号主题色底放账号名，右半段放天数；超过该账号阈值的天数标红。
+// 用户反馈：手机上原来是「账号胶囊」一行 + 另一行堆「已N天没发视频」标签，
+// 又重复又占地方，**要照 PC 那样合成一块**。
+function AccountDaysChip({ sample, account }) {
+  const days = daysSincePublishByAccount(sample, account)
+  const th = sampleDays(sample, account)
+  const due = days === Infinity || days > th     // 与 accountDue 同口径（严格超过）
+  const col = ACCOUNT_COLOR[account] || { c: '#8a8f98', bg: 'rgba(148,163,184,0.16)' }
+  return (
+    <span
+      title={`${account}：${days === Infinity ? '从未发布' : `${days} 天没发`}（阈值 ${th} 天）`}
+      style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 6, overflow: 'hidden', lineHeight: '16px', whiteSpace: 'nowrap', fontSize: 11 }}
+    >
+      <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{account}</span>
+      <span style={{
+        padding: '0 5px', fontWeight: 700,
+        background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
+        color: due ? '#e11d48' : '#64748b',
+      }}>
+        {days === Infinity ? '从未发布' : `已${days}天`}
+      </span>
+    </span>
+  )
+}
 
 // 顶部问候（按时段）
 function greeting() {
@@ -634,7 +660,13 @@ export function DashboardPage() {
 
   // 发布提醒：可发布状态但超阈值未发（含从未发布）；abandoned 已被 needPublishReminder 排除
   // 口径统一从 utils/reminders 取，保证与列表页「卡片数字 = 点进去的条数」
-  const allReminders = useMemo(() => selectPublishReminders(samples, orders), [samples, orders])
+  //
+  // ⚠️ **故意不传 orders**（用户：「我要的不是这样，你看看 PC」）：
+  //   传了 orders 会触发 selectPublishReminders 里的「出过单但没发满 10 条也催更」分支，
+  //   于是 4/5/6 天这种没超阈值的样品也被塞进发布提醒。
+  //   PC 端（selectAllReminders）一直没传，所以 PC 那份才是用户要的口径：
+  //   **只按「超过阈值 / 从未发过 / 逾期」**；条数不够交给「发布不足10」那个 tab 管。
+  const allReminders = useMemo(() => selectPublishReminders(samples), [samples])
   // 总览页内直接展示全部，不再跳列表页（保留别名以免大范围改动下方渲染代码）
   const reminders = allReminders
 
@@ -1679,21 +1711,8 @@ export function DashboardPage() {
                     if (remindAccount !== 'all' && pendingAccounts(s).includes(remindAccount) && !showAccounts.includes(remindAccount)) {
                       showAccounts = [remindAccount, ...showAccounts]
                     }
-                    // 这条到底为什么进来？（用户反馈「一天的也显示了」——不是天数判进来的）
-                    // 若 showAccounts 里既没有「从未发过」也没有「到天数」的账号，
-                    // 说明它是靠 needPublishReminder 最后一条「出过单但没发满 N 条」催更进来的。
-                    const cntMap = s.countsByAccount || {}
-                    const byCountOnly = showAccounts.length > 0
-                      && !showAccounts.some((a) => (Number(cntMap[a]?.publishCount) || 0) === 0)
-                      && !showAccounts.some((a) => accountDue(s, a))
-                    // 每个待发账号**各自一条**标签（用户反馈「账号不对」：
-                    // 之前只挑"最严重的一个"显示，容易挑到他不关心的那个账号）。
-                    // 顺序沿用 showAccounts，与卡片上方的账号胶囊一致。
-                    const pendingLabels = showAccounts.map((a) => ({
-                      acc: a,
-                      never: (Number(cntMap[a]?.publishCount) || 0) === 0,
-                      days: daysSincePublishByAccount(s, a),
-                    }))
+                    // 这里不再需要区分「是不是靠催更进来的」——列表已经和 PC 同口径
+                    // （selectPublishReminders 不传 orders），只剩「超过阈值 / 从未发过」两种。
                     const swiped = swipedHotId === s.id
                     return (
                       // 与「高频出单」一致：操作收到左滑里（用户要求「发布提醒也一样」）
@@ -1739,37 +1758,15 @@ export function DashboardPage() {
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {showAccounts.map((a) => (
-                              <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
-                            ))}
+                            {/* 账号 + 该账号自己多少天没发，合成一个双段胶囊（与 PC 总览同一观感） */}
+                            {showAccounts.map((a) => <AccountDaysChip key={a} sample={s} account={a} />)}
                           </div>
-                          {/* 显示天数提示：未发布且逾期显示红色；还有账号没发显示橙色 */}
-                          {s.status !== 'published' && isOverdue(s) ? (
+                          {/* 逾期单独标红；天数已经在上面的胶囊里，不再重复堆一行 */}
+                          {s.status !== 'published' && isOverdue(s) && (
                             <div style={{ marginTop: '4px' }}>
                               <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap' }}>⚠ 已逾期（截止 {s.deadline}）</span>
                             </div>
-                          ) : showAccounts.length > 0 ? (
-                            <div style={{ marginTop: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                              {byCountOnly ? (
-                                <span style={{
-                                  fontSize: '10px', fontWeight: 700, color: '#fff',
-                                  background: '#8b5cf6', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap',
-                                }}>
-                                  出过单，还需补到 {REMIND_PUBLISH_TARGET} 条
-                                </span>
-                              ) : pendingLabels.map((p) => (
-                                <span
-                                  key={p.acc}
-                                  style={{
-                                    fontSize: '10px', fontWeight: 700, color: '#fff',
-                                    background: '#f59e0b', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {p.acc} {p.never ? '从未发过视频' : `已 ${p.days} 天没发视频`}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
+                          )}
                         </div>
                         {/* 「新建计划」常驻显示（用户要求「计划按钮放出来，不要左滑才显示」） */}
                         <button
