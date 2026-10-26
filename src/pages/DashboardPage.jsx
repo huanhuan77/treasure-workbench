@@ -672,7 +672,11 @@ export function DashboardPage() {
 
   // 已发布但发布不足5条 —— 按「账号」粒度返回「样品×账号」条目数组，
   // 一个样品可能贡献多条（多个账号各自发布不足），计数与列表都基于它，保证同源。
-  const lowPublish = useMemo(() => selectLowPublish(samples, LOW_PUBLISH_LIMIT, orders), [samples, orders])
+  // ⚠️ **不传 orders**，与 PC（selectAllReminders）保持同一口径：
+  //   传了 orders 会把「出过单的样品」整条排除掉（归发布提醒催更），
+  //   于是同一份数据 PC 显示 30 条、手机只显示 18 条（用户：「为什么 2 端不一样」）。
+  //   现在两端都是「某账号发了 1~9 条就算不足」，出过单的也在里面，一条不漏。
+  const lowPublish = useMemo(() => selectLowPublish(samples, LOW_PUBLISH_LIMIT), [samples])
 
   // 即将到期：有截止日期、且未发布/未放弃、7 天内到期（含已逾期），按截止日期升序
   const expiringSoon = useMemo(() => selectExpiringSoon(samples), [samples])
