@@ -126,11 +126,15 @@ export function isHotAccount(sample, account) {
 // 天数按账号口径（账号单独设 > 产品设 > 默认 7）；从未发布过 → 也算该发。
 // 边界：隔 N 天（第 N 天）就提醒。
 export function accountDue(sample, account) {
-  // 阈值下限：样品/账号上填的「提醒天数」可以比全局默认更**宽松**（>7 天仍生效），
-  // 但不允许更**短** —— 否则设了 1 天的账号会天天被催，用户反馈「一天的也显示了」。
-  const th = Math.max(sampleDays(sample, account), PUBLISH_DAYS)
+  // 生效阈值 = 账号单独设的 > 产品设的 > 全局默认 7（即 sampleDays 的原语义）。
+  // 用户口径：「超过 7 天、或者超过单独设置的天数」才提醒 —— 所以单设 3 天就是 3 天，
+  // 不做下限夹紧（上一版曾用 max(..., 7) 夹过，会把单设的短周期废掉，已撤回）。
+  // 真正让 1 天乱入的是脏数据（publishCount=0 却残留 lastPublishAt），在
+  // daysSincePublishByAccount 里已经堵掉了。
+  const th = sampleDays(sample, account)
   const d = daysSincePublishByAccount(sample, account)
-  return d === Infinity || d >= th
+  // 严格「超过」阈值才提醒（原来是 >=，第 7 天当天就进列表，用户反馈不该出现）。
+  return d === Infinity || d > th
 }
 
 export function pendingAccounts(sample) {
