@@ -325,6 +325,16 @@ export function PcDashboard() {
     return [...set].sort((x, y) => accRank(x) - accRank(y))
   }, [cur, account, visAcc])
 
+  // 每个账号的条目数（筛选条上的角标）。口径：当前 Tab 里「涉及该账号」的条目数，
+  // 与手机端 acctCounts 一致（手机是 reminders.filter(matchAcct) 这类写法）。
+  const accountCounts = useMemo(() => {
+    const m = {}
+    for (const a of ACCOUNTS) {
+      m[a] = cur.items.filter((it) => visAcc(cur.accountsOf(it)).includes(a)).length
+    }
+    return m
+  }, [cur, visAcc])
+
   // 「全部账号」时**合并成一张表**，用一列「账号」标出属于谁（用户要求）。
   // 粒度与手机端一致：**一个样品一行**（同一个品不按账号拆成多行），
   // 账号列里并列列出涉及的账号；天数这类数字取「最严重的那个账号」。
@@ -611,6 +621,7 @@ export function PcDashboard() {
                 {accountOptions.map((a) => {
                   const col = (ACCOUNT_COLOR[a] || {}).c || '#6b7280'
                   const on = account === a
+                  const n = accountCounts[a] || 0
                   return (
                     <button
                       key={a}
@@ -618,11 +629,22 @@ export function PcDashboard() {
                       style={{
                         padding: '5px 11px', borderRadius: 999, cursor: 'pointer', whiteSpace: 'nowrap',
                         fontSize: 12, fontWeight: 600,
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
                         border: on ? 'none' : `1px solid ${col}`,
                         background: on ? col : '#fff',
                         color: on ? '#fff' : col,
                       }}
-                    >{maskAcc(a)}</button>
+                    >
+                      {maskAcc(a)}
+                      {/* 数量角标（与手机端一致）：该账号在当前 Tab 里涉及的条目数 */}
+                      {n > 0 && (
+                        <span style={{
+                          fontSize: 9, fontWeight: 700, padding: '0 5px', borderRadius: 8,
+                          background: on ? 'rgba(255,255,255,0.28)' : `${col}1f`,
+                          color: on ? '#fff' : col,
+                        }}>{n}</span>
+                      )}
+                    </button>
                   )
                 })}
               </div>
