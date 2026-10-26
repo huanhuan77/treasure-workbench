@@ -30,7 +30,9 @@ export function OrderDialog({ prefill, onClose, editing }) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   })
   // 备注（编辑时可改；新增时也允许填）
-  const [remark, setRemark] = useState(editing?.remark || '')
+  // 备注输入框已按用户要求从「记出单」弹窗去掉；这里仍读原值，
+  // 保证编辑已有记录时不会把原来的备注清空（新增记录为空）。
+  const [remark] = useState(editing?.remark || '')
   // 每个账号独立的条目：{ [account]: [{ sampleId, qty }] }
   const [byAcc, setByAcc] = useState(() => {
     const o = {}
@@ -316,16 +318,6 @@ export function OrderDialog({ prefill, onClose, editing }) {
               </div>
             )}
           </div>
-
-          {/* 备注（选填）：编辑时能改原来的备注 */}
-          <div className="pcv-field-label" style={{ marginTop: 14 }}>备注（选填）</div>
-          <input
-            className="pcv-input"
-            style={{ width: '100%' }}
-            placeholder="平台 / 链接 / 说明…"
-            value={remark}
-            onChange={(e) => setRemark(e.target.value)}
-          />
         </div>
 
         <div className="pcv-dialog-f">
