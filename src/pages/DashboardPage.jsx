@@ -1268,8 +1268,7 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* 待投流：没有待投/暂停的条目时隐藏整个板块 */}
-      {adVisible.length > 0 && (
+      {/* 待投流：从已发布样品挑选，带出账号与发布时间，状态可改 */}
       <div style={{ padding: '6px 8px 0' }}>
         <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', padding: '12px 14px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1352,7 +1351,6 @@ export function DashboardPage() {
           )}
         </div>
       </div>
-      )}
 
       {/* 待投流选择弹窗：列出已发布样品 × 账号 */}
       {adPickerOpen && (

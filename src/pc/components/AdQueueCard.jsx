@@ -146,10 +146,6 @@ export function AdQueueCard() {
     return () => { clearTimeout(t); clearTimeout(t2) }
   }, [flashId])
 
-  // 没有待投/暂停的条目时隐藏整个板块
-  const visibleList = list.filter((a) => a.status !== '已投流')
-  if (!visibleList.length) return null
-
   return (
     <>
       <div className="pcv-card">
