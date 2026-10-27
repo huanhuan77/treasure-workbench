@@ -295,6 +295,8 @@ export function PcDashboard() {
     const m = new Map()
     const today = todayStr()
     for (const p of publishPlans || []) {
+      // 已完成的计划不算「已建计划」
+      if (p.done) continue
       // 用户要求：日期已过去的计划不算「已建计划」（比如今天 10-23，10-21 的那条不该再标）
       if (p.planDate && p.planDate < today) continue
       // 用户要求：筛了账号就只认该账号的计划（其他账号排的计划不算「已建计划」）；
