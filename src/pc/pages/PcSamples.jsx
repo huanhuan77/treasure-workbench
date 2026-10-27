@@ -6,13 +6,14 @@ import {
   SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter,
   getAccounts, getCounts, getTopStatus,
 } from '../../utils/sampleStatus'
-import { deadlineDesc } from '../../utils/helpers'
+import { deadlineDesc, copyText } from '../../utils/helpers'
 import { sampleDays } from '../../utils/publish'
 import { CATEGORY_STYLE } from '../../utils/productDisplay'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
 import { SampleDialog } from '../components/SampleDialog'
 import { ResetButton } from '../components/ResetButton'
 import QtyDetailModal from '../components/QtyDetailModal'
+import { useToast } from '../../components/Toast'
 
 // 状态色调只用三档 + 一档淡出：
 //   中性（未到货）/ 待办（未拍、已拍未发）/ 完成（已发布）/ 淡出（已放弃）
@@ -44,6 +45,7 @@ const SORT_DEFAULT_DIR = { receiveDate: 'desc', deadline: 'asc' }
 export function PcSamples() {
   const navigate = useNavigate()
   const { samples, orders, hiddenAccounts } = useStore()
+  const { show } = useToast()
   // 「隐藏账号」= 名字打星号，不筛选（用户明确「是账号显示星号，不是筛选」）
   const visAcc = useCallback((arr) => (arr || []), [])
   const [keyword, setKeyword] = useState('')
@@ -364,13 +366,14 @@ export function PcSamples() {
                 <th style={{ width: 155 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
+                <th style={{ width: 100 }}>链接</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
               {displayed.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="pcv-empty">当前筛选下没有样品</td>
+                  <td colSpan={11} className="pcv-empty">当前筛选下没有样品</td>
                 </tr>
               ) : displayed.map((s) => {
                 const top = getTopStatus(s)
@@ -543,6 +546,28 @@ export function PcSamples() {
                       {dl && top !== 'published' && top !== 'abandoned' && (
                         <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 700, color: dl.includes('过期') ? '#e02020' : '#d97706' }}>{dl}</span>
                       )}
+                    </td>
+                    <td>
+                      {(() => {
+                        const links = Array.isArray(s?.links) ? s.links.filter((l) => l && l.url) : []
+                        if (!links.length) return <span style={{ color: '#c9cdd4' }}>—</span>
+                        return links.map((lk, i) => (
+                          <button
+                            key={lk.id || i}
+                            onClick={async () => {
+                              const ok = await copyText(lk.url)
+                              show(ok ? `已复制${lk.platform ? '·' + lk.platform : (links.length > 1 ? '链接' + (i + 1) : '')}` : '复制失败', ok ? 'success' : 'error')
+                            }}
+                            title={lk.url}
+                            style={{
+                              fontSize: 11, padding: '2px 8px', borderRadius: 5,
+                              background: 'rgba(99,102,241,0.12)', color: '#4f46e5',
+                              fontWeight: 700, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
+                              marginRight: links.length > 1 ? 4 : 0,
+                            }}
+                          >{lk.platform ? `复制·${lk.platform}` : (links.length > 1 ? `复制${i + 1}` : '复制')}</button>
+                        ))
+                      })()}
                     </td>
                     <td>
                       {/* 列表只留「编辑」一个按钮（用户要求）：标记已拍 / 改名 / 补发布
