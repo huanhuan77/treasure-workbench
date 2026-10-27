@@ -146,6 +146,9 @@ export function AdQueueCard() {
     return () => { clearTimeout(t); clearTimeout(t2) }
   }, [flashId])
 
+  // 无数据时隐藏整个板块
+  if (!list.length) return null
+
   return (
     <>
       <div className="pcv-card">
