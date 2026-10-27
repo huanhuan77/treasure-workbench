@@ -6,6 +6,7 @@ import { CATEGORIES } from '../../utils/categories'
 import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
 import { isShotSample } from '../../utils/sampleStatus'
 import { todayStr, addDays, toDateInput } from '../../utils/helpers'
+import { LinksEditor } from '../../components/LinksEditor'
 
 // PC 版「新增/编辑样品」对话框。
 // 用户要求：PC 上的按钮操作都走弹窗、不跳页面；弹窗要是 PC 风格。
@@ -67,6 +68,7 @@ export function SampleDialog({ sample, onClose, onSaved }) {
     productId: sample?.productId || '',
     category: sample?.category || '',
     archived: sample?.archived || sample?.status === 'abandoned' || false,
+    links: Array.isArray(sample?.links) ? sample.links : [],
   })
   const [deadlineTouched, setDeadlineTouched] = useState(!!sample?.deadline)
   const [delOpen, setDelOpen] = useState(false)
@@ -254,6 +256,13 @@ export function SampleDialog({ sample, onClose, onSaved }) {
               value={form.remark}
               onChange={(e) => setForm((f) => ({ ...f, remark: e.target.value }))}
             />
+
+            <div style={{ marginTop: 18 }}>
+              <LinksEditor
+                links={form.links}
+                onChange={(next) => setForm((f) => ({ ...f, links: next }))}
+              />
+            </div>
           </div>
 
           <div className="pcv-dialog-f">
