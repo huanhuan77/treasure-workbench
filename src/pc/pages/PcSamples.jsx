@@ -570,8 +570,16 @@ export function PcSamples() {
                       })()}
                     </td>
                     <td>
-                      {/* 列表只留「编辑」一个按钮（用户要求）：标记已拍 / 改名 / 补发布
-                          全部收进编辑弹窗，列表不再提供任何行内修改入口。 */}
+                      <button
+                        className="pcv-btn"
+                        style={{ marginRight: 8 }}
+                        onClick={() => {
+                          const accs = getAccounts(s) || []
+                          window.dispatchEvent(new CustomEvent('wb:new-plan', {
+                            detail: { name: s.name, account: accs[0] || '', sampleId: s.id },
+                          }))
+                        }}
+                      >新建计划</button>
                       <button
                         className="pcv-btn pcv-btn-ghost"
                         onClick={() => setSampleDialog(s)}
