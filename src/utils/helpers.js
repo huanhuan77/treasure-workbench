@@ -109,6 +109,8 @@ function isProductNameHeader(line) {
 
 export function parseBulkCopies(text) {
   if (!text) return []
+  // 去掉独立的 --- 分隔线（用户导入格式：每条文案之间用 --- 隔开）
+  text = String(text).split('\n').filter((line) => !/^\s*-{3,}\s*$/.test(line)).join('\n')
   const _lines = text.split('\n')
   // 首行以「产品名称：」开头 → 去掉该行（用户显式标记产品名）
   if (_lines.length > 1 && /^\s*产品名称[：:]\s*/.test(_lines[0])) {

@@ -19,7 +19,10 @@ export async function readTextFile(file) {
 //   · 只有单个换行、且不止一行 → 认为「一行一条」，转成空行分隔
 // 不然一份「每行一条」的 txt 会被解析成一大条文案（用户要求「识别」）。
 export function normalizeForCopies(text) {
-  const t = String(text || '').replace(/\r\n?/g, '\n').trim()
+  let t = String(text || '').replace(/\r\n?/g, '\n').trim()
+  if (!t) return ''
+  // 去掉独立的 --- 分隔线（用户导入格式：每条文案之间用 --- 隔开）
+  t = t.split('\n').filter((line) => !/^\s*-{3,}\s*$/.test(line)).join('\n').trim()
   if (!t) return ''
   if (/\n\s*\n/.test(t)) return t
   const lines = t.split('\n').map((s) => s.trim()).filter(Boolean)
