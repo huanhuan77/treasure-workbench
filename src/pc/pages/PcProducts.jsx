@@ -522,6 +522,25 @@ export function PcProducts() {
                   >
                     📄 导入 txt
                   </button>
+                  <button
+                    className="pcv-btn pcv-btn-ghost"
+                    onClick={() => {
+                      if (!copyList.length) { show('还没有文案可导出', 'error'); return }
+                      const text = copyList.map((c) => c.content || '').filter(Boolean).join('\n\n---\n\n')
+                      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+                      const url = URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `${active.name || '文案'}.txt`
+                      a.click()
+                      URL.revokeObjectURL(url)
+                      show(`已导出 ${copyList.length} 条文案`, 'success')
+                    }}
+                    title="导出全部文案为 txt"
+                    style={{ color: '#7a5ea8', borderColor: 'rgba(122,94,168,0.75)', background: '#f7f2fc', fontWeight: 600 }}
+                  >
+                    📤 导出 txt
+                  </button>
                   <button className="pcv-btn pcv-btn-ghost" onClick={() => { setImportText(''); setImportOpen(true) }}>＋ 新增文案</button>
                 </div>
 
