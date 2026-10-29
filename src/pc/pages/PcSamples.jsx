@@ -196,6 +196,12 @@ export function PcSamples() {
         if (pa === pb) return (a.name || '').localeCompare(b.name || '')
         return (pa - pb) * dir
       }
+      if (sortKey === 'orderQty') {
+        const qa = orderQtyBySample.get(a.id) || 0
+        const qb = orderQtyBySample.get(b.id) || 0
+        if (qa === qb) return (a.name || '').localeCompare(b.name || '')
+        return (qa - qb) * dir
+      }
       const va = a[sortKey] || ''
       const vb = b[sortKey] || ''
       if (!va && !vb) return (a.name || '').localeCompare(b.name || '')
@@ -365,7 +371,9 @@ export function PcSamples() {
                 </th>
                 <th style={{ width: 70 }}>是否出单</th>
                 {/* 出单数量：该样品在出单记录里的件数合计（用户要求「加上出单数量」） */}
-                <th style={{ width: 160 }}>出单数量</th>
+                <th style={{ width: 160 }} className="pcv-th-sort" onClick={() => toggleSort('orderQty')}>
+                  出单数量{sortDirOf('orderQty') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
+                </th>
                 {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天），与提醒中心同一套算 */}
                 <th style={{ width: 78 }}>提醒天数</th>
                 <th style={{ width: 107 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
