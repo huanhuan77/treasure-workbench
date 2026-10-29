@@ -42,7 +42,10 @@ export function PcPublishRecords() {
 
   const qtyOfDate = (group, date) => {
     const list = group.records.filter((r) => r.publishDate === date)
-    return list.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
+    return list.reduce((s, r) => {
+      const v = Number(r.qty)
+      return s + (r.qty == null || r.qty === '' ? 1 : v)
+    }, 0)
   }
 
   const openDateEdit = (group, date) => {
@@ -68,8 +71,9 @@ export function PcPublishRecords() {
 
     if (dateDraft !== date) ids.forEach((id) => updatePublishRecord(id, { publishDate: dateDraft }))
     if (qtyChanged) {
-      // 数量记到这一天第一条记录上（同一天多条时其余保留原值，避免一次改乱多条）
+      // 数量记到这一天第一条记录上，同一天其余记录清零（否则总和对不上用户填的总数）
       updatePublishRecord(list[0].id, { qty: String(newQty) })
+      list.slice(1).forEach((r) => updatePublishRecord(r.id, { qty: '0' }))
     }
 
     const parts = []
@@ -172,7 +176,10 @@ export function PcPublishRecords() {
     return [...map.values()]
       .map((g) => {
         const dates = [...new Set(g.records.map((r) => r.publishDate).filter(Boolean))].sort().reverse()
-        const qty = g.records.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
+        const qty = g.records.reduce((s, r) => {
+          const v = Number(r.qty)
+          return s + (r.qty == null || r.qty === '' ? 1 : v)
+        }, 0)
         return { ...g, dates, qty, legacy: g.records.some((r) => r.legacy) }
       })
       .sort((a, b) => {
