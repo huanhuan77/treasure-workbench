@@ -5,7 +5,7 @@ import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 
-import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
+import { daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, hotReminderDays, accountDue, sampleDays, isHotAccount } from '../../utils/publish'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount, mapAccount } from '../../utils/accounts'
 import { todayStr } from '../../utils/helpers'
 import { SAMPLE_STATUS, getTopStatus } from '../../utils/sampleStatus'
@@ -162,9 +162,9 @@ export function PcDashboard() {
     // 高频出单：手动设了提醒天数（≤5 天）且已到该发的产品（与手机端同一口径）
     hot: {
       items: all.hot,
-      // 列「到该发」的账号：含多账号里非高频的那个，避免只显示高频账号后
-      // 另一个账号的待发状态被藏起来（这些样品已从「发布提醒」里剔除）
-      accountsOf: (s) => pendingAccounts(s),
+      // 只返回「高频账号」（≤5天）且到期的账号，这样按账号筛选时
+      // 不会把另一个账号设了高频、但当前账号只是普通到期的样品带进来
+      accountsOf: (s) => pendingAccounts(s).filter((a) => isHotAccount(s, a)),
       // 「提醒天数」单独一列（用户要求「提醒天数放一列，账号那里显示账号加未发布天数」）
       header: '提醒天数',
       mid: (s) => {
