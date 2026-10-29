@@ -250,9 +250,15 @@ export function PcDashboard() {
         const color = overdue ? '#b96a66' : du <= 3 ? '#b07d4a' : '#a99154'
         return <span style={{ fontSize: 14, fontWeight: 600, color }}>{text}</span>
       },
-      actions: (s) => (
-        <button className="pcv-btn pcv-btn-ghost" onClick={() => setSampleDialog(s)}>打开样品</button>
-      ),
+      actions: (s) => {
+        const accs = getAccounts(s) || []
+        return (
+          <>
+            <button className="pcv-btn" onClick={() => quickPlan(s, accs[0] || '')}>新建计划</button>
+            <button className="pcv-btn pcv-btn-ghost" style={{ marginLeft: 8 }} onClick={() => setSampleDialog(s)}>打开样品</button>
+          </>
+        )
+      },
     },
   }), [all, navigate, quickPlan])
 
