@@ -116,13 +116,11 @@ export function PcDashboard() {
       account: searchParams.get('account') || '',
       sampleId: searchParams.get('sampleId') || '',
     }
-    // 等 PublishPlanCard 挂载后再派发事件
-    setTimeout(() => window.dispatchEvent(new CustomEvent('wb:new-plan', { detail })), 100)
+    setTimeout(() => window.dispatchEvent(new CustomEvent('wb:new-plan', { detail })), 150)
     const next = new URLSearchParams(searchParams)
     next.delete('newPlan'); next.delete('account'); next.delete('sampleId')
     setSearchParams(next, { replace: true })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [searchParams])
 
   // 每个样品的「出单数量」= 出单记录里 qty 合计（用户要求提醒中心加这一列）
   const orderQtyBySample = useMemo(() => {
