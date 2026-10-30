@@ -591,9 +591,12 @@ export function PcSamples() {
                         style={{ marginRight: 8 }}
                         onClick={() => {
                           const accs = getAccounts(s) || []
-                          window.dispatchEvent(new CustomEvent('wb:new-plan', {
-                            detail: { name: s.name, account: accs[0] || '', sampleId: s.id },
-                          }))
+                          const params = new URLSearchParams({
+                            newPlan: s.name || '',
+                            account: accs[0] || '',
+                            sampleId: s.id || '',
+                          })
+                          navigate(`/pc?${params.toString()}`)
                         }}
                       >新建计划</button>
                       <button

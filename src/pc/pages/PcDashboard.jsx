@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { DueTag } from '../../components/DueTag'
@@ -90,6 +90,7 @@ function AccountDays({ sample, list, hidden }) {
 // 这里只重写「怎么摆」，不重新定义「哪些算要提醒」，避免两套 UI 口径漂移。
 export function PcDashboard() {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { show } = useToast()
   const { samples, todos, orders, publishPlans, hiddenAccounts, setHiddenAccounts, updateTodo } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
@@ -105,6 +106,23 @@ export function PcDashboard() {
   // 「补记发布」入口已按用户要求去掉（总览不再用 PublishDialog，记录发布走「视频发布记录」页）
 
   const all = useMemo(() => selectAllReminders(samples, orders), [samples, orders])
+
+  // 从样品页点「新建计划」跳过来：带参数自动打开计划弹窗
+  useEffect(() => {
+    const np = searchParams.get('newPlan')
+    if (!np) return
+    const detail = {
+      name: np,
+      account: searchParams.get('account') || '',
+      sampleId: searchParams.get('sampleId') || '',
+    }
+    // 等 PublishPlanCard 挂载后再派发事件
+    setTimeout(() => window.dispatchEvent(new CustomEvent('wb:new-plan', { detail })), 100)
+    const next = new URLSearchParams(searchParams)
+    next.delete('newPlan'); next.delete('account'); next.delete('sampleId')
+    setSearchParams(next, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 每个样品的「出单数量」= 出单记录里 qty 合计（用户要求提醒中心加这一列）
   const orderQtyBySample = useMemo(() => {
