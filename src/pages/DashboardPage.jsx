@@ -882,30 +882,30 @@ export function DashboardPage() {
     <div className="app-container dash-sticky-page" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', minHeight: '100vh', color: '#1a1a1a' }}>
       <header className="pc-header" style={{ padding: 'calc(18px + var(--safe-top)) 20px 14px', background: 'transparent', borderBottom: '1px solid rgba(236,72,153,0.12)' }}>
         <p style={{ margin: 0, fontSize: '13px', color: '#b3888f' }}>{greeting()} · {todayLabel}</p>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px' }}>工作台总览</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px', flexWrap: 'wrap', gap: '6px' }}>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px', flex: '1 1 auto', minWidth: '0' }}>工作台总览</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexShrink: 0, flexWrap: 'wrap' }}>
             <button onClick={toggleHideAccount}
               style={{
-                padding: '7px 12px', borderRadius: '8px',
+                padding: '5px 9px', borderRadius: '8px',
                 border: '1px solid #fbcfe8', background: hideAccount ? '#fce7f3' : '#fff', color: '#db2777',
-                fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >{hideAccount ? '🙈 隐藏中' : '👁 隐藏账号'}</button>
             <button onClick={handleSync} disabled={syncing}
               style={{
-                padding: '7px 12px', borderRadius: '8px',
+                padding: '5px 9px', borderRadius: '8px',
                 border: '1px solid #fbcfe8', background: '#fff', color: '#db2777',
-                fontSize: '12px', fontWeight: 600, cursor: syncing ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
+                fontSize: '11px', fontWeight: 600, cursor: syncing ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
               }}
             >{syncing ? '同步中…' : '🔄 同步'}</button>
             <button
               onClick={handleCheckUpdate}
               disabled={checking}
               style={{
-                padding: '7px 12px', borderRadius: '8px',
+                padding: '5px 9px', borderRadius: '8px',
                 border: '1px solid #fbcfe8', background: '#fff', color: '#db2777',
-                fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+                fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
               }}
             >{checking ? '检查中…' : '↻ 检查更新'}</button>
           </div>
