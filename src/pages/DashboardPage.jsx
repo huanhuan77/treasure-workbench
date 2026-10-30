@@ -6,6 +6,7 @@ import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays, isHotAccount } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
+import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 import PlanBadge from '../components/PlanBadge'
@@ -18,17 +19,17 @@ import { getStoredToken } from '../utils/cloudBackup'
 // 左半段用账号主题色底放账号名，右半段放天数；超过该账号阈值的天数标红。
 // 用户反馈：手机上原来是「账号胶囊」一行 + 另一行堆「已N天没发视频」标签，
 // 又重复又占地方，**要照 PC 那样合成一块**。
-function AccountDaysChip({ sample, account }) {
+function AccountDaysChip({ sample, account, masked }) {
   const days = daysSincePublishByAccount(sample, account)
   const th = sampleDays(sample, account)
-  const due = days === Infinity || days > th     // 与 accountDue 同口径（严格超过）
+  const due = days === Infinity || days > th
   const col = ACCOUNT_COLOR[account] || { c: '#8a8f98', bg: 'rgba(148,163,184,0.16)' }
   return (
     <span
       title={`${account}：${days === Infinity ? '从未发布' : `${days} 天没发`}（阈值 ${th} 天）`}
       style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 6, overflow: 'hidden', lineHeight: '16px', whiteSpace: 'nowrap', fontSize: 11 }}
     >
-      <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{account}</span>
+      <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{masked ? '•••' : account}</span>
       <span style={{
         padding: '0 5px', fontWeight: 700,
         background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
@@ -212,6 +213,13 @@ export function DashboardPage() {
     settings,
   } = useStore()
   const { show } = useToast()
+  const [hideAccount, setHideAccount] = useState(isAccountsHidden)
+  const toggleHideAccount = () => {
+    const next = !hideAccount
+    setHideAccount(next)
+    setAccountsHidden(next)
+  }
+  const maskA = (a) => (hideAccount ? maskAccount(a, hiddenAccounts) : a)
   // 把用户设置的「多少天没发才提醒」同步到提醒计算口径
   useEffect(() => { setPublishDays(settings?.publishReminderDays || 7) }, [settings?.publishReminderDays])
   // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
@@ -872,6 +880,13 @@ export function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
           <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#111', letterSpacing: '-0.4px' }}>工作台总览</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <button onClick={toggleHideAccount}
+              style={{
+                padding: '7px 12px', borderRadius: '8px',
+                border: '1px solid #fbcfe8', background: hideAccount ? '#fce7f3' : '#fff', color: '#db2777',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >{hideAccount ? '🙈 隐藏中' : '👁 隐藏账号'}</button>
             <button onClick={handleSync} disabled={syncing}
               style={{
                 padding: '7px 12px', borderRadius: '8px',
@@ -1047,7 +1062,7 @@ export function DashboardPage() {
                             />
                             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <span style={{ fontSize: '13px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{p.name}</span>
-                              <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, flexShrink: 0 }}>{p.account || '未选账号'}</span>
+                              <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, flexShrink: 0 }}>{maskA(p.account) || '未选账号'}</span>
                             </div>
                             <span style={{ fontSize: '10px', color: '#b8517f', background: '#fdf1f6', padding: '1px 6px', borderRadius: '6px', flexShrink: 0, fontWeight: 700 }}>
                               ×{p.qty || 1}
@@ -1303,7 +1318,7 @@ export function DashboardPage() {
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '13px', color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{a.name}</span>
-                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, flexShrink: 0 }}>{a.account}</span>
+                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, flexShrink: 0 }}>{maskA(a.account)}</span>
                       </div>
                       {a.publishDate && <span style={{ fontSize: '10px', color: '#94a3b8', flexShrink: 0 }}>{a.publishDate}</span>}
                     </div>
@@ -1763,7 +1778,7 @@ export function DashboardPage() {
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                             {/* 账号 + 该账号自己多少天没发，合成一个双段胶囊（与 PC 总览同一观感） */}
-                            {showAccounts.map((a) => <AccountDaysChip key={a} sample={s} account={a} />)}
+                            {showAccounts.map((a) => <AccountDaysChip key={a} sample={s} account={a} masked={hideAccount} />)}
                           </div>
                           {/* 逾期单独标红；天数已经在上面的胶囊里，不再重复堆一行 */}
                           {s.status !== 'published' && isOverdue(s) && (
@@ -1885,7 +1900,7 @@ export function DashboardPage() {
                                 const col = ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)', c: '#64748b' }
                                 return (
                                   <span key={a} style={{ display: 'inline-flex', alignItems: 'center', borderRadius: '6px', overflow: 'hidden', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                    <span style={{ fontSize: '10px', padding: '2px 6px', background: col.bg, color: col.c, fontWeight: 600 }}>{a}</span>
+                                    <span style={{ fontSize: '10px', padding: '2px 6px', background: col.bg, color: col.c, fontWeight: 600 }}>{hideAccount ? '•••' : a}</span>
                                     <span style={{
                                       fontSize: '10px', padding: '2px 6px', fontWeight: 700,
                                       background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
