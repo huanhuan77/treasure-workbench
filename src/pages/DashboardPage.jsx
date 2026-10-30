@@ -1020,7 +1020,7 @@ export function DashboardPage() {
                         background: on ? (a==='all' ? '#fdf2f8' : c.bg) : '#f4f4f8',
                         color: on ? (a==='all' ? '#ec4899' : c.c) : '#94a3b8',
                         fontWeight: on ? 600 : 400,
-                      }}>{a === 'all' ? '全部账号' : a}</button>
+                      }}>{a === 'all' ? '全部账号' : (hideAccount ? '•••' : a)}</button>
                     )
                   })}
                 </div>
@@ -1666,7 +1666,7 @@ export function DashboardPage() {
                   color: sel ? '#fff' : col.c,
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                 }}
-              >{a}{acctCounts[a] > 0 && <span style={{
+              >{hideAccount ? '•••' : a}{acctCounts[a] > 0 && <span style={{
                 fontSize: '9px', fontWeight: 700, padding: '0 5px', borderRadius: '8px',
                 background: sel ? 'rgba(255,255,255,0.25)' : `${col.c}1f`,
                 color: sel ? '#fff' : col.c,
