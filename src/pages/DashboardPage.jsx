@@ -29,7 +29,7 @@ function AccountDaysChip({ sample, account, masked }) {
       title={`${account}：${days === Infinity ? '从未发布' : `${days} 天没发`}（阈值 ${th} 天）`}
       style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 6, overflow: 'hidden', lineHeight: '16px', whiteSpace: 'nowrap', fontSize: 11 }}
     >
-      <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{masked ? '•••' : account}</span>
+      <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{masked ? (account[0] + '*'.repeat(Math.max(2, account.length - 2)) + account[account.length - 1]) : account}</span>
       <span style={{
         padding: '0 5px', fontWeight: 700,
         background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
@@ -219,7 +219,12 @@ export function DashboardPage() {
     setHideAccount(next)
     setAccountsHidden(next)
   }
-  const maskA = (a) => (hideAccount ? '•••' : a)
+  const maskA = (a) => {
+    if (!hideAccount || !a) return a
+    const s = String(a)
+    if (s.length <= 2) return s[0] + '*'
+    return s[0] + '*'.repeat(Math.max(2, s.length - 2)) + s[s.length - 1]
+  }
   // 把用户设置的「多少天没发才提醒」同步到提醒计算口径
   useEffect(() => { setPublishDays(settings?.publishReminderDays || 7) }, [settings?.publishReminderDays])
   // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
@@ -1020,7 +1025,7 @@ export function DashboardPage() {
                         background: on ? (a==='all' ? '#fdf2f8' : c.bg) : '#f4f4f8',
                         color: on ? (a==='all' ? '#ec4899' : c.c) : '#94a3b8',
                         fontWeight: on ? 600 : 400,
-                      }}>{a === 'all' ? '全部账号' : (hideAccount ? '•••' : a)}</button>
+                      }}>{a === 'all' ? '全部账号' : maskA(a)}</button>
                     )
                   })}
                 </div>
@@ -1666,7 +1671,7 @@ export function DashboardPage() {
                   color: sel ? '#fff' : col.c,
                   display: 'inline-flex', alignItems: 'center', gap: '4px',
                 }}
-              >{hideAccount ? '•••' : a}{acctCounts[a] > 0 && <span style={{
+              >{maskA(a)}{acctCounts[a] > 0 && <span style={{
                 fontSize: '9px', fontWeight: 700, padding: '0 5px', borderRadius: '8px',
                 background: sel ? 'rgba(255,255,255,0.25)' : `${col.c}1f`,
                 color: sel ? '#fff' : col.c,
@@ -1900,7 +1905,7 @@ export function DashboardPage() {
                                 const col = ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)', c: '#64748b' }
                                 return (
                                   <span key={a} style={{ display: 'inline-flex', alignItems: 'center', borderRadius: '6px', overflow: 'hidden', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                    <span style={{ fontSize: '10px', padding: '2px 6px', background: col.bg, color: col.c, fontWeight: 600 }}>{hideAccount ? '•••' : a}</span>
+                                    <span style={{ fontSize: '10px', padding: '2px 6px', background: col.bg, color: col.c, fontWeight: 600 }}>{maskA(a)}</span>
                                     <span style={{
                                       fontSize: '10px', padding: '2px 6px', fontWeight: 700,
                                       background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
