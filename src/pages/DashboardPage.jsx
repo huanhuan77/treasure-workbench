@@ -219,7 +219,7 @@ export function DashboardPage() {
     setHideAccount(next)
     setAccountsHidden(next)
   }
-  const maskA = (a) => (hideAccount ? maskAccount(a, hiddenAccounts) : a)
+  const maskA = (a) => (hideAccount ? '•••' : a)
   // 把用户设置的「多少天没发才提醒」同步到提醒计算口径
   useEffect(() => { setPublishDays(settings?.publishReminderDays || 7) }, [settings?.publishReminderDays])
   // 提醒中心在桌面端换成「按账号分组的紧凑表格」，手机端保持卡片列表
