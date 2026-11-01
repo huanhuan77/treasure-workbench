@@ -701,6 +701,8 @@ export function DashboardPage() {
     try { return new Set(JSON.parse(localStorage.getItem('dash_dismissed') || '[]')) } catch { return new Set() }
   })
   const dismissReminder = (id) => {
+    const s = samples.find((x) => x.id === id)
+    if (s) lastDismissRef.current[id] = s.lastPublishAt || ''
     setDismissed((prev) => {
       const next = new Set(prev)
       next.add(id)
@@ -708,15 +710,17 @@ export function DashboardPage() {
       return next
     })
   }
-  // 样品发布后自动取消忽略（重新出现在提醒里）
+  // 样品有新发布后自动取消忽略（重新出现在提醒里）
+  const lastDismissRef = useRef({})
   useEffect(() => {
     if (!dismissed.size) return
     const cleared = new Set()
     for (const id of dismissed) {
       const s = samples.find((x) => x.id === id)
       if (!s) { cleared.add(id); continue }
-      // 样品状态变了（已发布/已出单）就自动解除忽略
-      if (s.status === 'published' || (s.orderCount || 0) > 0) cleared.add(id)
+      const lp = s.lastPublishAt || ''
+      const before = lastDismissRef.current[id]
+      if (before && lp && lp > before) cleared.add(id)
     }
     if (cleared.size) {
       setDismissed((prev) => {
