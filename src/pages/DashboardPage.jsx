@@ -696,6 +696,37 @@ export function DashboardPage() {
   })
   const ACC_META = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
 
+  // 忽略提醒：点过忽略后不再显示，直到样品状态变化（发布/出单）自动清除
+  const [dismissed, setDismissed] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem('dash_dismissed') || '[]')) } catch { return new Set() }
+  })
+  const dismissReminder = (id) => {
+    setDismissed((prev) => {
+      const next = new Set(prev)
+      next.add(id)
+      try { localStorage.setItem('dash_dismissed', JSON.stringify([...next])) } catch {}
+      return next
+    })
+  }
+  // 样品发布后自动取消忽略（重新出现在提醒里）
+  useEffect(() => {
+    if (!dismissed.size) return
+    const cleared = new Set()
+    for (const id of dismissed) {
+      const s = samples.find((x) => x.id === id)
+      if (!s) { cleared.add(id); continue }
+      // 样品状态变了（已发布/已出单）就自动解除忽略
+      if (s.status === 'published' || (s.orderCount || 0) > 0) cleared.add(id)
+    }
+    if (cleared.size) {
+      setDismissed((prev) => {
+        const next = new Set([...prev].filter((x) => !cleared.has(x)))
+        try { localStorage.setItem('dash_dismissed', JSON.stringify([...next])) } catch {}
+        return next
+      })
+    }
+  }, [samples, dismissed])
+
   // 「已建计划」标记索引（与 PC 总览一致，用户要求手机端也加）：按产品名关联、排除已完成的计划，
   // 且**跟着账号筛选走**（用户要求：筛了账号就只认该账号的计划，别的账号排的不算）。
   // 匹配做两层归一，避免「有计划却不标」：
@@ -782,29 +813,29 @@ export function DashboardPage() {
     return days(b) - days(a)
   }
   const fReminders = useMemo(
-    () => reminders.filter((s) => matchAcct(s, remindAccount)).sort(sortByShownDays),
-    [reminders, remindAccount],
+    () => reminders.filter((s) => !dismissed.has(s.id) && matchAcct(s, remindAccount)).sort(sortByShownDays),
+    [reminders, remindAccount, dismissed],
   )
   const fLowPublish = useMemo(
     () => lowPublish.filter((item) => {
+      if (dismissed.has(item.id)) return false
       if (remindAccount === 'all') return true
-      // 不足5条：筛了账号后，只显示该账号发布数不足5的
       return item.accounts.some(({ account: a, publishCount: n }) =>
         a === remindAccount && n < LOW_PUBLISH_LIMIT)
     }),
-    [lowPublish, remindAccount],
+    [lowPublish, remindAccount, dismissed],
   )
   const fExpiring = useMemo(
-    () => expiringSoon.filter((s) => matchAcct(s, remindAccount)),
-    [expiringSoon, remindAccount],
+    () => expiringSoon.filter((s) => !dismissed.has(s.id) && matchAcct(s, remindAccount)),
+    [expiringSoon, remindAccount, dismissed],
   )
   const fHot = useMemo(
     () => hotCadence.filter((s) => {
+      if (dismissed.has(s.id)) return false
       if (remindAccount === 'all') return true
-      // 筛了账号：该号必须自己是高频(≤5天)且到点，不能因为别的号高频就把这个号带进来
       return pendingAccounts(s).includes(remindAccount) && isHotAccount(s, remindAccount)
     }).sort(sortByShownDays),
-    [hotCadence, remindAccount],
+    [hotCadence, remindAccount, dismissed],
   )
   // 每个账号在当前 tab 下的数量（用于账号角标）
   const acctCounts = useMemo(() => {
@@ -1742,6 +1773,10 @@ export function DashboardPage() {
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
                           <button
+                            onClick={() => { setSwipedHotId(null); dismissReminder(s.id) }}
+                            style={{ width: 56, height: '80%', border: 'none', background: '#fca5a5', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >忽略</button>
+                          <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >调整状态</button>
@@ -1763,7 +1798,7 @@ export function DashboardPage() {
                           onTouchEnd={(e) => {
                             if (e.currentTarget.dataset.swiping !== 'true') return
                             const dir = e.currentTarget.dataset.dir
-                            swipeGuardRef.current = Date.now()   // 记录滑动结束时刻，用于拦截误触点击
+                            swipeGuardRef.current = Date.now()
                             setSwipedHotId((prev) => (dir === 'left' ? (prev === s.id ? null : s.id) : null))
                           }}
                           onClick={() => { if (swiped) setSwipedHotId(null) }}
@@ -1851,6 +1886,10 @@ export function DashboardPage() {
                       // 左滑露出操作（用户要求「操作放到左滑操作」）：操作条固定在底层，卡片整体左移
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
+                          <button
+                            onClick={() => { setSwipedHotId(null); dismissReminder(s.id) }}
+                            style={{ width: 56, height: '80%', border: 'none', background: '#fca5a5', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
+                          >忽略</button>
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
