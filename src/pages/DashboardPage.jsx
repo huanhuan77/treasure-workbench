@@ -293,6 +293,9 @@ export function DashboardPage() {
   const tapOK = () => !movedRef.current && Date.now() - swipeGuardRef.current > 400
   const pickTab = (id) => {
     setRemindTab(id)
+    if ((id === 'hot' || id === 'low') && remindAccount === 'all' && ACCOUNTS[0]) {
+      setRemindAccount(ACCOUNTS[0])
+    }
     try { sessionStorage.setItem('dash_remind_tab', id) } catch { /* 忽略隐私模式写入失败 */ }
   }
   const handleCheckUpdate = async () => {
@@ -1640,6 +1643,7 @@ export function DashboardPage() {
             overflowX: 'auto', WebkitOverflowScrolling: 'touch',
           }}
         >
+          {remindTab === 'expiring' && (
           <button
             onClick={() => setRemindAccount('all')}
             style={{
@@ -1650,6 +1654,7 @@ export function DashboardPage() {
               color: remindAccount === 'all' ? '#fff' : 'var(--text-main)',
             }}
           >全部账号</button>
+          )}
           {ACCOUNTS.map((a) => {
             const col = ACC_META(a)
             const sel = remindAccount === a
