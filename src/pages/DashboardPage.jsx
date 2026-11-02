@@ -1540,11 +1540,13 @@ export function DashboardPage() {
                     >放弃</button>
                     <button
                       onClick={() => {
+                        const sdc = { ...(s.suggestDismissCount || {}) }
                         accs.forEach((a) => {
                           const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
                           keepSuggest(s.id, a, pub)
+                          sdc[a] = pub
                         })
-                        updateSample(s.id, { suggestAbandonedByAccount: {} })
+                        updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
                         show('已保留，再发5条未出单会再次提醒', 'success')
                       }}
                       style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
