@@ -373,10 +373,10 @@ export function PcDashboard() {
       const s = it.sample || it
       // 产品名搜索（用户要求）：不区分大小写，名称或品类命中即保留
       if (k && !`${s.name || ''} ${s.category || ''}`.toLowerCase().includes(k)) continue
-      // 发布不足10 tab：只看已发<5条
+      // 发布不足10 tab：只看已发>5条
       if (tab === 'low' && lowLt5) {
         const sent = (it.accounts || []).reduce((n, x) => n + (x.publishCount || 0), 0)
-        if (sent >= 5) continue
+        if (sent <= 5) continue
       }
       // 天数 / 条数这类数字按「最严重的那一个账号」展示（与手机端一致：取最大值）
       const worst = (tab === 'reminders' || tab === 'hot')
