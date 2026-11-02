@@ -4352,12 +4352,12 @@ export function StoreProvider({ children }) {
   }, [])
 
   const updateSample = useCallback((id, patch) => {
-    setData((d) => ({
-      ...d,
-      samples: d.samples.map((s) => {
+    setData((d) => {
+      const old = d.samples.find((s) => s.id === id)
+      const oldName = old?.name || ''
+      const nextSamples = d.samples.map((s) => {
         if (s.id !== id) return s
         const next = { ...s, ...patch, updatedAt: Date.now() }
-        // 协调 accounts 与 execByAccount / countsByAccount 一致：补全缺失、剔除已移除账号
         const accounts = getAccounts(next)
         const execByAccount = { ...(next.execByAccount || {}) }
         const countsByAccount = { ...(next.countsByAccount || {}) }
@@ -4371,7 +4371,6 @@ export function StoreProvider({ children }) {
         }
         if (rec) { next.execByAccount = execByAccount; next.countsByAccount = countsByAccount }
         next.account = accounts[0] || ''
-        // 用户把某账号从「系统自动放弃」改回其它状态 → 视为已处理，之后不再自动改回放弃
         const dismiss = { ...(next.abandonDismissedByAccount || {}) }
         let dismissChanged = false
         for (const a of accounts) {
@@ -4383,8 +4382,20 @@ export function StoreProvider({ children }) {
         if (!next.logistics) next.logistics = getLogistics(next)
         next.status = recomputeTopStatus(next)
         return next
-      }),
-    }))
+      })
+      // 样品改名 → 同步更新出单台账、发布计划、待投流里的名字快照
+      const newName = patch.name?.trim()
+      if (newName && oldName && newName !== oldName) {
+        return {
+          ...d,
+          samples: nextSamples,
+          orders: (d.orders || []).map((o) => (o.sampleId === id ? { ...o, name: newName } : o)),
+          publishPlans: (d.publishPlans || []).map((p) => (p.sampleId === id ? { ...p, name: newName } : p)),
+          adQueue: (d.adQueue || []).map((a) => (a.sampleId === id ? { ...a, name: newName } : a)),
+        }
+      }
+      return { ...d, samples: nextSamples }
+    })
   }, [])
 
   // 按账号设置执行状态（物流共享、执行独立）
