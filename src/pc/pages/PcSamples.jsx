@@ -51,6 +51,7 @@ export function PcSamples() {
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('all')
+  const [shipinhaoOnly, setShipinhaoOnly] = useState(false)
   // 「出单数量」默认只显示总数，点数字弹出明细弹窗（用户要求）
   const [qtyOpen, setQtyOpen] = useState(null)
   // 是否出单筛选：all=全部 / yes=已出单 / no=未出单（口径同「是否出单」列，以出单记录表为准）
@@ -161,6 +162,7 @@ export function PcSamples() {
   const accountFiltered = useMemo(() => {
     let list = samples
     if (accountFilter !== 'all') list = list.filter((s) => getAccounts(s).includes(accountFilter))
+    if (shipinhaoOnly) list = list.filter((s) => (s.links || []).some((l) => l.platform === '视频号'))
     if (filter !== 'all') list = list.filter((s) => sampleMatchesFilter(s, filter))
     // 「全部」默认**不含已放弃**（用户要求）：放弃的样品平时不占列表，
     // 只有点「已放弃」那张状态卡才列出来。这也让「N / 64 个样品」两个数字对得上。
@@ -327,6 +329,7 @@ export function PcSamples() {
           {usedAccounts.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{maskAccount(a, hiddenAccounts)}</button>
           ))}
+          <button className={shipinhaoOnly ? 'on' : ''} onClick={() => setShipinhaoOnly((v) => !v)}>视频号</button>
           {/* 竖线把两组筛选分开，避免读成一长串同类按钮 */}
           <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
           {/* 是否出单：三档胶囊，默认档直接叫「全部」（与账号组的「全部账号」同义） */}
