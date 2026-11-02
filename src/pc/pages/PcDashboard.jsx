@@ -690,7 +690,7 @@ export function PcDashboard() {
                     color: lowLt5 ? '#a97c46' : '#6b7280',
                     fontWeight: lowLt5 ? 700 : 400,
                   }}
-                >&lt;5条{lowLt5 ? ' ✓' : ''}</button>
+                >5条{lowLt5 ? ' ✓' : ''}</button>
               )}
               <input
                 className="pcv-input"
