@@ -1361,7 +1361,7 @@ export function DashboardPage() {
                       >{a.status} ▾</button>
                       {statusOpen && (
                         <div style={{
-                          position: 'absolute', right: 0, top: '100%', marginTop: 4, zIndex: 50,
+                          position: 'absolute', right: 0, bottom: '100%', marginBottom: 4, zIndex: 50,
                           background: '#fff', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
                           border: '1px solid #f0f0f0', overflow: 'hidden', minWidth: 90,
                         }}>
