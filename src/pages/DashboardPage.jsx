@@ -1454,7 +1454,7 @@ export function DashboardPage() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                       {accChips}
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'normal', wordBreak: 'break-word' }}>{s.name}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>{s.name}</span>
                     </div>
                     <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '3px', fontWeight: 600 }}>
                       最后出单后又发了5条未出单 → 已自动放弃
@@ -1498,7 +1498,7 @@ export function DashboardPage() {
                           const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
                           return <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600 }}>{a}</span>
                         })}
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'normal', wordBreak: 'break-word' }}>{s.name}</span>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>{s.name}</span>
                       </div>
                       <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '3px', fontWeight: 600 }}>
                         发了5条还没出单，要放弃吗？
@@ -1789,7 +1789,7 @@ export function DashboardPage() {
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'normal', wordBreak: 'break-word' }}>{s.name}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>{s.name}</span>
                             {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
@@ -1904,7 +1904,7 @@ export function DashboardPage() {
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'normal', wordBreak: 'break-word' }}>{s.name}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>{s.name}</span>
                             {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                             {/* 「每N天提醒」紧跟状态标签（用户要求「几天提醒放在状态后面」） */}
@@ -2028,7 +2028,7 @@ export function DashboardPage() {
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'normal', wordBreak: 'break-word' }}>{s.name}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>{s.name}</span>
                             {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                             <span style={{ fontSize: '10px', fontWeight: 700, color: '#8b5cf6', background: '#ede9fe', padding: '2px 8px', borderRadius: '8px', whiteSpace: 'nowrap', flexShrink: 0 }}>
@@ -2147,7 +2147,7 @@ export function DashboardPage() {
                         >
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'normal', wordBreak: 'break-word' }}>{s.name}</span>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>{s.name}</span>
                             {planBadge(s.name, s.id)}
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
