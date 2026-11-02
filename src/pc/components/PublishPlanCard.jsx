@@ -239,7 +239,8 @@ export function PublishPlanCard() {
   // prefill = { name, account }：外部（提醒中心「新建计划」）带过来的产品名与账号
   const openNew = (prefill) => {
     const base = emptyByAcc()
-    const acc = (prefill && prefill.account) || ACCOUNTS[0] || ''
+    // 外面点的是哪个账号 tab，新增就默认选哪个账号
+    const acc = (prefill && prefill.account) || accFilter || ACCOUNTS[0] || ''
     if (prefill && prefill.name) base[acc] = [{ name: String(prefill.name), qty: '1', sampleId: (prefill && prefill.sampleId) || '' }]
     setLockProduct(!!(prefill && prefill.name))
     setByAcc(base)
