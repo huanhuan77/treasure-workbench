@@ -700,10 +700,10 @@ export function PcDashboard() {
                     <th style={{ width: 180 }}>操作</th>
                     {/* 账号列：高频出单 / 发布提醒里是「账号 + 已N天」双色胶囊，需要更宽 */}
                     <th style={{ width: 340 }}>账号</th>
+                    {/* 提醒天数/还差条数紧跟账号（用户要求） */}
+                    <th style={{ width: 180 }}>{cur.header}</th>
                     {/* 出单数量：该样品出单记录的件数合计（用户要求） */}
                     <th style={{ width: 170 }}>出单数量</th>
-                    {/* 提醒天数单独一列（只有「每N天提醒」/「已逾期」这些标签） */}
-                    <th style={{ width: 130 }}>{cur.header}</th>
                     <th style={{ width: 90 }}>状态</th>
                     <th style={{ width: 110 }}>截止日期</th>
                   </tr>
@@ -765,6 +765,8 @@ export function PcDashboard() {
                             </span>
                           </td>
                         )}
+                        {/* 提醒天数/还差条数紧跟账号 */}
+                        <td>{cur.mid(it, acc, accs)}</td>
                         {/* 出单数量：默认只显示**总数**（带下划线提示可点），
                             点数字弹出各账号明细弹窗（用户要求「点击了弹出弹窗」） */}
                         <td
@@ -800,8 +802,6 @@ export function PcDashboard() {
                             />
                           )}
                         </td>
-                        {/* 提醒天数（每N天提醒 / 已逾期）单独一列 */}
-                        <td>{cur.mid(it, acc, accs)}</td>
                         <td>{st && <span className="pcv-chip" style={statusTone(s.status)}>{st.label}</span>}</td>
                         <td
                           className="pcv-num"
