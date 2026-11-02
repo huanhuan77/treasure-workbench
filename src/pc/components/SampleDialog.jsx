@@ -3,7 +3,8 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { CATEGORIES } from '../../utils/categories'
-import { ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
+import { ACCOUNTS as BASE_ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
+const FORM_ACCOUNTS = [...BASE_ACCOUNTS, '视频号']
 import { isShotSample } from '../../utils/sampleStatus'
 import { todayStr, addDays, toDateInput } from '../../utils/helpers'
 import { LinksEditor } from '../../components/LinksEditor'
@@ -167,7 +168,7 @@ export function SampleDialog({ sample, onClose, onSaved }) {
                 原来未选中反而用了深色描边+深色字，看起来比选中的淡粉底更重。
                 现在未选中一律中性灰（白底细灰边），只有选中才上色，对比一眼可辨。 */}
             <div className="pcv-catpick">
-              {ACCOUNTS.map((a) => {
+              {FORM_ACCOUNTS.map((a) => {
                 const on = form.accounts.includes(a)
                 const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
                 return (
