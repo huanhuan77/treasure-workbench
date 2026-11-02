@@ -613,7 +613,7 @@ export function PublishPlanCard() {
                           ) : filtered.length === 0 ? (
                             <div className="pcv-drop-hint">没有匹配的产品</div>
                           ) : filtered.map((c) => {
-                            const on = picked.includes(c.name)
+                            const on = picked.some((x) => x.name === c.name)
                             return (
                               <button
                                 key={c.name}
