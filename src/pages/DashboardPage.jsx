@@ -1831,10 +1831,6 @@ export function DashboardPage() {
                         </div>
                         {/* 「新建计划」常驻显示（用户要求「计划按钮放出来，不要左滑才显示」） */}
                         <button
-                          onClick={() => dismissReminder(s.id)}
-                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                        >保留</button>
-                        <button
                           onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                         >新建计划</button>
@@ -1959,10 +1955,6 @@ export function DashboardPage() {
                         </div>
                         {/* 「新建计划」常驻显示（用户要求「计划按钮放出来，不要左滑才显示」） */}
                         <button
-                          onClick={() => dismissReminder(s.id)}
-                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                        >保留</button>
-                        <button
                           onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                         >新建计划</button>
@@ -2082,10 +2074,6 @@ export function DashboardPage() {
                           </div>
                         </div>
                         <button
-                          onClick={() => dismissReminder(s.id)}
-                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                        >保留</button>
-                        <button
                           onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                         >新建计划</button>
@@ -2185,10 +2173,6 @@ export function DashboardPage() {
                             {text}
                           </div>
                         </div>
-                        <button
-                          onClick={() => dismissReminder(s.id)}
-                          style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-                        >保留</button>
                         <button
                           onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
