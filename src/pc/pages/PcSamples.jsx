@@ -335,7 +335,7 @@ export function PcSamples() {
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => { setAccountFilter(a); setShipinhaoOnly(false) }}>{maskAccount(a, hiddenAccounts)}</button>
           ))}
           <button className={shipinhaoOnly ? 'on' : ''} onClick={() => { setShipinhaoOnly((v) => !v); setAccountFilter('all') }}>视频号</button>
-          <button className={publishGt5 ? 'on' : ''} onClick={() => setPublishGt5((v) => !v)}>发布&gt;5条</button>
+          <button className={publishGt5 ? 'on' : ''} onClick={() => setPublishGt5((v) => !v)}>发布超过5条</button>
           {/* 竖线把两组筛选分开，避免读成一长串同类按钮 */}
           <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
           {/* 是否出单：三档胶囊，默认档直接叫「全部」（与账号组的「全部账号」同义） */}
