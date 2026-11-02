@@ -4386,12 +4386,17 @@ export function StoreProvider({ children }) {
       // 样品改名 → 同步更新出单台账、发布计划、待投流里的名字快照
       const newName = patch.name?.trim()
       if (newName && oldName && newName !== oldName) {
+        const norm = (v) => String(v || '').replace(/\s+/g, '')
+        const oldNorm = norm(oldName)
         return {
           ...d,
           samples: nextSamples,
-          orders: (d.orders || []).map((o) => (o.sampleId === id ? { ...o, name: newName } : o)),
-          publishPlans: (d.publishPlans || []).map((p) => (p.sampleId === id ? { ...p, name: newName } : p)),
-          adQueue: (d.adQueue || []).map((a) => (a.sampleId === id ? { ...a, name: newName } : a)),
+          orders: (d.orders || []).map((o) =>
+            o.sampleId === id || norm(o.name) === oldNorm ? { ...o, name: newName } : o),
+          publishPlans: (d.publishPlans || []).map((p) =>
+            p.sampleId === id || norm(p.name) === oldNorm ? { ...p, name: newName } : p),
+          adQueue: (d.adQueue || []).map((a) =>
+            a.sampleId === id || norm(a.name) === oldNorm ? { ...a, name: newName } : a),
         }
       }
       return { ...d, samples: nextSamples }
