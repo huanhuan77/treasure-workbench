@@ -4065,8 +4065,13 @@ export function StoreProvider({ children }) {
                 s.suggestAbandonedByAccount[a] = true
                 sampleChanged = true
               }
+            } else {
+              // 还在保留期内，确保不显示
+              if (s.suggestAbandonedByAccount && s.suggestAbandonedByAccount[a]) {
+                delete s.suggestAbandonedByAccount[a]
+                sampleChanged = true
+              }
             }
-            // 否则还在保留期内，不提醒
           } else {
             if (!s.suggestAbandonedByAccount) s.suggestAbandonedByAccount = {}
             if (!s.suggestAbandonedByAccount[a]) {
