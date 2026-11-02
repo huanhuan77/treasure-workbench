@@ -699,7 +699,7 @@ export function PcDashboard() {
                     <th style={{ width: 190 }}>产品</th>
                     <th style={{ width: 180 }}>操作</th>
                     {/* 账号列：高频出单 / 发布提醒里是「账号 + 已N天」双色胶囊，需要更宽 */}
-                    <th style={{ width: 340 }}>账号</th>
+                    <th style={{ width: 220 }}>账号</th>
                     {/* 提醒天数/还差条数紧跟账号（用户要求） */}
                     <th style={{ width: 180 }}>{cur.header}</th>
                     {/* 出单数量：该样品出单记录的件数合计（用户要求） */}
