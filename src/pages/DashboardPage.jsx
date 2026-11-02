@@ -709,6 +709,18 @@ export function DashboardPage() {
     })
   }
 
+  // 建议放弃：点过「保留」后不再弹，直到该账号又发满5条
+  const [keptSuggest, setKeptSuggest] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('dash_suggest_kept') || '{}') } catch { return {} }
+  })
+  const keepSuggest = (sampleId, account, pubCount) => {
+    setKeptSuggest((prev) => {
+      const next = { ...prev, [`${sampleId}_${account}`]: pubCount }
+      try { localStorage.setItem('dash_suggest_kept', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
   // 「已建计划」标记索引（与 PC 总览一致，用户要求手机端也加）：按产品名关联、排除已完成的计划，
   // 且**跟着账号筛选走**（用户要求：筛了账号就只认该账号的计划，别的账号排的不算）。
   // 匹配做两层归一，避免「有计划却不标」：
@@ -1478,7 +1490,21 @@ export function DashboardPage() {
 
       {/* 建议放弃：从没出单发满5条，问用户要不要放弃 */}
       {(() => {
-        const suggested = (samples || []).filter((s) => s.suggestAbandonedByAccount && Object.keys(s.suggestAbandonedByAccount).length > 0)
+        const suggested = (samples || [])
+          .map((s) => {
+            // 过滤掉已点「保留」且还没再发5条的账号
+            const accs = Object.keys(s.suggestAbandonedByAccount || {})
+              .filter((a) => s.suggestAbandonedByAccount[a])
+              .filter((a) => {
+                const key = `${s.id}_${a}`
+                const keptAt = keptSuggest[key]
+                if (keptAt == null) return true
+                const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
+                return pub - Number(keptAt) >= 5  // 再发满5条才重新提醒
+              })
+            return { s, accs }
+          })
+          .filter((x) => x.accs.length > 0)
         if (!suggested.length) return null
         return (
           <div style={{ padding: '6px 8px 0' }}>
@@ -1488,8 +1514,7 @@ export function DashboardPage() {
               <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 7px', borderRadius: '8px' }}>{suggested.length}</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {suggested.map((s) => {
-                const accs = Object.keys(s.suggestAbandonedByAccount).filter((a) => s.suggestAbandonedByAccount[a])
+              {suggested.map(({ s, accs }) => {
                 return (
                   <div key={s.id} style={{ background: '#fff', border: '1px solid #fde68a', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -1515,11 +1540,11 @@ export function DashboardPage() {
                     >放弃</button>
                     <button
                       onClick={() => {
-                        const sdc = { ...(s.suggestDismissCount || {}) }
                         accs.forEach((a) => {
-                          sdc[a] = Number(s.countsByAccount?.[a]?.publishCount) || 0
+                          const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
+                          keepSuggest(s.id, a, pub)
                         })
-                        updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
+                        updateSample(s.id, { suggestAbandonedByAccount: {} })
                         show('已保留，再发5条未出单会再次提醒', 'success')
                       }}
                       style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
