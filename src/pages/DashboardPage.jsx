@@ -1353,40 +1353,12 @@ export function DashboardPage() {
                     </div>
                     <div style={{ position: 'relative', flexShrink: 0 }}>
                       <button
-                        ref={(el) => { if (statusOpen) window._adStatusBtn = el }}
                         onClick={(e) => { e.stopPropagation(); setAdStatusOpenId(statusOpen ? null : a.id) }}
                         style={{
                           fontSize: '11px', padding: '3px 8px', borderRadius: '8px',
                           border: `1px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer',
                         }}
                       >{a.status} ▾</button>
-                      {statusOpen && typeof document !== 'undefined' && (() => {
-                        const btn = window._adStatusBtn
-                        const rect = btn ? btn.getBoundingClientRect() : { right: 100, bottom: 100 }
-                        return (
-                        <div style={{
-                          position: 'fixed', right: Math.min(window.innerWidth - 110, window.innerWidth - rect.right),
-                          top: Math.min(rect.bottom + 4, window.innerHeight - 140), zIndex: 9999,
-                          background: '#fff', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
-                          border: '1px solid #f0f0f0', overflow: 'hidden', minWidth: 90,
-                        }}>
-                          {AD_STATUSES.map((opt) => {
-                            const osc = AD_STATUS_COLOR[opt]
-                            return (
-                              <button
-                                key={opt}
-                                onClick={(e) => { e.stopPropagation(); updateAdQueue(a.id, { status: opt }); setAdStatusOpenId(null) }}
-                                style={{
-                                  display: 'block', width: '100%', textAlign: 'left', border: 'none',
-                                  background: opt === a.status ? osc.bg : '#fff', color: osc.c,
-                                  fontSize: 12, padding: '8px 12px', cursor: 'pointer', fontWeight: opt === a.status ? 700 : 400,
-                                }}
-                              >{opt}{opt === a.status ? ' ✓' : ''}</button>
-                            )
-                          })}
-                        </div>
-                        )
-                      })()}
                     </div>
                   </SwipeRow>
                 )
@@ -1401,6 +1373,43 @@ export function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* 待投流状态选择：底部弹出，不被卡片裁剪 */}
+      {adStatusOpenId && (() => {
+        const ad = adQueue.find((x) => x.id === adStatusOpenId)
+        if (!ad) return null
+        return (
+          <div onClick={() => setAdStatusOpenId(null)} style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 9999,
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          }}>
+            <div onClick={(e) => e.stopPropagation()} style={{
+              width: '100%', background: '#fff', borderRadius: '16px 16px 0 0', padding: '16px',
+              paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
+            }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#111', marginBottom: 12 }}>{ad.name}</div>
+              {AD_STATUSES.map((opt) => {
+                const osc = AD_STATUS_COLOR[opt]
+                const on = opt === ad.status
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => { updateAdQueue(ad.id, { status: opt }); setAdStatusOpenId(null) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', padding: '12px 8px', border: 'none', background: on ? osc.bg : '#fff',
+                      borderRadius: 8, marginBottom: 4, cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ fontSize: 14, color: osc.c, fontWeight: on ? 700 : 400 }}>{opt}</span>
+                    {on && <span style={{ fontSize: 14, color: osc.c }}>✓</span>}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* 待投流选择弹窗：列出已发布样品 × 账号 */}
       {adPickerOpen && (
