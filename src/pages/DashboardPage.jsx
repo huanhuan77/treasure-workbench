@@ -1353,16 +1353,21 @@ export function DashboardPage() {
                     </div>
                     <div style={{ position: 'relative', flexShrink: 0 }}>
                       <button
+                        ref={(el) => { if (statusOpen) window._adStatusBtn = el }}
                         onClick={(e) => { e.stopPropagation(); setAdStatusOpenId(statusOpen ? null : a.id) }}
                         style={{
                           fontSize: '11px', padding: '3px 8px', borderRadius: '8px',
                           border: `1px solid ${st.c}`, background: st.bg, color: st.c, cursor: 'pointer',
                         }}
                       >{a.status} ▾</button>
-                      {statusOpen && (
+                      {statusOpen && typeof document !== 'undefined' && (() => {
+                        const btn = window._adStatusBtn
+                        const rect = btn ? btn.getBoundingClientRect() : { right: 100, bottom: 100 }
+                        return (
                         <div style={{
-                          position: 'absolute', right: 0, bottom: '100%', marginBottom: 4, zIndex: 50,
-                          background: '#fff', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                          position: 'fixed', right: Math.min(window.innerWidth - 110, window.innerWidth - rect.right),
+                          top: Math.min(rect.bottom + 4, window.innerHeight - 140), zIndex: 9999,
+                          background: '#fff', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
                           border: '1px solid #f0f0f0', overflow: 'hidden', minWidth: 90,
                         }}>
                           {AD_STATUSES.map((opt) => {
@@ -1380,7 +1385,8 @@ export function DashboardPage() {
                             )
                           })}
                         </div>
-                      )}
+                        )
+                      })()}
                     </div>
                   </SwipeRow>
                 )
