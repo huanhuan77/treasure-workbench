@@ -696,13 +696,11 @@ export function DashboardPage() {
   })
   const ACC_META = (a) => ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.14)' }
 
-  // 忽略提醒：点过忽略后不再显示，直到样品状态变化（发布/出单）自动清除
+  // 忽略提醒：点过忽略后不再显示，永久隐藏（直到清缓存或重新发布）
   const [dismissed, setDismissed] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem('dash_dismissed') || '[]')) } catch { return new Set() }
   })
   const dismissReminder = (id) => {
-    const s = samples.find((x) => x.id === id)
-    if (s) lastDismissRef.current[id] = s.lastPublishAt || ''
     setDismissed((prev) => {
       const next = new Set(prev)
       next.add(id)
@@ -710,26 +708,6 @@ export function DashboardPage() {
       return next
     })
   }
-  // 样品有新发布后自动取消忽略（重新出现在提醒里）
-  const lastDismissRef = useRef({})
-  useEffect(() => {
-    if (!dismissed.size) return
-    const cleared = new Set()
-    for (const id of dismissed) {
-      const s = samples.find((x) => x.id === id)
-      if (!s) { cleared.add(id); continue }
-      const lp = s.lastPublishAt || ''
-      const before = lastDismissRef.current[id]
-      if (before && lp && lp > before) cleared.add(id)
-    }
-    if (cleared.size) {
-      setDismissed((prev) => {
-        const next = new Set([...prev].filter((x) => !cleared.has(x)))
-        try { localStorage.setItem('dash_dismissed', JSON.stringify([...next])) } catch {}
-        return next
-      })
-    }
-  }, [samples, dismissed])
 
   // 「已建计划」标记索引（与 PC 总览一致，用户要求手机端也加）：按产品名关联、排除已完成的计划，
   // 且**跟着账号筛选走**（用户要求：筛了账号就只认该账号的计划，别的账号排的不算）。
