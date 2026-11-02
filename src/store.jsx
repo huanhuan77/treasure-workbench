@@ -3040,15 +3040,31 @@ function stripCopyTitles(products) {
 
 function normalizeDates(d) {
   if (!d) return d
+  const norm = (v) => String(v || '').replace(/\s+/g, '')
+  // 一次性：把发布计划/出单/待投流里的名字对齐到当前样品名
+  const idToName = new Map()
+  const nameToSample = new Map()
+  for (const s of (d.samples || [])) {
+    if (s?.id) idToName.set(s.id, s.name || '')
+    if (s?.name) nameToSample.set(norm(s.name), s.name || '')
+  }
+  const fixName = (rec) => {
+    if (!rec) return rec
+    if (rec.sampleId && idToName.has(rec.sampleId)) {
+      const live = idToName.get(rec.sampleId)
+      if (live && rec.name !== live) return { ...rec, name: live }
+    }
+    return rec
+  }
   return {
     ...d,
     samples: (d.samples || []).map((s) => (s ? { ...s, receiveDate: normDate(s.receiveDate), deadline: normDate(s.deadline) } : s)),
-    orders: (d.orders || []).map((o) => (o ? { ...o, date: normDate(o.date) } : o)),
+    orders: (d.orders || []).map((o) => fixName(o ? { ...o, date: normDate(o.date) } : o)),
     publishRecords: (d.publishRecords || []).map((r) => (r ? { ...r, publishDate: normDate(r.publishDate) } : r)),
     transactions: (d.transactions || []).map((t) => (t ? { ...t, date: normDate(t.date) } : t)),
     todos: (d.todos || []).map((t) => (t ? { ...t, due: normDate(t.due) } : t)),
-    adQueue: (d.adQueue || []).map((a) => (a ? { ...a, publishDate: normDate(a.publishDate) } : a)),
-    publishPlans: (d.publishPlans || []).map((p) => (p ? { ...p, planDate: normDate(p.planDate) } : p)),
+    adQueue: (d.adQueue || []).map((a) => fixName(a ? { ...a, publishDate: normDate(a.publishDate) } : a)),
+    publishPlans: (d.publishPlans || []).map((p) => fixName(p ? { ...p, planDate: normDate(p.planDate) } : p)),
   }
 }
 
