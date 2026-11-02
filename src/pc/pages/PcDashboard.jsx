@@ -375,7 +375,7 @@ export function PcDashboard() {
       if (k && !`${s.name || ''} ${s.category || ''}`.toLowerCase().includes(k)) continue
       // 发布不足10 tab：只看已发>5条
       if (tab === 'low' && lowLt5) {
-        const sent = (it.accounts || []).reduce((n, x) => n + (x.publishCount || 0), 0)
+        const sent = Number(it.publishCount) || (it.accounts || []).reduce((n, x) => n + (Number(x.publishCount) || 0), 0)
         if (sent <= 5) continue
       }
       // 天数 / 条数这类数字按「最严重的那一个账号」展示（与手机端一致：取最大值）
@@ -410,7 +410,7 @@ export function PcDashboard() {
       out.sort((x, y) => accRank(x.acc) - accRank(y.acc))
     }
     return out
-  }, [items, cur, account, tab, kw])
+  }, [items, cur, account, tab, kw, lowLt5])
 
   // ── 「为什么没提醒」诊断数据 ────────────────────────────────
   // 列出**全部样品**（不再只列已超期的），每个账号给出「已N天 / 阈值」和是否判为超期，
