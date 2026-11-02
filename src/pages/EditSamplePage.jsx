@@ -8,7 +8,7 @@ import { getAccounts, getLogistics, getCounts, isShotSample, LOGISTICS_STATUS } 
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
 
-const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
+const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆', '视频号']
 const LOGISTICS_LIST = Object.values(LOGISTICS_STATUS)
 
 function PageHeader({ title, onBack }) {
