@@ -94,6 +94,7 @@ export function PcDashboard() {
   const { show } = useToast()
   const { samples, todos, orders, publishPlans, hiddenAccounts, setHiddenAccounts, updateTodo } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
+  const [lowLt5, setLowLt5] = useState(false)  // 发布不足10 tab：只看已发<5条
   const [account, setAccount] = useState('')
   // 提醒中心表格的产品名搜索（用户要求「加个搜索条件」）
   const [kw, setKw] = useState('')
@@ -372,6 +373,11 @@ export function PcDashboard() {
       const s = it.sample || it
       // 产品名搜索（用户要求）：不区分大小写，名称或品类命中即保留
       if (k && !`${s.name || ''} ${s.category || ''}`.toLowerCase().includes(k)) continue
+      // 发布不足10 tab：只看已发<5条
+      if (tab === 'low' && lowLt5) {
+        const sent = (it.accounts || []).reduce((n, x) => n + (x.publishCount || 0), 0)
+        if (sent >= 5) continue
+      }
       // 天数 / 条数这类数字按「最严重的那一个账号」展示（与手机端一致：取最大值）
       const worst = (tab === 'reminders' || tab === 'hot')
         ? accs.reduce((w, a) => (daysSincePublishByAccount(s, a) > daysSincePublishByAccount(s, w) ? a : w), accs[0])
@@ -673,6 +679,19 @@ export function PcDashboard() {
                 })}
               </div>
               {/* 产品名搜索（用户要求「加个搜索条件」）：靠右，当前 Tab 的表格实时过滤 */}
+              {tab === 'low' && (
+                <button
+                  onClick={() => setLowLt5((v) => !v)}
+                  style={{
+                    marginLeft: 8, flexShrink: 0, padding: '7px 12px', fontSize: 13,
+                    borderRadius: 8, cursor: 'pointer',
+                    border: lowLt5 ? '1px solid #a97c46' : '1px solid #e2e8f0',
+                    background: lowLt5 ? '#faf1e3' : '#fff',
+                    color: lowLt5 ? '#a97c46' : '#6b7280',
+                    fontWeight: lowLt5 ? 700 : 400,
+                  }}
+                >&lt;5条{lowLt5 ? ' ✓' : ''}</button>
+              )}
               <input
                 className="pcv-input"
                 value={kw}
