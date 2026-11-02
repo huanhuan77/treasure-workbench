@@ -179,7 +179,7 @@ export function PcSamples() {
     const kw = keyword.trim().toLowerCase()
     if (kw) list = list.filter((s) => `${s.name || ''} ${s.category || ''}`.toLowerCase().includes(kw))
     return list
-  }, [samples, accountFilter, filter, orderFilter, orderCountBySample, keyword])
+  }, [samples, accountFilter, filter, orderFilter, orderCountBySample, keyword, shipinhaoOnly, publishGt5])
 
   // 已过期（未发布/未放弃 + 截止日已过，与「剩 N 天」红字同一口径）的样品排最前面。
   // 默认视图（sortKey=custom）下生效；用户点了表头排序时就按他自己的排序来，不插队。
