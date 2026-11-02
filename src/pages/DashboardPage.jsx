@@ -1755,10 +1755,6 @@ export function DashboardPage() {
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
                           <button
-                            onClick={() => { setSwipedHotId(null); dismissReminder(s.id) }}
-                            style={{ width: 56, height: '80%', border: 'none', background: '#fca5a5', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >忽略</button>
-                          <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
                           >调整状态</button>
@@ -1809,6 +1805,10 @@ export function DashboardPage() {
                           )}
                         </div>
                         {/* 「新建计划」常驻显示（用户要求「计划按钮放出来，不要左滑才显示」） */}
+                        <button
+                          onClick={() => dismissReminder(s.id)}
+                          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 9, border: 'none', background: '#f1f5f9', color: '#94a3b8', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                        >×</button>
                         <button
                           onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
@@ -1868,10 +1868,6 @@ export function DashboardPage() {
                       // 左滑露出操作（用户要求「操作放到左滑操作」）：操作条固定在底层，卡片整体左移
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
                         <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', gap: 4, paddingRight: 4 }}>
-                          <button
-                            onClick={() => { setSwipedHotId(null); dismissReminder(s.id) }}
-                            style={{ width: 56, height: '80%', border: 'none', background: '#fca5a5', color: '#fff', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >忽略</button>
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
@@ -1937,6 +1933,10 @@ export function DashboardPage() {
                           </div>
                         </div>
                         {/* 「新建计划」常驻显示（用户要求「计划按钮放出来，不要左滑才显示」） */}
+                        <button
+                          onClick={() => dismissReminder(s.id)}
+                          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 9, border: 'none', background: '#f1f5f9', color: '#94a3b8', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                        >×</button>
                         <button
                           onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
@@ -2057,6 +2057,10 @@ export function DashboardPage() {
                           </div>
                         </div>
                         <button
+                          onClick={() => dismissReminder(s.id)}
+                          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 9, border: 'none', background: '#f1f5f9', color: '#94a3b8', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                        >×</button>
+                        <button
                           onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                         >新建计划</button>
@@ -2156,6 +2160,10 @@ export function DashboardPage() {
                             {text}
                           </div>
                         </div>
+                        <button
+                          onClick={() => dismissReminder(s.id)}
+                          style={{ flexShrink: 0, width: 28, height: 28, borderRadius: 9, border: 'none', background: '#f1f5f9', color: '#94a3b8', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                        >×</button>
                         <button
                           onClick={() => { if (!tapOK()) return; quickPlan(s) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
