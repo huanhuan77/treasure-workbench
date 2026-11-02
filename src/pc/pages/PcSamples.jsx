@@ -325,11 +325,11 @@ export function PcSamples() {
 
         {/* 账号筛选 + 是否出单筛选（排序入口已移到表头：点「收货日期」/「截止日期」列名） */}
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
-          <button className={accountFilter === 'all' ? 'on' : ''} onClick={() => setAccountFilter('all')}>全部账号</button>
+          <button className={accountFilter === 'all' && !shipinhaoOnly ? 'on' : ''} onClick={() => { setAccountFilter('all'); setShipinhaoOnly(false) }}>全部账号</button>
           {usedAccounts.map((a) => (
-            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{maskAccount(a, hiddenAccounts)}</button>
+            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => { setAccountFilter(a); setShipinhaoOnly(false) }}>{maskAccount(a, hiddenAccounts)}</button>
           ))}
-          <button className={shipinhaoOnly ? 'on' : ''} onClick={() => setShipinhaoOnly((v) => !v)}>视频号</button>
+          <button className={shipinhaoOnly ? 'on' : ''} onClick={() => { setShipinhaoOnly((v) => !v); setAccountFilter('all') }}>视频号</button>
           {/* 竖线把两组筛选分开，避免读成一长串同类按钮 */}
           <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
           {/* 是否出单：三档胶囊，默认档直接叫「全部」（与账号组的「全部账号」同义） */}
