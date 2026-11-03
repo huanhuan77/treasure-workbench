@@ -188,14 +188,23 @@ export function WordsPage() {
       }}>
         <button style={{ ...btnBase, background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
           onClick={() => {
-            window.speechSynthesis?.cancel()
             setOrder([...WORDS])
-            ;[...WORDS].forEach((it, i) => {
-              const u = new SpeechSynthesisUtterance(it.w)
-              u.lang = 'en-US'; u.rate = 0.85
-              u.onend = () => {}
-              window.speechSynthesis.speak(u)
-            })
+            if (!('speechSynthesis' in window)) { alert('当前浏览器不支持语音朗读'); return }
+            window.speechSynthesis.cancel()
+            // 链式播放：cancel 后稍等，再逐个入队，避免手机浏览器卡死
+            setTimeout(() => {
+              const list = [...WORDS]
+              let i = 0
+              const next = () => {
+                if (i >= list.length) return
+                const u = new SpeechSynthesisUtterance(list[i].w)
+                u.lang = 'en-US'; u.rate = 0.85
+                i++
+                u.onend = next
+                window.speechSynthesis.speak(u)
+              }
+              next()
+            }, 120)
           }}>顺序朗读</button>
         <button style={btnBase} onClick={() => setOrder(pickN([...WORDS], WORDS.length))}>打乱顺序</button>
         <button style={{ ...btnBase, ...(onlyUndone ? { background: 'var(--primary-light)', borderColor: 'var(--primary)', color: 'var(--primary-dark)' } : {}) }}
