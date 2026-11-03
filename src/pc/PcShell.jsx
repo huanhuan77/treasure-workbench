@@ -5,7 +5,7 @@ import { useIsDesktop } from '../utils/useIsDesktop'
 import {
   HomeIcon, PenIcon, TagIcon, MoneyIcon, VideoIcon,
   WalletIcon, TvIcon, CalendarIcon, ListIcon, BookIcon,
-  CardIcon, PiggyIcon, ChartIcon, BanIcon,
+  CardIcon, PiggyIcon, ChartIcon, BanIcon, WordIcon,
 } from '../components/navIcons'
 import { CloudActions } from './components/CloudActions'
 import { useDialogDrag } from './utils/dialogDrag'
@@ -33,6 +33,7 @@ const NAV = [
   { to: '/pc/calendar', label: '日记', Icon: CalendarIcon, color: '#4f7f8f' },
   { to: '/pc/daily', label: '每日计划', Icon: ListIcon, color: '#6b7280' },
   { to: '/pc/reading', label: '读书成长', Icon: BookIcon, color: '#8a6d3b' },
+  { to: '/pc/words', label: '英语单词', Icon: WordIcon, color: '#3f7f8f' },
   { to: '/pc/brands', label: '品牌方', Icon: CardIcon, color: '#7a8a4f' },
   { to: '/pc/savings', label: '攒钱计划', Icon: PiggyIcon, color: '#c08552' },
   { to: '/pc/investment', label: '投资跟踪', Icon: ChartIcon, color: '#4a7c59' },

@@ -58,6 +58,8 @@ import { PcFinance } from './pc/pages/PcFinance'
 import { PcDaily } from './pc/pages/PcDaily'
 import { PcInvestment } from './pc/pages/PcInvestment'
 import { PcSummary } from './pc/pages/PcSummary'
+import { WordsPage } from './pages/WordsPage'
+import { PcWords } from './pc/pages/PcWords'
 
 // 路由表（data 形式，供 KeepAliveRoutes 内的 useRoutes 使用）
 const routes = [
@@ -83,6 +85,7 @@ const routes = [
       { path: 'daily', element: <PcDaily /> },
       { path: 'investment', element: <PcInvestment /> },
       { path: 'summary', element: <PcSummary /> },
+      { path: 'words', element: <PcWords /> },
       { path: 'backup', element: <PcBackup /> },
     ],
   },
@@ -101,6 +104,7 @@ const routes = [
   { path: '/investment', element: <InvestmentPage /> },
   { path: '/reading', element: <ReadingPage /> },
   { path: '/reading/:id/notes', element: <NotePage /> },
+  { path: '/words', element: <WordsPage /> },
   { path: '/brands', element: <BrandContactsPage /> },
   { path: '/daily', element: <DailyPlanPage /> },
   { path: '/todos', element: <TodoPage /> },

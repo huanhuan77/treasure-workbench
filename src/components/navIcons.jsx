@@ -133,6 +133,16 @@ export const BanIcon = () => (
     <path d="m4.9 4.9 14.2 14.2" />
   </svg>
 )
+
+// 英语单词：字母 A
+export const WordIcon = () => (
+  <svg {...iconProps}>
+    <path {...fillLayer} d="M6 20 12 5l6 15" />
+    <path d="M6 20 12 5l6 15" />
+    <path d="M8.5 14h7" />
+  </svg>
+)
+
 // 手机版「更多」抽屉
 export const MoreIcon = () => (
   <svg {...iconProps}>
