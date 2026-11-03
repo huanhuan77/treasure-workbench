@@ -176,6 +176,18 @@
   color: #a8416f;
 }
 
+/* 文案「已置底」的按钮态：蓝底蓝边蓝字（与产品级置底同色） */
+.pcv-btn.pcv-pin-bottom-btn--on {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+.pcv-btn.pcv-pin-bottom-btn--on:hover:not(:disabled) {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
 /* 淡彩按钮（次要操作用）：粉底 + 粉边 + 粉字，比白底 ghost 更有存在感，
    又不像主按钮那样抢眼。用于「查看明细」这类行内查看入口。 */
 /* 用 .pcv-btn.pcv-btn--tint 提高优先级：本规则写在 .pcv-btn-ghost（第 514 行）之前，

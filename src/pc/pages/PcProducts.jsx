@@ -243,11 +243,13 @@ export function PcProducts() {
       const key = copyFilter === 'order' ? 'hasOrder' : copyFilter === 'hot' ? 'hasHot' : 'used'
       base = activeCopies.filter((c) => c[key])
     }
-    // 置顶的最前（用户新增），其余按标记排：爆单 → 出单 → 用过 → 未标记。
+    // 置顶的最前、置底的最后，其余按标记排：爆单 → 出单 → 用过 → 未标记。
     // 组内保持原有顺序（Array.sort 稳定），不会把同状态的文案打乱。
     const rank = (c) => (c.hasHot ? 0 : c.hasOrder ? 1 : c.used ? 2 : 3)
     return [...base].sort((a, b) => {
-      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
+      const pa = a.pinned ? 0 : a.pinnedBottom ? 2 : 1
+      const pb = b.pinned ? 0 : b.pinnedBottom ? 2 : 1
+      if (pa !== pb) return pa - pb
       return rank(a) - rank(b)
     })
   }, [activeCopies, copyFilter])
@@ -269,6 +271,13 @@ export function PcProducts() {
     if (!active) return
     updateCopy(active.id, c.id, { pinned: !c.pinned })
     show(!c.pinned ? '已置顶这条文案' : '已取消置顶', 'success')
+  }
+
+  // 文案置底：写在文案记录上（copies[].pinnedBottom），排在所有普通文案最后。
+  const togglePinBottomCopy = (c) => {
+    if (!active) return
+    updateCopy(active.id, c.id, { pinnedBottom: !c.pinnedBottom })
+    show(!c.pinnedBottom ? '已置底这条文案' : '已取消置底', 'success')
   }
 
   // 复制：与手机版一致 —— 复制成功即视为「用过」，顺带写 usedDate
@@ -597,9 +606,11 @@ export function PcProducts() {
                       <div
                         key={c.id}
                         className="pcv-copyitem"
-                        // 左侧 3px 竖条标状态：已置顶优先显示粉色，其余与手机版 CopyCard 同口径（出单 > 爆单 > 用过）
+                        // 左侧 3px 竖条标状态：置顶粉、置底蓝，其余与手机版 CopyCard 同口径（出单 > 爆单 > 用过）
                         style={c.pinned
                           ? { boxShadow: 'inset 3px 0 0 #b8517f', background: '#fdf9fb' }
+                          : c.pinnedBottom
+                          ? { boxShadow: 'inset 3px 0 0 #2563eb', background: '#f8faff' }
                           : (bar ? { boxShadow: `inset 3px 0 0 ${bar}` } : undefined)}
                       >
                         <div className="pcv-copytext">{c.content}</div>
@@ -654,6 +665,17 @@ export function PcProducts() {
                               <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
                             </svg>
                             {c.pinned ? '已置顶' : '置顶'}
+                          </button>
+                          <button
+                            className={`pcv-btn pcv-btn-ghost${c.pinnedBottom ? ' pcv-pin-bottom-btn--on' : ''}`}
+                            style={{ padding: '5px 10px', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                            title={c.pinnedBottom ? '取消置底' : '置底这条文案'}
+                            onClick={() => togglePinBottomCopy(c)}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ transform: 'rotate(180deg)' }}>
+                              <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                            </svg>
+                            {c.pinnedBottom ? '已置底' : '置底'}
                           </button>
                           {/* 编辑 / 删除：次要操作，保持描边样式，紧跟标记与用过时间之后 */}
                           <button className="pcv-btn pcv-btn-ghost" style={{ padding: '5px 10px' }} onClick={() => setCopyDialog(c)}>编辑</button>
