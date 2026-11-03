@@ -207,6 +207,7 @@ export function WordsPage() {
             }, 120)
           }}>顺序朗读</button>
         <button style={btnBase} onClick={() => setOrder(pickN([...WORDS], WORDS.length))}>打乱顺序</button>
+        <button style={btnBase} onClick={() => setOrder([...WORDS])}>重置顺序</button>
         <button style={{ ...btnBase, ...(onlyUndone ? { background: 'var(--primary-light)', borderColor: 'var(--primary)', color: 'var(--primary-dark)' } : {}) }}
           onClick={() => setOnlyUndone(v => !v)}>{onlyUndone ? '显示全部' : '只看未学'}</button>
         <button style={{ ...btnBase, background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
