@@ -1450,7 +1450,7 @@ export function DashboardPage() {
                         <span style={{ fontSize: '10px', color: '#94a3b8' }}>{o.publishDate || '未填日期'} · 共{o.publishCount}条</span>
                       </div>
                     </div>
-                    <span style={{ color: '#ec4899', fontSize: '18px', flexShrink: 0 }}>＋</span>
+                    <span style={{ color: '#ec4899', fontSize: '24px', fontWeight: 700, flexShrink: 0, padding: '0 8px', lineHeight: 1 }}>＋</span>
                   </div>
                 )
               })}

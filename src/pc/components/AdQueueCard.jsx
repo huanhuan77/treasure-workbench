@@ -404,7 +404,7 @@ export function AdQueueCard() {
                       <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>
                         {o.publishDate || '未填日期'} · 共 {o.publishCount} 条
                       </span>
-                      <span style={{ color: '#b8517f', fontSize: 15, flexShrink: 0 }}>＋</span>
+                      <span style={{ color: '#b8517f', fontSize: 22, fontWeight: 700, flexShrink: 0, padding: '0 6px' }}>＋</span>
                     </button>
                   )
                 })}
