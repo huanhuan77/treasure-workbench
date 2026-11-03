@@ -127,6 +127,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
   /* 给 .pcv-globalactions 当定位参照 */
   position: relative;
 }
