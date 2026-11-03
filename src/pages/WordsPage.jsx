@@ -64,6 +64,7 @@ const WORDS = [
 ]
 
 const STORE_KEY = 'cet_words_done_v1'
+const TODAY_KEY = 'cet_words_last_study'
 const TYPES = ['cn2en', 'en2cn', 'cloze', 'listen']
 
 function pickN(arr, n) {
@@ -113,14 +114,24 @@ export function WordsPage() {
   const [order, setOrder] = useState(() => [...WORDS])
   const [onlyUndone, setOnlyUndone] = useState(false)
   const [quiz, setQuiz] = useState(null)
+  const todayStr = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD local
+  const [lastStudy, setLastStudy] = useState(() => {
+    try { return localStorage.getItem(TODAY_KEY) || '' } catch { return '' }
+  })
+  const studiedToday = lastStudy === todayStr
 
   const save = (arr) => {
     setDoneArr(arr)
     localStorage.setItem(STORE_KEY, JSON.stringify(arr))
   }
   const toggleDone = (w) => {
-    const next = doneSet.has(w) ? doneArr.filter(x => x !== w) : [...doneArr, w]
+    const wasDone = doneSet.has(w)
+    const next = wasDone ? doneArr.filter(x => x !== w) : [...doneArr, w]
     save(next)
+    if (!wasDone) {
+      localStorage.setItem(TODAY_KEY, todayStr)
+      setLastStudy(todayStr)
+    }
   }
 
   const visible = onlyUndone ? order.filter(it => !doneSet.has(it.w)) : order
@@ -154,6 +165,21 @@ export function WordsPage() {
           点喇叭发音 · 学过打勾 · 20 题随机测验
         </p>
       </div>
+
+      {!studiedToday && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
+          border: '1px solid #f59e0b', borderRadius: 12,
+          padding: '12px 16px', marginBottom: 14, fontSize: 14, color: '#92400e',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <span style={{ fontSize: 20 }}>⏰</span>
+          <div>
+            <b>今天还没背单词哦</b><br/>
+            <span style={{ fontSize: 12, opacity: 0.8 }}>打勾一个词就算完成今日学习，开始吧</span>
+          </div>
+        </div>
+      )}
 
       <div style={{
         display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center',
