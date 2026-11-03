@@ -1567,7 +1567,7 @@ export function DashboardPage() {
                       onClick={() => {
                         const execByAccount = { ...(s.execByAccount || {}) }
                         accs.forEach((a) => { execByAccount[a] = 'abandoned' })
-                        updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {} })
+                        updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {}, archived: true })
                         show('已标记为放弃', 'success')
                       }}
                       style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: 'none', background: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
