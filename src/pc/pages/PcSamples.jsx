@@ -166,7 +166,7 @@ export function PcSamples() {
     if (shipinhaoOnly) list = list.filter((s) => (s.links || []).some((l) => l.platform === '视频号'))
     if (publishGt5) list = list.filter((s) => {
       const total = getAccounts(s).reduce((n, a) => n + (getCounts(s, a).publishCount || 0), 0)
-      return total > 5
+      return total >= 5
     })
     if (filter !== 'all') list = list.filter((s) => sampleMatchesFilter(s, filter))
     // 「全部」默认**不含已放弃**（用户要求）：放弃的样品平时不占列表，

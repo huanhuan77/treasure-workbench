@@ -376,7 +376,7 @@ export function PcDashboard() {
       // 发布不足10 tab：只看已发>5条
       if (tab === 'low' && lowLt5) {
         const sent = Number(it.publishCount) || (it.accounts || []).reduce((n, x) => n + (Number(x.publishCount) || 0), 0)
-        if (sent <= 5) continue
+        if (sent < 5) continue
       }
       // 天数 / 条数这类数字按「最严重的那一个账号」展示（与手机端一致：取最大值）
       const worst = (tab === 'reminders' || tab === 'hot')
