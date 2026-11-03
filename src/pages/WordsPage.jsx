@@ -147,7 +147,7 @@ export function WordsPage() {
   }, [quiz])
 
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', padding: '8px 4px 100px' }}>
+    <div style={{ maxWidth: 760, margin: '0 auto', padding: 'calc(20px + var(--safe-top)) 4px 100px' }}>
       <div style={{ marginBottom: 16 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>四六级单词卡片</h1>
         <p style={{ color: 'var(--text-sub)', fontSize: 12, marginTop: 4 }}>
