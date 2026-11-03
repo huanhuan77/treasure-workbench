@@ -189,9 +189,11 @@ export function WordsPage() {
         <button style={{ ...btnBase, background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
           onClick={() => {
             window.speechSynthesis?.cancel()
-            order.forEach(it => {
+            setOrder([...WORDS])
+            ;[...WORDS].forEach((it, i) => {
               const u = new SpeechSynthesisUtterance(it.w)
               u.lang = 'en-US'; u.rate = 0.85
+              u.onend = () => {}
               window.speechSynthesis.speak(u)
             })
           }}>顺序朗读</button>
