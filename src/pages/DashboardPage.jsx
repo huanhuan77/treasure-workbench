@@ -574,11 +574,14 @@ export function DashboardPage() {
   }
   const publishedOptions = useMemo(() => {
     const out = []
+    const seen = new Set()
     for (const s of (samples || [])) {
       if (!s || isArchivedSample(s) || !hasPublished(s)) continue
       for (const a of getAccounts(s)) {
         const c = getCounts(s, a)
         if (!(c.publishCount > 0)) continue
+        const key = `${s.id}_${a}`
+        seen.add(key)
         out.push({
           sampleId: s.id,
           name: s.name,
@@ -588,9 +591,25 @@ export function DashboardPage() {
         })
       }
     }
+    // 从发布记录补全，刚录的发布即使样品计数还没同步也能搜到
+    for (const r of (publishRecords || [])) {
+      const accs = Array.isArray(r.accounts) ? r.accounts : []
+      for (const a of accs) {
+        const key = `${r.sampleId || r.productId || ''}_${a}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        out.push({
+          sampleId: r.sampleId || r.productId || '',
+          name: r.productId || r.sampleId || '未知',
+          account: a,
+          publishDate: r.publishDate || '',
+          publishCount: Number(r.qty) || 1,
+        })
+      }
+    }
     out.sort((x, y) => (y.publishDate || '').localeCompare(x.publishDate || ''))
     return out
-  }, [samples])
+  }, [samples, publishRecords])
 
   const filteredAdOptions = useMemo(() => {
     const kw = adSearch.trim()

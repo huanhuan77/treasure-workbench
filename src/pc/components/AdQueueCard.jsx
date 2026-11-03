@@ -16,7 +16,7 @@ const AD_STATUS_COLOR = {
 }
 
 export function AdQueueCard() {
-  const { samples, adQueue, addAdQueue, updateAdQueue, deleteAdQueue, hiddenAccounts } = useStore()
+  const { samples, publishRecords, adQueue, addAdQueue, updateAdQueue, deleteAdQueue, hiddenAccounts } = useStore()
   const { show } = useToast()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -80,13 +80,17 @@ export function AdQueueCard() {
   const [flashId, setFlashId] = useState('')   // 刚加入的那条：滚动定位 + 高亮 4 秒
 
   // 可作为待投流的候选：已发布（至少一条视频）的 样品 × 账号
+  // 同时从发布记录补全，刚录的发布即使样品计数还没同步也能搜到
   const options = useMemo(() => {
     const out = []
+    const seen = new Set()
     for (const s of samples || []) {
       if (!s || isArchivedSample(s) || !hasPublished(s)) continue
       for (const a of getAccounts(s)) {
         const c = getCounts(s, a)
         if (!(c.publishCount > 0)) continue
+        const key = `${s.id}_${a}`
+        seen.add(key)
         out.push({
           sampleId: s.id,
           name: s.name,
@@ -96,8 +100,24 @@ export function AdQueueCard() {
         })
       }
     }
+    // 从发布记录补全：样品里没算到的已发布记录也列出来
+    for (const r of (publishRecords || [])) {
+      const accs = Array.isArray(r.accounts) ? r.accounts : []
+      for (const a of accs) {
+        const key = `${r.sampleId || r.productId || ''}_${a}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        out.push({
+          sampleId: r.sampleId || r.productId || '',
+          name: r.productId || r.sampleId || '未知',
+          account: a,
+          publishDate: r.publishDate || '',
+          publishCount: Number(r.qty) || 1,
+        })
+      }
+    }
     return out.sort((x, y) => (y.publishDate || '').localeCompare(x.publishDate || ''))
-  }, [samples])
+  }, [samples, publishRecords])
 
   // 候选里出现过的账号（按 ACCOUNTS 顺序，未在册的排后面）
   const accountOptions = useMemo(() => {
