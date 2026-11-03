@@ -208,7 +208,6 @@ export function WordsPage() {
             }, 120)
           }}>顺序朗读</button>
         <button style={{ ...btnBase, ...(isShuffled ? { background: "var(--primary)", color: "#fff", borderColor: "var(--primary)" } : {}) }} onClick={() => { setOrder(pickN([...WORDS], WORDS.length)); setIsShuffled(true) }}>打乱顺序</button>
-        <button style={{ ...btnBase, ...(!isShuffled ? { background: "var(--primary-light)", borderColor: "var(--primary)", color: "var(--primary-dark)" } : {}) }} onClick={() => { setOrder([...WORDS]); setIsShuffled(false) }}>重置顺序</button>
         <button style={{ ...btnBase, ...(onlyUndone ? { background: 'var(--primary-light)', borderColor: 'var(--primary)', color: 'var(--primary-dark)' } : {}) }}
           onClick={() => setOnlyUndone(v => !v)}>{onlyUndone ? '显示全部' : '只看未学'}</button>
         <button style={{ ...btnBase, background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
