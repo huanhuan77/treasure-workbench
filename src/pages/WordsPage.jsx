@@ -138,7 +138,7 @@ export function WordsPage() {
   const pct = Math.round(doneSet.size / WORDS.length * 100)
 
   const startQuiz = () => {
-    const words = pickN([...WORDS], 20)
+    const words = pickN([...WORDS], 15)
     const questions = words.map(w => ({
       target: w,
       type: TYPES[Math.floor(Math.random() * TYPES.length)],
@@ -162,7 +162,7 @@ export function WordsPage() {
       <div style={{ marginBottom: 16 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>四六级单词卡片</h1>
         <p style={{ color: 'var(--text-sub)', fontSize: 12, marginTop: 4 }}>
-          点喇叭发音 · 学过打勾 · 20 题随机测验
+          点喇叭发音 · 学过打勾 · 15 题随机测验
         </p>
       </div>
 
