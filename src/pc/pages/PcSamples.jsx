@@ -68,11 +68,14 @@ export function PcSamples() {
   // 保存后「重新请求列表」：清掉可能挡住新样品的筛选（状态/账号/是否出单/搜索），
   // 并 +1 一个 refreshKey 强制重算，保证新加的那条一定出现在当前视图里
   const [refreshKey, setRefreshKey] = useState(0)
-  const handleSaved = (id) => {
-    setFilter('all')
-    setAccountFilter('all')
-    setOrderFilter('all')
-    setKeyword('')
+  const handleSaved = (id, isNew) => {
+    // 新增样品时重置筛选方便看到新记录；编辑已有样品时保留用户筛选状态
+    if (isNew) {
+      setFilter('all')
+      setAccountFilter('all')
+      setOrderFilter('all')
+      setKeyword('')
+    }
     setRefreshKey((k) => k + 1)
     if (id) setFlashId(id)
   }

@@ -116,7 +116,7 @@ export function SampleDialog({ sample, onClose, onSaved }) {
     onClose()
     // 保存成功后让列表「重新请求一次」：清掉可能把这条挡住的筛选 + 强制重算 + 定位高亮。
     // （addSample 会返回新 id，部分实现没有返回值，这里只在拿到 id 时透传）
-    if (typeof onSaved === 'function') onSaved(newId || sample?.id || '')
+    if (typeof onSaved === 'function') onSaved(newId || sample?.id || '', isNew)
   }
 
   const doDelete = () => {
