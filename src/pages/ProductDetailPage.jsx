@@ -164,8 +164,10 @@ export function ProductDetailPage() {
     else if (copyFilter === '爆单') list = list.filter((c) => c.hasHot)
     else if (copyFilter === '未出单') list = list.filter((c) => !c.hasOrder && !c.used)
     return [...list].sort((a, b) => {
-      // 置顶的最前（与 PC 文案库同一字段 pinned）
-      if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
+      // 置顶最前、置底最后（与 PC 文案库同一字段 pinned / pinnedBottom）
+      const ra = a.pinned ? 0 : a.pinnedBottom ? 2 : 1
+      const rb = b.pinned ? 0 : b.pinnedBottom ? 2 : 1
+      if (ra !== rb) return ra - rb
       if (!sortPending) {
         if (a.hasHot !== b.hasHot) return b.hasHot ? 1 : -1  // 爆单优先
         if (a.hasOrder !== b.hasOrder) return b.hasOrder ? 1 : -1  // 其次出单
@@ -265,6 +267,12 @@ export function ProductDetailPage() {
   const togglePinCopy = (copyId, current) => {
     updateCopy(id, copyId, { pinned: !current })
     show(!current ? '已置顶这条文案' : '已取消置顶', 'success')
+  }
+
+  // 文案置底：与 PC 同一字段 pinnedBottom，排到所有普通文案最后
+  const togglePinBottomCopy = (copyId, current) => {
+    updateCopy(id, copyId, { pinnedBottom: !current })
+    show(!current ? '已置底这条文案' : '已取消置底', 'success')
   }
 
   const toggleUsed = (copyId, current) => {
@@ -474,6 +482,7 @@ export function ProductDetailPage() {
                 onToggleHot={() => toggleHot(copy.id, copy.hasHot)}
                 onToggleUsed={() => toggleUsed(copy.id, copy.used)}
                 onTogglePin={() => togglePinCopy(copy.id, copy.pinned)}
+                onTogglePinBottom={() => togglePinBottomCopy(copy.id, copy.pinnedBottom)}
                 onDelete={() => setDelCopyId(copy.id)}
                 onSimilar={() => { setGenModal({ open: true, copy }); setGenResults([]); setGenLoading(true); setTimeout(() => { try { const rs = rewriteSimilar(copy.content, 4, sensitiveWords).map((content, i) => ({ id: Date.now() + i, content, collected: false })); setGenResults(rs) } catch(e) { console.error(e) } setGenLoading(false) }, 500) }}
               />
@@ -711,18 +720,20 @@ export function ProductDetailPage() {
 function CopyCard({
   copy,
   onCopyContent,
-  onEdit, onToggleOrder, onToggleHot, onToggleUsed, onTogglePin, onDelete, onSimilar,
+  onEdit, onToggleOrder, onToggleHot, onToggleUsed, onTogglePin, onTogglePinBottom, onDelete, onSimilar,
 }) {
-  // 左侧强调条配色与 PC 文案库统一（用户指定）：置顶=粉 / 出单=绿 / 爆单=红 / 用过=黄
+  // 左侧强调条配色与 PC 文案库统一：置顶=粉 / 置底=蓝 / 出单=绿 / 爆单=红 / 用过=黄
   const cardAccent = copy.pinned
     ? { borderLeft: '4px solid #b8517f', borderTop: '3px solid #f2cbdd', background: '#fdf9fb' }
-    : copy.hasOrder
-      ? { borderLeft: '4px solid #10b981', borderTop: '3px solid #34d399' }
-      : copy.hasHot
-        ? { borderLeft: '4px solid #ef4444', borderTop: '3px solid #f87171' }
-        : copy.used
-          ? { borderLeft: '4px solid #f59e0b' }
-          : {}
+    : copy.pinnedBottom
+      ? { borderLeft: '4px solid #2563eb', borderTop: '3px solid #93c5fd', background: '#f8faff' }
+      : copy.hasOrder
+        ? { borderLeft: '4px solid #10b981', borderTop: '3px solid #34d399' }
+        : copy.hasHot
+          ? { borderLeft: '4px solid #ef4444', borderTop: '3px solid #f87171' }
+          : copy.used
+            ? { borderLeft: '4px solid #f59e0b' }
+            : {}
 
   return (
     <div style={{
@@ -763,6 +774,25 @@ function CopyCard({
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block' }}>
+            <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+          </svg>
+        </button>
+        {/* 置底：已置底时蓝底白图标，未置底为淡蓝（与 PC 文案库同一字段 pinnedBottom） */}
+        <button
+          onClick={onTogglePinBottom}
+          aria-label={copy.pinnedBottom ? '取消置底' : '置底文案'}
+          title={copy.pinnedBottom ? '取消置底' : '置底这条文案'}
+          style={{
+            width: '30px', height: '30px', borderRadius: '50%',
+            border: copy.pinnedBottom ? 'none' : '1px solid rgba(37,99,235,0.18)',
+            background: copy.pinnedBottom ? '#2563eb' : 'rgba(239,246,255,0.9)',
+            color: copy.pinnedBottom ? '#fff' : '#2563eb',
+            cursor: 'pointer', padding: 0,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block', transform: 'rotate(180deg)' }}>
             <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
           </svg>
         </button>
