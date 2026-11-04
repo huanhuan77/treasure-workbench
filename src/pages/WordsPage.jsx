@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 
-const WORDS = [
+const WORD_POOL = [
   { w: "abundant", ph: "/əˈbʌndənt/", pos: "adj.", m: "丰富的，充裕的",
     ex: "The region has abundant natural resources.", cn: "该地区自然资源丰富。",
     tip: "abound（充满）+ ant → 充满的 → 丰富的。" },
@@ -61,7 +61,152 @@ const WORDS = [
   { w: "vanish", ph: "/ˈvænɪʃ/", pos: "v.", m: "突然消失，绝迹",
     ex: "The magician made the rabbit vanish.", cn: "魔术师让兔子消失了。",
     tip: "van（空，同 empty、vain）+ ish → 变得空空如也 → 消失。" },
+  { w: "abolish", ph: "/əˈbɒlɪʃ/", pos: "v.", m: "废除，取消",
+    ex: "The government decided to abolish the old law.", cn: "政府决定废除旧法律。",
+    tip: "ab（离开）+ ol（生长）+ ish → 让不再生长 → 废除。" },
+  { w: "accumulate", ph: "/əˈkjuːmjəleɪt/", pos: "v.", m: "积累，积聚",
+    ex: "He accumulated a fortune over the years.", cn: "他多年来积攒了一笔财富。",
+    tip: "ac（加强）+ cumul（堆积）+ ate → 不断堆积 → 积累。" },
+  { w: "advocate", ph: "/ˈædvəkeɪt/", pos: "v./n.", m: "提倡；支持者",
+    ex: "Many doctors advocate a balanced diet.", cn: "许多医生提倡均衡饮食。",
+    tip: "ad（加强）+ voc（叫喊）+ ate → 大声呼吁 → 提倡。" },
+  { w: "aspire", ph: "/əˈspaɪə(r)/", pos: "v.", m: "渴望，有志于",
+    ex: "She aspires to become a doctor.", cn: "她立志当一名医生。",
+    tip: "a（向）+ spire（呼吸）→ 向往地呼吸 → 渴望。" },
+  { w: "authentic", ph: "/ɔːˈθentɪk/", pos: "adj.", m: "真实的，正宗的",
+    ex: "Is this an authentic Chinese restaurant?", cn: "这是正宗的中餐馆吗？",
+    tip: "auth（自己）+ entic → 一手的、原作的 → 真实的。" },
+  { w: "beneficial", ph: "/ˌbenɪˈfɪʃl/", pos: "adj.", m: "有益的，有利的",
+    ex: "Exercise is beneficial to health.", cn: "运动有益健康。",
+    tip: "bene（好）+ fic（做）+ ial → 做好事的 → 有益的。" },
+  { w: "circulate", ph: "/ˈsɜːkjəleɪt/", pos: "v.", m: "循环，流通；传播",
+    ex: "Blood circulates through the body.", cn: "血液在体内循环。",
+    tip: "circ（圆）+ ul + ate → 绕圈走 → 循环。" },
+  { w: "comprehensive", ph: "/ˌkɒmprɪˈhensɪv/", pos: "adj.", m: "全面的，综合的",
+    ex: "We need a comprehensive plan.", cn: "我们需要一个全面的计划。",
+    tip: "com（完全）+ prehens（抓住）+ ive → 全部抓住 → 全面的。" },
+  { w: "conceive", ph: "/kənˈsiːv/", pos: "v.", m: "构想；怀孕",
+    ex: "He conceived a bold plan.", cn: "他构想出一个大胆的计划。",
+    tip: "con（一起）+ ceive（拿）→ 把想法拿来 → 构想。" },
+  { w: "confront", ph: "/kənˈfrʌnt/", pos: "v.", m: "面对，遭遇",
+    ex: "We must confront the problem.", cn: "我们必须直面这个问题。",
+    tip: "con（一起）+ front（前面）→ 面对面 → 对抗。" },
+  { w: "consensus", ph: "/kənˈsensəs/", pos: "n.", m: "一致意见，共识",
+    ex: "They reached a consensus after hours of debate.", cn: "经过数小时辩论他们达成了共识。",
+    tip: "con（共同）+ sens（感觉）+ us → 共同感觉 → 共识。" },
+  { w: "contemplate", ph: "/ˈkɒntəmpleɪt/", pos: "v.", m: "深思；凝视",
+    ex: "She sat quietly, contemplating her future.", cn: "她静静坐着思考未来。",
+    tip: "con（加强）+ templ（神庙）+ ate → 在神庙里凝神 → 沉思。" },
+  { w: "crucial", ph: "/ˈkruːʃl/", pos: "adj.", m: "至关重要的，决定性的",
+    ex: "This is a crucial moment.", cn: "这是关键时刻。",
+    tip: "cruc（十字）+ ial → 十字路口 → 决定性的。" },
+  { w: "diminish", ph: "/dɪˈmɪnɪʃ/", pos: "v.", m: "减少，缩小",
+    ex: "The pain gradually diminished.", cn: "疼痛逐渐减轻了。",
+    tip: "di（离开）+ min（小）+ ish → 变小 → 减少。" },
+  { w: "elaborate", ph: "/ɪˈlæbərət/", pos: "adj./v.", m: "详尽的；详细说明",
+    ex: "Could you elaborate on your plan?", cn: "你能详细说明一下计划吗？",
+    tip: "e（出）+ labor（劳动）+ ate → 付出更多劳动 → 详尽。" },
+  { w: "endeavor", ph: "/ɪnˈdevə(r)/", pos: "v./n.", m: "努力，尽力",
+    ex: "We will endeavor to meet your needs.", cn: "我们会尽力满足您的需求。",
+    tip: "en（使）+ deavor（职责）→ 尽责 → 努力。" },
+  { w: "exaggerate", ph: "/ɪgˈzædʒəreɪt/", pos: "v.", m: "夸大，夸张",
+    ex: "Don't exaggerate the difficulties.", cn: "不要夸大困难。",
+    tip: "ex（出）+ agger（堆积）+ ate → 堆得超出实际 → 夸张。" },
+  { w: "fluctuate", ph: "/ˈflʌktʃueɪt/", pos: "v.", m: "波动，起伏",
+    ex: "Oil prices fluctuate daily.", cn: "油价每天都在波动。",
+    tip: "fluct（波浪）+ uate → 像波浪一样 → 波动。" },
+  { w: "gratitude", ph: "/ˈɡrætɪtjuːd/", pos: "n.", m: "感激，感谢",
+    ex: "She expressed her gratitude to the team.", cn: "她向团队表达了感谢。",
+    tip: "grat（感激）+ itude（状态）→ 感恩的状态。" },
+  { w: "hypothesis", ph: "/haɪˈpɒθəsɪs/", pos: "n.", m: "假设，假说",
+    ex: "The experiment proved his hypothesis.", cn: "实验证明了他的假设。",
+    tip: "hypo（下面）+ thesis（放置）→ 放在下面的前提 → 假设。" },
+  { w: "indispensable", ph: "/ˌɪndɪˈspensəbl/", pos: "adj.", m: "不可或缺的",
+    ex: "Water is indispensable to life.", cn: "水是生命不可或缺的。",
+    tip: "in（不）+ dis（分开）+ pens（称量）+ able → 不能分开称量 → 必需的。" },
+  { w: "integrate", ph: "/ˈɪntɪɡreɪt/", pos: "v.", m: "整合，使融入",
+    ex: "We need to integrate the new system.", cn: "我们需要整合新系统。",
+    tip: "integr（完整）+ ate → 使完整 → 整合。" },
+  { w: "justify", ph: "/ˈdʒʌstɪfaɪ/", pos: "v.", m: "证明…正当；为…辩护",
+    ex: "Nothing can justify such rudeness.", cn: "无论什么理由都不能为这种粗鲁开脱。",
+    tip: "just（正当）+ ify（使…）→ 使显得正当。名词 justification。" },
+  { w: "magnify", ph: "/ˈmæɡnɪfaɪ/", pos: "v.", m: "放大；夸大",
+    ex: "The microscope magnifies the cells.", cn: "显微镜放大细胞。",
+    tip: "magn（大）+ ify（使）→ 使变大 → 放大。" },
+  { w: "negotiate", ph: "/nɪˈɡəʊʃieɪt/", pos: "v.", m: "谈判，协商",
+    ex: "They negotiated a better deal.", cn: "他们谈判达成了更好的交易。",
+    tip: "neg（不）+ otium（空闲）→ 没有空闲 → 忙着谈。" },
+  { w: "obstacle", ph: "/ˈɒbstəkl/", pos: "n.", m: "障碍，干扰",
+    ex: "Fear is the biggest obstacle to success.", cn: "恐惧是成功最大的障碍。",
+    tip: "ob（反）+ sta（站）+ cle → 站在对面挡路 → 障碍。" },
+  { w: "perceive", ph: "/pəˈsiːv/", pos: "v.", m: "察觉，感知；理解",
+    ex: "She perceived a slight change in his mood.", cn: "她察觉到他情绪的微妙变化。",
+    tip: "per（完全）+ ceive（抓）→ 完全抓住 → 感知。" },
+  { w: "prestige", ph: "/preˈstiːʒ/", pos: "n.", m: "威望，声望",
+    ex: "The university has great prestige.", cn: "这所大学享有很高声望。",
+    tip: "pre（前）+ stig（拉）→ 拉到前面 → 引人注目 → 威望。" },
+  { w: "profound", ph: "/prəˈfaʊnd/", pos: "adj.", m: "深刻的，深远的",
+    ex: "The book had a profound effect on me.", cn: "这本书对我影响深远。",
+    tip: "pro（向前）+ found（底）→ 深到底 → 深刻的。" },
+  { w: "reinforce", ph: "/ˌriːɪnˈfɔːs/", pos: "v.", m: "加强，加固",
+    ex: "This evidence reinforces our argument.", cn: "这个证据加强了我们的论点。",
+    tip: "re（再）+ in（进）+ force（强）→ 再用力 → 加强。" },
+  { w: "reluctant", ph: "/rɪˈlʌktənt/", pos: "adj.", m: "不情愿的，勉强的",
+    ex: "He was reluctant to admit his mistake.", cn: "他不情愿承认错误。",
+    tip: "re（反）+ luct（挣扎）+ ant → 反抗挣扎 → 不情愿。" },
+  { w: "restrain", ph: "/rɪˈstreɪn/", pos: "v.", m: "抑制，约束",
+    ex: "She could not restrain her anger.", cn: "她抑制不住怒火。",
+    tip: "re（回）+ strain（拉紧）→ 拉回来 → 抑制。" },
+  { w: "simultaneous", ph: "/ˌsɪmlˈteɪniəs/", pos: "adj.", m: "同时的",
+    ex: "There were simultaneous translations.", cn: "有同声传译。",
+    tip: "simul（相同）+ tane + ous → 相同时间发生的。" },
+  { w: "sustain", ph: "/səˈsteɪn/", pos: "v.", m: "维持，支撑；遭受",
+    ex: "The economy cannot sustain this growth.", cn: "经济无法维持这种增长。",
+    tip: "sus（下面）+ tain（握）→ 在下面撑住 → 维持。" },
+  { w: "tedious", ph: "/ˈtiːdiəs/", pos: "adj.", m: "冗长乏味的",
+    ex: "The lecture was incredibly tedious.", cn: "那场讲座无聊透顶。",
+    tip: "ted（厌倦）+ ious → 令人厌倦的。" },
+  { w: "transition", ph: "/trænˈzɪʃn/", pos: "n.", m: "过渡，转变",
+    ex: "The transition was smooth.", cn: "过渡很顺利。",
+    tip: "trans（穿过）+ it（走）+ ion → 走过去 → 过渡。" },
+  { w: "underlying", ph: "/ˌʌndəˈlaɪɪŋ/", pos: "adj.", m: "潜在的，根本的",
+    ex: "We need to address the underlying causes.", cn: "我们需要解决根本原因。",
+    tip: "under（下面）+ lying（躺着）→ 躺在下面的 → 潜在的。" },
+  { w: "vivid", ph: "/ˈvɪvɪd/", pos: "adj.", m: "生动的，鲜明的",
+    ex: "She gave a vivid description of the trip.", cn: "她生动地描述了旅行。",
+    tip: "viv（生命）+ id → 有生命的 → 生动的。" },
+  { w: "witness", ph: "/ˈwɪtnəs/", pos: "n./v.", m: "目击者；目睹",
+    ex: "She witnessed the accident.", cn: "她目睹了那场事故。",
+    tip: "wit（知道）+ ness → 亲眼知道的人 → 目击者。" },
+  { w: "yield", ph: "/jiːld/", pos: "v./n.", m: "产出；屈服；产量",
+    ex: "The investment yielded high returns.", cn: "这项投资带来了高回报。",
+    tip: "yield 有两个意思：产出庄稼，或屈服让步。" },
 ]
+
+const WORDS_PER_DAY = 20
+
+// 根据日期生成确定性随机种子，保证同一天内词表固定，跨天自动换
+function seedFromDate(dateStr) {
+  let h = 0
+  for (let i = 0; i < dateStr.length; i++) {
+    h = (h * 31 + dateStr.charCodeAt(i)) >>> 0
+  }
+  return h
+}
+function seededShuffle(arr, seed) {
+  const a = [...arr]
+  let s = seed
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 1103515245 + 12345) >>> 0
+    const j = s % (i + 1)
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+function todayWords(dateStr) {
+  const seed = seedFromDate(dateStr)
+  return seededShuffle(WORD_POOL, seed).slice(0, WORDS_PER_DAY)
+}
 
 const STORE_KEY = 'cet_words_done_v1'
 const TODAY_KEY = 'cet_words_last_study'
@@ -107,15 +252,16 @@ const btnBase = {
 }
 
 export function WordsPage() {
+  const todayStr = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD local
+  const todayList = useMemo(() => todayWords(todayStr), [todayStr])
   const [doneArr, setDoneArr] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]') } catch { return [] }
   })
   const doneSet = useMemo(() => new Set(doneArr), [doneArr])
-  const [order, setOrder] = useState(() => [...WORDS])
+  const [order, setOrder] = useState(() => todayList)
   const [onlyUndone, setOnlyUndone] = useState(false)
   const [isShuffled, setIsShuffled] = useState(false)
   const [quiz, setQuiz] = useState(null)
-  const todayStr = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD local
   const [lastStudy, setLastStudy] = useState(() => {
     try { return localStorage.getItem(TODAY_KEY) || '' } catch { return '' }
   })
@@ -136,14 +282,15 @@ export function WordsPage() {
   }
 
   const visible = onlyUndone ? order.filter(it => !doneSet.has(it.w)) : order
-  const pct = Math.round(doneSet.size / WORDS.length * 100)
+  const todayDoneCount = todayList.filter(it => doneSet.has(it.w)).length
+  const pct = Math.round(todayDoneCount / todayList.length * 100)
 
   const startQuiz = () => {
-    const words = pickN([...WORDS], 15)
+    const words = pickN([...todayList], Math.min(15, todayList.length))
     const questions = words.map(w => ({
       target: w,
       type: TYPES[Math.floor(Math.random() * TYPES.length)],
-      others: pickN(WORDS.filter(x => x.w !== w.w), 3),
+      others: pickN(WORD_POOL.filter(x => x.w !== w.w), 3),
     }))
     setQuiz({ questions, index: 0, score: 0, wrong: [], answers: new Array(questions.length).fill(null), done: false })
   }
@@ -163,7 +310,7 @@ export function WordsPage() {
       <div style={{ marginBottom: 16 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>四六级单词卡片</h1>
         <p style={{ color: 'var(--text-sub)', fontSize: 12, marginTop: 4 }}>
-          点喇叭发音 · 学过打勾 · 15 题随机测验
+          每天自动换 20 个词 · 点喇叭发音 · 学过打勾 · 15 题随机测验
         </p>
       </div>
 
@@ -189,12 +336,12 @@ export function WordsPage() {
       }}>
         <button style={{ ...btnBase, background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
           onClick={() => {
-            setOrder([...WORDS]); setIsShuffled(false)
+            setOrder([...todayList]); setIsShuffled(false)
             if (!('speechSynthesis' in window)) { alert('当前浏览器不支持语音朗读'); return }
             window.speechSynthesis.cancel()
             // 链式播放：cancel 后稍等，再逐个入队，避免手机浏览器卡死
             setTimeout(() => {
-              const list = [...WORDS]
+              const list = [...todayList]
               let i = 0
               const next = () => {
                 if (i >= list.length) return
@@ -207,7 +354,7 @@ export function WordsPage() {
               next()
             }, 120)
           }}>顺序朗读</button>
-        <button style={{ ...btnBase, ...(isShuffled ? { background: "var(--primary)", color: "#fff", borderColor: "var(--primary)" } : {}) }} onClick={() => { setOrder(pickN([...WORDS], WORDS.length)); setIsShuffled(true) }}>打乱顺序</button>
+        <button style={{ ...btnBase, ...(isShuffled ? { background: "var(--primary)", color: "#fff", borderColor: "var(--primary)" } : {}) }} onClick={() => { setOrder(pickN([...todayList], todayList.length)); setIsShuffled(true) }}>打乱顺序</button>
         <button style={{ ...btnBase, ...(onlyUndone ? { background: 'var(--primary-light)', borderColor: 'var(--primary)', color: 'var(--primary-dark)' } : {}) }}
           onClick={() => setOnlyUndone(v => !v)}>{onlyUndone ? '显示全部' : '只看未学'}</button>
         <button style={{ ...btnBase, background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
@@ -223,7 +370,7 @@ export function WordsPage() {
         <div style={{ height: '100%', background: 'var(--primary)', width: pct + '%', transition: 'width .3s' }} />
       </div>
       <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 14 }}>
-        已学 {doneSet.size} / {WORDS.length} 个 · {pct}%
+        今日已学 {todayDoneCount} / {todayList.length} 词 · {pct}%
       </div>
 
       {!quiz ? (
