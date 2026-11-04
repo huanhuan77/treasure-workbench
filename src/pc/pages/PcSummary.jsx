@@ -117,6 +117,28 @@ export function PcSummary() {
           ))}
         </div>
 
+        {/* 区间内新增的样品：放统计卡片下面，用户要求放前面 */}
+        <div className="pcv-card" style={{ marginTop: 12 }}>
+          <div className="pcv-card-h">
+            <span style={{ fontWeight: 600 }}>区间内新增的样品</span>
+            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>{sum.newSamples} 个</span>
+          </div>
+          <div style={{ padding: '10px 14px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {sum.newSampleList.length === 0 ? (
+              <span style={{ fontSize: 12, color: '#9aa0a9' }}>这个区间没有新增样品</span>
+            ) : sum.newSampleList.map((s, i) => (
+              <span
+                key={`${s.name}-${i}`}
+                style={{
+                  fontSize: 12, padding: '3px 9px', borderRadius: 999,
+                  background: '#f3f4f6', color: '#4b5563', whiteSpace: 'nowrap',
+                }}
+                title={s.status}
+              >{s.name}</span>
+            ))}
+          </div>
+        </div>
+
         {/* 图表区（ECharts 按需引入）：期间趋势 + 近 6 个月趋势/转化率 + 分类占比 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
           <div className="pcv-card">
@@ -234,28 +256,6 @@ export function PcSummary() {
               ))}
             </tbody>
           </table>
-        </div>
-
-        {/* 新增样品清单：卡片上的数字对应到具体是哪几个品 */}
-        <div className="pcv-card" style={{ marginTop: 12 }}>
-          <div className="pcv-card-h">
-            <span style={{ fontWeight: 600 }}>区间内新增的样品</span>
-            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>{sum.newSamples} 个</span>
-          </div>
-          <div style={{ padding: '10px 14px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {sum.newSampleList.length === 0 ? (
-              <span style={{ fontSize: 12, color: '#9aa0a9' }}>这个区间没有新增样品</span>
-            ) : sum.newSampleList.map((s, i) => (
-              <span
-                key={`${s.name}-${i}`}
-                style={{
-                  fontSize: 12, padding: '3px 9px', borderRadius: 999,
-                  background: '#f3f4f6', color: '#4b5563', whiteSpace: 'nowrap',
-                }}
-                title={s.status}
-              >{s.name}</span>
-            ))}
-          </div>
         </div>
 
         {/* 「按天明细」按用户要求去掉（保留分账号 / 按产品 / 新增样品三块） */}
