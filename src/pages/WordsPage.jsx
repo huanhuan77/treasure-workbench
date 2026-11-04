@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 
-const WORD_POOL = [
+const FALLBACK_POOL = [
   { w: "abundant", ph: "/əˈbʌndənt/", pos: "adj.", m: "丰富的，充裕的",
     ex: "The region has abundant natural resources.", cn: "该地区自然资源丰富。",
     tip: "abound（充满）+ ant → 充满的 → 丰富的。" },
@@ -203,9 +203,9 @@ function seededShuffle(arr, seed) {
   }
   return a
 }
-function todayWords(dateStr) {
+function todayWords(pool, dateStr) {
   const seed = seedFromDate(dateStr)
-  return seededShuffle(WORD_POOL, seed).slice(0, WORDS_PER_DAY)
+  return seededShuffle(pool, seed).slice(0, Math.min(WORDS_PER_DAY, pool.length))
 }
 
 const STORE_KEY = 'cet_words_done_v1'
@@ -253,7 +253,14 @@ const btnBase = {
 
 export function WordsPage() {
   const todayStr = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD local
-  const todayList = useMemo(() => todayWords(todayStr), [todayStr])
+  const [wordPool, setWordPool] = useState(FALLBACK_POOL)
+  useEffect(() => {
+    fetch('words-db.json?_=' + Date.now())
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length) setWordPool(data) })
+      .catch(() => {})
+  }, [])
+  const todayList = useMemo(() => todayWords(wordPool, todayStr), [wordPool, todayStr])
   const [doneArr, setDoneArr] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]') } catch { return [] }
   })
@@ -290,7 +297,7 @@ export function WordsPage() {
     const questions = words.map(w => ({
       target: w,
       type: TYPES[Math.floor(Math.random() * TYPES.length)],
-      others: pickN(WORD_POOL.filter(x => x.w !== w.w), 3),
+      others: pickN(wordPool.filter(x => x.w !== w.w), 3),
     }))
     setQuiz({ questions, index: 0, score: 0, wrong: [], answers: new Array(questions.length).fill(null), done: false })
   }
