@@ -178,5 +178,140 @@
     "ex": "The magician made the rabbit vanish.",
     "cn": "魔术师让兔子消失了。",
     "tip": "van（空，同 empty、vain）+ ish → 变得空空如也 → 消失。"
+  },
+  {
+    "w": "anticipate",
+    "ph": "/ænˈtɪsɪpeɪt/",
+    "pos": "v.",
+    "m": "预料，预期；预先处理",
+    "ex": "We anticipate a rise in demand next quarter.",
+    "cn": "我们预计下季度需求会上升。",
+    "tip": "anti（前）+ cip（拿）+ ate → 提前把事拿到手里 → 预料。"
+  },
+  {
+    "w": "barrier",
+    "ph": "/ˈbæriər/",
+    "pos": "n.",
+    "m": "障碍，屏障；关卡",
+    "ex": "Language can be a serious barrier to communication.",
+    "cn": "语言可能成为沟通的严重障碍。",
+    "tip": "bar（栏杆）+ rier → 拦在路上的横杆。"
+  },
+  {
+    "w": "coherent",
+    "ph": "/koʊˈhɪrənt/",
+    "pos": "adj.",
+    "m": "连贯的，条理清楚的；一致的",
+    "ex": "She gave a coherent explanation of the whole process.",
+    "cn": "她把整个流程解释得条理清晰。",
+    "tip": "co（共同）+ her（粘）+ ent → 各部分粘在一起 → 连贯。"
+  },
+  {
+    "w": "diminish",
+    "ph": "/dɪˈmɪnɪʃ/",
+    "pos": "v.",
+    "m": "减少，缩小；降低",
+    "ex": "The pain gradually diminished after taking the medicine.",
+    "cn": "服药后疼痛逐渐减轻。",
+    "tip": "di + min（小）+ ish → 往小里走。同根 minimum、minor。"
+  },
+  {
+    "w": "elaborate",
+    "ph": "/ɪˈlæbəreɪt/",
+    "pos": "v./adj.",
+    "m": "详细阐述；精心制作的",
+    "ex": "Could you elaborate on your proposal a little more?",
+    "cn": "你能把方案再详细说说吗？",
+    "tip": "e（出）+ labor（劳动）+ ate → 花大量劳动做出来的。"
+  },
+  {
+    "w": "fluctuate",
+    "ph": "/ˈflʌktʃueɪt/",
+    "pos": "v.",
+    "m": "波动，起伏不定",
+    "ex": "Prices fluctuate wildly during the holiday season.",
+    "cn": "节假日期间价格剧烈波动。",
+    "tip": "flu（流）+ ctuate → 像水一样来回流动。"
+  },
+  {
+    "w": "grasp",
+    "ph": "/ɡræsp/",
+    "pos": "v./n.",
+    "m": "抓紧；理解，领会",
+    "ex": "It took me a while to grasp the main idea of the lecture.",
+    "cn": "我花了一会儿才抓住讲座的主旨。",
+    "tip": "和 grip（握紧）同源。手上抓牢 → 脑中理解透。"
+  },
+  {
+    "w": "reluctant",
+    "ph": "/rɪˈlʌktənt/",
+    "pos": "adj.",
+    "m": "不情愿的，勉强的",
+    "ex": "He was reluctant to admit that he had made a mistake.",
+    "cn": "他不情愿承认自己犯了错。",
+    "tip": "re（反）+ luct（挣扎）+ ant → 心里反复挣扎。"
+  },
+  {
+    "w": "simultaneous",
+    "ph": "/ˌsaɪməlˈteɪniəs/",
+    "pos": "adj.",
+    "m": "同时发生的，同步的",
+    "ex": "The two events happened almost simultaneously.",
+    "cn": "两件事几乎同时发生。",
+    "tip": "simul（相同）+ taneous → 同一时刻。"
+  },
+  {
+    "w": "tolerate",
+    "ph": "/ˈtɑːləreɪt/",
+    "pos": "v.",
+    "m": "容忍，忍受；耐受",
+    "ex": "I can tolerate the noise for a short while.",
+    "cn": "这噪音我忍一会儿还行。",
+    "tip": "toler（承受）+ ate → 扛着。名词 tolerance。"
+  },
+  {
+    "w": "vulnerable",
+    "ph": "/ˈvʌlnərəbl/",
+    "pos": "adj.",
+    "m": "易受伤害的，脆弱的；易受攻击的",
+    "ex": "Young children are especially vulnerable to infection.",
+    "cn": "幼儿尤其容易被感染。",
+    "tip": "vulner（伤口）+ able → 容易被戳出伤口的。"
+  },
+  {
+    "w": "withdraw",
+    "ph": "/wɪðˈdrɔː/",
+    "pos": "v.",
+    "m": "撤回，撤消；取（钱）；退出",
+    "ex": "The company decided to withdraw its product from the market.",
+    "cn": "公司决定将产品撤出市场。",
+    "tip": "with（往回）+ draw（拉）→ 往回拉 → 撤回。"
+  },
+  {
+    "w": "compensate",
+    "ph": "/ˈkɑːmpenseɪt/",
+    "pos": "v.",
+    "m": "补偿，赔偿；弥补",
+    "ex": "Nothing can compensate for the loss of a friend.",
+    "cn": "失去朋友的痛苦无可弥补。",
+    "tip": "com（共同）+ pens（称重、付钱）+ ate → 称一称补上差额。"
+  },
+  {
+    "w": "distinguish",
+    "ph": "/dɪˈstɪŋɡwɪʃ/",
+    "pos": "v.",
+    "m": "区分，辨别；使有别于",
+    "ex": "It is hard to distinguish between the twins.",
+    "cn": "这对双胞胎很难分辨。",
+    "tip": "dis（分开）+ stingu（做标记）+ ish → 打上记号分开。"
+  },
+  {
+    "w": "migrate",
+    "ph": "/ˈmaɪɡreɪt/",
+    "pos": "v.",
+    "m": "迁徙，移居；（候鸟）迁移",
+    "ex": "Many birds migrate south before winter arrives.",
+    "cn": "许多鸟类在入冬前南迁。",
+    "tip": "migr（迁移）+ ate。对比 emigrate 移出、immigrate 移入。"
   }
 ]
