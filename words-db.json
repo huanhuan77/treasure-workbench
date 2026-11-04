@@ -1,0 +1,182 @@
+[
+  {
+    "w": "abundant",
+    "ph": "/əˈbʌndənt/",
+    "pos": "adj.",
+    "m": "丰富的，充裕的",
+    "ex": "The region has abundant natural resources.",
+    "cn": "该地区自然资源丰富。",
+    "tip": "abound（充满）+ ant → 充满的 → 丰富的。"
+  },
+  {
+    "w": "accelerate",
+    "ph": "/əkˈseləreɪt/",
+    "pos": "v.",
+    "m": "加速，促进",
+    "ex": "The car accelerated to overtake the truck.",
+    "cn": "汽车加速超过卡车。",
+    "tip": "ac（加强）+ celer（快）+ ate → 加快。反义 decelerate 减速。"
+  },
+  {
+    "w": "compromise",
+    "ph": "/ˈkɒmprəmaɪz/",
+    "pos": "v./n.",
+    "m": "妥协，折中；危及",
+    "ex": "We had to compromise on the price.",
+    "cn": "我们不得不在价格上妥协。",
+    "tip": "com（共同）+ promise（承诺）→ 各让一步 → 妥协。"
+  },
+  {
+    "w": "dilemma",
+    "ph": "/dɪˈlemə/",
+    "pos": "n.",
+    "m": "进退两难的困境",
+    "ex": "She faced the dilemma of choosing between career and family.",
+    "cn": "她面临事业与家庭的两难。",
+    "tip": "di（两个）+ lemma（假设）→ 两个假设都不好 → 两难。"
+  },
+  {
+    "w": "eliminate",
+    "ph": "/ɪˈlɪmɪneɪt/",
+    "pos": "v.",
+    "m": "消除，排除；淘汰",
+    "ex": "The team was eliminated in the first round.",
+    "cn": "该队在第一轮被淘汰。",
+    "tip": "e（出）+ limin（门槛）+ ate → 扫地出门 → 消除。"
+  },
+  {
+    "w": "genuine",
+    "ph": "/ˈdʒenjuɪn/",
+    "pos": "adj.",
+    "m": "真的；真诚的",
+    "ex": "Her smile looked genuine.",
+    "cn": "她的微笑看起来很真诚。",
+    "tip": "词根 gen（出生/基因）→ 原生的 → 真的。反义 artificial。"
+  },
+  {
+    "w": "hierarchy",
+    "ph": "/ˈhaɪərɑːki/",
+    "pos": "n.",
+    "m": "等级制度，层级",
+    "ex": "There is a strict hierarchy in the company.",
+    "cn": "公司里有严格的等级制度。",
+    "tip": "hier（神圣）+ archy（统治）→ 神圣的统治秩序 → 等级。"
+  },
+  {
+    "w": "inevitable",
+    "ph": "/ɪnˈevɪtəbl/",
+    "pos": "adj.",
+    "m": "不可避免的",
+    "ex": "Change is inevitable in life.",
+    "cn": "生活中变化是不可避免的。",
+    "tip": "in（不）+ evit（避免）+ able → 不能避免的。"
+  },
+  {
+    "w": "perspective",
+    "ph": "/pəˈspektɪv/",
+    "pos": "n.",
+    "m": "视角，观点；透视法",
+    "ex": "Try to see it from a different perspective.",
+    "cn": "试着从不同角度看这件事。",
+    "tip": "per（贯穿）+ spect（看）+ ive → 看透 → 视角。"
+  },
+  {
+    "w": "substantial",
+    "ph": "/səbˈstænʃl/",
+    "pos": "adj.",
+    "m": "大量的；结实的；实质的",
+    "ex": "The building is a substantial structure.",
+    "cn": "这座建筑结构坚固。",
+    "tip": "sub（下面）+ stan（站）+ tial → 站得住的 → 结实的。"
+  },
+  {
+    "w": "ambiguous",
+    "ph": "/æmˈbɪɡjuəs/",
+    "pos": "adj.",
+    "m": "模棱两可的，含糊的",
+    "ex": "His ambiguous reply made her unsure what to do.",
+    "cn": "他模棱两可的回复让她拿不定主意。",
+    "tip": "ambi（两个）+ gu（驱动）+ ous → 两种走向都可解释 → 含糊。"
+  },
+  {
+    "w": "cautious",
+    "ph": "/ˈkɔːʃəs/",
+    "pos": "adj.",
+    "m": "小心的，谨慎的",
+    "ex": "Be cautious when crossing the busy street.",
+    "cn": "过这条繁忙马路时要小心。",
+    "tip": "caut（小心，同 caution）+ ious → 处处留神。别和 curious（好奇）混。"
+  },
+  {
+    "w": "dedicate",
+    "ph": "/ˈdedɪkeɪt/",
+    "pos": "v.",
+    "m": "致力于，献身；献给",
+    "ex": "She dedicated her life to helping the poor.",
+    "cn": "她毕生致力于帮助穷人。",
+    "tip": "de（加强）+ dic（宣告）+ ate → 公开宣告投入 → 奉献。"
+  },
+  {
+    "w": "evident",
+    "ph": "/ˈevɪdənt/",
+    "pos": "adj.",
+    "m": "明显的，明白的",
+    "ex": "It was evident that she had been crying.",
+    "cn": "很明显她刚哭过。",
+    "tip": "e（出）+ vid（看）+ ent → 一眼看出 → 明显。名词 evidence。"
+  },
+  {
+    "w": "fragile",
+    "ph": "/ˈfrædʒaɪl/",
+    "pos": "adj.",
+    "m": "易碎的；脆弱的",
+    "ex": "The fragile packages must be handled with care.",
+    "cn": "这些易碎包裹必须轻拿轻放。",
+    "tip": "frag（打碎，同 fraction）+ ile（易…的）→ 容易碎的。"
+  },
+  {
+    "w": "hesitate",
+    "ph": "/ˈhezɪteɪt/",
+    "pos": "v.",
+    "m": "犹豫，踌躇",
+    "ex": "Don't hesitate to call me if you need help.",
+    "cn": "需要帮忙就尽管打电话，别犹豫。",
+    "tip": "haes（粘，同 adhesive）+ itate → 脚粘住迈不开 → 犹豫。"
+  },
+  {
+    "w": "immense",
+    "ph": "/ɪˈmens/",
+    "pos": "adj.",
+    "m": "巨大的，广大的",
+    "ex": "The project requires an immense amount of time.",
+    "cn": "这个项目需要极其多的时间。",
+    "tip": "im（不）+ mens（测量，同 measure）→ 大到没法测量。"
+  },
+  {
+    "w": "justify",
+    "ph": "/ˈdʒʌstɪfaɪ/",
+    "pos": "v.",
+    "m": "证明…正当；为…辩护",
+    "ex": "Nothing can justify such rudeness.",
+    "cn": "无论什么理由都不能为这种粗鲁开脱。",
+    "tip": "just（正当）+ ify（使…）→ 使显得正当。名词 justification。"
+  },
+  {
+    "w": "prominent",
+    "ph": "/ˈprɒmɪnənt/",
+    "pos": "adj.",
+    "m": "突出的，杰出的；显著的",
+    "ex": "She is a prominent scientist in her field.",
+    "cn": "她是所在领域杰出的科学家。",
+    "tip": "pro（向前）+ min（突出）+ ent → 向前伸出来 → 显眼。"
+  },
+  {
+    "w": "vanish",
+    "ph": "/ˈvænɪʃ/",
+    "pos": "v.",
+    "m": "突然消失，绝迹",
+    "ex": "The magician made the rabbit vanish.",
+    "cn": "魔术师让兔子消失了。",
+    "tip": "van（空，同 empty、vain）+ ish → 变得空空如也 → 消失。"
+  }
+]
