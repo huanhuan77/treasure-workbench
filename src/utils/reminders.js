@@ -49,11 +49,14 @@ export function selectPublishReminders(samples, orders = []) {
     // 互斥口径：出过单的 → 进发布提醒；没出单的 → 归发布不足10
     if (orderedSampleIds.has(s.id)) return true
 
-    // 没出单的：只有「从未发布过」（所有账号 publishCount=0）才进发布提醒
-    // 发了1~9条但没出单的，归发布不足10
+    // 没出单：只要还有账号从没发过（publishCount=0），这个样品就进发布提醒，
+    // 卡片只挂这些待发账号（reminderAccounts）；已经发过 1~9 条的账号归「发布不足10」。
+    // 多账号样品按账号粒度分流：允许同一个样品在两个 tab 各挂各自的账号子集，
+    // 不能用「全部账号都没发过」的整品闸门把还没发的账号漏掉（用户反馈：
+    // 红脸兔刘亦菲发了 2 条、富婆一条没发，富婆却在发布提醒里消失了）。
     const accs = getAccounts(s)
-    const allNeverPublished = accs.every((a) => (Number(s?.countsByAccount?.[a]?.publishCount) || 0) === 0)
-    return allNeverPublished
+    const hasNeverPosted = accs.some((a) => (Number(s?.countsByAccount?.[a]?.publishCount) || 0) === 0)
+    return hasNeverPosted
   })
 }
 

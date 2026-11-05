@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, isOverdue, compareUrgent } from '../utils/publish'
-import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
+import { daysSincePublish, daysSincePublishByAccount, reminderAccounts, isOverdue, compareUrgent } from '../utils/publish'
+import { ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 import { selectPublishReminders } from '../utils/reminders'
 import { ReminderListPage, ReminderCard, CardTitleRow, CardActions } from '../components/ReminderListPage'
@@ -37,8 +37,9 @@ export function PublishRemindersPage() {
         const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.published
         const days = daysSincePublish(s)
         // 只显示还需要发视频的账号（从未发过 / 超阈值没发）；都发过则显示全部
-        const pending = pendingAccounts(s)
-        const all = pending.length ? pending : getAccounts(s)
+        // 口径与 PC 总览一致：reminderAccounts = 从未发过 ∪ 超期未发
+        const pending = reminderAccounts(s)
+        const all = pending
         // 用户筛了账号就只显示该账号 —— 否则从「广东刘亦菲」进来却看到
         // 「努力成为富婆」的标签，会以为筛选没生效。
         // 若所选账号不在本样品的待发名单里（本不该出现，防御性处理），退回全量避免卡片空标签。
