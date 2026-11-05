@@ -1107,6 +1107,35 @@ select.pcv-input {
   padding: 24px;
   background: rgba(15, 23, 42, 0.28);
 }
+
+/* 全局同步 loading 卡片 */
+.pcv-sync-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 38px;
+  box-shadow: 0 4px 20px rgba(244, 114, 182, 0.12);
+}
+.pcv-sync-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #fce7f3;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.pcv-sync-loading-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.pcv-sync-loading-sub {
+  font-size: 12px;
+  color: #94a3b8;
+}
 .pcv-dialog {
   width: 100%;
   max-width: 520px;

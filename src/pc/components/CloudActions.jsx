@@ -25,6 +25,7 @@ export function CloudActions({ vertical = false }) {
   // 便于一眼分辨「没拉到」和「拉到了但页面被筛选挡住」
   const { applySyncResult, todos, publishRecords, samples, orders, transactions } = useStore()
   const [syncing, setSyncing] = useState(false)
+  const [manualSyncing, setManualSyncing] = useState(false)
   const [restoring, setRestoring] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
 
@@ -60,6 +61,7 @@ export function CloudActions({ vertical = false }) {
     if (syncingRef.current) return
     syncingRef.current = true
     setSyncing(true)
+    if (!silent) setManualSyncing(true)
     try {
       const gistId = localStorage.getItem('backup_gist_id')
       const before = {
@@ -92,6 +94,7 @@ export function CloudActions({ vertical = false }) {
     } finally {
       syncingRef.current = false
       setSyncing(false)
+      setManualSyncing(false)
     }
   }, [applySyncResult, show, navigate, todos, publishRecords, samples, orders, transactions])
 
@@ -114,6 +117,14 @@ export function CloudActions({ vertical = false }) {
       window.removeEventListener('focus', onVisible)
     }
   }, [runSync])
+
+  // 全局 loading 期间锁定页面滚动
+  useEffect(() => {
+    if (!manualSyncing) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [manualSyncing])
 
   const handleRestore = async () => {
     const tk = getStoredToken()
@@ -179,6 +190,16 @@ export function CloudActions({ vertical = false }) {
           直接挂弹窗会被裁在侧栏内、且被主内容盖住（点「备份与同步」只看到页面变灰、弹窗不见）。 */}
       {createPortal(
         <>
+          {/* 手动同步时的全局 loading 遮罩：覆盖整页、禁止操作，静默自动同步不弹 */}
+          {manualSyncing && (
+            <div className="pcv-overlay" style={{ background: 'rgba(255,255,255,0.35)', backdropFilter: 'blur(2px)' }}>
+              <div className="pcv-sync-loading">
+                <span className="pcv-sync-spinner" />
+                <span className="pcv-sync-loading-title">同步中…</span>
+                <span className="pcv-sync-loading-sub">正在与云端合并数据，请稍候</span>
+              </div>
+            </div>
+          )}
           <ConfirmModal
             open={confirmRestore}
             onClose={() => setConfirmRestore(false)}
