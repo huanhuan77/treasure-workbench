@@ -210,7 +210,19 @@ function todayWords(pool, dateStr) {
 
 const STORE_KEY = 'cet_words_done_v1'
 const TODAY_KEY = 'cet_words_last_study'
+const BATCH_KEY = 'cet_words_batch_v1'
 const TYPES = ['cn2en', 'en2cn', 'cloze', 'listen']
+
+// 冻结批次：快照存单词列表，不再按日期跨天自动换；只有手动点“换一批”才刷新
+function readBatchW() {
+  try { return JSON.parse(localStorage.getItem(BATCH_KEY) || '[]') } catch { return [] }
+}
+function writeBatchW(ws) {
+  try { localStorage.setItem(BATCH_KEY, JSON.stringify(ws)) } catch {}
+}
+function buildBatchW(pool, seed) {
+  return seededShuffle(pool, seed).slice(0, Math.min(WORDS_PER_DAY, pool.length)).map(x => x.w)
+}
 
 function pickN(arr, n) {
   const a = [...arr]
@@ -309,7 +321,29 @@ export function WordsPage() {
       .then(data => { if (Array.isArray(data) && data.length) setWordPool(data) })
       .catch(() => {})
   }, [])
-  const todayList = useMemo(() => todayWords(wordPool, todayStr), [wordPool, todayStr])
+  const [batchW, setBatchW] = useState(readBatchW)
+  const todayList = useMemo(
+    () => batchW.map(w => wordPool.find(x => x.w === w)).filter(Boolean),
+    [batchW, wordPool],
+  )
+  // 词库加载后补全/校验快照批次；快照为空时用固定种子生成一批并冻结
+  useEffect(() => {
+    if (!wordPool.length) return
+    const valid = batchW.filter(w => wordPool.some(x => x.w === w))
+    const syncOrder = (ws) => setOrder(ws.map(w => wordPool.find(x => x.w === w)).filter(Boolean))
+    if (!valid.length) {
+      const ws = buildBatchW(wordPool, 20261105)
+      writeBatchW(ws); setBatchW(ws); syncOrder(ws)
+    } else if (valid.length !== batchW.length) {
+      writeBatchW(valid); setBatchW(valid); syncOrder(valid)
+    }
+  }, [wordPool])
+  const refreshBatch = () => {
+    const ws = buildBatchW(wordPool, Date.now() >>> 0)
+    writeBatchW(ws); setBatchW(ws)
+    const fresh = ws.map(w => wordPool.find(x => x.w === w)).filter(Boolean)
+    setOrder(fresh); setIsShuffled(false); setOnlyUndone(false)
+  }
   const [doneArr, setDoneArr] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORE_KEY) || '[]') } catch { return [] }
   })
@@ -371,7 +405,7 @@ export function WordsPage() {
       <div style={{ marginBottom: 16 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>四六级单词卡片</h1>
         <p style={{ color: 'var(--text-sub)', fontSize: 12, marginTop: 4 }}>
-          每天自动换 20 个词 · 点喇叭发音 · 学过打勾 · 15 题随机测验
+          固定一批 20 个词 · 点喇叭发音 · 学过打勾 · 15 题随机测验
         </p>
       </div>
 
@@ -425,6 +459,7 @@ export function WordsPage() {
           onClick={() => setOnlyUndone(v => !v)}>{onlyUndone ? '显示全部' : '只看未学'}</button>
         <button style={{ ...btnBase, background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
           onClick={startQuiz}>开始测试</button>
+        <button style={{ ...btnBase }} onClick={refreshBatch} title="学完、考完后可手动换一批新词">换一批</button>
         {quiz && !quiz.done && (
           <button style={{ ...btnBase, borderColor: 'var(--danger)', color: 'var(--danger)' }}
             onClick={quitQuiz}>退出测试</button>
@@ -436,7 +471,7 @@ export function WordsPage() {
         <div style={{ height: '100%', background: 'var(--primary)', width: pct + '%', transition: 'width .3s' }} />
       </div>
       <div style={{ fontSize: 12, color: 'var(--text-sub)', marginBottom: 14 }}>
-        今日已学 {todayDoneCount} / {todayList.length} 词 · {pct}%
+        本批已学 {todayDoneCount} / {todayList.length} 词 · {pct}%
       </div>
 
       {!quiz ? (
