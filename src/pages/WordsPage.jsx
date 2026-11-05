@@ -221,12 +221,23 @@ function pickN(arr, n) {
   return a.slice(0, Math.min(n, a.length))
 }
 
+function pickEnVoice() {
+  if (!('speechSynthesis' in window)) return null
+  const voices = window.speechSynthesis.getVoices() || []
+  return voices.find(v => /en[-_]US/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang)) || null
+}
 function speak(text) {
   if (!('speechSynthesis' in window)) { alert('当前浏览器不支持语音朗读'); return }
   window.speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(text)
-  u.lang = 'en-US'; u.rate = 0.9
-  window.speechSynthesis.speak(u)
+  // cancel 是异步的，延迟一点再发声，避免浏览器把新语音吞掉；并显式指定英文语音
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'en-US'; u.rate = 0.9
+    const v = pickEnVoice()
+    if (v) u.voice = v
+    u.onerror = () => {}
+    window.speechSynthesis.speak(u)
+  }, 120)
 }
 
 const spkSvg = (size = 18) => (
@@ -354,6 +365,8 @@ export function WordsPage() {
                 if (i >= list.length) return
                 const u = new SpeechSynthesisUtterance(list[i].w)
                 u.lang = 'en-US'; u.rate = 0.85
+                const v = pickEnVoice()
+                if (v) u.voice = v
                 i++
                 u.onend = next
                 window.speechSynthesis.speak(u)
