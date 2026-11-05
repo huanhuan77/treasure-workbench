@@ -227,6 +227,14 @@ function pickEnVoice() {
   return voices.find(v => /en[-_]US/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang)) || null
 }
 let audioEl = null
+function ensureAudioEl() {
+  if (!audioEl) {
+    audioEl = new Audio()
+    audioEl.style.display = 'none'
+    document.body.appendChild(audioEl)
+  }
+  return audioEl
+}
 function stopAll() {
   if (audioEl) { audioEl.pause(); audioEl = null }
   if ('speechSynthesis' in window) window.speechSynthesis.cancel()
@@ -242,30 +250,32 @@ function localSpeak(text) {
     window.speechSynthesis.speak(u)
   }, 120)
 }
-function playWordOnline(word, onDone) {
-  const a = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`)
+function playWordOnline(word, onDone, onFail) {
+  const a = ensureAudioEl()
+  a.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`
   audioEl = a
   a.onended = () => { audioEl = null; onDone && onDone() }
-  a.onerror = () => { audioEl = null; onDone && onDone() }
-  a.play().catch(() => { audioEl = null; onDone && onDone() })
+  a.onerror = () => { audioEl = null; onFail && onFail(); onDone && onDone() }
+  const p = a.play()
+  if (p && p.catch) p.catch(() => { audioEl = null; onFail && onFail(); onDone && onDone() })
 }
-function playWordsChain(words, idx = 0) {
+function playWordsChain(words, idx = 0, onFail) {
   if (idx >= words.length) return
-  playWordOnline(words[idx], () => playWordsChain(words, idx + 1))
+  playWordOnline(words[idx], () => playWordsChain(words, idx + 1, onFail), onFail)
 }
-function speak(text) {
+function speak(text, onFail) {
   stopAll()
   const tokens = text.trim().split(/\s+/).filter(Boolean)
   const isSentence = tokens.length > 1
   if (!isSentence) {
     // 单词：在线发音优先，失败回退本地 TTS
-    playWordOnline(text, () => localSpeak(text))
+    playWordOnline(text, () => localSpeak(text), onFail)
     return
   }
   // 例句：本机有英文语音包就整句读；否则拆成单词逐个在线链式发音
   if (pickEnVoice()) { localSpeak(text); return }
   const words = text.replace(/[.,!?;:"']/g, ' ').trim().split(/\s+/).filter(Boolean)
-  playWordsChain(words)
+  playWordsChain(words, 0, onFail)
 }
 
 const spkSvg = (size = 18) => (
@@ -312,6 +322,11 @@ export function WordsPage() {
     try { return localStorage.getItem(TODAY_KEY) || '' } catch { return '' }
   })
   const studiedToday = lastStudy === todayStr
+  const [speakHint, setSpeakHint] = useState('')
+  const flashFail = () => {
+    setSpeakHint('发音被浏览器拦截，请再点一次喇叭')
+    setTimeout(() => setSpeakHint(''), 2200)
+  }
 
   const save = (arr) => {
     setDoneArr(arr)
@@ -359,6 +374,13 @@ export function WordsPage() {
           每天自动换 20 个词 · 点喇叭发音 · 学过打勾 · 15 题随机测验
         </p>
       </div>
+
+      {speakHint && (
+        <div style={{
+          background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c',
+          borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 13,
+        }}>{speakHint}</div>
+      )}
 
       {!studiedToday && (
         <div style={{
@@ -438,7 +460,7 @@ export function WordsPage() {
                     textDecoration: isDone ? 'line-through' : 'none',
                     textDecorationColor: 'var(--primary)',
                   }}>{it.w}</span>
-                  <button onClick={() => speak(it.w)} title="朗读单词"
+                  <button onClick={() => speak(it.w, flashFail)} title="朗读单词"
                     style={{
                       width: 32, height: 32, borderRadius: '50%', border: 'none', cursor: 'pointer',
                       background: 'var(--primary-light)', color: 'var(--primary-dark)',
@@ -456,7 +478,7 @@ export function WordsPage() {
                   borderLeft: '3px solid var(--primary)', borderRadius: '0 8px 8px 0', fontSize: 14,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <button onClick={() => speak(it.ex)}
+                    <button onClick={() => speak(it.ex, flashFail)}
                       style={{
                         width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer',
                         background: '#fce7f3', color: 'var(--primary-dark)',
