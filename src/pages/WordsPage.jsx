@@ -226,10 +226,9 @@ function pickEnVoice() {
   const voices = window.speechSynthesis.getVoices() || []
   return voices.find(v => /en[-_]US/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang)) || null
 }
-function speak(text) {
-  if (!('speechSynthesis' in window)) { alert('当前浏览器不支持语音朗读'); return }
-  window.speechSynthesis.cancel()
-  // cancel 是异步的，延迟一点再发声，避免浏览器把新语音吞掉；并显式指定英文语音
+let audioEl = null
+function fallbackSpeak(text) {
+  if (!('speechSynthesis' in window)) return
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text)
     u.lang = 'en-US'; u.rate = 0.9
@@ -238,6 +237,17 @@ function speak(text) {
     u.onerror = () => {}
     window.speechSynthesis.speak(u)
   }, 120)
+}
+function speak(text) {
+  // 停掉上一次音频与本地朗读
+  if (audioEl) { audioEl.pause(); audioEl = null }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+  // 优先走在线发音（不依赖本机语音包），失败再回退本地 TTS
+  const a = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=2`)
+  audioEl = a
+  a.onended = () => { audioEl = null }
+  a.onerror = () => { audioEl = null; fallbackSpeak(text) }
+  a.play().catch(() => { audioEl = null; fallbackSpeak(text) })
 }
 
 const spkSvg = (size = 18) => (
@@ -355,24 +365,20 @@ export function WordsPage() {
         <button style={{ ...btnBase, background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' }}
           onClick={() => {
             setOrder([...todayList]); setIsShuffled(false)
-            if (!('speechSynthesis' in window)) { alert('当前浏览器不支持语音朗读'); return }
-            window.speechSynthesis.cancel()
-            // 链式播放：cancel 后稍等，再逐个入队，避免手机浏览器卡死
-            setTimeout(() => {
-              const list = [...todayList]
-              let i = 0
-              const next = () => {
-                if (i >= list.length) return
-                const u = new SpeechSynthesisUtterance(list[i].w)
-                u.lang = 'en-US'; u.rate = 0.85
-                const v = pickEnVoice()
-                if (v) u.voice = v
-                i++
-                u.onend = next
-                window.speechSynthesis.speak(u)
-              }
-              next()
-            }, 120)
+            if (audioEl) { audioEl.pause(); audioEl = null }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+            const list = [...todayList]
+            let i = 0
+            const next = () => {
+              if (i >= list.length) return
+              const word = list[i].w; i++
+              const a = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`)
+              audioEl = a
+              a.onended = () => { audioEl = null; next() }
+              a.onerror = () => { audioEl = null; next() }
+              a.play().catch(() => next())
+            }
+            next()
           }}>顺序朗读</button>
         <button style={{ ...btnBase, ...(isShuffled ? { background: "var(--primary)", color: "#fff", borderColor: "var(--primary)" } : {}) }} onClick={() => { setOrder(pickN([...todayList], todayList.length)); setIsShuffled(true) }}>打乱顺序</button>
         <button style={{ ...btnBase, ...(onlyUndone ? { background: 'var(--primary-light)', borderColor: 'var(--primary)', color: 'var(--primary-dark)' } : {}) }}
