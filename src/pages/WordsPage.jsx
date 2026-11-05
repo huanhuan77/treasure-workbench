@@ -478,7 +478,7 @@ export function WordsPage() {
                   borderLeft: '3px solid var(--primary)', borderRadius: '0 8px 8px 0', fontSize: 14,
                 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                    <button onClick={() => speak(it.ex, flashFail)}
+                    <button onClick={() => speak(it.ex, flashFail)} title="朗读例句"
                       style={{
                         width: 26, height: 26, borderRadius: '50%', border: 'none', cursor: 'pointer',
                         background: '#fce7f3', color: 'var(--primary-dark)',
