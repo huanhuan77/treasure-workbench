@@ -1108,6 +1108,13 @@ select.pcv-input {
   background: rgba(15, 23, 42, 0.28);
 }
 
+/* 全局同步 loading 遮罩：层级抬高、底色压暗，确保盖在所有 PC 内容之上 */
+.pcv-sync-mask {
+  z-index: 3000;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(2px);
+}
+
 /* 全局同步 loading 卡片 */
 .pcv-sync-loading {
   display: flex;

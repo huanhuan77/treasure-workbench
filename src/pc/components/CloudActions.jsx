@@ -35,6 +35,8 @@ export function CloudActions({ vertical = false }) {
     return t > 0 ? new Date(t) : null
   })
   const syncingRef = useRef(false)
+  // 静默自动同步在途时，用户又手动点了同步：记下待跑，等在途那次结束后再补一次手动同步
+  const pendingManualRef = useRef(false)
 
   const requireToken = () => {
     const tk = getStoredToken()
@@ -58,7 +60,15 @@ export function CloudActions({ vertical = false }) {
       }
       return
     }
-    if (syncingRef.current) return
+    if (syncingRef.current) {
+      // 已有一次同步在跑（多半是进页面的静默自动同步）：手动点击不能被吞掉，
+      // 先挂上遮罩并记为待跑，等在途那次结束后补跑一次手动同步。
+      if (!silent) {
+        pendingManualRef.current = true
+        setManualSyncing(true)
+      }
+      return
+    }
     syncingRef.current = true
     setSyncing(true)
     if (!silent) setManualSyncing(true)
@@ -94,7 +104,13 @@ export function CloudActions({ vertical = false }) {
     } finally {
       syncingRef.current = false
       setSyncing(false)
-      setManualSyncing(false)
+      if (pendingManualRef.current) {
+        pendingManualRef.current = false
+        // 在途的静默同步结束了，补上用户刚才手动点的那次（遮罩保持到这次跑完）
+        runSync({ silent: false })
+      } else {
+        setManualSyncing(false)
+      }
     }
   }, [applySyncResult, show, navigate, todos, publishRecords, samples, orders, transactions])
 
@@ -192,7 +208,7 @@ export function CloudActions({ vertical = false }) {
         <>
           {/* 手动同步时的全局 loading 遮罩：覆盖整页、禁止操作，静默自动同步不弹 */}
           {manualSyncing && (
-            <div className="pcv-overlay" style={{ background: 'rgba(255,255,255,0.35)', backdropFilter: 'blur(2px)' }}>
+            <div className="pcv-overlay pcv-sync-mask">
               <div className="pcv-sync-loading">
                 <span className="pcv-sync-spinner" />
                 <span className="pcv-sync-loading-title">同步中…</span>
