@@ -227,7 +227,11 @@ function pickEnVoice() {
   return voices.find(v => /en[-_]US/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang)) || null
 }
 let audioEl = null
-function fallbackSpeak(text) {
+function stopAll() {
+  if (audioEl) { audioEl.pause(); audioEl = null }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+}
+function localSpeak(text) {
   if (!('speechSynthesis' in window)) return
   setTimeout(() => {
     const u = new SpeechSynthesisUtterance(text)
@@ -238,16 +242,30 @@ function fallbackSpeak(text) {
     window.speechSynthesis.speak(u)
   }, 120)
 }
-function speak(text) {
-  // 停掉上一次音频与本地朗读
-  if (audioEl) { audioEl.pause(); audioEl = null }
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel()
-  // 优先走在线发音（不依赖本机语音包），失败再回退本地 TTS
-  const a = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(text)}&type=2`)
+function playWordOnline(word, onDone) {
+  const a = new Audio(`https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`)
   audioEl = a
-  a.onended = () => { audioEl = null }
-  a.onerror = () => { audioEl = null; fallbackSpeak(text) }
-  a.play().catch(() => { audioEl = null; fallbackSpeak(text) })
+  a.onended = () => { audioEl = null; onDone && onDone() }
+  a.onerror = () => { audioEl = null; onDone && onDone() }
+  a.play().catch(() => { audioEl = null; onDone && onDone() })
+}
+function playWordsChain(words, idx = 0) {
+  if (idx >= words.length) return
+  playWordOnline(words[idx], () => playWordsChain(words, idx + 1))
+}
+function speak(text) {
+  stopAll()
+  const tokens = text.trim().split(/\s+/).filter(Boolean)
+  const isSentence = tokens.length > 1
+  if (!isSentence) {
+    // 单词：在线发音优先，失败回退本地 TTS
+    playWordOnline(text, () => localSpeak(text))
+    return
+  }
+  // 例句：本机有英文语音包就整句读；否则拆成单词逐个在线链式发音
+  if (pickEnVoice()) { localSpeak(text); return }
+  const words = text.replace(/[.,!?;:"']/g, ' ').trim().split(/\s+/).filter(Boolean)
+  playWordsChain(words)
 }
 
 const spkSvg = (size = 18) => (
