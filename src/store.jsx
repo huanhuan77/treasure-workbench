@@ -4890,6 +4890,12 @@ export function StoreProvider({ children }) {
       } catch(e) { console.warn('[applySyncResult] 修复文案ID失败:', e) }
       // 文案标题已废弃：同步合并回来的数据也统一去掉 title
       next.products = stripCopyTitles(next.products)
+      // 同步是「按 id 各自取并集」：新发布记录并进来时，样品上缓存的发布影子计数
+      // （countsByAccount.publishCount）可能还是旧的。这里用合并后的发布记录重算一遍
+      // 样品统计，保证样品列表「发布」数与发布详情弹窗（按记录 qty 实时求和）一致。
+      try {
+        next.samples = recomputeSamplePublish(next.samples, next.publishRecords)
+      } catch (e) { console.warn('[applySyncResult] 重算样品发布统计失败:', e) }
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch (e) {}
       return next
     })
