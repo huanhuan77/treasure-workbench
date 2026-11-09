@@ -3805,9 +3805,103 @@ function aggregatePublish(samples, records) {
         }
         changed = true
       }
+    } else {
+      // 无任何发布记录：清零各账号残留影子计数（保留出单数与最后出单日期），
+      // 与 recomputeSamplePublish 同口径，避免删光记录后旧条数残留。
+      for (const a of accounts) {
+        const prev = countsByAccount[a] || {}
+        countsByAccount[a] = {
+          publishCount: 0,
+          orderCount: Number(prev.orderCount) || 0,
+          lastPublishAt: '',
+          lastOrderAt: prev.lastOrderAt || '',
+          publishesSinceLastOrder: 0,
+        }
+        changed = true
+      }
     }
-    if (!changed && !list) return s
-    const next = { ...s, countsByAccount, publishHistory: list ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: recordQty(r.qty) })) : (s.publishHistory || []) }
+    if (!changed) return s
+    const next = { ...s, countsByAccount, publishHistory: list && list.length ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: recordQty(r.qty) })) : [] }
+    const agg = getAggregateCounts(next)
+    next.publishCount = agg.publishCount
+    next.orderCount = agg.orderCount
+    next.lastPublishAt = agg.lastPublishAt
+    next.status = recomputeTopStatus(next)
+    return next
+  })
+}
+
+// 由发布记录重算样品按账号统计（发布历史/最近发布/发布条数），保留各账号出单数。
+// 纯函数，模块级导出以便回归脚本直连；组件内通过同名闭包引用。
+export function recomputeSamplePublishPure(samples, records) {
+  const { byId, byName } = buildPublishIndex(samples, records)
+  return (samples || []).map((sm) => {
+    // 自己有记录按 ID 精确取；没有记录的同名样品按名字继承（重复创建的样品不会再「从未发布」）
+    const list = (byId[sm.id] && byId[sm.id].length) ? byId[sm.id] : (byName[normSampleName(sm.name)] || byId[sm.id])
+    const accounts = getAccounts(sm)
+    const countsByAccount = { ...(sm.countsByAccount || {}) }
+    let changed = false
+    for (const a of accounts) {
+      if (!countsByAccount[a]) { countsByAccount[a] = { publishCount: 0, orderCount: Number(sm.orderCount) || 0, lastPublishAt: '' }; changed = true }
+    }
+    if (list && list.length) {
+      const perAcct = {}
+      // 先收集「明确写了账号」的记录归属集合，作为无账号老记录的兜底依据
+      const explicit = new Set()
+      for (const r of list) {
+        const raw = Array.isArray(r.accounts) ? r.accounts.map((a) => mapAccount(a)).filter(Boolean) : []
+        for (const a of raw) if (accounts.includes(a)) explicit.add(a)
+      }
+      for (const r of list) {
+        // 记录里写了账号、但那些账号不属于这个样品 → 不能算到样品现有账号头上
+        const raw = Array.isArray(r.accounts) ? r.accounts.map((a) => mapAccount(a)).filter(Boolean) : []
+        const rAccs = raw.filter((a) => accounts.includes(a))
+        if (raw.length && rAccs.length === 0) continue
+        // 记录本身没写账号 → 老数据。单账号样品直接算给该账号；多账号样品只补到
+        // 明确出现过的账号，新换进来的账号不继承历史账号的发布数。
+        const qty = recordQty(r.qty)
+        const targets = rAccs.length
+          ? rAccs
+          : (accounts.length === 1 ? accounts : [...explicit])
+        for (const a of targets) {
+          if (!perAcct[a]) perAcct[a] = { count: 0, dates: [] }
+          perAcct[a].count += qty
+          if (r.publishDate) perAcct[a].dates.push(r.publishDate)
+        }
+      }
+      // 按当前账号全集重建，避免旧账号残留数被新账号继承
+      for (const a of accounts) {
+        const pc = perAcct[a]
+        const dates = pc ? pc.dates.filter(Boolean).sort() : []
+        countsByAccount[a] = {
+          publishCount: pc ? pc.count : 0,
+          orderCount: Number(countsByAccount[a]?.orderCount) || 0,
+          lastPublishAt: dates.slice(-1)[0] || '',
+        }
+        changed = true
+      }
+    } else {
+      // 样品已无任何发布记录（含同名继承记录）：把各账号残留影子计数清零，
+      // 只保留出单数。否则删光记录后 countsByAccount 仍留旧条数，
+      // 「发布不足10」会按旧条数继续挂着（用户反馈：记录删完仍显示已发 3 条）。
+      for (const a of accounts) {
+        const prev = countsByAccount[a] || {}
+        countsByAccount[a] = {
+          publishCount: 0,
+          orderCount: Number(prev.orderCount) || 0,
+          lastPublishAt: '',
+        }
+        changed = true
+      }
+    }
+    if (!changed) return sm
+    const next = {
+      ...sm,
+      countsByAccount,
+      publishHistory: list && list.length
+        ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: recordQty(r.qty) }))
+        : [],
+    }
     const agg = getAggregateCounts(next)
     next.publishCount = agg.publishCount
     next.orderCount = agg.orderCount
@@ -4512,71 +4606,8 @@ export function StoreProvider({ children }) {
     })
   }, [])
 
-  // 由发布记录重算样品按账号统计（发布历史/最近发布/发布条数），保留各账号出单数
-  const recomputeSamplePublish = (samples, records) => {
-    const { byId, byName } = buildPublishIndex(samples, records)
-    return (samples || []).map((sm) => {
-      // 自己有记录按 ID 精确取；没有记录的同名样品按名字继承（重复创建的样品不会再「从未发布」）
-      const list = (byId[sm.id] && byId[sm.id].length) ? byId[sm.id] : (byName[normSampleName(sm.name)] || byId[sm.id])
-      const accounts = getAccounts(sm)
-      const countsByAccount = { ...(sm.countsByAccount || {}) }
-      let changed = false
-      for (const a of accounts) {
-        if (!countsByAccount[a]) { countsByAccount[a] = { publishCount: 0, orderCount: Number(sm.orderCount) || 0, lastPublishAt: '' }; changed = true }
-      }
-      if (list && list.length) {
-        const perAcct = {}
-        // 先收集「明确写了账号」的记录归属集合，作为无账号老记录的兜底依据
-        const explicit = new Set()
-        for (const r of list) {
-          const raw = Array.isArray(r.accounts) ? r.accounts.map((a) => mapAccount(a)).filter(Boolean) : []
-          for (const a of raw) if (accounts.includes(a)) explicit.add(a)
-        }
-        for (const r of list) {
-          // 记录里写了账号、但那些账号不属于这个样品 → 不能算到样品现有账号头上
-          const raw = Array.isArray(r.accounts) ? r.accounts.map((a) => mapAccount(a)).filter(Boolean) : []
-          const rAccs = raw.filter((a) => accounts.includes(a))
-          if (raw.length && rAccs.length === 0) continue
-          // 记录本身没写账号 → 老数据。单账号样品直接算给该账号；多账号样品只补到
-          // 明确出现过的账号，新换进来的账号不继承历史账号的发布数。
-          const qty = recordQty(r.qty)
-          const targets = rAccs.length
-            ? rAccs
-            : (accounts.length === 1 ? accounts : [...explicit])
-          for (const a of targets) {
-            if (!perAcct[a]) perAcct[a] = { count: 0, dates: [] }
-            perAcct[a].count += qty
-            if (r.publishDate) perAcct[a].dates.push(r.publishDate)
-          }
-        }
-        // 按当前账号全集重建，避免旧账号残留数被新账号继承
-        for (const a of accounts) {
-          const pc = perAcct[a]
-          const dates = pc ? pc.dates.filter(Boolean).sort() : []
-          countsByAccount[a] = {
-            publishCount: pc ? pc.count : 0,
-            orderCount: Number(countsByAccount[a]?.orderCount) || 0,
-            lastPublishAt: dates.slice(-1)[0] || '',
-          }
-          changed = true
-        }
-      }
-      if (!changed && !list) return sm
-      const next = {
-        ...sm,
-        countsByAccount,
-        publishHistory: list
-          ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: recordQty(r.qty) }))
-          : (sm.publishHistory || []),
-      }
-      const agg = getAggregateCounts(next)
-      next.publishCount = agg.publishCount
-      next.orderCount = agg.orderCount
-      next.lastPublishAt = agg.lastPublishAt
-      next.status = recomputeTopStatus(next)
-      return next
-    })
-  }
+  // 由发布记录重算样品按账号统计（纯函数实现见模块级 recomputeSamplePublishPure）
+  const recomputeSamplePublish = recomputeSamplePublishPure
 
   // 清理自动生成的发布计划：用户已停用自动生成，并要求把历史自动条目清掉。
   // 依据三处标记判定（auto 布尔 / autoKey / id 以 auto_ 开头），只要命中就删——
@@ -4600,7 +4631,7 @@ export function StoreProvider({ children }) {
     statsFixedRef.current = true
     setData((prev) => {
       const recs = prev.publishRecords || []
-      if (!recs.length || !(prev.samples || []).length) return prev
+      if (!(prev.samples || []).length) return prev
       return { ...prev, samples: recomputeSamplePublish(prev.samples, recs) }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
