@@ -141,6 +141,16 @@ export function pendingAccounts(sample) {
   return getAccounts(sample).filter((a) => accountDue(sample, a))
 }
 
+// 待发账号里的非高频子集（默认/产品级 >5 天）→ 归「发布提醒」
+export function nonHotPendingAccounts(sample) {
+  return pendingAccounts(sample).filter((a) => !isHotAccount(sample, a))
+}
+
+// 待发账号里的高频子集（账号单独设 ≤5 天）→ 归「高频出单」
+export function hotPendingAccounts(sample) {
+  return pendingAccounts(sample).filter((a) => isHotAccount(sample, a))
+}
+
 // 「高频出单」tab 里「每 N 天提醒」的展示值。
 // 必须取**高频账号**（≤5 天）的天数，不能拿产品级/默认的 7 天：
 // 用户反馈「我不是改成了 5 天吗」—— 行内账号可能是按 7 天口径的那个账号，
@@ -169,7 +179,9 @@ export function reminderAccounts(sample) {
   const never = accs.filter((a) => (Number(counts[a]?.publishCount) || 0) === 0)
   const stale = pendingAccounts(sample)
   const due = accs.filter((a) => never.includes(a) || stale.includes(a))
-  return due.length ? due : accs
+  if (!due.length) return accs
+  // 高频（≤5 天）到期账号归「高频出单」tab，不在发布提醒卡片里并列
+  return due.filter((a) => !isHotAccount(sample, a))
 }
 
 // 是否逾期（有截止时间且已过今天）

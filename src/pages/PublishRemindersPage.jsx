@@ -12,10 +12,10 @@ const ACCENT = '#ec4899'
 // 「发布提醒」列表页
 // 口径来自 utils/reminders → publish.needPublishReminder，与总览 Tab 计数同源
 export function PublishRemindersPage() {
-  const { samples } = useStore()
+  const { samples, orders } = useStore()
   const navigate = useNavigate()
 
-  const base = useMemo(() => selectPublishReminders(samples), [samples])
+  const base = useMemo(() => selectPublishReminders(samples, orders), [samples, orders])
 
   const SORTS = useMemo(() => [
     // 最该处理的排前面：逾期优先，其次「多久没发视频」由久到近

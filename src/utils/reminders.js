@@ -41,8 +41,11 @@ export function selectPublishReminders(samples, orders = []) {
     if (!needPublishReminder(s)) return false
     const due = pendingAccounts(s)
     if (!due.length) return false
-    // 与「高频出单」互斥
-    if (due.some((a) => isHotAccount(s, a))) return false
+    // 与「高频出单」按账号粒度互斥：高频到期账号归高频 tab；
+    // 只要还有非高频到期账号，样品就留在发布提醒，卡片只挂这些非高频账号。
+    // 不能按整品判定：一个账号设了高频，不能把另一个普通到期账号的提醒一起吞掉。
+    const nonHotDue = due.filter((a) => !isHotAccount(s, a))
+    if (!nonHotDue.length) return false
     // 没拍过视频的不进发布提醒（由「即将到期」盯截止日）
     if (!isShotSample(s)) return false
 

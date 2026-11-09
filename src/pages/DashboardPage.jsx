@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
-import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays, isHotAccount } from '../utils/publish'
+import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, nonHotPendingAccounts, hotPendingAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
@@ -827,7 +827,7 @@ export function DashboardPage() {
     return days(b) - days(a)
   }
   const fReminders = useMemo(
-    () => reminders.filter((s) => !dismissed.has(s.id) && matchAcct(s, remindAccount)).sort(sortByShownDays),
+    () => reminders.filter((s) => !dismissed.has(s.id) && (remindAccount === 'all' || nonHotPendingAccounts(s).includes(remindAccount))).sort(sortByShownDays),
     [reminders, remindAccount, dismissed],
   )
   const fLowPublish = useMemo(
@@ -847,7 +847,7 @@ export function DashboardPage() {
     () => hotCadence.filter((s) => {
       if (dismissed.has(s.id)) return false
       if (remindAccount === 'all') return true
-      return pendingAccounts(s).includes(remindAccount) && isHotAccount(s, remindAccount)
+      return hotPendingAccounts(s).includes(remindAccount)
     }).sort(sortByShownDays),
     [hotCadence, remindAccount, dismissed],
   )
@@ -856,9 +856,9 @@ export function DashboardPage() {
     const c = {}
     for (const a of ACCOUNTS) {
       if (remindTab === 'hot') {
-        c[a] = hotCadence.filter((s) => pendingAccounts(s).includes(a) && isHotAccount(s, a)).length
+        c[a] = hotCadence.filter((s) => hotPendingAccounts(s).includes(a)).length
       } else if (remindTab === 'reminders') {
-        c[a] = reminders.filter((s) => matchAcct(s, a)).length
+        c[a] = reminders.filter((s) => nonHotPendingAccounts(s).includes(a)).length
       } else if (remindTab === 'low') {
         c[a] = lowPublish.filter((it) => it.accounts.some((x) => x.account === a && x.publishCount < LOW_PUBLISH_LIMIT)).length
       } else {
@@ -1775,7 +1775,7 @@ export function DashboardPage() {
                   onlyAccount={remindAccount === 'all' ? '' : remindAccount}
                   accountsOf={(s) => {
                     const list = reminderAccounts(s)
-                    if (remindAccount !== 'all' && pendingAccounts(s).includes(remindAccount) && !list.includes(remindAccount)) {
+                    if (remindAccount !== 'all' && nonHotPendingAccounts(s).includes(remindAccount) && !list.includes(remindAccount)) {
                       return [remindAccount, ...list]
                     }
                     return list
@@ -1890,7 +1890,7 @@ export function DashboardPage() {
                 <ReminderTable
                   items={fHot}
                   onlyAccount={remindAccount === 'all' ? '' : remindAccount}
-                  accountsOf={(s) => pendingAccounts(s)}
+                  accountsOf={(s) => hotPendingAccounts(s)}
                   midHeader="未发布天数"
                   renderMid={(s, account) => {
                     const days = daysSincePublishByAccount(s, account)
@@ -1919,8 +1919,8 @@ export function DashboardPage() {
                     // 与 PC 一致：列出**所有到该发**的账号（不再只挑从未发布的那个）
                     // 筛了账号时只保留当前账号
                     const showAccounts = remindAccount === 'all'
-                      ? pendingAccounts(s)
-                      : pendingAccounts(s).filter((a) => a === remindAccount)
+                      ? hotPendingAccounts(s)
+                      : hotPendingAccounts(s).filter((a) => a === remindAccount)
                     const swiped = swipedHotId === s.id
                     return (
                       // 左滑露出操作（用户要求「操作放到左滑操作」）：操作条固定在底层，卡片整体左移
