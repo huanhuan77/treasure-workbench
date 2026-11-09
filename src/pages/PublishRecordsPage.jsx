@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts } from '../utils/accounts'
+import { recordQty } from '../utils/helpers'
 import { DraggableFab } from '../components/DraggableFab'
 import { ConfirmModal } from '../components/Modal'
 import { DateFilterBar, dateBounds } from '../components/DateFilterBar'
@@ -87,7 +88,7 @@ export function PublishRecordsPage() {
     return [...map.values()]
       .map((g) => {
         const dates = [...new Set(g.records.map((r) => r.publishDate).filter(Boolean))].sort().reverse()
-        const qty = g.records.reduce((s, r) => s + (Number(r.qty) > 0 ? Number(r.qty) : 1), 0)
+        const qty = g.records.reduce((s, r) => s + recordQty(r.qty), 0)
         return { ...g, dates, qty, legacy: g.records.some((r) => r.legacy) }
       })
       .sort((a, b) => {

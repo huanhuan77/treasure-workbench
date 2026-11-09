@@ -14,6 +14,7 @@ import { SampleForm } from '../components/SampleForm'
 import { useIsDesktop } from '../utils/useIsDesktop'
 import { syncAll } from '../utils/sync'
 import { getStoredToken } from '../utils/cloudBackup'
+import { recordQty } from '../utils/helpers'
 
 // 「账号 + 该账号多少天没发」的双段小胶囊 —— 与 PC 总览的 AccountDays 同一套观感：
 // 左半段用账号主题色底放账号名，右半段放天数；超过该账号阈值的天数标红。
@@ -603,7 +604,7 @@ export function DashboardPage() {
           name: r.productId || r.sampleId || '未知',
           account: a,
           publishDate: r.publishDate || '',
-          publishCount: Number(r.qty) || 1,
+          publishCount: recordQty(r.qty),
         })
       }
     }
@@ -871,7 +872,7 @@ export function DashboardPage() {
   const last7Count = useMemo(() => {
     const from = new Date(Date.now() - 6 * 864e5).toISOString().slice(0, 10)
     return (publishRecords || []).reduce((s, r) => (
-      String(r.publishDate || '') >= from ? s + (Number(r.qty) > 0 ? Number(r.qty) : 1) : s
+      String(r.publishDate || '') >= from ? s + recordQty(r.qty) : s
     ), 0)
   }, [publishRecords])
 

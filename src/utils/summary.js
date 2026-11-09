@@ -8,6 +8,7 @@
 //   · 样品：新增按 createdAt 落在区间内；逾期 = 截止日已过且未发布/未放弃（按当前状态算）
 //   · 待办：完成数 = done 且 updatedAt 落在区间内
 import { ACCOUNTS } from './accounts'
+import { recordQty } from './helpers'
 
 const pad = (n) => String(n).padStart(2, '0')
 export const ymd = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
@@ -88,7 +89,7 @@ export function buildSummary(data, range) {
   let publishRecords = 0
   for (const r of pubRecs) {
     if (!inRange(String(r.publishDate || ''), start, end)) continue
-    const qty = Number(r.qty) > 0 ? Number(r.qty) : 1
+    const qty = recordQty(r.qty)
     const accs = Array.isArray(r.accounts) && r.accounts.length ? r.accounts : []
     publishRecords += 1
     if (!accs.length) { publish += qty; continue }
@@ -166,7 +167,7 @@ export function buildSummary(data, range) {
     if (!inRange(String(r.publishDate || ''), start, end)) continue
     const nm = sampleName.get(r.sampleId) || r.name || '（样品已删除）'
     const row = prodOf(nm)
-    row.publish += Number(r.qty) > 0 ? Number(r.qty) : 1
+    row.publish += recordQty(r.qty)
     for (const a of (r.accounts || [])) row.accounts.add(a)
     for (const a of (sampleAccs.get(nm) || [])) row.accounts.add(a)
   }
@@ -195,7 +196,7 @@ export function buildSummary(data, range) {
   for (const r of pubRecs) {
     const d = String(r.publishDate || '')
     if (!inRange(d, start, end)) continue
-    dayOf(d).publish += Number(r.qty) > 0 ? Number(r.qty) : 1
+    dayOf(d).publish += recordQty(r.qty)
   }
   for (const o of orders) {
     const d = String(o.date || '')
@@ -353,7 +354,7 @@ export function buildCategoryShare(data, range, metric = 'publish') {
   } else {
     for (const r of data.publishRecords || []) {
       if (!inRange(String(r.publishDate || ''), range.start, range.end)) continue
-      add(catById.get(r.sampleId) || '未分类', Number(r.qty) > 0 ? Number(r.qty) : 1)
+      add(catById.get(r.sampleId) || '未分类', recordQty(r.qty))
     }
   }
 

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { DEFAULT_SENSITIVE_WORDS, generateTopics } from './utils/copyGenerator'
-import { todayStr, addDays } from './utils/helpers'
+import { todayStr, addDays, recordQty } from './utils/helpers'
 import { isHotAccount, sampleDays, accountDue } from './utils/publish'
 import { recordDelete, clearDelete, setWordTime, syncAll } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
@@ -3776,7 +3776,7 @@ function aggregatePublish(samples, records) {
       for (const r of list) {
         const rAccs = (Array.isArray(r.accounts) && r.accounts.length ? r.accounts : accounts)
           .map((a) => mapAccount(a)).filter((a) => accounts.includes(a))
-        const qty = Number(r.qty) > 0 ? Number(r.qty) : 1
+        const qty = recordQty(r.qty)
         const targets = rAccs.length ? rAccs : accounts
         for (const a of targets) {
           if (!perAcct[a]) perAcct[a] = { count: 0, dates: [] }
@@ -3807,7 +3807,7 @@ function aggregatePublish(samples, records) {
       }
     }
     if (!changed && !list) return s
-    const next = { ...s, countsByAccount, publishHistory: list ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: Number(r.qty) > 0 ? Number(r.qty) : 1 })) : (s.publishHistory || []) }
+    const next = { ...s, countsByAccount, publishHistory: list ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: recordQty(r.qty) })) : (s.publishHistory || []) }
     const agg = getAggregateCounts(next)
     next.publishCount = agg.publishCount
     next.orderCount = agg.orderCount
@@ -4016,7 +4016,7 @@ export function StoreProvider({ children }) {
           if (!accs.includes(p.account)) continue
           // 只有「计划同一天」的发布记录才算这条计划已完成
           if (String(r.publishDate || '') !== planDate) continue
-          total += Number(r.qty) > 0 ? Number(r.qty) : 1
+          total += recordQty(r.qty)
         }
         if (total >= qty) {
           changed = true
@@ -4539,7 +4539,7 @@ export function StoreProvider({ children }) {
           if (raw.length && rAccs.length === 0) continue
           // 记录本身没写账号 → 老数据。单账号样品直接算给该账号；多账号样品只补到
           // 明确出现过的账号，新换进来的账号不继承历史账号的发布数。
-          const qty = Number(r.qty) > 0 ? Number(r.qty) : 1
+          const qty = recordQty(r.qty)
           const targets = rAccs.length
             ? rAccs
             : (accounts.length === 1 ? accounts : [...explicit])
@@ -4566,7 +4566,7 @@ export function StoreProvider({ children }) {
         ...sm,
         countsByAccount,
         publishHistory: list
-          ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: Number(r.qty) > 0 ? Number(r.qty) : 1 }))
+          ? list.map((r) => ({ recordId: r.id, publishDate: r.publishDate, accounts: r.accounts || [], qty: recordQty(r.qty) }))
           : (sm.publishHistory || []),
       }
       const agg = getAggregateCounts(next)
@@ -4614,7 +4614,7 @@ export function StoreProvider({ children }) {
       productId: record.productId || '',
       accounts: Array.isArray(record.accounts) ? record.accounts : [],
       publishDate: record.publishDate || new Date().toISOString().slice(0, 10),
-      qty: Number(record.qty) > 0 ? Number(record.qty) : 1,
+      qty: recordQty(record.qty),
       createdAt: now,
     }
     setData((d) => {

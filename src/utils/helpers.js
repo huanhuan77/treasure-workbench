@@ -177,3 +177,11 @@ export function deadlineDesc(deadline) {
   if (d === 1) return '明天截止'
   return `剩${d}天`
 }
+
+// 发布记录数量归一化：未填（null/undefined/''）按 1 条；明确填 0 按 0
+// （同日合并后被清零的兄弟记录不能再被算成 1）；其余取数值，非法值兜底 1。
+export function recordQty(qty) {
+  if (qty == null || qty === '') return 1
+  const n = Number(qty)
+  return Number.isFinite(n) ? n : 1
+}

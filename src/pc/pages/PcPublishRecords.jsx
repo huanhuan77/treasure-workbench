@@ -4,6 +4,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { ACCOUNTS, getAccounts, maskAccount } from '../../utils/accounts'
+import { recordQty } from '../../utils/helpers'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
 import { ResetButton } from '../components/ResetButton'
@@ -43,8 +44,7 @@ export function PcPublishRecords() {
   const qtyOfDate = (group, date) => {
     const list = group.records.filter((r) => r.publishDate === date)
     return list.reduce((s, r) => {
-      const v = Number(r.qty)
-      return s + (r.qty == null || r.qty === '' ? 1 : v)
+      return s + recordQty(r.qty)
     }, 0)
   }
 
@@ -176,10 +176,7 @@ export function PcPublishRecords() {
     return [...map.values()]
       .map((g) => {
         const dates = [...new Set(g.records.map((r) => r.publishDate).filter(Boolean))].sort().reverse()
-        const qty = g.records.reduce((s, r) => {
-          const v = Number(r.qty)
-          return s + (r.qty == null || r.qty === '' ? 1 : v)
-        }, 0)
+        const qty = g.records.reduce((s, r) => s + recordQty(r.qty), 0)
         return { ...g, dates, qty, legacy: g.records.some((r) => r.legacy) }
       })
       .sort((a, b) => {

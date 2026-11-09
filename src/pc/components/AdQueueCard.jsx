@@ -3,6 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount } from '../../utils/accounts'
 import { getCounts, hasPublished, isArchivedSample } from '../../utils/sampleStatus'
+import { recordQty } from '../../utils/helpers'
 
 // 总览「待投流」卡片（对齐手机端 DashboardPage 的那个板块）：
 //   · 数据：store 的 adQueue / addAdQueue / updateAdQueue / deleteAdQueue
@@ -112,7 +113,7 @@ export function AdQueueCard() {
           name: r.productId || r.sampleId || '未知',
           account: a,
           publishDate: r.publishDate || '',
-          publishCount: Number(r.qty) || 1,
+          publishCount: recordQty(r.qty),
         })
       }
     }
