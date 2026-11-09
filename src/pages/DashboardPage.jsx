@@ -576,6 +576,14 @@ export function DashboardPage() {
   const publishedOptions = useMemo(() => {
     const out = []
     const seen = new Set()
+    // 发布记录本身不存品名，按样品 id / productId 回查取名字；
+    // 查不到（样品已删）再给占位文案，不能把内部 ID 当品名显示
+    const sampleById = new Map()
+    for (const s of samples || []) {
+      if (!s) continue
+      if (s.id) sampleById.set(s.id, s)
+      if (s.productId) sampleById.set(s.productId, s)
+    }
     for (const s of (samples || [])) {
       if (!s || isArchivedSample(s) || !hasPublished(s)) continue
       for (const a of getAccounts(s)) {
@@ -595,13 +603,16 @@ export function DashboardPage() {
     // 从发布记录补全，刚录的发布即使样品计数还没同步也能搜到
     for (const r of (publishRecords || [])) {
       const accs = Array.isArray(r.accounts) ? r.accounts : []
+      const sid = r.sampleId || r.productId || ''
+      const sm = sampleById.get(sid)
+      const name = sm ? sm.name : (r.name || '（样品已删除）')
       for (const a of accs) {
-        const key = `${r.sampleId || r.productId || ''}_${a}`
+        const key = `${sid}_${a}`
         if (seen.has(key)) continue
         seen.add(key)
         out.push({
-          sampleId: r.sampleId || r.productId || '',
-          name: r.productId || r.sampleId || '未知',
+          sampleId: sid,
+          name,
           account: a,
           publishDate: r.publishDate || '',
           publishCount: recordQty(r.qty),
