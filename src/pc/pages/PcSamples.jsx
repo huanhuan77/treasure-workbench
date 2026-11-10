@@ -51,7 +51,6 @@ export function PcSamples() {
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('all')
-  const [shipinhaoOnly, setShipinhaoOnly] = useState(false)
   const [publishGt5, setPublishGt5] = useState(false)
   // 「出单数量」默认只显示总数，点数字弹出明细弹窗（用户要求）
   const [qtyOpen, setQtyOpen] = useState(null)
@@ -166,7 +165,6 @@ export function PcSamples() {
   const accountFiltered = useMemo(() => {
     let list = samples
     if (accountFilter !== 'all') list = list.filter((s) => getAccounts(s).includes(accountFilter))
-    if (shipinhaoOnly) list = list.filter((s) => (s.links || []).some((l) => l.platform === '视频号'))
     if (publishGt5) list = list.filter((s) => {
       const total = getAccounts(s).reduce((n, a) => n + (getCounts(s, a).publishCount || 0), 0)
       return total >= 5
@@ -182,7 +180,7 @@ export function PcSamples() {
     const kw = keyword.trim().toLowerCase()
     if (kw) list = list.filter((s) => `${s.name || ''} ${s.category || ''}`.toLowerCase().includes(kw))
     return list
-  }, [samples, accountFilter, filter, orderFilter, orderCountBySample, keyword, shipinhaoOnly, publishGt5])
+  }, [samples, accountFilter, filter, orderFilter, orderCountBySample, keyword, publishGt5])
 
   // 已过期（未发布/未放弃 + 截止日已过，与「剩 N 天」红字同一口径）的样品排最前面。
   // 默认视图（sortKey=custom）下生效；用户点了表头排序时就按他自己的排序来，不插队。
@@ -333,11 +331,10 @@ export function PcSamples() {
 
         {/* 账号筛选 + 是否出单筛选（排序入口已移到表头：点「收货日期」/「截止日期」列名） */}
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
-          <button className={accountFilter === 'all' && !shipinhaoOnly ? 'on' : ''} onClick={() => { setAccountFilter('all'); setShipinhaoOnly(false) }}>全部账号</button>
+          <button className={accountFilter === 'all' ? 'on' : ''} onClick={() => setAccountFilter('all')}>全部账号</button>
           {usedAccounts.map((a) => (
-            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => { setAccountFilter(a); setShipinhaoOnly(false) }}>{maskAccount(a, hiddenAccounts)}</button>
+            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{maskAccount(a, hiddenAccounts)}</button>
           ))}
-          <button className={shipinhaoOnly ? 'on' : ''} onClick={() => { setShipinhaoOnly((v) => !v); setAccountFilter('all') }}>视频号</button>
           <button className={publishGt5 ? 'on' : ''} onClick={() => setPublishGt5((v) => !v)}>发布超过5条</button>
           {/* 竖线把两组筛选分开，避免读成一长串同类按钮 */}
           <span style={{ width: 1, height: 16, background: 'rgba(15,23,42,0.10)', margin: '0 4px' }} />
