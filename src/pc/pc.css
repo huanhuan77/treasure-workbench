@@ -164,16 +164,18 @@
   text-underline-offset: 3px;
 }
 
-/* 链接列：多个复制按钮竖排、留行距；按钮比原来放大一档（字号 12、内边距 4px 10px） */
+/* 链接列：复制按钮横向流式排列、放不下再折行，避免纵向堆叠把整行撑高；
+   按钮尺寸收紧（字号 12、内边距 3px 9px），保证行高紧凑。 */
 .pcv-links {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 6px;
 }
 .pcv-link-btn {
   font-size: 12px;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 6px;
   background: rgba(99, 102, 241, 0.12);
   color: #4f46e5;

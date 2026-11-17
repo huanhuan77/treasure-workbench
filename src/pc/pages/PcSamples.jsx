@@ -413,7 +413,7 @@ export function PcSamples() {
                 <th style={{ width: 155 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 118 }}>链接</th>
+                <th style={{ width: 145 }}>链接</th>
                 <th style={{ width: 240 }}>操作</th>
               </tr>
             </thead>
@@ -606,8 +606,8 @@ export function PcSamples() {
                               const ok = await copyText(lk.url)
                               show(ok ? `已复制${lk.platform ? '·' + lk.platform : (links.length > 1 ? '链接' + (i + 1) : '')}` : '复制失败', ok ? 'success' : 'error')
                             }}
-                            title={lk.url}
-                          >{lk.platform ? `复制·${lk.platform}` : (links.length > 1 ? `复制${i + 1}` : '复制')}</button>
+                            title={`点击复制：${lk.url}`}
+                          >{lk.platform || (links.length > 1 ? `链接${i + 1}` : '复制')}</button>
                         ))
                       })()}
                     </td>
