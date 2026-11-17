@@ -164,6 +164,28 @@
   text-underline-offset: 3px;
 }
 
+/* 链接列：多个复制按钮竖排、留行距；按钮比原来放大一档（字号 12、内边距 4px 10px） */
+.pcv-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.pcv-link-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+  font-weight: 700;
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+}
+.pcv-link-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
 /* 文案「已置顶」的按钮态：粉底粉边粉字（双类提权，避免被 .pcv-btn-ghost 覆盖） */
 .pcv-btn.pcv-pin-btn--on {
   background: #fdf1f6;

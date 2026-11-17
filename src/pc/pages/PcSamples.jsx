@@ -413,7 +413,7 @@ export function PcSamples() {
                 <th style={{ width: 155 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 100 }}>链接</th>
+                <th style={{ width: 118 }}>链接</th>
                 <th style={{ width: 240 }}>操作</th>
               </tr>
             </thead>
@@ -594,24 +594,19 @@ export function PcSamples() {
                         <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 700, color: dl.includes('过期') ? '#e02020' : '#d97706' }}>{dl}</span>
                       )}
                     </td>
-                    <td>
+                    <td className="pcv-links">
                       {(() => {
                         const links = Array.isArray(s?.links) ? s.links.filter((l) => l && l.url) : []
                         if (!links.length) return <span style={{ color: '#c9cdd4' }}>—</span>
                         return links.map((lk, i) => (
                           <button
                             key={lk.id || i}
+                            className="pcv-link-btn"
                             onClick={async () => {
                               const ok = await copyText(lk.url)
                               show(ok ? `已复制${lk.platform ? '·' + lk.platform : (links.length > 1 ? '链接' + (i + 1) : '')}` : '复制失败', ok ? 'success' : 'error')
                             }}
                             title={lk.url}
-                            style={{
-                              fontSize: 11, padding: '2px 8px', borderRadius: 5,
-                              background: 'rgba(99,102,241,0.12)', color: '#4f46e5',
-                              fontWeight: 700, whiteSpace: 'nowrap', border: 'none', cursor: 'pointer',
-                              marginRight: links.length > 1 ? 4 : 0,
-                            }}
                           >{lk.platform ? `复制·${lk.platform}` : (links.length > 1 ? `复制${i + 1}` : '复制')}</button>
                         ))
                       })()}
