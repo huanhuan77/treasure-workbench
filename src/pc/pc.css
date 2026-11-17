@@ -620,6 +620,14 @@
   border-color: rgba(185, 106, 102, 0.6);
 }
 
+/* success 变体（标记已发布类操作）：绿底白字，hover 略加深 */
+.pcv-btn--success {
+  background: #16a34a;
+}
+.pcv-btn--success:hover {
+  background: #15803d;
+}
+
 .pcv-btn-text {
   padding: 5px 2px;
   border: none;

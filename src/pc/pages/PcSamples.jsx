@@ -44,7 +44,7 @@ const SORT_DEFAULT_DIR = { receiveDate: 'desc', deadline: 'asc' }
 // 这里只把「卡片 + 一堆彩色标签」重排成「筛选条 + 紧凑表格」。
 export function PcSamples() {
   const navigate = useNavigate()
-  const { samples, orders, hiddenAccounts } = useStore()
+  const { samples, orders, hiddenAccounts, addPublishRecord } = useStore()
   const { show } = useToast()
   // 「隐藏账号」= 名字打星号，不筛选（用户明确「是账号显示星号，不是筛选」）
   const visAcc = useCallback((arr) => (arr || []), [])
@@ -77,6 +77,21 @@ export function PcSamples() {
     }
     setRefreshKey((k) => k + 1)
     if (id) setFlashId(id)
+  }
+
+  // 把「已拍未发」快捷标记为「已发布」：
+  // 状态由发布记录派生（无记录时影子计数会被重算清零），所以这里补记一条今日发布记录，
+  // store 内部会自动把对应账号置为已发布、发布条数 +1，口径与「发布记录」页一致。
+  const handleMarkPublished = (s) => {
+    if (!s || getTopStatus(s) !== 'shot') return
+    if (!window.confirm(`将「${s.name || '该样品'}」标记为已发布？会补记 1 条今日发布记录。`)) return
+    addPublishRecord({
+      sampleId: s.id,
+      productId: s.productId || '',
+      accounts: getAccounts(s),
+      qty: 1,
+    })
+    show('已标记为已发布', 'success')
   }
 
   // 新增样品后**定位并高亮**那一行（用户反馈「新增样品没刷新列表」）：
@@ -595,6 +610,14 @@ export function PcSamples() {
                       })()}
                     </td>
                     <td>
+                      {top === 'shot' && (
+                        <button
+                          className="pcv-btn pcv-btn--success"
+                          style={{ marginRight: 8 }}
+                          onClick={() => handleMarkPublished(s)}
+                          title="补记一条今日发布记录，状态改为已发布"
+                        >标记已发</button>
+                      )}
                       <button
                         className="pcv-btn"
                         style={{ marginRight: 8 }}
