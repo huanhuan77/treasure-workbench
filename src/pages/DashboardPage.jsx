@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, nonHotPendingAccounts, hotPendingAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
-import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
+import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
@@ -248,7 +248,7 @@ export function DashboardPage() {
   const [adSearch, setAdSearch] = useState('')
   // 列表默认只显示前 3 条，点「展开全部」才显示其余
   const [planExpanded, setPlanExpanded] = useState(true)
-  const [planAcct, setPlanAcct] = useState(ACCOUNTS[0] || 'all')
+  const [planAcct, setPlanAcct] = useState('all')
   const [adExpanded, setAdExpanded] = useState(false)
   const [adStatusOpenId, setAdStatusOpenId] = useState(null)
   const PREVIEW_COUNT = 3
@@ -388,11 +388,12 @@ export function DashboardPage() {
   const planSavingRef = useRef(false)
   // 从提醒中心「新建计划」进来：产品已预填、锁定，不显示「发布产品 & 数量 / ＋添加 / 提示」
   const [planLockProduct, setPlanLockProduct] = useState(false)
-  const [planAccount, setPlanAccount] = useState(ACCOUNTS[0] || '')
+  // 发布计划可排的账号含「视频号」（PLAN_ACCOUNTS），提醒中心/出单等仍用三个达人账号
+  const [planAccount, setPlanAccount] = useState(PLAN_ACCOUNTS[0] || '')
   const [planDate, setPlanDate] = useState(tomorrowPlan)
   const [planByAcc, setPlanByAcc] = useState(() => {
     const o = {}
-    for (const a of ACCOUNTS) o[a] = []
+    for (const a of PLAN_ACCOUNTS) o[a] = []
     return o
   })
   const [planEditEntry, setPlanEditEntry] = useState({ name: '', qty: '1' })
@@ -451,13 +452,13 @@ export function DashboardPage() {
   )))
   const planTotal = planIsEditing
     ? (planEditEntry.name && Number(planEditEntry.qty) >= 1 ? 1 : 0)
-    : ACCOUNTS.reduce((n, a) => n + (planByAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length, 0)
+    : PLAN_ACCOUNTS.reduce((n, a) => n + (planByAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length, 0)
 
   const openPlanNew = () => {
     const o = {}
-    for (const a of ACCOUNTS) o[a] = []
+    for (const a of PLAN_ACCOUNTS) o[a] = []
     setPlanByAcc(o)
-    setPlanAccount(ACCOUNTS[0] || '')
+    setPlanAccount(PLAN_ACCOUNTS[0] || '')
     setPlanDate(tomorrowPlan)
     setPlanEditEntry({ name: '', qty: '1' })
     setPlanPickIdx(-1)
@@ -466,7 +467,7 @@ export function DashboardPage() {
     setPlanEdit('new')
   }
   const openPlanEdit = (p) => {
-    setPlanAccount(p.account || ACCOUNTS[0] || '')
+    setPlanAccount(p.account || PLAN_ACCOUNTS[0] || '')
     setPlanDate(p.planDate || tomorrowPlan)
     setPlanEditEntry({ name: p.name || '', qty: String(p.qty || 1), sampleId: p.sampleId || '' })
     setPlanPickIdx(-1)
@@ -488,7 +489,7 @@ export function DashboardPage() {
       return
     }
     const o = {}
-    for (const a of ACCOUNTS) o[a] = []
+    for (const a of PLAN_ACCOUNTS) o[a] = []
     o[acc] = [{ name, qty: '1', sampleId: (s && s.id) || '' }]
     setPlanByAcc(o)
     setPlanAccount(acc)
@@ -548,7 +549,7 @@ export function DashboardPage() {
       return
     }
     let n = 0
-    for (const a of ACCOUNTS) {
+    for (const a of PLAN_ACCOUNTS) {
       for (const e of (planByAcc[a] || []).filter((x) => x.name && Number(x.qty) >= 1)) {
         addPublishPlan({
           name: e.name.trim(),
@@ -1070,17 +1071,19 @@ export function DashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
               {(
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
-                  {ACCOUNTS.map((a) => {
-                    const on = planAcct === a
-                    const c = a === 'all' ? null : (ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' })
+                  {/* 「全部账号」放最前：默认就是它，视频号等各账号的计划都能看到，
+                      按账号点选才收窄（原来没有这个胶囊，默认只能看到第一个账号的计划） */}
+                  {[{ key: 'all', label: '全部账号', c: null }, ...PLAN_ACCOUNTS.map((a) => ({ key: a, label: maskA(a), c: (ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }) }))].map((it) => {
+                    const on = planAcct === it.key
+                    const c = it.c
                     return (
-                      <button key={a} onClick={() => setPlanAcct(a)} style={{
+                      <button key={it.key} onClick={() => setPlanAcct(it.key)} style={{
                         fontSize: '11px', padding: '3px 10px', borderRadius: '999px', cursor: 'pointer',
-                        border: on ? `1.5px solid ${a==='all' ? '#ec4899' : c.c}` : '1.5px solid transparent',
-                        background: on ? (a==='all' ? '#fdf2f8' : c.bg) : '#f4f4f8',
-                        color: on ? (a==='all' ? '#ec4899' : c.c) : '#94a3b8',
+                        border: on ? `1.5px solid ${it.key === 'all' ? '#ec4899' : c.c}` : '1.5px solid transparent',
+                        background: on ? (it.key === 'all' ? '#fdf2f8' : c.bg) : '#f4f4f8',
+                        color: on ? (it.key === 'all' ? '#ec4899' : c.c) : '#94a3b8',
                         fontWeight: on ? 600 : 400,
-                      }}>{a === 'all' ? '全部账号' : maskA(a)}</button>
+                      }}>{it.label}</button>
                     )
                   })}
                 </div>
@@ -1176,7 +1179,7 @@ export function DashboardPage() {
             <div style={{ fontSize: '12px', color: '#8a8f98', margin: '12px 0 4px' }}>发布账号</div>
             {/* 先选账号再选产品（用户要求）：切换账号看到的是该账号自己的行，产品按账号筛选 */}
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {ACCOUNTS.map((a) => {
+              {PLAN_ACCOUNTS.map((a) => {
                 const on = planAccount === a
                 const col = (ACCOUNT_COLOR[a] || {}).c || '#b8517f'
                 const cnt = planIsEditing
