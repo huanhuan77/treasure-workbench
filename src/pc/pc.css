@@ -188,21 +188,6 @@
   color: #1d4ed8;
 }
 
-/* 淡彩按钮（次要操作用）：粉底 + 粉边 + 粉字，比白底 ghost 更有存在感，
-   又不像主按钮那样抢眼。用于「查看明细」这类行内查看入口。 */
-/* 用 .pcv-btn.pcv-btn--tint 提高优先级：本规则写在 .pcv-btn-ghost（第 514 行）之前，
-   同优先级会被它覆盖，按钮又会变回白底。 */
-.pcv-btn.pcv-btn--tint {
-  background: #fdf1f6;
-  border-color: #f2cbdd;
-  color: #b8517f;
-}
-.pcv-btn.pcv-btn--tint:hover:not(:disabled) {
-  background: #fbe4ef;
-  border-color: #eeb6cf;
-  color: #a8416f;
-}
-
 /* 侧边栏底部版本：竖排、等宽，按钮靠左对齐文字 */
 .pcv-globalactions--side {
   flex-direction: column;
@@ -618,6 +603,19 @@
 .pcv-btn-ghost--danger:hover {
   background: #fdf3f3;
   border-color: rgba(185, 106, 102, 0.6);
+}
+
+/* ghost 的粉色变体（正向次操作，如「标记已发」）：白底 + 粉边 + 粉字，
+   边框必须可见，避免浅粉底和淡粉表头/行背景融成一片；hover 转浅粉底、粉边加深。 */
+.pcv-btn-ghost--pink {
+  background: #fff;
+  border-color: #e8a8c4;
+  color: #b8517f;
+}
+.pcv-btn-ghost--pink:hover {
+  background: #fdf1f6;
+  border-color: #ee8fb6;
+  color: #a8416f;
 }
 
 /* 操作列：按钮一行排开、不换行，间距用 gap；按钮不被压缩折字 */

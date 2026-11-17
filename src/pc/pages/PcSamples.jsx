@@ -612,7 +612,7 @@ export function PcSamples() {
                     <td className="pcv-actions">
                       {top === 'shot' && (
                         <button
-                          className="pcv-btn pcv-btn--tint"
+                          className="pcv-btn pcv-btn-ghost pcv-btn-ghost--pink"
                           onClick={() => handleMarkPublished(s)}
                           title="补记一条今日发布记录，状态改为已发布"
                         >标记已发</button>
