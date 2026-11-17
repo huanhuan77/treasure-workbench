@@ -396,13 +396,13 @@ export function PcSamples() {
                 <th style={{ width: 130 }}>产品</th>
                 <th style={{ width: 65 }}>分类</th>
                 <th style={{ width: 75 }}>状态</th>
-                <th style={{ width: 260 }}>账号</th>
+                <th style={{ width: 245 }}>账号</th>
                 <th style={{ width: 70 }} className="pcv-th-sort" onClick={() => toggleSort('publishTotal')}>
                   发布{sortDirOf('publishTotal') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 <th style={{ width: 70 }}>是否出单</th>
                 {/* 出单数量：该样品在出单记录里的件数合计（用户要求「加上出单数量」） */}
-                <th style={{ width: 160 }} className="pcv-th-sort" onClick={() => toggleSort('orderQty')}>
+                <th style={{ width: 135 }} className="pcv-th-sort" onClick={() => toggleSort('orderQty')}>
                   出单数量{sortDirOf('orderQty') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天），与提醒中心同一套算 */}
@@ -413,7 +413,7 @@ export function PcSamples() {
                 <th style={{ width: 155 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 145 }}>链接</th>
+                <th style={{ width: 175 }}>链接</th>
                 <th style={{ width: 240 }}>操作</th>
               </tr>
             </thead>
