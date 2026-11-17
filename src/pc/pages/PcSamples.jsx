@@ -14,6 +14,7 @@ import { SampleDialog } from '../components/SampleDialog'
 import { ResetButton } from '../components/ResetButton'
 import QtyDetailModal from '../components/QtyDetailModal'
 import { useToast } from '../../components/Toast'
+import { ConfirmModal } from '../../components/Modal'
 
 // 状态色调只用三档 + 一档淡出：
 //   中性（未到货）/ 待办（未拍、已拍未发）/ 完成（已发布）/ 淡出（已放弃）
@@ -61,6 +62,8 @@ export function PcSamples() {
   const [sortDir, setSortDir] = useState('desc')
   // 样品新增/编辑走弹窗：undefined=关闭、null=新增、对象=编辑
   const [sampleDialog, setSampleDialog] = useState(undefined)
+  // 「标记已发」二次确认弹窗：null=关闭、对象=待确认样品（替代原生 window.confirm）
+  const [markTarget, setMarkTarget] = useState(null)
   // 「补记发布」入口已从样品页移除（用户要求），弹窗状态与组件一并删掉
   // 改名、改状态一律走「编辑」弹窗（用户要求：列表里不再有任何行内修改）
 
@@ -91,7 +94,14 @@ export function PcSamples() {
   // store 内部会自动把对应账号置为已发布、发布条数 +1，口径与「发布记录」页一致。
   const handleMarkPublished = (s) => {
     if (!s || getTopStatus(s) !== 'shot' || !isWechatOnly(s)) return
-    if (!window.confirm(`将「${s.name || '该样品'}」标记为已发布？会补记 1 条今日发布记录。`)) return
+    setMarkTarget(s)
+  }
+
+  // 弹窗确认后真正补记一条今日发布记录：store 内部会自动把对应账号置为已发布、
+  // 发布条数 +1，口径与「发布记录」页一致。
+  const confirmMarkPublished = () => {
+    const s = markTarget
+    if (!s) return
     addPublishRecord({
       sampleId: s.id,
       productId: s.productId || '',
@@ -99,6 +109,7 @@ export function PcSamples() {
       qty: 1,
     })
     show('已标记为已发布', 'success')
+    setMarkTarget(null)
   }
 
   // 新增样品后**定位并高亮**那一行（用户反馈「新增样品没刷新列表」）：
@@ -652,6 +663,16 @@ export function PcSamples() {
           onSaved={handleSaved}
         />
       )}
+
+      {/* 标记已发二次确认：项目风格 ConfirmModal，替代浏览器原生 confirm */}
+      <ConfirmModal
+        open={!!markTarget}
+        title="标记已发布"
+        message={`将「${markTarget?.name || '该样品'}」标记为已发布？会补记 1 条今日发布记录。`}
+        confirmText="标记已发"
+        onClose={() => setMarkTarget(null)}
+        onConfirm={confirmMarkPublished}
+      />
 
     </>
   )
