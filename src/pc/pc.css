@@ -412,6 +412,10 @@
    --scroll 让卡片成为滚动容器，卡头吸在卡片顶部不跟着滚。 */
 .pcv-card--scroll {
   overflow-y: auto;
+  /* 横向兜底：12 列全部定宽，窄视口下总宽可能超过容器。
+     以前只有纵向滚动，超出部分会被裁掉、右侧露出一块空白；现在可以横向滚。
+     overflow-x:auto 不影响 th 的 sticky top（仍相对本容器纵向吸顶）。 */
+  overflow-x: auto;
 }
 .pcv-card--scroll > .pcv-card-h {
   position: sticky;

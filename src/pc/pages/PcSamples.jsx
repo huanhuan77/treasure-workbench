@@ -421,11 +421,13 @@ export function PcSamples() {
                 <th style={{ width: 107 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
                   收货日期{sortDirOf('receiveDate') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 155 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
+                {/* 截止日期：日期 78 + 「剩/已过期 N 天」约 55，155px 装不下会被裁，
+                    加宽到 175；宽度从操作列（240→220）匀过来，总宽不变。 */}
+                <th style={{ width: 175 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 <th style={{ width: 175 }}>链接</th>
-                <th style={{ width: 240 }}>操作</th>
+                <th style={{ width: 220 }}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -605,7 +607,10 @@ export function PcSamples() {
                         <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 700, color: dl.includes('过期') ? '#e02020' : '#d97706' }}>{dl}</span>
                       )}
                     </td>
-                    <td className="pcv-links">
+                    <td>
+                      {/* flex 只能放内层 div：直接写在 td 上会让单元格脱离表格列布局，
+                          与表头列宽脱钩（表现为右侧多出一大块空白、按钮和表头对不齐） */}
+                      <div className="pcv-links">
                       {(() => {
                         const links = Array.isArray(s?.links) ? s.links.filter((l) => l && l.url) : []
                         if (!links.length) return <span style={{ color: '#c9cdd4' }}>—</span>
@@ -621,8 +626,11 @@ export function PcSamples() {
                           >{lk.platform || (links.length > 1 ? `链接${i + 1}` : '复制')}</button>
                         ))
                       })()}
+                      </div>
                     </td>
-                    <td className="pcv-actions">
+                    <td>
+                      {/* 同上：flex 放内层 div，td 保持 table-cell，列宽才对得上表头 */}
+                      <div className="pcv-actions">
                       {top === 'shot' && isWechatOnly(s) && (
                         <button
                           className="pcv-btn pcv-btn-ghost pcv-btn-ghost--pink"
@@ -646,6 +654,7 @@ export function PcSamples() {
                         className="pcv-btn pcv-btn-ghost"
                         onClick={() => setSampleDialog(s)}
                       >编辑</button>
+                      </div>
                     </td>
                   </tr>
                 )
