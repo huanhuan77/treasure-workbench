@@ -248,7 +248,7 @@ export function DashboardPage() {
   const [adSearch, setAdSearch] = useState('')
   // 列表默认只显示前 3 条，点「展开全部」才显示其余
   const [planExpanded, setPlanExpanded] = useState(true)
-  const [planAcct, setPlanAcct] = useState('all')
+  const [planAcct, setPlanAcct] = useState(PLAN_ACCOUNTS[0] || '')
   const [adExpanded, setAdExpanded] = useState(false)
   const [adStatusOpenId, setAdStatusOpenId] = useState(null)
   const PREVIEW_COUNT = 3
@@ -1071,19 +1071,17 @@ export function DashboardPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
               {(
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '2px' }}>
-                  {/* 「全部账号」放最前：默认就是它，视频号等各账号的计划都能看到，
-                      按账号点选才收窄（原来没有这个胶囊，默认只能看到第一个账号的计划） */}
-                  {[{ key: 'all', label: '全部账号', c: null }, ...PLAN_ACCOUNTS.map((a) => ({ key: a, label: maskA(a), c: (ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }) }))].map((it) => {
-                    const on = planAcct === it.key
-                    const c = it.c
+                  {PLAN_ACCOUNTS.map((a) => {
+                    const on = planAcct === a
+                    const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
                     return (
-                      <button key={it.key} onClick={() => setPlanAcct(it.key)} style={{
+                      <button key={a} onClick={() => setPlanAcct(a)} style={{
                         fontSize: '11px', padding: '3px 10px', borderRadius: '999px', cursor: 'pointer',
-                        border: on ? `1.5px solid ${it.key === 'all' ? '#ec4899' : c.c}` : '1.5px solid transparent',
-                        background: on ? (it.key === 'all' ? '#fdf2f8' : c.bg) : '#f4f4f8',
-                        color: on ? (it.key === 'all' ? '#ec4899' : c.c) : '#94a3b8',
+                        border: on ? `1.5px solid ${c.c}` : '1.5px solid transparent',
+                        background: on ? c.bg : '#f4f4f8',
+                        color: on ? c.c : '#94a3b8',
                         fontWeight: on ? 600 : 400,
-                      }}>{it.label}</button>
+                      }}>{maskA(a)}</button>
                     )
                   })}
                 </div>
