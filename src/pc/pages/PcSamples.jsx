@@ -79,11 +79,18 @@ export function PcSamples() {
     if (id) setFlashId(id)
   }
 
+  // 是否只归属「视频号」渠道：账号数组非空且全部是「视频号」，
+  // 挂在达人账号（抖音矩阵）下的品不显示「标记已发」入口。
+  const isWechatOnly = (sample) => {
+    const accs = getAccounts(sample)
+    return accs.length > 0 && accs.every((a) => a === '视频号')
+  }
+
   // 把「已拍未发」快捷标记为「已发布」：
   // 状态由发布记录派生（无记录时影子计数会被重算清零），所以这里补记一条今日发布记录，
   // store 内部会自动把对应账号置为已发布、发布条数 +1，口径与「发布记录」页一致。
   const handleMarkPublished = (s) => {
-    if (!s || getTopStatus(s) !== 'shot') return
+    if (!s || getTopStatus(s) !== 'shot' || !isWechatOnly(s)) return
     if (!window.confirm(`将「${s.name || '该样品'}」标记为已发布？会补记 1 条今日发布记录。`)) return
     addPublishRecord({
       sampleId: s.id,
@@ -610,7 +617,7 @@ export function PcSamples() {
                       })()}
                     </td>
                     <td className="pcv-actions">
-                      {top === 'shot' && (
+                      {top === 'shot' && isWechatOnly(s) && (
                         <button
                           className="pcv-btn pcv-btn-ghost pcv-btn-ghost--pink"
                           onClick={() => handleMarkPublished(s)}
