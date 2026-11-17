@@ -620,12 +620,15 @@
   border-color: rgba(185, 106, 102, 0.6);
 }
 
-/* success 变体（标记已发布类操作）：绿底白字，hover 略加深 */
-.pcv-btn--success {
-  background: #16a34a;
+/* 操作列：按钮一行排开、不换行，间距用 gap；按钮不被压缩折字 */
+.pcv-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
 }
-.pcv-btn--success:hover {
-  background: #15803d;
+.pcv-actions .pcv-btn {
+  flex-shrink: 0;
 }
 
 .pcv-btn-text {

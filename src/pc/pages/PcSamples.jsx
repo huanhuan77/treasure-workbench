@@ -407,7 +407,7 @@ export function PcSamples() {
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 <th style={{ width: 100 }}>链接</th>
-                <th>操作</th>
+                <th style={{ width: 240 }}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -609,18 +609,16 @@ export function PcSamples() {
                         ))
                       })()}
                     </td>
-                    <td>
+                    <td className="pcv-actions">
                       {top === 'shot' && (
                         <button
-                          className="pcv-btn pcv-btn--success"
-                          style={{ marginRight: 8 }}
+                          className="pcv-btn pcv-btn--tint"
                           onClick={() => handleMarkPublished(s)}
                           title="补记一条今日发布记录，状态改为已发布"
                         >标记已发</button>
                       )}
                       <button
                         className="pcv-btn"
-                        style={{ marginRight: 8 }}
                         onClick={() => {
                           const accs = getAccounts(s) || []
                           const params = new URLSearchParams({
