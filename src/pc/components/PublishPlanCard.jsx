@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount } from '../../utils/accounts'
+import { PLAN_ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount } from '../../utils/accounts'
 import { isArchivedSample } from '../../utils/sampleStatus'
 import { AccountTabs } from './AccountTabs'
 
@@ -23,7 +23,7 @@ const tomorrowStr = () => fmtDate(new Date(Date.now() + 864e5))
 // 编辑已有计划时只保留原有一条，不允许增删行。
 const emptyByAcc = () => {
   const o = {}
-  for (const a of ACCOUNTS) o[a] = []
+  for (const a of PLAN_ACCOUNTS) o[a] = []
   return o
 }
 // 行结构带 sampleId：从样品发起/选品时记下，样品改名后「已建计划」仍能对上
@@ -36,7 +36,7 @@ export function PublishPlanCard() {
   const { samples, publishPlans, addPublishPlan, updatePublishPlan, deletePublishPlan, addPublishRecord, hiddenAccounts } = useStore()
   const { show } = useToast()
   const [editing, setEditing] = useState(null)   // null=关闭 / 'new' / 条目对象
-  const [account, setAccount] = useState(ACCOUNTS[0] || '')
+  const [account, setAccount] = useState(PLAN_ACCOUNTS[0] || '')
   const [planDate, setPlanDate] = useState(tomorrowStr())
   const [byAcc, setByAcc] = useState(emptyByAcc)  // 新增态：{ 账号: [{ name, qty }] }
   const [editEntry, setEditEntry] = useState(newEntry())  // 编辑态：只有这一行
@@ -54,11 +54,11 @@ export function PublishPlanCard() {
   // 「隐藏账号」= 名字打星号，不做筛选（用户明确「是账号显示星号，不是筛选」）
   const list = publishPlans || []
 
-  // 先按账号分组（同账号排在一起，账号之间按 ACCOUNTS 固定顺序），
+  // 先按账号分组（同账号排在一起，账号之间按 PLAN_ACCOUNTS 固定顺序），
   // 组内按发布时间升序（没填日期的排最后），同一天按创建时间倒序
   const sorted = useMemo(() => {
     const rank = (acc) => {
-      const i = ACCOUNTS.indexOf(acc)
+      const i = PLAN_ACCOUNTS.indexOf(acc)
       return i === -1 ? 999 : i
     }
     return [...list].filter((p) => !p.done).sort((a, b) => {
@@ -80,12 +80,15 @@ export function PublishPlanCard() {
   // '' = 全部账号。默认只列 5 条，底部「查看全部 N 条」展开（与「待办清单」一致）。
   const [accFilter, setAccFilter] = useState('')
   const [expanded, setExpanded] = useState(false)
-  // 只列卡里真实出现过的账号（按 ACCOUNTS 固定顺序，未在册的排后面）
+  // 固定列出四个可排账号（三个达人 + 视频号），再补上卡里出现过但不在册的账号
+  // （按 PLAN_ACCOUNTS 固定顺序，未在册的排后面）。视频号即使还没有计划也常驻，
+  // 否则新建视频号计划前根本点不到这个 tab。
   const accOptions = useMemo(() => {
-    const set = new Set(list.map((p) => p.account).filter(Boolean))
+    const set = new Set(PLAN_ACCOUNTS)
+    for (const p of list) if (p.account) set.add(p.account)
     return [...set].sort((x, y) => {
-      const ix = ACCOUNTS.indexOf(x)
-      const iy = ACCOUNTS.indexOf(y)
+      const ix = PLAN_ACCOUNTS.indexOf(x)
+      const iy = PLAN_ACCOUNTS.indexOf(y)
       return (ix === -1 ? 999 : ix) - (iy === -1 ? 999 : iy) || x.localeCompare(y, 'zh')
     })
   }, [list])
@@ -147,7 +150,7 @@ export function PublishPlanCard() {
 
   const counts = useMemo(() => {
     const o = {}
-    for (const a of ACCOUNTS) {
+    for (const a of PLAN_ACCOUNTS) {
       o[a] = isEditing
         ? (a === account && editEntry.name && Number(editEntry.qty) >= 1 ? 1 : 0)
         : (byAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length
@@ -205,7 +208,7 @@ export function PublishPlanCard() {
 
   const total = useMemo(() => {
     if (isEditing) return editEntry.name && Number(editEntry.qty) >= 1 ? 1 : 0
-    return ACCOUNTS.reduce((n, a) => n + (byAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length, 0)
+    return PLAN_ACCOUNTS.reduce((n, a) => n + (byAcc[a] || []).filter((e) => e.name && Number(e.qty) >= 1).length, 0)
   }, [byAcc, isEditing, editEntry])
 
   // 打开弹窗时重置所有行的选择面板状态
@@ -240,7 +243,7 @@ export function PublishPlanCard() {
   const openNew = (prefill) => {
     const base = emptyByAcc()
     // 外面点的是哪个账号 tab，新增就默认选哪个账号
-    const acc = (prefill && prefill.account) || accFilter || ACCOUNTS[0] || ''
+    const acc = (prefill && prefill.account) || accFilter || PLAN_ACCOUNTS[0] || ''
     if (prefill && prefill.name) base[acc] = [{ name: String(prefill.name), qty: '1', sampleId: (prefill && prefill.sampleId) || '' }]
     setLockProduct(!!(prefill && prefill.name))
     setByAcc(base)
@@ -260,7 +263,7 @@ export function PublishPlanCard() {
   }, [])
   const openEdit = (p) => {
     setLockProduct(false)
-    setAccount(p.account || ACCOUNTS[0] || '')
+    setAccount(p.account || PLAN_ACCOUNTS[0] || '')
     setPlanDate(p.planDate || tomorrowStr())
     setEditEntry({ name: p.name || '', qty: String(p.qty || 1), sampleId: p.sampleId || '' })
     resetPicker()
@@ -290,7 +293,7 @@ export function PublishPlanCard() {
     }
     let n = 0
     let lastId = ''
-    for (const a of ACCOUNTS) {
+    for (const a of PLAN_ACCOUNTS) {
       for (const e of (byAcc[a] || []).filter((x) => x.name && Number(x.qty) >= 1)) {
         const id = addPublishPlan({
           name: e.name.trim(),
@@ -532,6 +535,7 @@ export function PublishPlanCard() {
                       resetPicker()
                     }}
                     counts={counts}
+                    accounts={PLAN_ACCOUNTS}
                   />
                 </div>
               </div>
@@ -670,7 +674,7 @@ export function PublishPlanCard() {
               })()}
               <span style={{ fontSize: 12, color: '#9aa0a9' }}>
                 {total > 0
-                  ? `共 ${total} 条（${ACCOUNTS.filter((a) => counts[a] > 0).map((a) => `${a} ${counts[a]}`).join('、')}）`
+                  ? `共 ${total} 条（${PLAN_ACCOUNTS.filter((a) => counts[a] > 0).map((a) => `${a} ${counts[a]}`).join('、')}）`
                   : '还没有条目'}
               </span>
               <div className="pcv-spacer" />

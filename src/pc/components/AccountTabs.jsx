@@ -3,9 +3,10 @@ import { useStore } from '../../store'
 
 // PC 版账号 Tab（「记出单」与「记录发布」两个弹窗共用）。
 // 全局「隐藏账号」选中后，账号名显示为星号（不筛掉，用户明确「是账号显示星号，不是筛选」）。
-export function AccountTabs({ value, onChange, counts = {} }) {
+// accounts 可选：发布计划要额外带上「视频号」，不传则仍是三个达人账号（其他页面行为不变）。
+export function AccountTabs({ value, onChange, counts = {}, accounts }) {
   const { hiddenAccounts } = useStore()
-  const list = ACCOUNTS
+  const list = accounts || ACCOUNTS
   return (
     <div className="pcv-acctabs">
       {list.map((a) => {
