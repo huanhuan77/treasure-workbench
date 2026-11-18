@@ -46,7 +46,8 @@ export function isHotCadence(sample) {
 export function selectPublishReminders(samples, orders = []) {
   const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   return (samples || []).filter((s) => {
-    if (isWechatOnlySample(s)) return false
+    // 注意：这里**不**排除「只有视频号」的样品（用户指定「发布提醒（待发）不要跳过」）——
+    // 视频号专属品该发视频时也要在这栏提醒；只有高频出单 / 发布不足10 / 即将到期三栏会跳过它。
     if (!needPublishReminder(s)) return false
     const due = pendingAccounts(s)
     if (!due.length) return false
