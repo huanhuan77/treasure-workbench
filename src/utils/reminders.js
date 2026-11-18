@@ -11,6 +11,14 @@ export const LOW_PUBLISH_LIMIT = 10
 // 即将到期的天数窗口
 export const EXPIRING_DAYS = 7
 
+// 归属账号里只有「视频号」的样品：不进提醒中心（用户要求）。
+// 提醒中心只针对三个达人账号做建议，视频号样品混在里面既没有对应账号胶囊，
+// 也抢占了本该给达人的提醒位置。
+export function isWechatOnlySample(sample) {
+  const accs = getAccounts(sample)
+  return accs.length > 0 && accs.every((a) => a === '视频号')
+}
+
 // 四个 Tab 的标签与跳转目标。
 export const REMINDER_TABS = [
   { id: 'hot', label: '高频出单', mid: '高频', short: '高频', accent: '#f43f5e', to: '/publish-reminders' },
@@ -38,6 +46,7 @@ export function isHotCadence(sample) {
 export function selectPublishReminders(samples, orders = []) {
   const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   return (samples || []).filter((s) => {
+    if (isWechatOnlySample(s)) return false
     if (!needPublishReminder(s)) return false
     const due = pendingAccounts(s)
     if (!due.length) return false
@@ -65,7 +74,7 @@ export function selectPublishReminders(samples, orders = []) {
 
 // 高频出单：有账号按 ≤5 天高频口径、当前已到该发的产品
 export function selectHotCadence(samples) {
-  return (samples || []).filter((s) => !s.archived && needPublishReminder(s) && isHotCadence(s))
+  return (samples || []).filter((s) => !s.archived && !isWechatOnlySample(s) && needPublishReminder(s) && isHotCadence(s))
 }
 
 // 2) 发布不足10：发布了没有出单，且发布数量 > 0 且 < 10（按账号粒度）。
@@ -76,6 +85,7 @@ export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []
   const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   for (const s of samples || []) {
     if (isArchivedSample(s)) continue
+    if (isWechatOnlySample(s)) continue
     // 出过单的样品不在这里
     if (orderedSampleIds.has(s.id)) continue
 
@@ -105,6 +115,7 @@ export function selectExpiringSoon(samples, days = EXPIRING_DAYS) {
   return (samples || [])
     .filter((s) => {
       if (isArchivedSample(s)) return false
+      if (isWechatOnlySample(s)) return false
       if (!s.deadline || s.status === 'published') return false
       const d = daysUntilDeadline(s.deadline)
       return d !== null && d <= days
