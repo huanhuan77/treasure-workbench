@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, nonHotPendingAccounts, hotPendingAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
-import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
+import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, PUBLISH_ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
@@ -158,8 +158,8 @@ function ReminderTable({ items, accountsOf, midHeader, renderMid, renderActions,
   }
   // 分组顺序跟随全局账号表的顺序，未登记的账号排最后
   groups.sort((a, b) => {
-    const ia = ACCOUNTS.indexOf(a[0])
-    const ib = ACCOUNTS.indexOf(b[0])
+    const ia = PUBLISH_ACCOUNTS.indexOf(a[0])
+    const ib = PUBLISH_ACCOUNTS.indexOf(b[0])
     return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
   })
 
@@ -866,7 +866,8 @@ export function DashboardPage() {
   // 每个账号在当前 tab 下的数量（用于账号角标）
   const acctCounts = useMemo(() => {
     const c = {}
-    for (const a of ACCOUNTS) {
+    // 含「视频号」：发布提醒里视频号的品要能点胶囊筛出来、角标数字也要对
+    for (const a of PUBLISH_ACCOUNTS) {
       if (remindTab === 'hot') {
         c[a] = hotCadence.filter((s) => hotPendingAccounts(s).includes(a)).length
       } else if (remindTab === 'reminders') {
@@ -1742,7 +1743,7 @@ export function DashboardPage() {
             }}
           >全部账号</button>
           )}
-          {ACCOUNTS.map((a) => {
+          {PUBLISH_ACCOUNTS.map((a) => {
             const col = ACC_META(a)
             const sel = remindAccount === a
             return (

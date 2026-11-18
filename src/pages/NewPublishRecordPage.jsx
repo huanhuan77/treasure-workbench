@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { SamplePickerPage } from '../components/SamplePickerPage'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
+import { PUBLISH_ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
 
 function getDateLabel(dateStr) {
   const weekDays = ['日', '一', '二', '三', '四', '五', '六']
@@ -28,14 +28,14 @@ export function NewPublishRecordPage() {
 
   const init = location.state || {}
   const initSample = init.sampleId || ''
-  const initAccount = init.account || (Array.isArray(init.accounts) && init.accounts.length ? init.accounts[0] : '') || ACCOUNTS[0]
+  const initAccount = init.account || (Array.isArray(init.accounts) && init.accounts.length ? init.accounts[0] : '') || PUBLISH_ACCOUNTS[0]
 
   const [publishDate, setPublishDate] = useState(() => init.publishDate || new Date().toISOString().slice(0, 10))
   const [activeAccount, setActiveAccount] = useState(initAccount)
   // 每个账号独立的样品条目：{ [account]: [{ sampleId, qty }] }
   const [entriesByAccount, setEntriesByAccount] = useState(() => {
     const initObj = {}
-    for (const a of ACCOUNTS) initObj[a] = []
+    for (const a of PUBLISH_ACCOUNTS) initObj[a] = []
     if (initSample && initAccount) initObj[initAccount] = [{ sampleId: initSample, qty: '1' }]
     return initObj
   })
@@ -108,7 +108,7 @@ export function NewPublishRecordPage() {
 
   const totalValid = useMemo(() => {
     let n = 0
-    for (const a of ACCOUNTS) {
+    for (const a of PUBLISH_ACCOUNTS) {
       n += (entriesByAccount[a] || []).filter((e) => e.sampleId && (Number(e.qty) >= 1)).length
     }
     return n
@@ -117,7 +117,7 @@ export function NewPublishRecordPage() {
   const handleSave = () => {
     if (totalValid === 0) { show('请至少选择 1 个样品并填写数量', 'error'); return }
     let count = 0
-    for (const a of ACCOUNTS) {
+    for (const a of PUBLISH_ACCOUNTS) {
       const valid = (entriesByAccount[a] || []).filter((e) => e.sampleId && (Number(e.qty) >= 1))
       for (const e of valid) {
         const sm = (samples || []).find((s) => s.id === e.sampleId)
@@ -222,7 +222,7 @@ export function NewPublishRecordPage() {
           display: 'flex', gap: '0', background: '#fff', borderRadius: '10px',
           border: '1.5px solid rgba(0,0,0,0.08)', padding: '4px', marginBottom: '14px', boxSizing: 'border-box',
         }}>
-          {ACCOUNTS.map((a) => {
+          {PUBLISH_ACCOUNTS.map((a) => {
             const active = activeAccount === a
             const col = ACCOUNT_COLOR[a] || { c: '#7c3aed', bg: 'rgba(124,58,237,0.12)' }
             const cnt = (entriesByAccount[a] || []).filter((e) => e.sampleId).length

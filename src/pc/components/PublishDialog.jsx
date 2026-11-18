@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS, hasAccount } from '../../utils/accounts'
+import { PUBLISH_ACCOUNTS, hasAccount } from '../../utils/accounts'
 import { CATEGORIES } from '../../utils/categories'
 import { isShotSample, isArchivedSample } from '../../utils/sampleStatus'
 import { todayStr } from '../../utils/helpers'
@@ -22,13 +22,13 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
   const { samples, addPublishRecord } = useStore()
   const { show } = useToast()
 
-  const initAcc = (Array.isArray(initAccounts) && initAccounts[0]) || ACCOUNTS[0]
+  const initAcc = (Array.isArray(initAccounts) && initAccounts[0]) || PUBLISH_ACCOUNTS[0]
   const [publishDate, setPublishDate] = useState(todayStr())
   const [account, setAccount] = useState(initAcc)
   // 每个账号独立的条目：{ [account]: [{ sampleId, qty }] }
   const [byAcc, setByAcc] = useState(() => {
     const o = {}
-    for (const a of ACCOUNTS) o[a] = []
+    for (const a of PUBLISH_ACCOUNTS) o[a] = []
     if (initSampleId) o[initAcc] = [{ sampleId: initSampleId, qty: '1' }]
     return o
   })
@@ -69,7 +69,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
 
   const counts = useMemo(() => {
     const o = {}
-    for (const a of ACCOUNTS) o[a] = (byAcc[a] || []).filter((e) => e.sampleId && Number(e.qty) >= 1).length
+    for (const a of PUBLISH_ACCOUNTS) o[a] = (byAcc[a] || []).filter((e) => e.sampleId && Number(e.qty) >= 1).length
     return o
   }, [byAcc])
 
@@ -112,7 +112,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
   )))
 
   const total = useMemo(
-    () => ACCOUNTS.reduce((n, a) => n + (byAcc[a] || []).filter((e) => e.sampleId && Number(e.qty) >= 1).length, 0),
+    () => PUBLISH_ACCOUNTS.reduce((n, a) => n + (byAcc[a] || []).filter((e) => e.sampleId && Number(e.qty) >= 1).length, 0),
     [byAcc],
   )
 
@@ -121,7 +121,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
   const save = () => {
     if (total === 0) { show('请至少选择 1 个样品并填写数量', 'error'); return }
     let n = 0
-    for (const a of ACCOUNTS) {
+    for (const a of PUBLISH_ACCOUNTS) {
       for (const e of (byAcc[a] || []).filter((x) => x.sampleId && Number(x.qty) >= 1)) {
         const sm = (samples || []).find((s) => s.id === e.sampleId)
         addPublishRecord({
@@ -165,7 +165,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="pcv-field-label">账号</div>
-              <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} />
+              <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} accounts={PUBLISH_ACCOUNTS} />
             </div>
           </div>
 
@@ -286,7 +286,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
 
         <div className="pcv-dialog-f">
           <span style={{ fontSize: 12, color: '#9aa0a9' }}>
-            {total > 0 ? `共 ${total} 条（${ACCOUNTS.filter((a) => counts[a] > 0).map((a) => `${a} ${counts[a]}`).join('、')}）` : '还没有条目'}
+            {total > 0 ? `共 ${total} 条（${PUBLISH_ACCOUNTS.filter((a) => counts[a] > 0).map((a) => `${a} ${counts[a]}`).join('、')}）` : '还没有条目'}
           </span>
           <div className="pcv-spacer" />
           <button className="pcv-btn pcv-btn-ghost" onClick={onClose}>取消</button>
