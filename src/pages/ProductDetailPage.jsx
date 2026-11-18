@@ -116,6 +116,16 @@ export function ProductDetailPage() {
     setTopicDraft(next); setEditTopicIdx(null)
     applyTopics(next)
   }
+  // 拖动排序（用户要求「话题可以拖动排序」）：手指按住一条话题，落到另一条上就换到它的位置
+  const [dragTopicIdx, setDragTopicIdx] = useState(null)
+  const moveTopic = (from, to) => {
+    if (from == null || to == null || from === to) return
+    const next = [...topicDraft]
+    const [item] = next.splice(from, 1)
+    next.splice(to, 0, item)
+    setTopicDraft(next)
+    applyTopics(next)
+  }
   const doneTopics = () => {
     setShowTopics(false)
     scrollTopicsToEnd()   // 关弹窗后让新话题出现在话题行可视区内
@@ -517,6 +527,10 @@ export function ProductDetailPage() {
           ) : (
             <>
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '6px' }}>
+                {/* 拖动排序的说明放这行左侧，不额外占高度 */}
+                <span style={{ fontSize: '11px', color: 'var(--gray-400)', marginRight: 'auto', alignSelf: 'center' }}>
+                  按住某个话题，拖到想放的位置松手即换顺序
+                </span>
                 <button onClick={async () => {
                   // topicDraft 里已带 # 前缀，这里补尾部 # 组成 #话题# 形式
                   const text = topicDraft.map(t => `${t}#`).join(' ')
@@ -530,11 +544,22 @@ export function ProductDetailPage() {
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', minHeight: '40px' }}>
                 {topicDraft.map((t, i) => (
-                  <span key={i} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '6px',
-                    fontSize: '12px', color: 'var(--primary-dark)', background: 'rgba(252, 231, 243, 0.7)',
-                    padding: '4px 8px 4px 10px', borderRadius: '8px', fontWeight: 500,
-                  }}>
+                  <span
+                    key={t + i}
+                    // 拖动排序：按住一条，落到另一条上就换到它的位置（松手才生效，不打断点按钮）
+                    onPointerDown={() => { if (editTopicIdx === null) setDragTopicIdx(i) }}
+                    onPointerUp={() => {
+                      if (dragTopicIdx !== null && dragTopicIdx !== i) moveTopic(dragTopicIdx, i)
+                      setDragTopicIdx(null)
+                    }}
+                    onPointerCancel={() => setDragTopicIdx(null)}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      fontSize: '12px', color: 'var(--primary-dark)', background: 'rgba(252, 231, 243, 0.7)',
+                      padding: '4px 8px 4px 10px', borderRadius: '8px', fontWeight: 500,
+                      opacity: dragTopicIdx === i ? 0.5 : 1,
+                      transition: 'opacity .12s',
+                    }}>
                     {editTopicIdx === i ? (
                       <>
                         <input

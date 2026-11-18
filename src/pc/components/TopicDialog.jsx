@@ -39,6 +39,9 @@ export function TopicDialog({ product, onClose }) {
   const [input, setInput] = useState('')
   const [editIdx, setEditIdx] = useState(null)
   const [editVal, setEditVal] = useState('')
+  // 拖动排序（用户要求「话题可以拖动排序」）：dragIdx = 正在拖的条目，overIdx = 拖到谁身上
+  const [dragIdx, setDragIdx] = useState(null)
+  const [overIdx, setOverIdx] = useState(null)
 
   if (!product) return null
 
@@ -46,6 +49,16 @@ export function TopicDialog({ product, onClose }) {
     const pool = norm(next)
     const updatedCopies = (product.copies || []).map((c) => ({ ...c, topics: [...pool] }))
     updateProduct(product.id, { copies: updatedCopies, topics: pool })
+  }
+
+  // 把 from 挪到 to（顺序立刻写回，和「加/删/改」一样即时生效）
+  const moveTo = (from, to) => {
+    if (from === to || from == null || to == null) return
+    const next = [...draft]
+    const [item] = next.splice(from, 1)
+    next.splice(to, 0, item)
+    setDraft(next)
+    apply(next)
   }
 
   const add = () => {
@@ -133,7 +146,33 @@ export function TopicDialog({ product, onClose }) {
             {draft.length === 0 ? (
               <span style={{ fontSize: 12, color: '#9aa0a9' }}>暂无话题</span>
             ) : draft.map((t, i) => (
-              <span key={i} className="pcv-topic">
+              <span
+                key={t}
+                className="pcv-topic"
+                // 整条胶囊可拖动：拖动中变半透明，拖到哪条就把哪条顶开
+                draggable={editIdx !== i}
+                onDragStart={(e) => {
+                  setDragIdx(i)
+                  // Firefox 需要 setData 才会真的开始拖
+                  try { e.dataTransfer.setData('text/plain', String(i)) } catch { /* 忽略 */ }
+                }}
+                onDragOver={(e) => { e.preventDefault(); if (overIdx !== i) setOverIdx(i) }}
+                onDragLeave={() => { if (overIdx === i) setOverIdx(null) }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  moveTo(dragIdx, i)
+                  setDragIdx(null); setOverIdx(null)
+                }}
+                onDragEnd={() => { setDragIdx(null); setOverIdx(null) }}
+                title="按住拖动可调整顺序"
+                style={{
+                  cursor: editIdx === i ? 'default' : 'grab',
+                  opacity: dragIdx === i ? 0.45 : 1,
+                  outline: overIdx === i && dragIdx !== null && dragIdx !== i ? '2px dashed rgba(236,72,153,0.55)' : 'none',
+                  outlineOffset: 2,
+                  transition: 'opacity .12s, outline-color .12s',
+                }}
+              >
                 {editIdx === i ? (
                   <>
                     <input
@@ -159,6 +198,7 @@ export function TopicDialog({ product, onClose }) {
 
           <p style={{ fontSize: 12, color: '#9aa0a9', margin: '10px 0 0', lineHeight: 1.6 }}>
             💡 列表来自所有文案的自带话题；新增 = 全部加上，删除 = 全部移除，改名 = 在原条目上替换。<b>改动即时生效</b>，点「完成」只是关闭。
+            话题可以<b>按住拖动排序</b>，顺序就是「复制全部到剪贴板」时的顺序。
           </p>
         </div>
 
