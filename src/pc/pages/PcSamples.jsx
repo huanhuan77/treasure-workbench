@@ -388,7 +388,9 @@ export function PcSamples() {
         </div>
 
         <div className="pcv-card pcv-card--scroll" style={{ flex: 1, minHeight: 0 }}>
-          <table className="pcv-table">
+          {/* tableLayout: fixed —— 列宽按表头写死的值分配，不再被长账号/长备注顶着走。
+              之前是 auto：账号列与备注列按内容撑宽，整张表超出卡片，最右侧「操作」被挤出可视区。 */}
+          <table className="pcv-table" style={{ tableLayout: 'fixed' }}>
             <thead>
               <tr>
                 {/* 每列都定宽，余量交给最后一列（操作）吸收：
@@ -404,32 +406,32 @@ export function PcSamples() {
                     账号列 260px 是为了让「3 个账号」也能一行排完（3×(6+4+65) + 2×8 ≈ 240 < 260-28）。
                     两个日期列加宽到 107 / 155：日期本身 78px，截止日期后面还要跟「剩 N 天」约 42px，
                     原来 90 / 95 装不下，会被折成两行（用户反馈「不要换行」）。 */}
-                <th style={{ width: 130 }}>产品</th>
-                <th style={{ width: 65 }}>分类</th>
-                <th style={{ width: 75 }}>状态</th>
-                <th style={{ width: 245 }}>账号</th>
-                <th style={{ width: 70 }} className="pcv-th-sort" onClick={() => toggleSort('publishTotal')}>
+                <th style={{ width: 125 }}>产品</th>
+                <th style={{ width: 62 }}>分类</th>
+                <th style={{ width: 72 }}>状态</th>
+                <th style={{ width: 200 }}>账号</th>
+                <th style={{ width: 56 }} className="pcv-th-sort" onClick={() => toggleSort('publishTotal')}>
                   发布{sortDirOf('publishTotal') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 70 }}>是否出单</th>
+                <th style={{ width: 68 }}>是否出单</th>
                 {/* 出单数量：该样品在出单记录里的件数合计（用户要求「加上出单数量」） */}
-                <th style={{ width: 135 }} className="pcv-th-sort" onClick={() => toggleSort('orderQty')}>
+                <th style={{ width: 105 }} className="pcv-th-sort" onClick={() => toggleSort('orderQty')}>
                   出单数量{sortDirOf('orderQty') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天），与提醒中心同一套算 */}
-                <th style={{ width: 78 }}>提醒天数</th>
-                <th style={{ width: 107 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
+                <th style={{ width: 70 }}>提醒天数</th>
+                <th style={{ width: 100 }} className="pcv-th-sort" onClick={() => toggleSort('receiveDate')}>
                   收货日期{sortDirOf('receiveDate') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 {/* 截止日期：日期 78 + 「剩/已过期 N 天」约 55，155px 装不下会被裁，
                     加宽到 175；宽度从操作列（240→220）匀过来，总宽不变。 */}
-                <th style={{ width: 175 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
+                <th style={{ width: 165 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 150 }}>链接</th>
+                <th style={{ width: 130 }}>链接</th>
                 {/* 备注：弹窗里能填但列表一直没展示（用户反馈「怎么没显示备注」） */}
-                <th style={{ width: 170 }}>备注</th>
-                <th style={{ width: 200 }}>操作</th>
+                <th style={{ width: 145 }}>备注</th>
+                <th style={{ width: 185 }}>操作</th>
               </tr>
             </thead>
             <tbody>
@@ -490,7 +492,7 @@ export function PcSamples() {
                         /* 一行内排完、不换行（用户要求）：多账号样品原来会折成 2~3 行把行高撑高。
                            nowrap + overflow:hidden，放不下的账号被裁掉，完整名单在 title 里悬停可看。 */
                         <span
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', whiteSpace: 'nowrap' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%', minWidth: 0 }}
                           title={accounts.join(' / ')}
                         >
                           {accounts.map((a) => (
@@ -630,13 +632,15 @@ export function PcSamples() {
                       })()}
                       </div>
                     </td>
-                    <td>
-                      {/* 备注：长文本单行省略，悬停看全文（列表里备注多为「3条」「出单 佣金10%」这类短标注） */}
+                    <td style={{ overflow: 'hidden' }}>
+                      {/* 备注：长文本单行省略，悬停看全文（列表里备注多为「3条」「出单 佣金10%」这类短标注）
+                          内层宽度锁成 100% —— 只写 maxWidth 会让 td 的最小宽度跟着文字走，
+                          表格总宽被撑开、把最右侧「操作」列挤出可视区（用户反馈「被挡住了」） */}
                       {s.remark ? (
                         <span
                           title={s.remark}
                           style={{
-                            display: 'block', maxWidth: 170,
+                            display: 'block', width: '100%',
                             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                             color: '#4b5563',
                           }}
