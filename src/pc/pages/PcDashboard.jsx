@@ -261,10 +261,12 @@ export function PcDashboard() {
       mid: (s) => {
         const du = daysUntilDeadline(s.deadline)
         const overdue = du !== null && du < 0
-        const text = overdue
-          ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
-          : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
-        const color = overdue ? '#b96a66' : du <= 3 ? '#b07d4a' : '#a99154'
+        const text = du === null
+          ? '未设截止时间'
+          : overdue
+            ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
+            : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
+        const color = du === null ? '#94a3b8' : overdue ? '#b96a66' : du <= 3 ? '#b07d4a' : '#a99154'
         return <span style={{ fontSize: 14, fontWeight: 600, color }}>{text}</span>
       },
       actions: (s) => {

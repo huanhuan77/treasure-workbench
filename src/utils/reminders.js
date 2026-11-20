@@ -3,12 +3,12 @@
 // 总览页的 Tab 计数与三个列表页的列表内容都从这里取，
 // 避免同一个口径散落在多处、改一处漏一处导致「卡片数字 ≠ 点进去的条数」。
 import { needPublishReminder, isHotAccount, pendingAccounts } from './publish'
-import { getAccounts, isArchivedSample, isShotSample } from './sampleStatus'
+import { getAccounts, isArchivedSample, isShotSample, getTopStatus } from './sampleStatus'
 
 // 发布不足的阈值：某产品发布数低于它即视为「发布不足」
 export const LOW_PUBLISH_LIMIT = 10
 
-// 即将到期的天数窗口
+// 旧「即将到期」天数窗口常量（保留导出兼容，页面口径已改为全部已拍未发）
 export const EXPIRING_DAYS = 7
 
 // 归属账号里只有「视频号」的样品：不进提醒中心（用户要求）。
@@ -24,7 +24,7 @@ export const REMINDER_TABS = [
   { id: 'hot', label: '高频出单', mid: '高频', short: '高频', accent: '#f43f5e', to: '/publish-reminders' },
   { id: 'reminders', label: '发布提醒', mid: '待发布', short: '待发', accent: '#ec4899', to: '/publish-reminders' },
   { id: 'low', label: '发布不足10', mid: '不足10', short: '不足', accent: '#8b5cf6', to: '/samples/low-publish' },
-  { id: 'expiring', label: '即将到期', mid: '将到期', short: '将到期', accent: '#f97316', to: '/samples/expiring' },
+  { id: 'expiring', label: '已拍未发', mid: '未发', short: '未发', accent: '#06b6d4', to: '/samples/expiring' },
 ]
 
 // 距截止日还有几天。无截止日 / 日期非法返回 null
@@ -47,7 +47,7 @@ export function selectPublishReminders(samples, orders = []) {
   const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
   return (samples || []).filter((s) => {
     // 注意：这里**不**排除「只有视频号」的样品（用户指定「发布提醒（待发）不要跳过」）——
-    // 视频号专属品该发视频时也要在这栏提醒；只有高频出单 / 发布不足10 / 即将到期三栏会跳过它。
+    // 视频号专属品该发视频时也要在这栏提醒；只有高频出单 / 发布不足10 / 已拍未发三栏会跳过它。
     if (!needPublishReminder(s)) return false
     const due = pendingAccounts(s)
     if (!due.length) return false
@@ -56,7 +56,7 @@ export function selectPublishReminders(samples, orders = []) {
     // 不能按整品判定：一个账号设了高频，不能把另一个普通到期账号的提醒一起吞掉。
     const nonHotDue = due.filter((a) => !isHotAccount(s, a))
     if (!nonHotDue.length) return false
-    // 没拍过视频的不进发布提醒（由「即将到期」盯截止日）
+    // 没拍过视频的不进发布提醒（已拍未发 tab 统一按状态盯）
     if (!isShotSample(s)) return false
 
     // 互斥口径：出过单的 → 进发布提醒；没出单的 → 归发布不足10
@@ -111,18 +111,21 @@ export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []
   return out
 }
 
-// 3) 即将到期：有截止日期、且未发布/未放弃、EXPIRING_DAYS 天内到期（含已逾期），按截止日升序
-export function selectExpiringSoon(samples, days = EXPIRING_DAYS) {
+// 3) 已拍未发：状态代表态为「已拍未发」（已到货、已拍摄、任一账号都未发布、未归档），
+//    不再限截止日 7 天窗口，所有已拍未发的都列出；有截止日的按截止日升序在前，无截止日在后。
+export function selectShotUnpublished(samples) {
   return (samples || [])
-    .filter((s) => {
-      if (isArchivedSample(s)) return false
-      if (isWechatOnlySample(s)) return false
-      if (!s.deadline || s.status === 'published') return false
-      const d = daysUntilDeadline(s.deadline)
-      return d !== null && d <= days
+    .filter((s) => !isWechatOnlySample(s) && getTopStatus(s) === 'shot')
+    .sort((a, b) => {
+      const da = daysUntilDeadline(a.deadline) ?? 9999
+      const db = daysUntilDeadline(b.deadline) ?? 9999
+      if (da !== db) return da - db
+      return (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN')
     })
-    .sort((a, b) => (daysUntilDeadline(a.deadline) ?? 999) - (daysUntilDeadline(b.deadline) ?? 999))
 }
+
+// 兼容旧引用名（PC / H5 多处仍 import selectExpiringSoon）
+export const selectExpiringSoon = selectShotUnpublished
 
 // 一次性取出四组，供总览 Tab 与列表页共用（PC + H5 同口径）
 export function selectAllReminders(samples, orders = []) {

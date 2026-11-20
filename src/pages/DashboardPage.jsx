@@ -4,7 +4,7 @@ import { useStore, AUTO_ABANDON_PUBLISH_COUNT } from '../store'
 import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, nonHotPendingAccounts, hotPendingAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
-import { LOW_PUBLISH_LIMIT, EXPIRING_DAYS, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
+import { LOW_PUBLISH_LIMIT, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, PUBLISH_ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
@@ -253,7 +253,7 @@ export function DashboardPage() {
   const [adStatusOpenId, setAdStatusOpenId] = useState(null)
   const PREVIEW_COUNT = 3
   // 「已投流」的从列表隐藏（与 PC 一致）：数据保留，不提供查看入口
-  // 提醒中心 Tab：reminders（发布提醒）| low（发布不足5条）| expiring（即将到期）
+  // 提醒中心 Tab：reminders（发布提醒）| low（发布不足5条）| expiring（已拍未发）
   // 用 lazy init 从 sessionStorage 恢复，刷新 / keep-alive 回场时保留上次选中
   const [remindTab, setRemindTab] = useState(() => {
     const v = sessionStorage.getItem('dash_remind_tab')
@@ -266,7 +266,7 @@ export function DashboardPage() {
   const swipeGuardRef = useRef(0)
   // 更彻底的兜底：记录本次触摸是否发生过明显位移（>10px）。
   // 卡片上的操作按钮统一用 tapOK() 判定 —— 只要是「滑动」，松手时就不会触发按钮，
-  // 避免在某些列表（没有左滑的「发布不足5条 / 即将到期」）上滑动时误点到右侧按钮。
+  // 避免在某些列表（没有左滑的「发布不足5条 / 已拍未发」）上滑动时误点到右侧按钮。
   const movedRef = useRef(false)
   useEffect(() => {
     let sx = 0
@@ -711,7 +711,7 @@ export function DashboardPage() {
   // 发布不足10：发布了没有出单，且发布数量 > 0 且 < 10。与 PC 同口径。
   const lowPublish = useMemo(() => selectLowPublish(samples, LOW_PUBLISH_LIMIT, orders), [samples, orders])
 
-  // 即将到期：有截止日期、且未发布/未放弃、7 天内到期（含已逾期），按截止日期升序
+  // 已拍未发：状态代表态为「已拍未发」，全部列出，有截止日的按截止日升序在前
   const expiringSoon = useMemo(() => selectExpiringSoon(samples), [samples])
 
   // 高频出单：手动设了提醒天数且 ≤5 天、当前已到该发的产品
@@ -1607,7 +1607,7 @@ export function DashboardPage() {
         )
       })()}
 
-      {/* ── 提醒中心：发布提醒 / 发布不足5条 / 即将到期 三合一（下划线标签式 Tab） ── */}
+      {/* ── 提醒中心：发布提醒 / 发布不足5条 / 已拍未发 三合一（下划线标签式 Tab） ── */}
       {/* 外层只留上下留白，左右 16px 交给 Tab 栏自己，这样吸顶时 Tab 能撑满宽度 */}
       <div style={{ paddingTop: '12px' }}>
         {/* Tab：纯文字标签 + 数量气泡，选中项下方一条粗色条。
@@ -1721,7 +1721,7 @@ export function DashboardPage() {
             样式与「出单记录」页的账号筛选保持一致（同色描边 / 选中填充同色），
             让同一套筛选在两处看起来是同一个东西。
             横向可滚，账号变多也不会挤成两行。
-            即将到期 tab 不需要账号筛选。 */}
+            已拍未发 tab 不需要账号筛选。 */}
         {remindTab !== 'expiring' && (
         <div
           className="hide-scrollbar"
@@ -2141,7 +2141,7 @@ export function DashboardPage() {
               {/* 原「按截止日期排序」说明行已去掉，空数据由下方空状态卡片提示 */}
               {fExpiring.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
-                  {remindAccount === 'all' ? `近 ${EXPIRING_DAYS} 天没有即将到期的样品` : `${remindAccount} 没有即将到期的样品`}
+                  {remindAccount === 'all' ? '没有已拍未发的样品' : `${remindAccount} 没有已拍未发的样品`}
                 </div>
               ) : isDesktop ? (
                 <ReminderTable
@@ -2152,10 +2152,12 @@ export function DashboardPage() {
                   renderMid={(s) => {
                     const du = daysUntil(s.deadline)
                     const overdue = du !== null && du < 0
-                    const text = overdue
-                      ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
-                      : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
-                    const color = overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
+                    const text = du === null
+                      ? '未设截止时间'
+                      : overdue
+                        ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
+                        : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
+                    const color = du === null ? '#94a3b8' : overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
                     return <span style={{ fontSize: '12px', fontWeight: 600, color }}>{text}</span>
                   }}
                   renderActions={(s) => (
@@ -2167,10 +2169,12 @@ export function DashboardPage() {
                   {fExpiring.map((s) => {
                     const du = daysUntil(s.deadline)
                     const overdue = du !== null && du < 0
-                    const text = overdue
-                      ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
-                      : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
-                    const color = overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
+                    const text = du === null
+                      ? '未设截止时间'
+                      : overdue
+                        ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
+                        : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
+                    const color = du === null ? '#94a3b8' : overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
                     const swiped = swipedHotId === s.id
                     return (
                       <div key={s.id} style={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>

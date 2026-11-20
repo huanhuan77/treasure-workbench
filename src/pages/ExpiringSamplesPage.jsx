@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
-import { EXPIRING_DAYS, daysUntilDeadline, selectExpiringSoon } from '../utils/reminders'
+import { daysUntilDeadline, selectExpiringSoon } from '../utils/reminders'
 import { ReminderListPage, ReminderCard, CardTitleRow, CardActions } from '../components/ReminderListPage'
 
-const ACCENT = '#f97316'
+const ACCENT = '#06b6d4'
 
-// 「即将到期」列表页
+// 「已拍未发」列表页
 // 口径来自 utils/reminders，与总览 Tab 计数同源
 export function ExpiringSamplesPage() {
   const { samples } = useStore()
@@ -18,28 +18,30 @@ export function ExpiringSamplesPage() {
   const base = useMemo(() => selectExpiringSoon(samples), [samples])
 
   const SORTS = useMemo(() => [
-    { key: 'deadlineAsc', label: '最紧急优先', compare: (a, b) => (daysUntilDeadline(a.deadline) ?? 999) - (daysUntilDeadline(b.deadline) ?? 999) },
-    { key: 'deadlineDesc', label: '最宽松优先', compare: (a, b) => (daysUntilDeadline(b.deadline) ?? 999) - (daysUntilDeadline(a.deadline) ?? 999) },
+    { key: 'deadlineAsc', label: '最紧急优先', compare: (a, b) => (daysUntilDeadline(a.deadline) ?? 9999) - (daysUntilDeadline(b.deadline) ?? 9999) },
+    { key: 'deadlineDesc', label: '最宽松优先', compare: (a, b) => (daysUntilDeadline(b.deadline) ?? 9999) - (daysUntilDeadline(a.deadline) ?? 9999) },
     { key: 'name', label: '名称', compare: (a, b) => (a.name || '').localeCompare(b.name || '', 'zh-Hans-CN') },
   ], [])
 
   return (
     <ReminderListPage
-      title={`即将到期（${base.length}）`}
+      title={`已拍未发（${base.length}）`}
       accent={ACCENT}
       base={base}
       sorts={SORTS}
-      emptyText={`🎉 近 ${EXPIRING_DAYS} 天没有即将到期的样品`}
+      emptyText="🎉 没有已拍未发的样品"
       noMatchText="没有符合筛选条件的样品"
     >
       {(s, { accountFilter } = {}) => {
-        const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.published
+        const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.shot
         const du = daysUntilDeadline(s.deadline)
         const overdue = du !== null && du < 0
-        const text = overdue
-          ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
-          : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
-        const color = overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
+        const text = du === null
+          ? '未设截止时间'
+          : overdue
+            ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
+            : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
+        const color = du === null ? '#94a3b8' : overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
         // 用户筛了账号就只显示该账号，避免"筛了一个账号却看到别的账号标签"
         const all = getAccounts(s)
         const showAccounts = (accountFilter && accountFilter !== 'all' && all.includes(accountFilter))
