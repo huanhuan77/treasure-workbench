@@ -718,13 +718,14 @@ export function PcDashboard() {
                 <thead>
                   <tr>
                     <th style={{ width: 190 }}>产品</th>
-                    <th style={{ width: 180 }}>操作</th>
-                    {/* 账号列：高频出单 / 发布提醒里是「账号 + 已N天」双色胶囊，需要更宽 */}
-                    <th style={{ width: 220 }}>账号</th>
+                    <th style={{ width: 170 }}>操作</th>
+                    {/* 账号列：高频出单 / 发布提醒里是「账号 + 已N天」双色胶囊，
+                        多个账号会在一格里并排，宽度给足（用户要求「账号列宽一点」） */}
+                    <th style={{ width: 330 }}>账号</th>
                     {/* 提醒天数/还差条数紧跟账号（用户要求） */}
-                    <th style={{ width: 180 }}>{cur.header}</th>
+                    <th style={{ width: 150 }}>{cur.header}</th>
                     {/* 出单数量：该样品出单记录的件数合计（用户要求） */}
-                    <th style={{ width: 170 }}>出单数量</th>
+                    <th style={{ width: 150 }}>出单数量</th>
                     <th style={{ width: 90 }}>状态</th>
                     <th style={{ width: 110 }}>截止日期</th>
                   </tr>
