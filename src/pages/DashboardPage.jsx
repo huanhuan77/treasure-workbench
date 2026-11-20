@@ -2229,9 +2229,11 @@ export function DashboardPage() {
       {/* 追剧入口已移到「更多」侧边栏（/dramas），总览不再占位 */}
 
       {editingSample && (
+        // 提醒卡片的「编辑」= 完整编辑样品（含分类/关联产品/佣金/备注），
+        // 与 PC 弹窗、样品记录页的编辑界面同口径；不再用只改状态的精简版
+        // （用户要求「打开也是编辑样品界面」）
         <SampleForm
           inline={false}
-          statusMode={true}
           sample={editingSample}
           onClose={() => setEditingSample(null)}
           onSave={(data) => {
