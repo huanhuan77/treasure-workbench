@@ -29,10 +29,11 @@ export function ExpiringSamplesPage() {
       accent={ACCENT}
       base={base}
       sorts={SORTS}
+      hideAccountFilter
       emptyText="🎉 没有已拍未发的样品"
       noMatchText="没有符合筛选条件的样品"
     >
-      {(s, { accountFilter } = {}) => {
+      {(s) => {
         const st = SAMPLE_STATUS[s.status] || SAMPLE_STATUS.shot
         const du = daysUntilDeadline(s.deadline)
         const overdue = du !== null && du < 0
@@ -42,11 +43,8 @@ export function ExpiringSamplesPage() {
             ? `已逾期 ${Math.abs(du)} 天（截止 ${s.deadline}）`
             : du === 0 ? `今天截止（${s.deadline}）` : `剩 ${du} 天（截止 ${s.deadline}）`
         const color = du === null ? '#94a3b8' : overdue ? '#ef4444' : du <= 3 ? '#ea580c' : '#ca8a04'
-        // 用户筛了账号就只显示该账号，避免"筛了一个账号却看到别的账号标签"
-        const all = getAccounts(s)
-        const showAccounts = (accountFilter && accountFilter !== 'all' && all.includes(accountFilter))
-          ? [accountFilter]
-          : all
+        // 已拍未发不区分账号：始终列出该样品挂的全部账号
+        const showAccounts = getAccounts(s)
         return (
           <ReminderCard key={s.id} borderColor="#fecdd3">
             <CardTitleRow
@@ -65,7 +63,7 @@ export function ExpiringSamplesPage() {
             </div>
             <CardActions
               sample={s}
-              account={accountFilter && accountFilter !== 'all' ? accountFilter : undefined}
+              account={undefined}
               onEdit={() => navigate(`/samples/${s.id}/edit`)}
             />
           </ReminderCard>

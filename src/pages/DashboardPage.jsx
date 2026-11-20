@@ -477,10 +477,11 @@ export function DashboardPage() {
   }
   // 「新建计划」：与 PC 一致，**打开「新增发布计划」弹窗**并带上该行的产品名 + 账号
   // （用户要求「新建计划要弹计划弹窗」）；数量/日期都在弹窗里确认后再保存。
-  const quickPlan = (s) => {
+  const quickPlan = (s, opts) => {
     const name = String((s && s.name) || '').trim()
     // 优先用当前筛选账号；没筛账号时取待发账号，再不行取第一个挂的账号
-    let acc = remindAccount && remindAccount !== 'all' ? remindAccount : ''
+    // opts.ignoreAccount：已拍未发不区分账号，不能被别 Tab 遗留的账号筛选带偏
+    let acc = (!opts?.ignoreAccount && remindAccount && remindAccount !== 'all') ? remindAccount : ''
     if (!acc || !getAccounts(s).includes(acc)) {
       acc = pendingAccounts(s)[0] || getAccounts(s)[0] || ''
     }
@@ -806,18 +807,11 @@ export function DashboardPage() {
     />
   )
 
-  // 样品是否命中当前账号筛选：
-  // - 未筛时全部通过
-  // - 筛了账号：只有该账号确实"需要发"（从未发过或超过7天没发）才显示
-  //   避免多账号样品中，是别的账号需要发、但本账号刚发过的情况被错误列出
-  const matchAcct = (s, a) => {
-    if (a === 'all') return true
-    // 该账号自己确实"该发了"（从未发过 / 超期没发）才列出
-    return pendingAccounts(s).includes(a)
-  }
+  // （已拍未发不区分账号，故不再有「样品是否命中账号筛选」的统一判定函数；
+  //   其余三个 Tab 各自在下方按账号过滤）
 
   // 筛选后的三组数据 —— 列表渲染与 Tab 气泡计数都读它们，保证「气泡数 = 点进去的条数」。
-  // 三个列表现在都是**样品粒度**，账号筛选统一走 matchAcct（样品归属账号命中即显示）。
+  // 发布提醒/发布不足5条/高频出单 都是**样品粒度**，筛选时按「该账号是否待处理」判断。
   // 「发布不足5条」曾短暂改成「样品×账号」条目、按条目 account 精确匹配，
   // 但那会让多账号样品被拆成多条（详见 utils/reminders 里 selectLowPublish 的注释）。
   // 排序：逾期优先，其余按**行里显示的那个天数**（reminderAccounts 里最久没发的）降序。
@@ -851,9 +845,11 @@ export function DashboardPage() {
     }),
     [lowPublish, remindAccount, dismissed],
   )
+  // 已拍未发**不区分账号**（用户要求：不做账号筛选，列出全部账号）：
+  // 只按「已忽略」过滤，不受 remindAccount 影响；卡片上始终列出样品挂的全部账号。
   const fExpiring = useMemo(
-    () => expiringSoon.filter((s) => !dismissed.has(s.id) && matchAcct(s, remindAccount)),
-    [expiringSoon, remindAccount, dismissed],
+    () => expiringSoon.filter((s) => !dismissed.has(s.id)),
+    [expiringSoon, dismissed],
   )
   const fHot = useMemo(
     () => hotCadence.filter((s) => {
@@ -1721,7 +1717,7 @@ export function DashboardPage() {
             样式与「出单记录」页的账号筛选保持一致（同色描边 / 选中填充同色），
             让同一套筛选在两处看起来是同一个东西。
             横向可滚，账号变多也不会挤成两行。
-            已拍未发 tab 不需要账号筛选。 */}
+            已拍未发 tab 不是按账号的，这里直接不显示筛选条。 */}
         {remindTab !== 'expiring' && (
         <div
           className="hide-scrollbar"
@@ -1731,18 +1727,6 @@ export function DashboardPage() {
             overflowX: 'auto', WebkitOverflowScrolling: 'touch',
           }}
         >
-          {remindTab === 'expiring' && (
-          <button
-            onClick={() => setRemindAccount('all')}
-            style={{
-              flex: '0 0 auto', padding: '6px 12px', borderRadius: '999px',
-              fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
-              border: remindAccount === 'all' ? 'none' : '1px solid rgba(244,114,182,0.35)',
-              background: remindAccount === 'all' ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
-              color: remindAccount === 'all' ? '#fff' : 'var(--text-main)',
-            }}
-          >全部账号</button>
-          )}
           {PUBLISH_ACCOUNTS.map((a) => {
             const col = ACC_META(a)
             const sel = remindAccount === a
@@ -1785,7 +1769,7 @@ export function DashboardPage() {
               ) : isDesktop ? (
                 <ReminderTable
                   items={fReminders}
-                  onlyAccount={remindAccount === 'all' ? '' : remindAccount}
+                  onlyAccount="" 
                   accountsOf={(s) => {
                     const list = reminderAccounts(s)
                     if (remindAccount !== 'all' && nonHotPendingAccounts(s).includes(remindAccount) && !list.includes(remindAccount)) {
@@ -1820,7 +1804,7 @@ export function DashboardPage() {
                     let showAccounts = reminderAccounts(s)
                     // 筛了账号时**只显示这个账号**（用户：「筛选哪个账号就显示哪个账号的状态」）。
                     // 原来只是"保证包含它"，其它待发账号还挂在卡片上，看着像筛选没生效。
-                    // 卡片本身能出现在这里，说明 matchAcct 已确认该账号确实该发，所以直接取单元素即可。
+                    // 卡片本身能出现在这里，说明该账号已确认确实该发，所以直接取单元素即可。
                     if (remindAccount !== 'all') showAccounts = [remindAccount]
                     // 这里不再需要区分「是不是靠催更进来的」——列表已经和 PC 同口径
                     // （selectPublishReminders 不传 orders），只剩「超过阈值 / 从未发过」两种。
@@ -1881,7 +1865,7 @@ export function DashboardPage() {
                         </div>
                         {/* 「新建计划」常驻显示（用户要求「计划按钮放出来，不要左滑才显示」） */}
                         <button
-                          onClick={() => { if (!tapOK()) return; quickPlan(s) }}
+                          onClick={() => { if (!tapOK()) return; quickPlan(s, { ignoreAccount: true }) }}
                           style={{ flexShrink: 0, padding: '7px 10px', borderRadius: 9, border: 'none', background: '#ec4899', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
                         >新建计划</button>
                         </div>{/* /左滑卡片内容 */}
@@ -2141,7 +2125,7 @@ export function DashboardPage() {
               {/* 原「按截止日期排序」说明行已去掉，空数据由下方空状态卡片提示 */}
               {fExpiring.length === 0 ? (
                 <div style={{ background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#94a3b8' }}>
-                  {remindAccount === 'all' ? '没有已拍未发的样品' : `${remindAccount} 没有已拍未发的样品`}
+                  没有已拍未发的样品
                 </div>
               ) : isDesktop ? (
                 <ReminderTable
@@ -2219,7 +2203,7 @@ export function DashboardPage() {
                             <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '6px', color: SAMPLE_STATUS[s.status]?.color, background: SAMPLE_STATUS[s.status]?.bg, fontWeight: 600, flexShrink: 0 }}>{SAMPLE_STATUS[s.status]?.icon} {SAMPLE_STATUS[s.status]?.label}</span>
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
-                            {(remindAccount !== 'all' ? [remindAccount] : getAccounts(s)).map((a) => (
+                            {getAccounts(s).map((a) => (
                               <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                             ))}
                           </div>

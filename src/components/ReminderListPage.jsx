@@ -67,6 +67,9 @@ function Pill({ active, onClick, children, accent = '#ec4899' }) {
 export function ReminderListPage({
   title, accent = '#ec4899', base, sorts, searchKeys, extraTop,
   emptyText = '暂无数据', noMatchText = '没有符合筛选条件的样品', children,
+  // hideAccountFilter：不按账号看的页面（如「已拍未发」）不显示账号胶囊，
+  // 列表恒为全部账号的数据，卡片自行列出样品的全部账号。
+  hideAccountFilter = false,
   getItem = (it) => ({ sample: it, account: null }),
 }) {
   const navigate = useNavigate()
@@ -78,7 +81,7 @@ export function ReminderListPage({
     let r = base || []
     // 账号筛选：条目自带 account 时按它精确匹配，否则退回「样品归属账号」判断。
     // 按账号口径的条目必须走前一条 —— 用「样品归属」会把同样品其它账号的条目也带进来。
-    if (accountFilter !== 'all') {
+    if (!hideAccountFilter && accountFilter !== 'all') {
       r = r.filter((it) => {
         const { sample, account } = getItem(it)
         return account ? account === accountFilter : getAccounts(sample).includes(accountFilter)
@@ -93,21 +96,24 @@ export function ReminderListPage({
     const cur = sorts.find((o) => o.key === sortKey) || sorts[0]
     if (cur?.compare) arr.sort(cur.compare)
     return arr
-  }, [base, accountFilter, keyword, sortKey, sorts, searchKeys, getItem])
+  }, [base, accountFilter, keyword, sortKey, sorts, searchKeys, getItem, hideAccountFilter])
 
-  const filtered = accountFilter !== 'all' || keyword.trim() !== ''
+  const activeAccount = hideAccountFilter ? 'all' : accountFilter
+  const filtered = activeAccount !== 'all' || keyword.trim() !== ''
 
   return (
     <div className="app-container" style={{ background: 'linear-gradient(180deg,#ffe3ec 0%,#fff0f3 55%,#fff8f9 100%)', minHeight: '100vh' }}>
       <PageHeader title={title} onBack={() => navigate(-1)} />
 
-      {/* 筛选区：账号胶囊 + 搜索框 + 排序胶囊 */}
+      {/* 筛选区：账号胶囊 + 搜索框 + 排序胶囊（hideAccountFilter 时只剩搜索与排序） */}
       <div style={{ padding: '10px 8px 6px', display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
-        <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-          {[{ k: 'all', label: '全部账号' }, ...ACCOUNTS.map((a) => ({ k: a, label: a }))].map((o) => (
-            <Pill key={o.k} active={accountFilter === o.k} accent={accent} onClick={() => setAccountFilter(o.k)}>{o.label}</Pill>
-          ))}
-        </div>
+        {!hideAccountFilter && (
+          <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            {[{ k: 'all', label: '全部账号' }, ...ACCOUNTS.map((a) => ({ k: a, label: a }))].map((o) => (
+              <Pill key={o.k} active={accountFilter === o.k} accent={accent} onClick={() => setAccountFilter(o.k)}>{o.label}</Pill>
+            ))}
+          </div>
+        )}
 
         <div style={{
           display: 'flex', alignItems: 'center', gap: '6px',
@@ -137,8 +143,8 @@ export function ReminderListPage({
         {filtered && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
             <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>
-              {accountFilter !== 'all' ? `账号：${accountFilter}` : ''}
-              {accountFilter !== 'all' && keyword ? ' · ' : ''}
+              {activeAccount !== 'all' ? `账号：${activeAccount}` : ''}
+              {activeAccount !== 'all' && keyword ? ' · ' : ''}
               {keyword ? `关键词：${keyword}` : ''}
               {` · 命中 ${list.length} / ${(base || []).length} 条`}
             </span>
@@ -165,7 +171,7 @@ export function ReminderListPage({
                 卡片内可能列出该样品的多个账号。用户筛了某个账号后，
                 行内若仍把所有账号都列出来，看起来就像筛选没生效。
                 故把筛选态透传给卡片，由卡片决定只显示哪个账号。 */}
-            {list.map((s) => children(s, { accountFilter }))}
+            {list.map((s) => children(s, { accountFilter: activeAccount }))}
           </div>
         )}
       </div>
