@@ -58,6 +58,9 @@ export function selectPublishReminders(samples, orders = []) {
     if (!nonHotDue.length) return false
     // 没拍过视频的不进发布提醒（已拍未发 tab 统一按状态盯）
     if (!isShotSample(s)) return false
+    // 与「已拍未发」整品互斥：全部账号都还没发布过的样品归已拍未发 tab，
+    // 不在发布提醒里重复提醒；只要有任一账号发过视频（代表态为已发布），仍按下面的账号粒度分流。
+    if (getTopStatus(s) === 'shot') return false
 
     // 互斥口径：出过单的 → 进发布提醒；没出单的 → 归发布不足10
     if (orderedSampleIds.has(s.id)) return true
