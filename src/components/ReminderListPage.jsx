@@ -198,7 +198,7 @@ export function CardTitleRow({ name, badge }) {
   )
 }
 
-// 卡片按钮行：补发布 / 调整状态，三页文案统一
+// 卡片按钮行：补发布 / 编辑（打开样品编辑弹窗），三页文案统一
 //
 // 账号预选优先级：publishAccounts（数组）> account（单值）> 该样品全部账号。
 // 「发布不足5条」用 publishAccounts 只带上**未达标**的账号 ——
@@ -219,7 +219,7 @@ export function CardActions({ sample, account, publishAccounts, onEdit, publishT
       <button
         onClick={() => (onEdit ? onEdit(sample) : navigate(`/samples/${sample.id}/edit`))}
         style={{ flex: 1, padding: '7px 0', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.08)', background: 'rgba(255,255,255,0.6)', color: 'var(--text-sub)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-      >调整状态</button>
+      >编辑</button>
     </div>
   )
 }

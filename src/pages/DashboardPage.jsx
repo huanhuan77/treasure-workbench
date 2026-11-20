@@ -259,10 +259,10 @@ export function DashboardPage() {
     const v = sessionStorage.getItem('dash_remind_tab')
     return v === 'low' || v === 'expiring' || v === 'reminders' ? v : 'hot'
   })
-  // 提醒卡片左滑露出的操作（新建计划 / 调整状态）——用户要求「操作放到左滑操作」
+  // 提醒卡片左滑露出的操作（新建计划 / 编辑）——用户要求「操作放到左滑操作」
   const [swipedHotId, setSwipedHotId] = useState(null)
   // 刚滑完的 400ms 内忽略操作按钮的点击：手指离开时正好落在被拉出来的按钮上，
-  // 浏览器会补发一次 click，会误触「调整状态」直接弹编辑弹窗（用户反馈「我只是左滑，怎么弹出来了」）
+  // 浏览器会补发一次 click，会误触「编辑」直接弹编辑弹窗（用户反馈「我只是左滑，怎么弹出来了」）
   const swipeGuardRef = useRef(0)
   // 更彻底的兜底：记录本次触摸是否发生过明显位移（>10px）。
   // 卡片上的操作按钮统一用 tapOK() 判定 —— 只要是「滑动」，松手时就不会触发按钮，
@@ -1793,7 +1793,7 @@ export function DashboardPage() {
                   renderActions={(s) => (
                     <>
                       <button style={pcPrimaryBtn} onClick={() => quickPlan(s)}>新建计划</button>
-                      <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
+                      <button style={pcTextBtn} onClick={() => setEditingSample(s)}>编辑</button>
                     </>
                   )}
                 />
@@ -1816,7 +1816,7 @@ export function DashboardPage() {
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >调整状态</button>
+                          >编辑</button>
                         </div>
                         <div
                           onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
@@ -1906,7 +1906,7 @@ export function DashboardPage() {
                   renderActions={(s) => (
                     <>
                       <button style={pcPrimaryBtn} onClick={() => quickPlan(s)}>新建计划</button>
-                      <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
+                      <button style={pcTextBtn} onClick={() => setEditingSample(s)}>编辑</button>
                     </>
                   )}
                 />
@@ -1926,7 +1926,7 @@ export function DashboardPage() {
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >调整状态</button>
+                          >编辑</button>
                         </div>
                         <div
                           onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
@@ -2030,7 +2030,7 @@ export function DashboardPage() {
                   renderActions={(it) => (
                     <>
                       <button style={pcPrimaryBtn} onClick={() => navigate('/publish-record/new', { state: { sampleId: it.sample.id, accounts: it.accounts.map((x) => x.account) } })}>补发布</button>
-                      <button style={pcTextBtn} onClick={() => setEditingSample(it.sample)}>调整状态</button>
+                      <button style={pcTextBtn} onClick={() => setEditingSample(it.sample)}>编辑</button>
                     </>
                   )}
                 />
@@ -2047,7 +2047,7 @@ export function DashboardPage() {
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >调整状态</button>
+                          >编辑</button>
                         </div>
                         <div
                           onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
@@ -2145,7 +2145,7 @@ export function DashboardPage() {
                     return <span style={{ fontSize: '12px', fontWeight: 600, color }}>{text}</span>
                   }}
                   renderActions={(s) => (
-                    <button style={pcTextBtn} onClick={() => setEditingSample(s)}>调整状态</button>
+                    <button style={pcTextBtn} onClick={() => setEditingSample(s)}>编辑</button>
                   )}
                 />
               ) : (
@@ -2166,7 +2166,7 @@ export function DashboardPage() {
                           <button
                             onClick={() => { setSwipedHotId(null); setEditingSample(s) }}
                             style={{ width: 66, height: '80%', border: 'none', background: '#e2e8f0', color: '#475569', fontSize: 12, fontWeight: 600, borderRadius: 9, cursor: 'pointer' }}
-                          >调整状态</button>
+                          >编辑</button>
                         </div>
                         <div
                           onTouchStart={(e) => { const t = e.touches[0]; e.currentTarget.dataset.sx = String(t.clientX); e.currentTarget.dataset.sy = String(t.clientY); e.currentTarget.dataset.swiping = 'false' }}
