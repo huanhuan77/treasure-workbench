@@ -394,13 +394,13 @@ export function PcSamples() {
             <thead>
               <tr>
                 {/* 每列都定宽，表格 table-layout: fixed，列宽按这里的比例分配：
-                    125+62+72+270+56+68+100+70+100+165+125+135+160 = 1508。
+                    135+62+72+270+56+68+100+70+100+165+120+130+160 = 1508。
                     账号列 270px：多账号样品（最多 4 个）尽量一行排完，不再挤成两三行。
                     操作列收紧到 160px：里面只有「新建计划 / 编辑」两个按钮（约需 128px 内容宽），
                     省下的宽度全部让给账号列（用户要求「操作列调小、账号列加宽」）。
                     两个日期列保持 100 / 165：日期本身 78px，截止日期还要跟「剩 N 天」约 42px，
                     再窄会被折成两行（用户反馈「不要换行」）。 */}
-                <th style={{ width: 125 }}>产品</th>
+                <th style={{ width: 135 }}>产品</th>
                 <th style={{ width: 62 }}>分类</th>
                 <th style={{ width: 72 }}>状态</th>
                 <th style={{ width: 270 }}>账号</th>
@@ -422,9 +422,9 @@ export function PcSamples() {
                 <th style={{ width: 165 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 125 }}>链接</th>
+                <th style={{ width: 120 }}>链接</th>
                 {/* 备注：弹窗里能填但列表一直没展示（用户反馈「怎么没显示备注」） */}
-                <th style={{ width: 135 }}>备注</th>
+                <th style={{ width: 130 }}>备注</th>
                 {/* 操作列：用户要求调小（只放「新建计划 / 编辑」两个按钮，约需 128px 内容宽） */}
                 <th style={{ width: 160 }}>操作</th>
               </tr>
