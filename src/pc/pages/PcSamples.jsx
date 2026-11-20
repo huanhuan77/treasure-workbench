@@ -426,14 +426,16 @@ export function PcSamples() {
                 <th style={{ width: 175 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 175 }}>链接</th>
-                <th style={{ width: 220 }}>操作</th>
+                <th style={{ width: 150 }}>链接</th>
+                {/* 备注：弹窗里能填但列表一直没展示（用户反馈「怎么没显示备注」） */}
+                <th style={{ width: 170 }}>备注</th>
+                <th style={{ width: 200 }}>操作</th>
               </tr>
             </thead>
             <tbody>
               {displayed.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="pcv-empty">当前筛选下没有样品</td>
+                  <td colSpan={12} className="pcv-empty">当前筛选下没有样品</td>
                 </tr>
               ) : displayed.map((s) => {
                 const top = getTopStatus(s)
@@ -627,6 +629,21 @@ export function PcSamples() {
                         ))
                       })()}
                       </div>
+                    </td>
+                    <td>
+                      {/* 备注：长文本单行省略，悬停看全文（列表里备注多为「3条」「出单 佣金10%」这类短标注） */}
+                      {s.remark ? (
+                        <span
+                          title={s.remark}
+                          style={{
+                            display: 'block', maxWidth: 170,
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            color: '#4b5563',
+                          }}
+                        >{s.remark}</span>
+                      ) : (
+                        <span style={{ color: '#c9cdd4' }}>—</span>
+                      )}
                     </td>
                     <td>
                       {/* 同上：flex 放内层 div，td 保持 table-cell，列宽才对得上表头 */}
