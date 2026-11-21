@@ -31,7 +31,7 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
         className="pc-card"
         style={{
           ...glassStyle, position: 'relative', padding: '11px 10px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: '9px', zIndex: 1,
+          display: 'flex', alignItems: 'center', gap: '6px', zIndex: 1,
         }}
       >
         {/* 左侧图标：显示分类名 */}
@@ -61,9 +61,9 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
           aria-label="置顶"
           title={p.pinned ? '取消置顶' : '置顶'}
           style={{
-            flexShrink: 0, width: '30px', height: '30px', border: 'none', borderRadius: '8px',
+            flexShrink: 0, width: '24px', height: '24px', border: 'none', borderRadius: '6px',
             background: p.pinned ? '#fef3c7' : 'transparent', cursor: 'pointer',
-            fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: p.pinned ? 1 : 0.3,
           }}
         >📌</button>
@@ -77,9 +77,9 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
           aria-label="置底"
           title={p.pinnedBottom ? '取消置底' : '置底'}
           style={{
-            flexShrink: 0, width: '30px', height: '30px', border: 'none', borderRadius: '8px',
+            flexShrink: 0, width: '24px', height: '24px', border: 'none', borderRadius: '6px',
             background: p.pinnedBottom ? '#dbeafe' : 'transparent', cursor: 'pointer',
-            fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: p.pinnedBottom ? 1 : 0.3,
           }}
         >⬇️</button>
@@ -92,8 +92,8 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
           aria-label="删除"
           title="删除"
           style={{
-            flexShrink: 0, width: '30px', height: '30px', border: 'none', borderRadius: '8px',
-            background: 'transparent', cursor: 'pointer', fontSize: '14px',
+            flexShrink: 0, width: '24px', height: '24px', border: 'none', borderRadius: '6px',
+            background: 'transparent', cursor: 'pointer', fontSize: '11px',
             display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5,
           }}
         >🗑️</button>
@@ -120,13 +120,13 @@ function SortableProductCard(props) {
       onTouchStart={(e) => { e.stopPropagation(); listeners?.onTouchStart?.(e) }}
       aria-label="拖动排序"
       style={{
-        flexShrink: 0, width: '28px', height: '32px', alignSelf: 'center',
-        border: 'none', borderRadius: '8px', background: '#fce7f3',
+        flexShrink: 0, width: '22px', height: '24px', alignSelf: 'center',
+        border: 'none', borderRadius: '6px', background: '#fce7f3',
         color: '#9ca3af', cursor: 'grab', touchAction: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 4l-4 4h3v4h2V8h3l-4-4zm0 16l4-4h-3v-4h-2v4H8l4 4z"/>
       </svg>
     </button>
