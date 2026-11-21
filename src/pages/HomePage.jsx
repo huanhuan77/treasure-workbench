@@ -18,6 +18,18 @@ const CATEGORIES = ['保健品', '美妆', '护肤', '洗护', '日用', '饮品
 // 分类配色 / 分类图标 / 产品显示名 的实现已抽到 utils/productDisplay.js，
 // 手机版与 PC 版共用同一份（这里保留本页自己的 CATEGORIES 顺序，不动筛选条排列）
 
+// 卡片右侧四个操作按钮共用同一套尺寸，保证宽高、圆角、字号、对齐完全一致
+const ACTION_BTN_SIZE = 24
+const actionBtn = (bg, opacity) => ({
+  flex: `0 0 ${ACTION_BTN_SIZE}px`,
+  width: `${ACTION_BTN_SIZE}px`,
+  height: `${ACTION_BTN_SIZE}px`,
+  padding: 0, border: 'none', borderRadius: '6px',
+  background: bg, cursor: 'pointer', opacity,
+  fontSize: '11px', lineHeight: 1,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+})
+
 // 产品卡片视觉层：点卡片进详情；右侧置顶 / 置底 / 删除（手机没有左滑，删除必须显式可见）
 function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, navigate, outerRef, outerStyle, handle }) {
   const iconInfo = getIconInfo(p.name, p.category)
@@ -31,7 +43,7 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
         className="pc-card"
         style={{
           ...glassStyle, position: 'relative', padding: '11px 10px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: '6px', zIndex: 1,
+          display: 'flex', alignItems: 'center', gap: '8px', zIndex: 1,
         }}
       >
         {/* 左侧图标：显示分类名 */}
@@ -55,48 +67,37 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
           </div>
         </div>
 
-        {/* 右侧：置顶按钮 */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onTogglePin(p) }}
-          aria-label="置顶"
-          title={p.pinned ? '取消置顶' : '置顶'}
-          style={{
-            flexShrink: 0, width: '24px', height: '24px', border: 'none', borderRadius: '6px',
-            background: p.pinned ? '#fef3c7' : 'transparent', cursor: 'pointer',
-            fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: p.pinned ? 1 : 0.3,
-          }}
-        >📌</button>
+        {/* 右侧操作组：置顶 / 拖动排序 / 置底 / 删除
+            四个按钮同尺寸（24×24）、同间隙（4px）、同一垂直中线，
+            统一放进一个 flex 组里，避免 emoji 字形宽窄不同造成「看起来没对齐」 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onTogglePin(p) }}
+            aria-label="置顶"
+            title={p.pinned ? '取消置顶' : '置顶'}
+            style={actionBtn(p.pinned ? '#fef3c7' : 'transparent', p.pinned ? 1 : 0.3)}
+          >📌</button>
 
-        {/* 右侧：拖动排序手柄 */}
-        {handle}
+          {/* 拖动排序手柄 */}
+          {handle}
 
-        {/* 右侧：置底按钮 */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onTogglePinBottom(p) }}
-          aria-label="置底"
-          title={p.pinnedBottom ? '取消置底' : '置底'}
-          style={{
-            flexShrink: 0, width: '24px', height: '24px', border: 'none', borderRadius: '6px',
-            background: p.pinnedBottom ? '#dbeafe' : 'transparent', cursor: 'pointer',
-            fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: p.pinnedBottom ? 1 : 0.3,
-          }}
-        >⬇️</button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onTogglePinBottom(p) }}
+            aria-label="置底"
+            title={p.pinnedBottom ? '取消置底' : '置底'}
+            style={actionBtn(p.pinnedBottom ? '#dbeafe' : 'transparent', p.pinnedBottom ? 1 : 0.3)}
+          >⬇️</button>
 
-        {/* 右侧：删除按钮（用户反馈「文案列表为什么没有删除按钮」——
-            之前只有一段没人触发的左滑逻辑，删除入口实际不存在。
-            这里改成常显图标，点击弹「删除产品」确认框，整品连同文案一起删） */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(p) }}
-          aria-label="删除"
-          title="删除"
-          style={{
-            flexShrink: 0, width: '24px', height: '24px', border: 'none', borderRadius: '6px',
-            background: 'transparent', cursor: 'pointer', fontSize: '11px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5,
-          }}
-        >🗑️</button>
+          {/* 删除（用户反馈「文案列表为什么没有删除按钮」——
+              之前只有一段没人触发的左滑逻辑，删除入口实际不存在。
+              这里改成常显图标，点击弹「删除产品」确认框，整品连同文案一起删） */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(p) }}
+            aria-label="删除"
+            title="删除"
+            style={actionBtn('transparent', 0.5)}
+          >🗑️</button>
+        </div>
       </div>
     </div>
   )
@@ -120,7 +121,8 @@ function SortableProductCard(props) {
       onTouchStart={(e) => { e.stopPropagation(); listeners?.onTouchStart?.(e) }}
       aria-label="拖动排序"
       style={{
-        flexShrink: 0, width: '22px', height: '24px', alignSelf: 'center',
+        flex: `0 0 ${ACTION_BTN_SIZE}px`, width: `${ACTION_BTN_SIZE}px`, height: `${ACTION_BTN_SIZE}px`,
+        padding: 0, alignSelf: 'center',
         border: 'none', borderRadius: '6px', background: '#fce7f3',
         color: '#9ca3af', cursor: 'grab', touchAction: 'none',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
