@@ -18,7 +18,7 @@ const CATEGORIES = ['保健品', '美妆', '护肤', '洗护', '日用', '饮品
 // 分类配色 / 分类图标 / 产品显示名 的实现已抽到 utils/productDisplay.js，
 // 手机版与 PC 版共用同一份（这里保留本页自己的 CATEGORIES 顺序，不动筛选条排列）
 
-// 产品卡片视觉层：左滑编辑/删除
+// 产品卡片视觉层：点卡片进详情；右侧置顶 / 置底 / 删除（手机没有左滑，删除必须显式可见）
 function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, navigate, outerRef, outerStyle, handle }) {
   const iconInfo = getIconInfo(p.name, p.category)
   const copies = p.copies?.length || 0
@@ -83,6 +83,20 @@ function ProductCard({ p, openEdit, onDelete, onTogglePin, onTogglePinBottom, na
             opacity: p.pinnedBottom ? 1 : 0.3,
           }}
         >⬇️</button>
+
+        {/* 右侧：删除按钮（用户反馈「文案列表为什么没有删除按钮」——
+            之前只有一段没人触发的左滑逻辑，删除入口实际不存在。
+            这里改成常显图标，点击弹「删除产品」确认框，整品连同文案一起删） */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(p) }}
+          aria-label="删除"
+          title="删除"
+          style={{
+            flexShrink: 0, width: '30px', height: '30px', border: 'none', borderRadius: '8px',
+            background: 'transparent', cursor: 'pointer', fontSize: '14px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5,
+          }}
+        >🗑️</button>
       </div>
     </div>
   )
