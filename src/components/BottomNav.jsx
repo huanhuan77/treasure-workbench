@@ -251,7 +251,12 @@ export function BottomNav() {
           borderTop: '1px solid rgba(255, 255, 255, 0.7)',
           display: 'flex',
           paddingBottom: 'var(--safe-bottom)',
-          zIndex: 999,
+          // zIndex 999 → 1000，并强制独立合成层：
+          // 移动端 WebView（尤其长页面整屏滚动时）会让 fixed 元素跟随内容一起被"滚走"，
+          // 用 translateZ(0) + will-change 把它提到自己的图层，滚动时不再被页面重绘吞掉
+          zIndex: 1000,
+          transform: 'translateZ(0)',
+          willChange: 'transform',
           pointerEvents: 'auto',
           touchAction: 'manipulation',
           boxShadow: '0 -4px 20px rgba(244, 114, 182, 0.06)',
