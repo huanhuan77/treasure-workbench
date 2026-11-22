@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
@@ -225,6 +225,42 @@ export function BottomNav() {
 
   const getBadge = (to) => (to === '/samples' ? samplesBadge : 0)
 
+  // 底部导航兜底定位：
+  // 部分移动端 WebView（安卓老内核 / 应用内浏览器 / iOS 过度滚动回弹）会让 position:fixed 的元素
+  // 跟着整页一起位移，表现为「滚到列表中间，底部菜单栏就不见了」。
+  // 这里每帧按视口高度校准一次：发现偏离就把 top 直接钉到视口底部，
+  // 位置正常时保持纯 CSS 的 bottom:0，不做任何干预。
+  const navRef = useRef(null)
+  useEffect(() => {
+    if (isDesktop) return
+    let raf = 0
+    const fix = () => {
+      raf = 0
+      const nav = navRef.current
+      if (!nav) return
+      const want = window.innerHeight - nav.offsetHeight
+      const top = nav.getBoundingClientRect().top
+      if (Math.abs(top - want) > 3) {
+        nav.style.top = `${want}px`
+        nav.style.bottom = 'auto'
+      } else if (nav.style.top) {
+        nav.style.top = 'auto'
+        nav.style.bottom = '0px'
+      }
+    }
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(fix) }
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    window.addEventListener('orientationchange', schedule)
+    fix()
+    return () => {
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+      window.removeEventListener('orientationchange', schedule)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [isDesktop])
+
   const handleSideNav = (to) => {
     navigate(to)
     setSidebarOpen(false)
@@ -237,6 +273,7 @@ export function BottomNav() {
     <>
       {/* 底部导航栏 */}
       <nav
+        ref={navRef}
         style={{
           position: 'fixed',
           bottom: 0,
@@ -245,7 +282,9 @@ export function BottomNav() {
           margin: '0 auto',
           width: '100%',
           maxWidth: '480px',
-          background: 'rgba(255, 255, 255, 0.65)',
+          // 0.65 → 0.96：不依赖 backdrop-filter 也能看清（部分安卓 WebView 不支持模糊，
+          // 甚至会把整层跳过绘制，那时导航看起来就是"消失"）
+          background: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(24px) saturate(180%)',
           WebkitBackdropFilter: 'blur(24px) saturate(180%)',
           borderTop: '1px solid rgba(255, 255, 255, 0.7)',
