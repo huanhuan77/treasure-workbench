@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 
 // 毛玻璃样式常量（核心复用）
 export const glassStyle = {
@@ -87,7 +88,11 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
   // 用 max(env, 44px) —— env 生效(如 PWA)取更大值，失效(WebView)也保底 44px 躲开状态栏。
   const topPadStr = kbActive ? 'max(env(safe-area-inset-top, 0px), 44px)' : '0px'
 
-  return (
+  // 挂到 body 上：弹窗是 position:fixed，如果留在页面树里，
+  // 只要祖先带了 transform（抽屉/滑动动画）它就会以那个祖先为定位基准，
+  // 表现为弹窗底部被裁、看不到「取消 / 保存」。
+  // z-index 1000 → 1200：要高于底部导航（1000）与页面浮层，但仍低于 Toast(9999)。
+  return createPortal(
     <div
       data-modal="1"
       onClick={onClose}
@@ -97,7 +102,7 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
         background: 'rgba(74, 44, 58, 0.25)',
         backdropFilter: 'blur(6px)',
         WebkitBackdropFilter: 'blur(6px)',
-        zIndex: 1000,
+        zIndex: 1200,
         display: 'flex',
         alignItems: center ? (kbActive ? 'flex-start' : 'center') : 'flex-end',
         justifyContent: 'center',
@@ -163,12 +168,18 @@ export function Modal({ open, onClose, title, children, footer, center, inline, 
           {children}
         </div>
         {footer && (
-          <div style={{ padding: '12px 22px calc(14px + var(--safe-bottom))', borderTop: '1px solid rgba(244, 114, 182, 0.12)', flexShrink: 0 }}>
+          <div style={{
+            padding: '12px 22px calc(14px + var(--safe-bottom))',
+            borderTop: '1px solid rgba(244, 114, 182, 0.12)', flexShrink: 0,
+            // 兜底：按钮条永远压在内容之上、自带底色，不被内容或底部导航吞掉
+            position: 'relative', zIndex: 1, background: 'rgba(255,255,255,0.98)',
+          }}>
             {footer}
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
