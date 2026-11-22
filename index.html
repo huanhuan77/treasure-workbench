@@ -33,6 +33,44 @@
         <div class="splash-tip">加载中...</div>
       </div>
     </div>
+    <!-- 首屏兜底：GitHub Pages 的 CDN 边缘偶发 503 / 传输中断时，
+         页面会永远停在「加载中…」。这里检测 splash 是否还在，
+         超过 12 秒就提示重试并自动刷新一次（带随机参数绕过坏缓存）。 -->
+    <script>
+      (function () {
+        var reloaded = false;
+        function splashing() {
+          var root = document.getElementById('root');
+          return !!(root && root.querySelector('.splash'));
+        }
+        function hardReload() {
+          try {
+            var base = location.href.split('#')[0].split('?')[0];
+            location.replace(base + '?r=' + Date.now() + (location.hash || ''));
+          } catch (e) { location.reload(); }
+        }
+        function fail() {
+          if (!splashing()) return;
+          var spin = document.querySelector('.splash-loading');
+          if (spin) spin.style.display = 'none';
+          var tip = document.querySelector('.splash-tip');
+          if (tip) {
+            tip.innerHTML = '网络或缓存异常，点这里重试';
+            tip.style.color = '#ec4899';
+            tip.style.fontWeight = '600';
+            tip.style.fontSize = '14px';
+            tip.style.cursor = 'pointer';
+            tip.onclick = hardReload;
+          }
+          if (!reloaded) { reloaded = true; setTimeout(hardReload, 1500); }
+        }
+        setTimeout(fail, 12000);
+        window.addEventListener('error', function (e) {
+          var t = e && e.target;
+          if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) setTimeout(fail, 400);
+        }, true);
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
