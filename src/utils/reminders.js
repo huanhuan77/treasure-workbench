@@ -43,37 +43,39 @@ export function isHotCadence(sample) {
   return pendingAccounts(sample).some((a) => isHotAccount(sample, a))
 }
 
+// 「这个样品会不会进发布提醒」的唯一判据。
+// 抽成函数是为了让「发布不足10」也能调用同一份口径做**整品互斥**（用户要求：
+// 发布提醒里出现过的样品，就不要再在发布不足10 里出现一次）。
+// 返回 true = 进发布提醒；false/undefined = 不进。
+function inPublishReminder(s, orderedSampleIds) {
+  // 注意：这里**不**排除「只有视频号」的样品（用户指定「发布提醒（待发）不要跳过」）——
+  // 视频号专属品该发视频时也要在这栏提醒；只有高频出单 / 发布不足10 / 已拍未发三栏会跳过它。
+  if (!needPublishReminder(s)) return false
+  const due = pendingAccounts(s)
+  if (!due.length) return false
+  // 与「高频出单」按账号粒度互斥：高频到期账号归高频 tab；
+  // 只要还有非高频到期账号，样品就留在发布提醒，卡片只挂这些非高频账号。
+  // 不能按整品判定：一个账号设了高频，不能把另一个普通到期账号的提醒一起吞掉。
+  const nonHotDue = due.filter((a) => !isHotAccount(s, a))
+  if (!nonHotDue.length) return false
+  // 没拍过视频的不进发布提醒（已拍未发 tab 统一按状态盯）
+  if (!isShotSample(s)) return false
+  // 与「已拍未发」整品互斥：全部账号都还没发布过的样品归已拍未发 tab，
+  // 不在发布提醒里重复提醒；只要有任一账号发过视频（代表态为已发布），仍按下面的账号粒度分流。
+  if (getTopStatus(s) === 'shot') return false
+
+  // 互斥口径：出过单的 → 进发布提醒；没出单的 → 归发布不足10
+  if (orderedSampleIds.has(s.id)) return true
+
+  // 没出单：只要还有账号从没发过（publishCount=0），这个样品就进发布提醒，
+  // 卡片只挂这些待发账号（reminderAccounts）。
+  const accs = getAccounts(s)
+  return accs.some((a) => (Number(s?.countsByAccount?.[a]?.publishCount) || 0) === 0)
+}
+
 export function selectPublishReminders(samples, orders = []) {
   const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
-  return (samples || []).filter((s) => {
-    // 注意：这里**不**排除「只有视频号」的样品（用户指定「发布提醒（待发）不要跳过」）——
-    // 视频号专属品该发视频时也要在这栏提醒；只有高频出单 / 发布不足10 / 已拍未发三栏会跳过它。
-    if (!needPublishReminder(s)) return false
-    const due = pendingAccounts(s)
-    if (!due.length) return false
-    // 与「高频出单」按账号粒度互斥：高频到期账号归高频 tab；
-    // 只要还有非高频到期账号，样品就留在发布提醒，卡片只挂这些非高频账号。
-    // 不能按整品判定：一个账号设了高频，不能把另一个普通到期账号的提醒一起吞掉。
-    const nonHotDue = due.filter((a) => !isHotAccount(s, a))
-    if (!nonHotDue.length) return false
-    // 没拍过视频的不进发布提醒（已拍未发 tab 统一按状态盯）
-    if (!isShotSample(s)) return false
-    // 与「已拍未发」整品互斥：全部账号都还没发布过的样品归已拍未发 tab，
-    // 不在发布提醒里重复提醒；只要有任一账号发过视频（代表态为已发布），仍按下面的账号粒度分流。
-    if (getTopStatus(s) === 'shot') return false
-
-    // 互斥口径：出过单的 → 进发布提醒；没出单的 → 归发布不足10
-    if (orderedSampleIds.has(s.id)) return true
-
-    // 没出单：只要还有账号从没发过（publishCount=0），这个样品就进发布提醒，
-    // 卡片只挂这些待发账号（reminderAccounts）；已经发过 1~9 条的账号归「发布不足10」。
-    // 多账号样品按账号粒度分流：允许同一个样品在两个 tab 各挂各自的账号子集，
-    // 不能用「全部账号都没发过」的整品闸门把还没发的账号漏掉（用户反馈：
-    // 红脸兔刘亦菲发了 2 条、富婆一条没发，富婆却在发布提醒里消失了）。
-    const accs = getAccounts(s)
-    const hasNeverPosted = accs.some((a) => (Number(s?.countsByAccount?.[a]?.publishCount) || 0) === 0)
-    return hasNeverPosted
-  })
+  return (samples || []).filter((s) => inPublishReminder(s, orderedSampleIds))
 }
 
 // 高频出单：有账号按 ≤5 天高频口径、当前已到该发的产品
@@ -82,8 +84,9 @@ export function selectHotCadence(samples) {
 }
 
 // 2) 发布不足10：发布了没有出单，且发布数量 > 0 且 < 10（按账号粒度）。
-//    与「发布提醒」互斥：整个样品出过单的不在这里。
-//    从未发布过（0条）的归「发布提醒」，不在此处。
+//    与「发布提醒」**整品互斥**（用户要求）：只要这个样品会上「发布提醒」，
+//    它整体就不出现在这里 —— 同一产品不该在两个 Tab 各提醒一次，先按更紧急的发布提醒处理。
+//    与「发布提醒」的另一半互斥：整个样品出过单的也不在这里。
 export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []) {
   const out = []
   const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
@@ -92,6 +95,8 @@ export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []
     if (isWechatOnlySample(s)) continue
     // 出过单的样品不在这里
     if (orderedSampleIds.has(s.id)) continue
+    // 整品互斥：已经归「发布提醒」的样品不在「发布不足10」重复出现
+    if (inPublishReminder(s, orderedSampleIds)) continue
 
     // 按账号单独判定：每个账号自己发了 1~9 条
     const allAccounts = getAccounts(s).map((a) => {
