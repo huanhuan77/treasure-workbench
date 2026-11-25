@@ -140,7 +140,8 @@ export function PcOrders() {
             const i = ACCOUNTS.indexOf(x)
             return i === -1 ? 999 : i
           }
-          return [...m.entries()].sort((p, q) => rank(p[0]) - rank(q[0]) || q[1] - p[1])
+          // 按**单量降序**排（用户要求「哪个号出的多一目了然」），同量再按账号固定顺序
+          return [...m.entries()].sort((p, q) => q[1] - p[1] || rank(p[0]) - rank(q[0]))
         })(),
         latest: entries.find((e) => e.date)?.date || '',
         accounts: [...new Set(entries.map((e) => e.account).filter(Boolean))],
@@ -198,6 +199,19 @@ export function PcOrders() {
   }
 
   const totalQty = filtered.reduce((s, o) => s + (Number(o.qty) || 0), 0)
+  // 当前筛选下「每个账号一共出了多少」——合计行用，按单量降序
+  const totalQtyByAccount = useMemo(() => {
+    const m = new Map()
+    for (const o of filtered) {
+      const a = o.account || '未指定'
+      m.set(a, (m.get(a) || 0) + (Number(o.qty) > 0 ? Number(o.qty) : 1))
+    }
+    const rank = (x) => {
+      const i = ACCOUNTS.indexOf(x)
+      return i === -1 ? 999 : i
+    }
+    return [...m.entries()].sort((p, q) => q[1] - p[1] || rank(p[0]) - rank(q[0]))
+  }, [filtered])
   // 表格底部合计行（用户要求「加个总数」）
   const totalCount = filtered.length
 
@@ -254,7 +268,8 @@ export function PcOrders() {
             <thead>
               <tr>
                 <th style={{ width: 260 }}>产品</th>
-                <th style={{ width: 200 }}>账号</th>
+                {/* 账号列加宽：现在这里是「账号 ×单量」胶囊，按单量从多到少排 */}
+                <th style={{ width: 340 }}>账号（各号出单量）</th>
                 {/* 出单数量（qty 合计）与笔数分开显示（用户要求「加一列出单数量」）；
                     两列都可点表头排序（用户要求「点击可以排序」） */}
                 <th style={{ width: 190 }} className="pcv-th-sort" onClick={() => toggleSort('qty')}>
@@ -301,31 +316,35 @@ export function PcOrders() {
                         </span>
                       </td>
                       <td>
-                        {g.accounts.length === 0 ? (
+                        {g.qtyByAccount.length === 0 ? (
                           <span style={{ color: '#9aa0a9' }}>—</span>
                         ) : (
-                          g.accounts.map((a, i) => (
-                            <span
-                              key={a}
-                              style={{
-                                display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap',
-                                marginRight: i < g.accounts.length - 1 ? 12 : 0,
-                              }}
-                            >
-                              {/* 账号名前一个**专属颜色**的圆点（广东刘亦菲琥珀 / 晚梨青绿 /
-                                  努力成为富婆玫红，取 ACCOUNT_COLOR.c），多账号时一眼分得清 */}
-                              <span
-                                aria-hidden="true"
-                                style={{
-                                  width: 6, height: 6, borderRadius: '50%',
-                                  background: (ACCOUNT_COLOR[a] || {}).c || '#c1c7cf',
-                                  marginRight: 6, flexShrink: 0,
-                                }}
-                              />
-                              {/* 圆点带色，账号名本身仍保持中性色（与样品页/发布记录页一致） */}
-                              <span style={{ color: '#333a45' }}>{maskAccount(a, hiddenAccounts)}</span>
-                            </span>
-                          ))
+                          <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 6 }}>
+                            {g.qtyByAccount.map(([a, v], i) => {
+                              const col = ACCOUNT_COLOR[a] || {}
+                              // 最多的那个号高亮：账号色淡底 + 描边 + 数字加粗，其余灰底
+                              const top = i === 0 && v > 1
+                              return (
+                                <span
+                                  key={a}
+                                  title={`${a} 共 ${v} 单`}
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+                                    padding: '1px 8px 1px 6px', borderRadius: 999,
+                                    background: top ? (col.bg || 'rgba(0,0,0,0.06)') : 'rgba(0,0,0,0.035)',
+                                    border: top ? `1px solid ${col.c || '#c1c7cf'}` : '1px solid transparent',
+                                  }}
+                                >
+                                  <span
+                                    aria-hidden="true"
+                                    style={{ width: 6, height: 6, borderRadius: '50%', background: col.c || '#c1c7cf', flexShrink: 0 }}
+                                  />
+                                  <span style={{ color: '#333a45', fontSize: 12 }}>{maskAccount(a, hiddenAccounts)}</span>
+                                  <span style={{ fontWeight: 700, fontSize: 12, color: top ? (col.c || '#b8517f') : '#6b7280' }}>{v}</span>
+                                </span>
+                              )
+                            })}
+                          </span>
                         )}
                       </td>
                       {/* 出单数量：默认只显示**总数**（带下划线提示可点），
@@ -461,7 +480,32 @@ export function PcOrders() {
               <tfoot>
                 <tr style={{ background: '#faf7fb' }}>
                   <td style={{ fontWeight: 700, color: '#334155' }}>合计（{groups.length} 个产品）</td>
-                  <td />
+                  <td>
+                    {totalQtyByAccount.length === 0 ? null : (
+                      <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 6 }}>
+                        {totalQtyByAccount.map(([a, v], i) => {
+                          const col = ACCOUNT_COLOR[a] || {}
+                          const top = i === 0 && v > 1
+                          return (
+                            <span
+                              key={a}
+                              title={`${a} 共 ${v} 单`}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+                                padding: '1px 8px 1px 6px', borderRadius: 999,
+                                background: top ? (col.bg || 'rgba(0,0,0,0.06)') : 'rgba(0,0,0,0.035)',
+                                border: top ? `1px solid ${col.c || '#c1c7cf'}` : '1px solid transparent',
+                              }}
+                            >
+                              <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: col.c || '#c1c7cf', flexShrink: 0 }} />
+                              <span style={{ color: '#333a45', fontSize: 12, fontWeight: 600 }}>{maskAccount(a, hiddenAccounts)}</span>
+                              <span style={{ fontWeight: 700, fontSize: 12, color: top ? (col.c || '#b8517f') : '#6b7280' }}>{v}</span>
+                            </span>
+                          )
+                        })}
+                      </span>
+                    )}
+                  </td>
                   <td style={{ fontWeight: 700, color: '#b8517f', fontSize: 14 }}>{totalQty}</td>
                   <td style={{ fontWeight: 700 }}>{totalCount}</td>
                   <td />
