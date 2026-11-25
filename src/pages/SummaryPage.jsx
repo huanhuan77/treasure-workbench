@@ -47,7 +47,11 @@ export default function SummaryPage() {
   )
   const pieOption = useMemo(() => makePieOption(catShare), [catShare])
   // 分账号对比柱状图（账号名跟随隐藏账号打码）
-  const accountOption = useMemo(() => makeAccountOption(sum.accounts, mask), [sum.accounts, hiddenAccounts])
+  const accountOption = useMemo(
+    // 账号多的时候名字斜一点，保证每个号都露出来（不再只显示隔一个）
+    () => makeAccountOption(sum.accounts, mask, { rotate: sum.accounts.length > 4 ? 30 : 0 }),
+    [sum.accounts, hiddenAccounts],
+  )
   const accountOrderOption = useMemo(
     () => makeAccountOrderOption(sum.accounts, mask, 'qty'),
     [sum.accounts, hiddenAccounts],

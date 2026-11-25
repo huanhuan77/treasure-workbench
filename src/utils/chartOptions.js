@@ -62,7 +62,7 @@ export function makeMonthlyOption(monthly = []) {
 }
 
 // 分账号对比：分组柱（发布条数 / 出单件数 / 新增产品数），柱顶标数值
-export function makeAccountOption(accounts = [], maskFn = (x) => x) {
+export function makeAccountOption(accounts = [], maskFn = (x) => x, { rotate = 0 } = {}) {
   const labels = accounts.map((r) => maskFn(r.account))
   return {
     grid: { left: 8, right: 12, top: 34, bottom: 4, containLabel: true },
@@ -73,7 +73,8 @@ export function makeAccountOption(accounts = [], maskFn = (x) => x) {
       data: labels,
       axisLine: { lineStyle: { color: 'rgba(15,23,42,0.12)' } },
       axisTick: { show: false },
-      axisLabel: { color: AXIS, fontSize: 11 },
+      // interval 0：所有账号名都要显示（默认 auto 会隔一个藏一个，看着像少了账号）
+      axisLabel: { color: AXIS, fontSize: 11, interval: 0, rotate, margin: 8 },
     },
     yAxis: {
       type: 'value',
