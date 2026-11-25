@@ -144,16 +144,17 @@ export default function SummaryPage() {
         </div>
       )}
 
-      {/* 指标卡：两列 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: '0 16px 12px' }}>
+      {/* 指标卡：一行三个（用户要求「改小一点，一行显示」） */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, padding: '0 16px 12px' }}>
         {cards.map((c) => (
           <div key={c.label} style={{
-            background: '#fff', borderRadius: 12, padding: '10px 12px',
+            background: '#fff', borderRadius: 10, padding: '8px 9px',
             borderLeft: `3px solid ${c.color}`, boxShadow: '0 1px 3px rgba(15,23,42,0.06)',
+            minWidth: 0,
           }}>
-            <div style={{ fontSize: 12, color: '#8a8f98' }}>{c.label}</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: c.color, lineHeight: 1.4 }}>{c.value}</div>
-            <div style={{ fontSize: 11, color: '#9aa0a9' }}>{c.sub}</div>
+            <div style={{ fontSize: 11, color: '#8a8f98', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.label}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: c.color, lineHeight: 1.35 }}>{c.value}</div>
+            <div style={{ fontSize: 10, color: '#9aa0a9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.sub}</div>
           </div>
         ))}
       </div>
