@@ -115,6 +115,19 @@ export function OrdersPage() {
         qty: entries.reduce((s, e) => s + (Number(e.qty) || 0), 0),
         latest: entries.find((e) => e.date)?.date || '',
         accounts: [...new Set(entries.map((e) => e.account).filter(Boolean))],
+        // 每个号各出了多少单：按单量降序（用户要求「哪个号出的多一目了然」）
+        qtyByAccount: (() => {
+          const m = new Map()
+          for (const e of entries) {
+            const a = e.account || '未指定'
+            m.set(a, (m.get(a) || 0) + (Number(e.qty) > 0 ? Number(e.qty) : 1))
+          }
+          const rank = (x) => {
+            const i = ACCOUNTS.indexOf(x)
+            return i === -1 ? 999 : i
+          }
+          return [...m.entries()].sort((p, q) => q[1] - p[1] || rank(p[0]) - rank(q[0]))
+        })(),
       })
     }
     // 排序：日期 新→旧 / 旧→新；或按出单量升降序（次级：笔数 → 最近日期 → 名称）
@@ -291,12 +304,28 @@ export function OrdersPage() {
                       <div style={{ fontSize: '11px', color: 'var(--text-sub)', marginTop: '2px' }}>
                         共记 {g.count} 笔 · <span style={{ color: '#ec4899', fontWeight: 700 }}>出单 {g.qty} 件</span>{dispDate(g.latest) && ` · 最近 ${dispDate(g.latest)}`}
                       </div>
-                      {g.accounts.length > 0 && (
+                      {g.qtyByAccount.length > 0 && (
                         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginTop: '6px' }}>
-                          {g.accounts.map((a) => {
+                          {g.qtyByAccount.map(([a, v], i) => {
                             const col = accMeta(a)
+                            // 最多的那个号排第一并高亮（账号色底 + 同色描边 + 数字加粗）
+                            const top = i === 0 && v > 1
                             return (
-                              <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
+                              <span
+                                key={a}
+                                title={`${a} 共 ${v} 单`}
+                                style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                                  fontSize: '10px', padding: '2px 8px 2px 6px', borderRadius: 999,
+                                  background: top ? col.bg : 'rgba(0,0,0,0.035)',
+                                  border: top ? `1px solid ${col.c}` : '1px solid transparent',
+                                  color: top ? col.c : 'var(--text-sub)', fontWeight: 600, whiteSpace: 'nowrap',
+                                }}
+                              >
+                                <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
+                                <span>{a}</span>
+                                <span style={{ fontWeight: 800, color: top ? col.c : '#6b7280' }}>{v}</span>
+                              </span>
                             )
                           })}
                         </div>
