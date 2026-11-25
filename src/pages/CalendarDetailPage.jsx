@@ -19,8 +19,12 @@ const MOODS = [
 const WEATHERS = ['☀️', '🌤', '☁️', '🌧', '⛈', '🌨', '🌫']
 
 function loadData() {
-  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : {} }
-  catch { return {} }
+  try {
+    const r = localStorage.getItem(STORAGE_KEY)
+    if (!r) return {}
+    const v = JSON.parse(r)
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : {}
+  } catch { return {} }
 }
 function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)) }
 

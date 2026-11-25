@@ -12,7 +12,10 @@ function uid() {
 function loadInvestments() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const v = JSON.parse(raw)
+      if (Array.isArray(v)) return v
+    }
   } catch(e) {}
   return []
 }

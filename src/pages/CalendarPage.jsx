@@ -4,9 +4,14 @@ import { glassStyle } from '../components/Modal'
 
 const STORAGE_KEY = 'blogger_calendar_v1'
 
+// 兜底：历史数据里这一键可能被写成字面量 "null"/"[]"，直接传给 Object.entries 会整页报错
 function loadData() {
-  try { const r = localStorage.getItem(STORAGE_KEY); return r ? JSON.parse(r) : {} }
-  catch (e) { return {} }
+  try {
+    const r = localStorage.getItem(STORAGE_KEY)
+    if (!r) return {}
+    const v = JSON.parse(r)
+    return v && typeof v === 'object' && !Array.isArray(v) ? v : {}
+  } catch (e) { return {} }
 }
 
 export function CalendarPage() {
@@ -22,7 +27,7 @@ export function CalendarPage() {
   const d = new Date()
   const today = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 
-  const monthEntries = Object.entries(data)
+  const monthEntries = Object.entries(data || {})
     .filter(([k]) => k.startsWith(`${year}-${String(month).padStart(2,'0')}`))
     .sort(([a], [b]) => b.localeCompare(a))
 

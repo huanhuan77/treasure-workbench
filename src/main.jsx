@@ -10,14 +10,23 @@ class ErrorBoundary extends Component {
   componentDidCatch(error, info) { console.error('渲染错误:', error, info) }
   render() {
     if (this.state.error) {
+      const msg = String(this.state.error?.message || this.state.error)
+      const hash = typeof window !== 'undefined' ? (window.location.hash || '(无)') : ''
       return (
         <div style={{ padding: '40px 20px', textAlign: 'center', fontFamily: 'system-ui' }}>
           <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
           <h2 style={{ fontSize: '16px', margin: '0 0 8px', color: '#333' }}>页面出错了</h2>
-          <p style={{ fontSize: '13px', color: '#666', margin: '0 0 16px', wordBreak: 'break-all' }}>{String(this.state.error?.message || this.state.error)}</p>
-          <button onClick={() => { this.setState({ error: null }); window.location.reload() }} style={{
-            padding: '10px 24px', border: 'none', borderRadius: '10px', background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-          }}>重新加载</button>
+          <p style={{ fontSize: '13px', color: '#666', margin: '0 0 6px', wordBreak: 'break-all' }}>{msg}</p>
+          {/* 带上当前路由，方便排查是哪个页面崩的 */}
+          <p style={{ fontSize: '12px', color: '#999', margin: '0 0 16px', wordBreak: 'break-all' }}>出错页面：{hash}</p>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            <button onClick={() => { this.setState({ error: null }); window.location.reload() }} style={{
+              padding: '10px 24px', border: 'none', borderRadius: '10px', background: 'linear-gradient(135deg,#f472b6,#ec4899)', color: '#fff', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+            }}>重新加载</button>
+            <button onClick={() => { this.setState({ error: null }); window.location.hash = '#/'; window.location.reload() }} style={{
+              padding: '10px 24px', border: '1px solid #ddd', borderRadius: '10px', background: '#fff', color: '#333', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+            }}>回到首页</button>
+          </div>
         </div>
       )
     }
