@@ -212,7 +212,7 @@ export default function SummaryPage() {
           })}
         </div>
         <div style={{ padding: '10px 12px 12px' }}>
-          <TopProductBars rows={topRows} max={topMax} mask={mask} nameWidth={96} barHeight={14} />
+          <TopProductBars rows={topRows} mask={mask} rotate={90} shortLen={5} height={290} />
         </div>
       </div>
 
