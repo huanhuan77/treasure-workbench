@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
-import { ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
 import { PERIODS, periodRange, buildSummary, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../../utils/summary'
 import { makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../../utils/chartOptions'
 import { EChart } from '../../components/EChart'
@@ -54,15 +54,52 @@ export function PcSummary() {
 
   // 按产品明细的排序：默认「出单件数」降序（用户要求），点表头可切换列与升降序
   const [prodSort, setProdSort] = useState({ key: 'order', dir: 'desc' })
+  // 产品搜索 + 账号筛选（用户要求「加上产品搜索条件和账号搜索条件」）
+  const [prodQ, setProdQ] = useState('')
+  const [prodAcc, setProdAcc] = useState('all')
   const toggleProdSort = (key) => {
     setProdSort((p) => (p.key === key ? { key, dir: p.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }))
   }
+  // 账号筛选候选：这个区间里「按产品明细」出现过的账号（按固定顺序 + 兜底）
+  const prodAccOptions = useMemo(() => {
+    const set = new Set()
+    for (const r of (sum.products || [])) {
+      for (const a of Object.keys(r.accOrder || {})) set.add(a)
+      for (const a of Object.keys(r.accPublish || {})) set.add(a)
+    }
+    const known = ACCOUNTS.filter((a) => set.has(a))
+    const other = [...set].filter((a) => !ACCOUNTS.includes(a))
+    return [...known, ...other]
+  }, [sum.products])
+  // 每行先算出「各账号的单量」，再按搜索词 / 账号条件过滤，最后按当前排序列排序
   const sortedProducts = useMemo(() => {
-    const arr = [...(sum.products || [])]
+    const q = prodQ.trim().toLowerCase()
+    const list = []
+    for (const r of (sum.products || [])) {
+      if (q && !String(r.name || '').toLowerCase().includes(q)) continue
+      const accOrder = r.accOrder || {}
+      const accPublish = r.accPublish || {}
+      const perAcc = [...new Set([...Object.keys(accOrder), ...Object.keys(accPublish)])].map((a) => ({
+        name: a,
+        qty: accOrder[a] || 0,
+        publish: accPublish[a] || 0,
+      }))
+      // 单量从多到少，同量再按发布多的在前，最后按固定账号顺序
+      const rank = (a) => { const i = ACCOUNTS.indexOf(a); return i === -1 ? 999 : i }
+      perAcc.sort((x, y) => (y.qty - x.qty) || (y.publish - x.publish) || (rank(x.name) - rank(y.name)))
+      if (prodAcc !== 'all') {
+        const hit = perAcc.find((x) => x.name === prodAcc)
+        if (!hit) continue
+        list.push({ ...r, perAcc, publish: hit.publish, orderQty: hit.qty })
+      } else {
+        list.push({ ...r, perAcc })
+      }
+    }
     const val = (r) => (prodSort.key === 'publish' ? r.publish : r.orderQty)
-    arr.sort((a, b) => (prodSort.dir === 'desc' ? val(b) - val(a) : val(a) - val(b)))
-    return arr
-  }, [sum.products, prodSort])
+    list.sort((a, b) => (prodSort.dir === 'desc' ? val(b) - val(a) : val(a) - val(b)))
+    return list
+  }, [sum.products, prodSort, prodQ, prodAcc])
+  const prodFiltering = !!prodQ.trim() || prodAcc !== 'all'
   const sortMark = (key) => (prodSort.key === key ? (prodSort.dir === 'desc' ? ' ↓' : ' ↑') : '')
   const monthlyOption = useMemo(() => makeMonthlyOption(monthly), [monthly])
   const pieOption = useMemo(() => makePieOption(catShare), [catShare])
@@ -212,45 +249,122 @@ export function PcSummary() {
           )}
         </div>
 
-        {/* 按产品明细：哪个品发了多少、出了多少单（用户要求「要统计具体的」） */}
+        {/* 按产品明细：哪个品发了多少、出了多少单（用户要求「要统计具体的」）；
+            再加产品搜索 + 账号筛选 + 各账号单量（用户要求「列出每个账号是多少，加上产品搜索条件和账号搜索条件」） */}
         <div className="pcv-card" style={{ marginTop: 12 }}>
           <div className="pcv-card-h">
             <span style={{ fontWeight: 600 }}>按产品明细</span>
             <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
-              {sum.products.length} 个产品 · 按{prodSort.key === 'order' ? '出单件数' : '发布条数'}{prodSort.dir === 'desc' ? '降序' : '升序'}
+              {sortedProducts.length}
+              {prodFiltering ? ` / ${sum.products.length}` : ''} 个产品 · 按{prodSort.key === 'order' ? '出单件数' : '发布条数'}{prodSort.dir === 'desc' ? '降序' : '升序'}
+              {prodAcc !== 'all' ? ` · 只看 ${mask(prodAcc)}` : ''}
             </span>
+          </div>
+          {/* 筛选行：产品名搜索框 + 账号胶囊 */}
+          <div style={{ padding: '0 14px 10px', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <input
+              value={prodQ}
+              onChange={(e) => setProdQ(e.target.value)}
+              placeholder="搜索产品名…"
+              style={{
+                width: 200, height: 28, padding: '0 10px', fontSize: 12,
+                border: '1px solid #e5e7eb', borderRadius: 6, outline: 'none', background: '#fff',
+              }}
+            />
+            <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+              <button
+                className={prodAcc === 'all' ? 'pcv-btn' : 'pcv-btn pcv-btn-ghost'}
+                style={{ height: 26 }}
+                onClick={() => setProdAcc('all')}
+              >全部账号</button>
+              {prodAccOptions.map((a) => {
+                const col = ACCOUNT_COLOR[a] || {}
+                const on = prodAcc === a
+                return (
+                  <button
+                    key={a}
+                    onClick={() => setProdAcc(on ? 'all' : a)}
+                    style={{
+                      height: 26, padding: '0 10px', borderRadius: 999, cursor: 'pointer', fontSize: 12,
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      background: on ? (col.bg || 'rgba(0,0,0,0.06)') : '#fff',
+                      border: on ? `1px solid ${col.c || '#c1c7cf'}` : '1px solid #e5e7eb',
+                      color: on ? '#333a45' : '#6b7280', fontWeight: on ? 600 : 400,
+                    }}
+                  >
+                    <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: col.c || '#c1c7cf' }} />
+                    {mask(a)}
+                  </button>
+                )
+              })}
+            </span>
+            {prodFiltering && (
+              <button
+                className="pcv-btn pcv-btn-ghost"
+                style={{ height: 26 }}
+                onClick={() => { setProdQ(''); setProdAcc('all') }}
+              >清空筛选</button>
+            )}
           </div>
           <table className="pcv-table">
             <thead>
               <tr>
-                <th style={{ width: 300 }}>产品</th>
-                <th style={{ width: 230 }}>账号</th>
-                <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleProdSort('publish')}>
-                  发布条数{sortMark('publish')}
+                <th style={{ width: 280 }}>产品</th>
+                {/* 账号列：每个号后面跟自己的单量，按单量从多到少 */}
+                <th style={{ width: 460 }}>账号（各号单量）</th>
+                <th style={{ width: 110 }} className="pcv-th-sort" onClick={() => toggleProdSort('publish')}>
+                  {prodAcc === 'all' ? '发布条数' : '发布条数（该号）'}{sortMark('publish')}
                 </th>
-                <th style={{ width: 120 }} className="pcv-th-sort" onClick={() => toggleProdSort('order')}>
-                  出单件数{sortMark('order')}
+                <th style={{ width: 130 }} className="pcv-th-sort" onClick={() => toggleProdSort('order')}>
+                  {prodAcc === 'all' ? '出单件数' : '出单件数（该号）'}{sortMark('order')}
                 </th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {sum.products.length === 0 ? (
-                <tr><td colSpan={5} className="pcv-empty">这个区间没有数据</td></tr>
+              {sortedProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="pcv-empty">
+                    {prodFiltering ? '没有符合筛选的产品' : '这个区间没有数据'}
+                  </td>
+                </tr>
               ) : sortedProducts.map((r) => (
                 <tr key={r.name}>
                   <td className="pcv-name" title={r.name}>{r.name}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>
-                    {(r.accounts || []).length === 0 ? (
+                    {r.perAcc.length === 0 ? (
                       <span style={{ color: '#c9cdd4' }}>—</span>
-                    ) : (r.accounts || []).map((a, k) => (
-                      <span key={a} style={{ marginRight: k < r.accounts.length - 1 ? 10 : 0, whiteSpace: 'nowrap' }}>
-                        <span style={{ color: (ACCOUNT_COLOR[a] || {}).c || '#8a8f98', fontWeight: 600, fontSize: 12 }}>{mask(a)}</span>
+                    ) : (
+                      <span style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 6 }}>
+                        {(prodAcc === 'all' ? r.perAcc : r.perAcc.filter((x) => x.name === prodAcc)).map((x, i) => {
+                          const col = ACCOUNT_COLOR[x.name] || {}
+                          // 最多的那个号高亮：账号色淡底 + 描边 + 数字加粗，其余灰底
+                          const top = i === 0 && x.qty > 0
+                          return (
+                            <span
+                              key={x.name}
+                              title={`${x.name}：出单 ${x.qty} 件 · 发布 ${x.publish} 条`}
+                              style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+                                padding: '1px 8px 1px 6px', borderRadius: 999,
+                                background: top ? (col.bg || 'rgba(0,0,0,0.06)') : 'rgba(0,0,0,0.035)',
+                                border: top ? `1px solid ${col.c || '#c1c7cf'}` : '1px solid transparent',
+                              }}
+                            >
+                              <span
+                                aria-hidden="true"
+                                style={{ width: 6, height: 6, borderRadius: '50%', background: col.c || '#c1c7cf', flexShrink: 0 }}
+                              />
+                              <span style={{ color: '#333a45', fontSize: 12 }}>{mask(x.name)}</span>
+                              <span style={{ fontWeight: 700, fontSize: 12, color: top ? (col.c || '#b8517f') : (x.qty ? '#6b7280' : '#b9bec6') }}>{x.qty}</span>
+                            </span>
+                          )
+                        })}
                       </span>
-                    ))}
+                    )}
                   </td>
                   <td className="pcv-num">{fmtInt(r.publish)}</td>
-                  <td className="pcv-num">{fmtInt(r.orderQty)}</td>
+                  <td className="pcv-num" style={prodAcc !== 'all' ? { fontWeight: 700 } : undefined}>{fmtInt(r.orderQty)}</td>
                   <td />
                 </tr>
               ))}

@@ -151,7 +151,8 @@ export function buildSummary(data, range) {
   const prodMap = new Map()
   const prodOf = (name) => {
     const key = String(name || '（未命名）')
-    if (!prodMap.has(key)) prodMap.set(key, { name: key, publish: 0, orderQty: 0, accounts: new Set() })
+    // accPublish / accOrder：这个品在每个账号上的发布条数 / 出单件数（用户要求「列出每个账号是多少」）
+    if (!prodMap.has(key)) prodMap.set(key, { name: key, publish: 0, orderQty: 0, accounts: new Set(), accPublish: {}, accOrder: {} })
     return prodMap.get(key)
   }
   const sampleName = new Map((samples || []).map((s) => [s.id, String(s.name || '')]))
@@ -167,15 +168,23 @@ export function buildSummary(data, range) {
     if (!inRange(String(r.publishDate || ''), start, end)) continue
     const nm = sampleName.get(r.sampleId) || r.name || '（样品已删除）'
     const row = prodOf(nm)
-    row.publish += recordQty(r.qty)
-    for (const a of (r.accounts || [])) row.accounts.add(a)
+    const q = recordQty(r.qty)
+    row.publish += q
+    for (const a of (r.accounts || [])) {
+      row.accounts.add(a)
+      row.accPublish[a] = (row.accPublish[a] || 0) + q
+    }
     for (const a of (sampleAccs.get(nm) || [])) row.accounts.add(a)
   }
   for (const o of orders) {
     if (!inRange(String(o.date || ''), start, end)) continue
     const row = prodOf(o.name)
-    row.orderQty += Number(o.qty) > 0 ? Number(o.qty) : 1
-    if (o.account) row.accounts.add(o.account)
+    const q = Number(o.qty) > 0 ? Number(o.qty) : 1
+    row.orderQty += q
+    if (o.account) {
+      row.accounts.add(o.account)
+      row.accOrder[o.account] = (row.accOrder[o.account] || 0) + q
+    }
     for (const a of (sampleAccs.get(String(o.name || '')) || [])) row.accounts.add(a)
   }
   const accOrder = (a) => {
