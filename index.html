@@ -34,11 +34,15 @@
       </div>
     </div>
     <!-- 首屏兜底：GitHub Pages 的 CDN 边缘偶发 503 / 传输中断时，
-         页面会永远停在「加载中…」。这里检测 splash 是否还在，
-         超过 12 秒就提示重试并自动刷新一次（带随机参数绕过坏缓存）。 -->
+         页面会永远停在「加载中…」。这里检测 splash 是否还在：
+         ① 任一 js/css 加载失败 → 立刻带随机参数自动重试（最多 3 次）
+         ② 超过 6 秒还没渲染 → 也自动重试一次
+         ③ 重试 3 次仍失败才提示手动点，避免死循环 -->
     <script>
       (function () {
-        var reloaded = false;
+        var KEY = 'boot_retry_n';
+        var n = 0;
+        try { n = Number(sessionStorage.getItem(KEY) || 0) || 0; } catch (e) {}
         function splashing() {
           var root = document.getElementById('root');
           return !!(root && root.querySelector('.splash'));
@@ -49,8 +53,7 @@
             location.replace(base + '?r=' + Date.now() + (location.hash || ''));
           } catch (e) { location.reload(); }
         }
-        function fail() {
-          if (!splashing()) return;
+        function showManual() {
           var spin = document.querySelector('.splash-loading');
           if (spin) spin.style.display = 'none';
           var tip = document.querySelector('.splash-tip');
@@ -60,15 +63,34 @@
             tip.style.fontWeight = '600';
             tip.style.fontSize = '14px';
             tip.style.cursor = 'pointer';
-            tip.onclick = hardReload;
+            tip.onclick = function () {
+              try { sessionStorage.removeItem(KEY); } catch (e) {}
+              hardReload();
+            };
           }
-          if (!reloaded) { reloaded = true; setTimeout(hardReload, 1500); }
         }
-        setTimeout(fail, 12000);
+        function retry() {
+          if (!splashing()) return;
+          if (n >= 3) { showManual(); return; }
+          var delays = [700, 1600, 3200];
+          var d = delays[n] || 3200;
+          n += 1;
+          try { sessionStorage.setItem(KEY, String(n)); } catch (e) {}
+          var tip = document.querySelector('.splash-tip');
+          if (tip) { tip.textContent = '网络不稳，正在重试(' + n + '/3)…'; }
+          setTimeout(hardReload, d);
+        }
+        // 资源（脚本/样式）加载失败：尽快重试，不等 12 秒
         window.addEventListener('error', function (e) {
           var t = e && e.target;
-          if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) setTimeout(fail, 400);
+          if (t && (t.tagName === 'SCRIPT' || t.tagName === 'LINK')) retry();
         }, true);
+        // 首屏 6 秒未渲染：当作加载失败重试
+        setTimeout(retry, 6000);
+        // 兜底：给用户一个总开关，避免任何情况下无限等待
+        setTimeout(function () {
+          if (splashing() && n >= 3) showManual();
+        }, 14000);
       })();
     </script>
     <script type="module" src="/src/main.jsx"></script>

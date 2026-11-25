@@ -36,6 +36,9 @@ class ErrorBoundary extends Component {
 
 const BUILD_ID_KEY = 'app_build_id'
 
+// 启动成功即清掉首屏兜底的自动重试计数，避免下次启动继承「已重试 3 次」状态
+try { sessionStorage.removeItem('boot_retry_n') } catch (e) { /* 隐私模式忽略 */ }
+
 // 一次性清理：灵感搜索功能已下线，把它的本地数据一并删掉（用户确认「连本地数据一起清」）。
 // 必须用标记位保证只执行一次 —— 否则以后若重新上线该功能，每次启动都会把新数据抹掉。
 // 云端那份由 utils/sync.js 的 SYNC_KEYS 摘掉该键后，下次同步即随之覆盖。
