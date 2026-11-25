@@ -141,7 +141,22 @@ export function makeAccountOrderOption(accounts = [], maskFn = (x) => x, metric 
 //   rows: [{ name, total, parts: [{ account, qty }] }]（由 buildTopProductRows 生成）
 //   rotate：x 轴产品名旋转角度（宽屏 0，手机 40 避免重叠）
 export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0, shortLen = 6, layout = 'grouped' } = {}) {
-  const short = (s) => (String(s).length > shortLen ? `${String(s).slice(0, shortLen)}…` : String(s))
+  // 按「显示宽度」截断：中文/全角算 2 个单位，英文/数字/符号算 1 个
+  // （原来按字符数截，英文名只有一半宽度却同样截 6 个字符，看起来短得莫名）
+  const short = (s) => {
+    const str = String(s)
+    const limit = shortLen * 2
+    let w = 0
+    let out = ''
+    for (const ch of str) {
+      const wide = /[\u3000-\u303f\u4e00-\u9fff\uff01-\uff60]/.test(ch)
+      const cw = wide ? 2 : 1
+      if (w + cw > limit) return out + '…'
+      w += cw
+      out += ch
+    }
+    return str
+  }
   const totalOf = new Map(rows.map((r) => [r.name, r.total]))
   const accList = [...new Set(rows.flatMap((r) => r.parts.filter((p) => p.qty > 0).map((p) => p.account)))]
   // 横向条形（手机端用）：每个产品一行，条内按账号分段，左边产品名+合计，条形右侧标合计
