@@ -140,10 +140,73 @@ export function makeAccountOrderOption(accounts = [], maskFn = (x) => x, metric 
 // 出单 Top N 产品：竖向堆叠柱状图（每个产品一根柱，柱内按账号分段，可按账号筛选）
 //   rows: [{ name, total, parts: [{ account, qty }] }]（由 buildTopProductRows 生成）
 //   rotate：x 轴产品名旋转角度（宽屏 0，手机 40 避免重叠）
-export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0, shortLen = 6 } = {}) {
+export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0, shortLen = 6, layout = 'grouped' } = {}) {
   const short = (s) => (String(s).length > shortLen ? `${String(s).slice(0, shortLen)}…` : String(s))
   const totalOf = new Map(rows.map((r) => [r.name, r.total]))
   const accList = [...new Set(rows.flatMap((r) => r.parts.filter((p) => p.qty > 0).map((p) => p.account)))]
+  // 横向条形（手机端用）：每个产品一行，条内按账号分段，左边产品名+合计，条形右侧标合计
+  if (layout === 'horizontal') {
+    const ordered = [...rows].reverse() // y 轴自下而上，第一行在最上面
+    const maxTotal = Math.max(1, ...rows.map((r) => r.total))
+    return {
+      grid: { left: 6, right: 10, top: 6, bottom: accList.length > 1 ? 26 : 4, containLabel: true },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        formatter: (ps) => {
+          const name = ps[0] && ps[0].name
+          const lines = ps
+            .filter((p) => Number(p.value) > 0)
+            .map((p) => `${p.marker}${p.seriesName}：${p.value} 件`)
+          return `<b>${name}</b><br/>${lines.join('<br/>')}<br/>合计：${totalOf.get(name) || 0} 件`
+        },
+      },
+      legend: {
+        show: accList.length > 1, bottom: 0, left: 'center', itemWidth: 10, itemHeight: 10,
+        textStyle: { color: '#6b7280', fontSize: 11 },
+      },
+      xAxis: {
+        type: 'value',
+        axisLine: { show: false },
+        axisTick: { show: false },
+        splitLine: { lineStyle: { color: 'rgba(15,23,42,0.06)' } },
+        axisLabel: { color: '#94a3b8', fontSize: 10 },
+      },
+      yAxis: {
+        type: 'category',
+        data: ordered.map((r) => r.name),
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          fontSize: 11, margin: 10,
+          formatter: (v) => `{n|${short(v)}} {t|· ${totalOf.get(v) || 0}}`,
+          rich: {
+            n: { color: '#4b5563', fontSize: 11 },
+            t: { color: '#a5abb4', fontSize: 10 },
+          },
+        },
+      },
+      series: accList.map((a) => ({
+        name: maskFn(a),
+        type: 'bar',
+        stack: 'qty',
+        barMaxWidth: 16,
+        itemStyle: { color: (ACCOUNT_COLOR[a] || {}).c || '#8a8f98' },
+        label: { show: true, position: 'inside', fontSize: 10, color: '#fff' },
+        data: ordered.map((r) => {
+          const hit = r.parts.find((p) => p.account === a)
+          const v = hit ? hit.qty : 0
+          // 按「全图最大值」算占比：条形太短（不到总量 10%）就不标数字，避免被裁
+          const pct = v / maxTotal
+          return {
+            value: v,
+            pct,
+            label: pct >= 0.1 ? { show: true } : { show: false, formatter: () => '' },
+          }
+        }),
+      })),
+    }
+  }
   return {
     grid: { left: 8, right: 12, top: 30, bottom: 10, containLabel: true },
     tooltip: {
