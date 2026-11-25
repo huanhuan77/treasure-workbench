@@ -293,7 +293,7 @@ export function PcSummary() {
             </div>
           </div>
           <div style={{ padding: '10px 14px 14px' }}>
-            <TopProductBars rows={topRows} mask={mask} rotate={0} shortLen={9} height={300} />
+            <TopProductBars rows={topRows} mask={mask} rotate={0} shortLen={7} height={310} />
           </div>
         </div>
 

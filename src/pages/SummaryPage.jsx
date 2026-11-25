@@ -212,7 +212,8 @@ export default function SummaryPage() {
           })}
         </div>
         <div style={{ padding: '10px 12px 12px' }}>
-          <TopProductBars rows={topRows} mask={mask} rotate={90} shortLen={5} height={290} />
+          <TopProductBars rows={topRows} mask={mask} rotate={0} shortLen={4} height={300} minWidth={720} />
+          <div style={{ fontSize: 11, color: '#9aa0a9', paddingTop: 4 }}>← 左右滑动看全部 10 个产品 →</div>
         </div>
       </div>
 

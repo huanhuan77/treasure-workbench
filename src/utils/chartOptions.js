@@ -139,13 +139,12 @@ export function makeAccountOrderOption(accounts = [], maskFn = (x) => x, metric 
 // 出单 Top N 产品：竖向堆叠柱状图（每个产品一根柱，柱内按账号分段，可按账号筛选）
 //   rows: [{ name, total, parts: [{ account, qty }] }]（由 buildTopProductRows 生成）
 //   rotate：x 轴产品名旋转角度（宽屏 0，手机 40 避免重叠）
-export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0, shortLen = 8 } = {}) {
+export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0, shortLen = 6 } = {}) {
   const short = (s) => (String(s).length > shortLen ? `${String(s).slice(0, shortLen)}…` : String(s))
   const totalOf = new Map(rows.map((r) => [r.name, r.total]))
   const accList = [...new Set(rows.flatMap((r) => r.parts.filter((p) => p.qty > 0).map((p) => p.account)))]
-  const maxTotal = Math.max(1, ...rows.map((r) => r.total))
   return {
-    grid: { left: 8, right: 12, top: 30, bottom: rotate ? 18 : 10, containLabel: true },
+    grid: { left: 8, right: 12, top: 30, bottom: 10, containLabel: true },
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
@@ -157,8 +156,9 @@ export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0,
         return `<b>${name}</b><br/>${lines.join('<br/>')}<br/>合计：${totalOf.get(name) || 0} 件`
       },
     },
+    // 图例放左上（和「分账号明细」一致）
     legend: {
-      show: accList.length > 1, top: 0, left: 'center', itemWidth: 10, itemHeight: 10,
+      show: accList.length > 1, top: 2, left: 0, itemWidth: 10, itemHeight: 10,
       textStyle: { color: '#6b7280', fontSize: 11 },
     },
     xAxis: {
@@ -167,9 +167,8 @@ export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0,
       axisLine: { lineStyle: { color: 'rgba(15,23,42,0.12)' } },
       axisTick: { show: false },
       axisLabel: {
-        interval: 0, rotate, margin: 8,
-        fontSize: 11,
-        // 产品名一行 + 合计件数一行（用户要「一目了然」）
+        interval: 0, rotate, margin: 8, fontSize: 11,
+        // 产品名一行 + 合计件数一行
         formatter: (v) => `{n|${short(v)}}\n{t|${totalOf.get(v) || 0} 件}`,
         rich: {
           n: { color: '#4b5563', fontSize: 11, lineHeight: 15 },
@@ -184,23 +183,21 @@ export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0,
       splitLine: { lineStyle: { color: 'rgba(15,23,42,0.06)' } },
       axisLabel: { color: '#94a3b8', fontSize: 10 },
     },
+    // 分组柱（每个产品下，各账号并排一根柱，柱顶标数值）——用户要求「改成这种」
     series: accList.map((a) => ({
       name: maskFn(a),
       type: 'bar',
-      stack: 'qty',
-      barMaxWidth: 36,
-      barMinWidth: 8,
-      itemStyle: { color: (ACCOUNT_COLOR[a] || {}).c || '#8a8f98' },
+      barMaxWidth: 24,
+      barGap: '18%',
+      itemStyle: { color: (ACCOUNT_COLOR[a] || {}).c || '#8a8f98', borderRadius: [3, 3, 0, 0] },
       label: {
-        show: true, position: 'inside', fontSize: 10, color: '#fff',
-        // 段太窄就不标数字，避免糊成一团
-        // 段太窄、或整根柱在最大值里太矮（<4%）就不标数字，避免糊成一团
-        formatter: (p) => (p.data && p.data.pct >= 0.1 && p.data.value / maxTotal >= 0.06 ? p.data.value : ''),
+        show: true, position: 'top', fontSize: 10,
+        color: (ACCOUNT_COLOR[a] || {}).c || '#6b7280',
+        formatter: (p) => (Number(p.value) > 0 ? p.value : ''),
       },
       data: rows.map((r) => {
         const hit = r.parts.find((p) => p.account === a)
-        const v = hit ? hit.qty : 0
-        return { value: v, pct: v / (r.total || 1) }
+        return hit ? hit.qty : 0
       }),
     })),
   }
