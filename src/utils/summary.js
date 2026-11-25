@@ -247,6 +247,30 @@ export function buildSummary(data, range) {
   }
 }
 
+// 出单 Top N 产品（用户要求「列出出单前 10 的产品，标上账号，可按账号筛选」）
+//   · account = 'all' → 合计出单件数排序，parts 保留全部账号（用于按颜色分段标注）
+//   · account = 某账号 → 只看这个号，只保留该号那一段，按该号的单量排序
+export function buildTopProductRows(products = [], { limit = 10, account = 'all' } = {}) {
+  const rows = []
+  for (const r of (products || [])) {
+    const accOrder = r.accOrder || {}
+    let parts = Object.entries(accOrder)
+      .map(([a, q]) => ({ account: a, qty: Number(q) || 0 }))
+      .filter((p) => p.qty > 0)
+      .sort((x, y) => y.qty - x.qty)
+    if (!parts.length) continue
+    let total = parts.reduce((s, p) => s + p.qty, 0)
+    if (account !== 'all') {
+      parts = parts.filter((p) => p.account === account)
+      total = parts.reduce((s, p) => s + p.qty, 0)
+    }
+    if (!parts.length || total <= 0) continue
+    rows.push({ name: r.name, total, parts })
+  }
+  rows.sort((a, b) => b.total - a.total)
+  return rows.slice(0, limit)
+}
+
 // 趋势柱：跟随当前选中的期间
 //   · 本周 / 上周 → **按天**对比（周一~周日，7 根柱，用户要求「点本周是天数对比」）
 //   · 本月 / 上月 → **按周**对比（自然周切分，通常 4~5 根柱，用户要求「本月是 4 周对比」）

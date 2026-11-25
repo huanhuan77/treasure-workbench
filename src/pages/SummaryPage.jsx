@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import { ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
-import { PERIODS, periodRange, buildSummary, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../utils/summary'
+import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
+import { PERIODS, periodRange, buildSummary, buildMonthlyTrend, buildCategoryShare, buildTopProductRows, daysBetween } from '../utils/summary'
 import { makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../utils/chartOptions'
 import { EChart } from '../components/EChart'
+import { TopProductBars } from '../components/TopProductBars'
 
 // 手机版「周 / 月总结」：只做数据展示（用户要求「只要数据表格」）。
 // 口径与 PC 完全一致（共用 utils/summary.js）：周=周一~周日、月=自然月。
@@ -51,6 +52,22 @@ export default function SummaryPage() {
     () => makeAccountOrderOption(sum.accounts, mask, 'qty'),
     [sum.accounts, hiddenAccounts],
   )
+
+  // 出单 Top 10 产品（横向柱状图，按账号分段，可按账号筛选）
+  const [topAcc, setTopAcc] = useState('all')
+  const topAccOptions = useMemo(() => {
+    const set = new Set()
+    for (const r of (sum.products || [])) {
+      for (const a of Object.keys(r.accOrder || {})) set.add(a)
+    }
+    const known = ACCOUNTS.filter((a) => set.has(a))
+    return [...known, ...[...set].filter((a) => !ACCOUNTS.includes(a))]
+  }, [sum.products])
+  const topRows = useMemo(
+    () => buildTopProductRows(sum.products || [], { limit: 10, account: topAcc }),
+    [sum.products, topAcc],
+  )
+  const topMax = topRows.length ? topRows[0].total : 1
 
   // 只留「发布 / 出单 / 样品」（用户要求去掉收入、净收入、完成待办）
   const cards = [
@@ -153,6 +170,50 @@ export default function SummaryPage() {
             <EChart option={accountOrderOption} height={Math.max(150, sum.accounts.length * 40 + 30)} />
           </div>
         )}
+      </div>
+
+      {/* 出单 Top 10 产品：横向柱状图，按账号分段，可按账号筛选 */}
+      <div style={{ margin: '0 16px 12px', background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 3px rgba(15,23,42,0.06)' }}>
+        <div style={{ padding: '10px 12px', fontSize: 13, fontWeight: 700, borderBottom: '0.5px solid rgba(15,23,42,0.06)' }}>
+          出单 Top 10 产品 <span style={{ fontWeight: 400, color: '#9aa0a9', fontSize: 11 }}>按出单件数</span>
+        </div>
+        {/* 账号筛选胶囊（横向滚动，避免挤成一团） */}
+        <div style={{ display: 'flex', gap: 6, padding: '8px 12px 0', overflowX: 'auto' }}>
+          <button
+            onClick={() => setTopAcc('all')}
+            style={{
+              flexShrink: 0, padding: '4px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer',
+              background: topAcc === 'all' ? '#b8517f' : '#fff',
+              color: topAcc === 'all' ? '#fff' : '#6b7280',
+              border: topAcc === 'all' ? '1px solid #b8517f' : '1px solid #e5e7eb',
+              fontWeight: topAcc === 'all' ? 600 : 400,
+            }}
+          >全部账号</button>
+          {topAccOptions.map((a) => {
+            const col = ACCOUNT_COLOR[a] || {}
+            const on = topAcc === a
+            return (
+              <button
+                key={a}
+                onClick={() => setTopAcc(on ? 'all' : a)}
+                style={{
+                  flexShrink: 0, padding: '4px 12px', borderRadius: 999, fontSize: 12, cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  background: on ? (col.bg || 'rgba(0,0,0,0.06)') : '#fff',
+                  color: on ? '#333a45' : '#6b7280',
+                  border: on ? `1px solid ${col.c || '#c1c7cf'}` : '1px solid #e5e7eb',
+                  fontWeight: on ? 600 : 400,
+                }}
+              >
+                <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: col.c || '#c1c7cf' }} />
+                {mask(a)}
+              </button>
+            )
+          })}
+        </div>
+        <div style={{ padding: '10px 12px 12px' }}>
+          <TopProductBars rows={topRows} max={topMax} mask={mask} nameWidth={96} barHeight={14} />
+        </div>
       </div>
 
       {/* 近 6 个月趋势 / 出单转化 */}

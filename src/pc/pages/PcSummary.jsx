@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
-import { PERIODS, periodRange, buildSummary, buildMonthlyTrend, buildCategoryShare, daysBetween } from '../../utils/summary'
+import { PERIODS, periodRange, buildSummary, buildMonthlyTrend, buildCategoryShare, buildTopProductRows, daysBetween } from '../../utils/summary'
 import { makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../../utils/chartOptions'
 import { EChart } from '../../components/EChart'
+import { TopProductBars } from '../../components/TopProductBars'
 import { DateRangePicker } from '../components/DateRangePicker'
 
 // PC 版「周 / 月总结」：只做**数据**（用户要求「只要数据表格，不需要文案」）。
@@ -100,6 +101,12 @@ export function PcSummary() {
     return list
   }, [sum.products, prodSort, prodQ, prodAcc])
   const prodFiltering = !!prodQ.trim() || prodAcc !== 'all'
+  // 出单 Top 10 产品：横向柱状图，按账号分段；跟随同一个账号筛选
+  const topRows = useMemo(
+    () => buildTopProductRows(sum.products || [], { limit: 10, account: prodAcc }),
+    [sum.products, prodAcc],
+  )
+  const topMax = topRows.length ? topRows[0].total : 1
   const sortMark = (key) => (prodSort.key === key ? (prodSort.dir === 'desc' ? ' ↓' : ' ↑') : '')
   const monthlyOption = useMemo(() => makeMonthlyOption(monthly), [monthly])
   const pieOption = useMemo(() => makePieOption(catShare), [catShare])
@@ -247,6 +254,47 @@ export function PcSummary() {
               <EChart option={accountOption} height={260} />
             </div>
           )}
+        </div>
+
+        {/* 出单 Top 10 产品：横向柱状图，每条按账号分段标色，可按账号筛选（与下方明细联动） */}
+        <div className="pcv-card" style={{ marginTop: 12 }}>
+          <div className="pcv-card-h">
+            <span style={{ fontWeight: 600 }}>出单 Top 10 产品</span>
+            <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', marginLeft: 8 }}>
+              按出单件数 · {range.label}{prodAcc !== 'all' ? ` · 只看 ${mask(prodAcc)}` : ''}
+            </span>
+            <div className="pcv-spacer" />
+            <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+              <button
+                className={prodAcc === 'all' ? 'pcv-btn' : 'pcv-btn pcv-btn-ghost'}
+                style={{ height: 26 }}
+                onClick={() => setProdAcc('all')}
+              >全部账号</button>
+              {prodAccOptions.map((a) => {
+                const col = ACCOUNT_COLOR[a] || {}
+                const on = prodAcc === a
+                return (
+                  <button
+                    key={a}
+                    onClick={() => setProdAcc(on ? 'all' : a)}
+                    style={{
+                      height: 26, padding: '0 10px', borderRadius: 999, cursor: 'pointer', fontSize: 12,
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      background: on ? (col.bg || 'rgba(0,0,0,0.06)') : '#fff',
+                      border: on ? `1px solid ${col.c || '#c1c7cf'}` : '1px solid #e5e7eb',
+                      color: on ? '#333a45' : '#6b7280', fontWeight: on ? 600 : 400,
+                    }}
+                  >
+                    <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: col.c || '#c1c7cf' }} />
+                    {mask(a)}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div style={{ padding: '10px 14px 14px' }}>
+            <TopProductBars rows={topRows} max={topMax} mask={mask} nameWidth={150} />
+          </div>
         </div>
 
         {/* 按产品明细：哪个品发了多少、出了多少单（用户要求「要统计具体的」）；
