@@ -219,19 +219,21 @@ export default function YearMemoPage() {
       {/* 顶栏 */}
       <div className="ym-head" style={{ background: G.head, color: '#fff', padding: '14px 20px' }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <button
-            onClick={doSync}
-            disabled={syncBusy}
-            title="与云端 Gist 双向合并（按天取更新的那份）"
-            style={{
-              background: syncBusy ? 'rgba(255,255,255,0.25)' : '#fff', color: G.head, border: 'none',
-              borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 800,
-              cursor: syncBusy ? 'default' : 'pointer', marginBottom: 4,
-            }}
-          >{syncBusy ? '同步中…' : '☁ 同步'}</button>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{year} 年 · 年度备忘录</div>
+          <div className="ym-sync-slot">
+            <button
+              onClick={doSync}
+              disabled={syncBusy}
+              title="与云端 Gist 双向合并（按天取更新的那份）"
+              style={{
+                background: syncBusy ? 'rgba(255,255,255,0.25)' : '#fff', color: G.head, border: 'none',
+                borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 800,
+                cursor: syncBusy ? 'default' : 'pointer',
+              }}
+            >{syncBusy ? '同步中…' : '☁ 同步'}</button>
             <span style={{ fontSize: 11.5, opacity: 0.78 }}>{lastSyncText}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginLeft: 12 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{year} 年 · 年度备忘录</div>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => setYear((y) => y - 1)} style={topBtn}>‹ {year - 1}</button>
