@@ -253,9 +253,14 @@ export function PcSamples() {
   }, [accountFiltered, sortKey, sortDir, refreshKey])
 
   const statusStats = useMemo(() => computeStatusStats(samples, accountFilter), [samples, accountFilter])
-  // 与手机版一致：总数扣掉已放弃
+  // 与手机版一致：总数扣掉已放弃（「全部」卡用这个活跃数）
   const totalCount = useMemo(
     () => Object.values(statusStats).reduce((a, b) => a + b, 0) - (statusStats.abandoned || 0),
+    [statusStats],
+  )
+  // 标题分母用全量（含已放弃），避免在「已放弃」筛选下出现分子 139 / 分母 42 的倒挂
+  const allCount = useMemo(
+    () => Object.values(statusStats).reduce((a, b) => a + b, 0),
     [statusStats],
   )
 
@@ -294,7 +299,7 @@ export function PcSamples() {
         <div>
           <div className="pcv-title">样品记录</div>
           <div className="pcv-sub">
-            {displayed.length} / {totalCount} 个样品
+            {displayed.length} / {allCount} 个样品
             {SAMPLE_STATUS_LIST.filter((s) => statusStats[s.key] > 0)
               .map((s) => ` · ${s.label} ${statusStats[s.key]}`)
               .join('')}
