@@ -1,14 +1,14 @@
 // 年度备忘录（独立页面，刻意不挂在 PC 工作台侧边栏框架里）
 // · 只在电脑上用：窄屏（手机）访问自动回工作台总览（用户明确「手机不要这个功能」）
 // · 一年 12 个月，每月一张 7 列（周一→周日）× 6 行的日历表
-// · 每天最多 5 条记事；新增/编辑/删除都在**弹窗**里完成（用户要求弹窗，不要格子内小输入框）
+// · 每天条数不设上限；新增/编辑/删除都在**弹窗**里完成（用户要求弹窗，不要格子内小输入框）
 // · 数据独立存 localStorage.year_memo_v1，同时纳入云备份 KEYS
 //   { '2026-01-04': ['约了闺蜜逛街', '…'] }
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const KEY = 'year_memo_v1'
-const MAX_PER_DAY = 5
+const MAX_PER_DAY = Infinity // 不限条数
 const WEEK_LABEL = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日']
 const MONTH_LABEL = ['1 月', '2 月', '3 月', '4 月', '5 月', '6 月', '7 月', '8 月', '9 月', '10 月', '11 月', '12 月']
 
@@ -192,7 +192,7 @@ export default function YearMemoPage() {
             )
           })}
           <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.85 }}>
-            每天最多 {MAX_PER_DAY} 条 · 点格子开弹窗编辑，格子里可直接勾完成、点 × 删除
+            点格子开弹窗编辑，格子里可直接勾完成、点 × 删除 · 条数不限
           </span>
         </div>
       </div>
@@ -266,9 +266,7 @@ export default function YearMemoPage() {
                       </div>
                     )
                   })}
-                  {items.filter((it) => it.t).length < MAX_PER_DAY && (
-                    <div style={{ color: '#b6c3ac', fontSize: 13, lineHeight: '20px' }}>＋ 添加</div>
-                  )}
+                  <div style={{ color: '#b6c3ac', fontSize: 13, lineHeight: '20px' }}>＋ 添加</div>
                 </div>
               )
             })}
@@ -291,7 +289,7 @@ export default function YearMemoPage() {
           >
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16 }}>
               <div style={{ fontSize: 17, fontWeight: 800, color: G.head }}>{modalInfo.label}</div>
-              <div style={{ fontSize: 12, color: G.muted, marginLeft: 'auto' }}>{modalInfo.items.length} / {MAX_PER_DAY} 条</div>
+              <div style={{ fontSize: 12, color: G.muted, marginLeft: 'auto' }}>共 {modalInfo.items.length} 条</div>
               <button
                 onClick={closeModal}
                 title="关闭"
@@ -340,7 +338,7 @@ export default function YearMemoPage() {
               <div style={{ fontSize: 13, color: G.muted, margin: '4px 0 14px' }}>这天还没有记事，点下面新增一条。</div>
             )}
 
-            {modalInfo.items.length < MAX_PER_DAY && (
+            {(
               <button
                 onClick={modalInfo.add}
                 style={{ width: '100%', border: `1.5px dashed ${G.line}`, background: '#fbfdf8', color: G.accent, borderRadius: 10, padding: '10px 0', fontSize: 14, fontWeight: 700, marginBottom: 14, cursor: 'pointer' }}
