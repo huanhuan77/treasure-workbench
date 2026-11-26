@@ -161,7 +161,8 @@ function mergeArrayById(localArr, remoteArr, tombstones = {}) {
     const id = item.id || stableKey(item)
     const t = getTime(item)
     const ex = map.get(id)
-    if (!ex || t > ex.time) map.set(id, { item, time: t })
+    // 时间相同（老数据都没 updatedAt）时，后并入的云端版本胜出：避免一端的改动被本地同时间旧记录压住、同步传不过去。
+    if (!ex || t >= ex.time) map.set(id, { item, time: t })
   }
   ;(localArr || []).forEach(push)
   ;(remoteArr || []).forEach(push)
@@ -210,7 +211,7 @@ function mergeProducts(localArr, remoteArr, tombstones = {}) {
     if (!p || !p.id) return
     const t = getTime(p)
     const ex = map.get(p.id)
-    if (!ex || t > ex.time) map.set(p.id, { item: p, time: t })
+    if (!ex || t >= ex.time) map.set(p.id, { item: p, time: t })
   }
   lp.forEach(push)
   rp.forEach(push)
