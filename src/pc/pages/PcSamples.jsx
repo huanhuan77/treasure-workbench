@@ -259,16 +259,6 @@ export function PcSamples() {
     [statusStats],
   )
 
-  const usedAccounts = useMemo(() => {
-    const set = new Set()
-    for (const s of samples) for (const a of visAcc(getAccounts(s))) set.add(a)
-    return [...set].sort((x, y) => {
-      const ix = ACCOUNTS.indexOf(x)
-      const iy = ACCOUNTS.indexOf(y)
-      return (ix === -1 ? 999 : ix) - (iy === -1 ? 999 : iy)
-    })
-  }, [samples])
-
   const toggleHideAccount = () => {
     const next = !hideAccount
     setHideAccount(next)
@@ -365,7 +355,7 @@ export function PcSamples() {
         {/* 账号筛选 + 是否出单筛选（排序入口已移到表头：点「收货日期」/「截止日期」列名） */}
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
           <button className={accountFilter === 'all' ? 'on' : ''} onClick={() => setAccountFilter('all')}>全部账号</button>
-          {usedAccounts.map((a) => (
+          {ACCOUNTS.map((a) => (
             <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{maskAccount(a, hiddenAccounts)}</button>
           ))}
           <button className={publishGt5 ? 'on' : ''} onClick={() => setPublishGt5((v) => !v)}>发布超过5条</button>

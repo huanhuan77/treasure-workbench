@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
-import { ACCOUNTS, getAccounts, maskAccount, cleanAccountOption } from '../../utils/accounts'
+import { ACCOUNTS, getAccounts, maskAccount } from '../../utils/accounts'
 import { recordQty } from '../../utils/helpers'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
@@ -194,11 +194,8 @@ export function PcPublishRecords() {
     [groups],
   )
 
-  const accountOptions = useMemo(() => {
-    const set = new Set()
-    for (const r of records) for (const a of (r.accounts || [])) { const n = cleanAccountOption(a); if (n) set.add(n) }
-    return [...set]
-  }, [records])
+  // 账号筛选固定列全集，没有发布记录的账号也能选
+  const accountOptions = ACCOUNTS
 
   // 按日期删（一条记录挂多账号时按 id 去重）
   const doDeleteDate = () => {

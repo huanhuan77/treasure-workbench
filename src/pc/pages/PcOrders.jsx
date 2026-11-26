@@ -170,10 +170,8 @@ export function PcOrders() {
     return arr
   }, [filtered, sortKey])
 
-  const accountOptions = useMemo(
-    () => [...new Set((orders || []).map((o) => cleanAccountOption(o.account)).filter(Boolean))],
-    [orders],
-  )
+  // 账号筛选固定列全集，没有出单的账号也能选（点进去列表为空）
+  const accountOptions = ACCOUNTS
 
   // 明细按日期分组（同一天的合并成一行）
   const byDay = (entries) => {
