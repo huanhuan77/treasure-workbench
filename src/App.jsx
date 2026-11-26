@@ -60,6 +60,7 @@ import { PcInvestment } from './pc/pages/PcInvestment'
 import { PcSummary } from './pc/pages/PcSummary'
 import { WordsPage } from './pages/WordsPage'
 import { PcWords } from './pc/pages/PcWords'
+import YearMemoPage from './pages/YearMemoPage'
 
 // 路由表（data 形式，供 KeepAliveRoutes 内的 useRoutes 使用）
 const routes = [
@@ -125,6 +126,8 @@ const routes = [
   { path: '/finance/new', element: <NewTransactionPage /> },
   { path: '/finance/edit/:id', element: <EditTransactionPage /> },
   { path: '/product/:id', element: <ProductDetailPage /> },
+  // 年度备忘录：独立页面，刻意不挂在 /pc 的侧边栏壳里
+  { path: '/memo', element: <YearMemoPage /> },
 ]
 
 // 本次会话是否明确选择了手机版（点过 PC 版里的「切回手机版」）
@@ -144,6 +147,8 @@ function LaunchRedirect() {
     done.current = true
     // PC 版有自己的落地逻辑（窄屏会送回手机版），这里不插手
     if (location.pathname.startsWith('/pc')) return
+    // 年度备忘录是独立页面，桌面端也要能直达，不能被弹回 /pc
+    if (location.pathname === '/memo') return
     // 桌面宽度进 PC 版。本次会话点过「切回手机版」就不再跳，避免被反复弹回去
     if (isDesktop && !mobileForced()) {
       navigate('/pc', { replace: true })
@@ -159,7 +164,7 @@ function LaunchRedirect() {
 // /pc 自带侧边栏，不要再叠一层手机版的底部导航 / 侧边栏
 function MobileOnly({ children }) {
   const { pathname } = useLocation()
-  return pathname.startsWith('/pc') ? null : children
+  return pathname.startsWith('/pc') || pathname === '/memo' ? null : children
 }
 
 function App() {

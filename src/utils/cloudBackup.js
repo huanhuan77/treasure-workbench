@@ -18,6 +18,7 @@ export const KEYS = [
   'daily_plan_v1',
   'brand_contacts_v1',
   'reading_growth_v1',
+  'year_memo_v1',
 ]
 
 export const TOKEN_KEY = 'backup_github_token'

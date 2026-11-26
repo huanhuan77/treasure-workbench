@@ -506,3 +506,20 @@ a {
     text-align: right;
   }
 }
+
+/* ── 年度备忘录（/memo）：独立页面，不套工作台的侧边栏留白与粉色背景 ── */
+body.memo-mode {
+  background: #f2f6ec;
+}
+@media (min-width: 768px) {
+  body.memo-mode #root {
+    padding-left: 0;
+  }
+}
+
+/* 年度备忘录：月份卡片的最小宽度。桌面宽屏一次看全 7 列；
+   手机上收到 700px，横滑一点点就能看全一周，不至于只露 3 列。 */
+.ym-card { min-width: 960px; }
+@media (max-width: 767px) {
+  .ym-card { min-width: 700px; }
+}

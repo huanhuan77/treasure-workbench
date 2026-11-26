@@ -38,6 +38,8 @@ const NAV = [
   { to: '/pc/savings', label: '攒钱计划', Icon: PiggyIcon, color: '#c08552' },
   { to: '/pc/investment', label: '投资跟踪', Icon: ChartIcon, color: '#4a7c59' },
   { to: '/pc/sensitive', label: '违禁词', Icon: BanIcon, color: '#a9504b' },
+  // 独立页面：点进去会离开 PC 壳（年度备忘录，绿色独立版式）
+  { to: '/memo', label: '年度备忘录', Icon: ListIcon, color: '#4b7d43' },
 ]
 
 function NavItem({ to, label, end, Icon, emoji, badge, color }) {
