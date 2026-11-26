@@ -244,7 +244,7 @@ export default function YearMemoPage() {
                           title={it.done ? '标记为未完成' : '标记完成'}
                           onClick={(e) => { e.stopPropagation(); toggleDone(cell.date, idx) }}
                           style={{
-                            flex: '0 0 auto', width: 15, height: 15, borderRadius: 4, fontSize: 10, lineHeight: 1,
+                            flex: '0 0 auto', width: 16, height: 16, borderRadius: 4, fontSize: 11, lineHeight: 1,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             border: `1.5px solid ${it.done ? G.accent : '#c9d3c1'}`,
                             background: it.done ? G.accent : '#fff', color: '#fff', cursor: 'pointer',
@@ -253,7 +253,7 @@ export default function YearMemoPage() {
                         <span
                           title={it.t}
                           style={{
-                            flex: 1, minWidth: 0, fontSize: 14, lineHeight: '20px', color: '#111',
+                            flex: 1, minWidth: 0, fontSize: 15, lineHeight: '22px', color: '#111',
                             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                             textDecoration: it.done ? 'line-through' : 'none', opacity: it.done ? 0.5 : 1,
                           }}
