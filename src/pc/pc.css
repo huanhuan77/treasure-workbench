@@ -353,19 +353,24 @@
   gap: 16px;
 }
 
-/* 总览三块并排：待办清单 / 发布计划 / 待投流，各占 1/3（用户要求）。
-   窄屏（<1280）退回单列，避免列太窄把文字挤成一团。 */
+/* 总览下方并排卡片：发布计划 / 待投流 / 待办清单 / 发布提醒，各占 1/4（用户要求一行四块）。
+   中屏（≤1440）退回两列，窄屏（≤1024）单列，避免列太窄把文字挤成一团。 */
 .pcv-3col {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   align-items: start;
 }
-/* 三列里卡片要等高好看：让 grid 项自身撑满，内容多的卡不会被拉长邻居 */
+/* 并排卡片要等高好看：让 grid 项自身撑满，内容多的卡不会被拉长邻居 */
 .pcv-3col > .pcv-card {
   min-width: 0;
 }
-@media (max-width: 1280px) {
+@media (max-width: 1180px) {
+  .pcv-3col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 860px) {
   .pcv-3col {
     grid-template-columns: minmax(0, 1fr);
   }
