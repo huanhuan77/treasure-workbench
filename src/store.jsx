@@ -4680,10 +4680,12 @@ export function StoreProvider({ children }) {
         status: 'shot',   // 先占位非 abandoned，避免旧顶层 status 被 isArchivedSample 兜底判回归档
         archived: false,
         execByAccount,
+        countsByAccount,
         autoAbandoned: false,
         autoAbandonedByAccount: {},
         suggestAbandonedByAccount: {},
         abandonDismissedByAccount: {},
+        updatedAt: Date.now(),
       }
       next.status = recomputeTopStatus(next)
       return next
@@ -4719,6 +4721,7 @@ export function StoreProvider({ children }) {
           autoAbandonedByAccount: {},
           suggestAbandonedByAccount: {},
           abandonDismissedByAccount: {},
+          updatedAt: Date.now(),
         }
         next.status = recomputeTopStatus(next)
         return next

@@ -200,6 +200,7 @@ export function setExecStatus(s, account, execKey) {
     execByAccount,
     countsByAccount,
     status: recomputeTopStatus({ ...s, accounts, execByAccount }),
+    updatedAt: Date.now(),
   }
   // 从放弃改回其它状态 → 视为该账号已人工处理，之后不再被自动放弃改回
   if (s.autoAbandonedByAccount && s.autoAbandonedByAccount[account] && execKey !== 'abandoned') {
@@ -213,13 +214,13 @@ export function setExecStatus(s, account, execKey) {
 // 不可变地设置物流状态
 export function setLogistics(s, key) {
   if (!LOGISTICS_STATUS[key]) return s
-  return { ...s, logistics: key, status: recomputeTopStatus({ ...s, logistics: key }) }
+  return { ...s, logistics: key, status: recomputeTopStatus({ ...s, logistics: key }), updatedAt: Date.now() }
 }
 
 // 设置拍摄状态（样品级共享）：拍过就是拍过，跟账号无关
 export function setShot(s, bool) {
   if (!s || typeof s !== 'object') return s
-  const next = { ...s, isShot: !!bool }
+  const next = { ...s, isShot: !!bool, updatedAt: Date.now() }
   // 同步兼容字段：execByAccount 各账号非 published 的 shot 与 isShot 对齐（published 不动，发布过必然拍过）
   const execByAccount = { ...(s.execByAccount || {}) }
   for (const a of Object.keys(execByAccount)) {
