@@ -4,6 +4,7 @@
 // 避免同一个口径散落在多处、改一处漏一处导致「卡片数字 ≠ 点进去的条数」。
 import { needPublishReminder, isHotAccount, pendingAccounts } from './publish'
 import { getAccounts, isArchivedSample, isShotSample, getTopStatus } from './sampleStatus'
+import { isVideoAccount } from './accounts'
 
 // 发布不足的阈值：某产品发布数低于它即视为「发布不足」
 export const LOW_PUBLISH_LIMIT = 10
@@ -16,7 +17,7 @@ export const EXPIRING_DAYS = 7
 // 也抢占了本该给达人的提醒位置。
 export function isWechatOnlySample(sample) {
   const accs = getAccounts(sample)
-  return accs.length > 0 && accs.every((a) => a === '视频号')
+  return accs.length > 0 && accs.every((a) => isVideoAccount(a))
 }
 
 // 四个 Tab 的标签与跳转目标。

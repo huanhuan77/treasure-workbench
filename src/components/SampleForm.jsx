@@ -5,7 +5,7 @@ import { Modal, Field, inputStyle, btnPrimary, btnGhost } from './Modal'
 import { todayStr, addDays, toDateInput } from '../utils/helpers'
 import { isShotSample } from '../utils/sampleStatus'
 import { CATEGORIES } from '../utils/categories'
-import { ACCOUNTS } from '../utils/accounts'
+import { PICK_ACCOUNTS } from '../utils/accounts'
 
 export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, statusMode = false }) {
   const { products } = useStore()
@@ -87,7 +87,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
 
       <Field label={sample ? '归属账号（可多选）' : '归属账号（可多选，选几个账号就生成几条样品）'}>
         <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', flexWrap: 'nowrap', overflowX: 'auto', paddingBottom: '2px' }}>
-          {ACCOUNTS.map((a) => {
+          {PICK_ACCOUNTS.map((a) => {
             const selected = form.accounts.includes(a)
             return (
               <button key={a} type="button" onClick={() => toggleAccountSel(a)} style={{

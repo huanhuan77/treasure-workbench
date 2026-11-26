@@ -7,7 +7,7 @@ import { addDays } from '../utils/helpers'
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
 
-const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
+import { PICK_ACCOUNTS as ACCOUNTS } from '../utils/accounts'
 
 function PageHeader({ title, onBack }) {
   return (

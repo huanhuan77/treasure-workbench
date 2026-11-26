@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
-import { ACCOUNTS, ACCOUNT_COLOR, hasAccount } from '../utils/accounts'
+import { ACCOUNTS, PICK_ACCOUNTS, ACCOUNT_COLOR, hasAccount } from '../utils/accounts'
 import { isSelectableForOrder } from '../utils/publish'
 
 function todayStr() {
@@ -87,7 +87,7 @@ export function OrderFormModal({ open, onClose, editing, onSave, prefill }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', paddingTop: '4px' }}>
         <Field label="账号" required>
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {ACCOUNTS.map((a) => {
+            {PICK_ACCOUNTS.map((a) => {
               const sel = account === a
               return (
                 <button key={a} onClick={() => onPickAccount(a)} style={{

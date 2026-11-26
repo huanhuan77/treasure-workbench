@@ -219,7 +219,7 @@ export function NewPublishRecordPage() {
 
         {/* 账号 Tab 切换 */}
         <div style={{
-          display: 'flex', gap: '0', background: '#fff', borderRadius: '10px',
+          display: 'flex', gap: '0', background: '#fff', borderRadius: '10px', overflowX: 'auto',
           border: '1.5px solid rgba(0,0,0,0.08)', padding: '4px', marginBottom: '14px', boxSizing: 'border-box',
         }}>
           {PUBLISH_ACCOUNTS.map((a) => {
@@ -228,7 +228,7 @@ export function NewPublishRecordPage() {
             const cnt = (entriesByAccount[a] || []).filter((e) => e.sampleId).length
             return (
               <button key={a} onClick={() => setActiveAccount(a)} style={{
-                flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
+                flex: '0 0 auto', padding: '10px 12px', borderRadius: '8px', border: 'none', whiteSpace: 'nowrap',
                 background: active ? col.bg : 'transparent',
                 color: active ? col.c : 'var(--text-sub)',
                 fontSize: '13px', fontWeight: active ? 700 : 500, cursor: 'pointer',

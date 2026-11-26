@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS, hasAccount } from '../../utils/accounts'
+import { PICK_ACCOUNTS as ACCOUNTS, hasAccount } from '../../utils/accounts'
 import { CATEGORIES } from '../../utils/categories'
 import { isSelectableForOrder } from '../../utils/publish'
 import { AccountTabs } from './AccountTabs'
@@ -193,7 +193,7 @@ export function OrderDialog({ prefill, onClose, editing }) {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="pcv-field-label">账号</div>
-              <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} />
+              <AccountTabs value={account} onChange={(a) => { setAccount(a); setPickIdx(-1); setQuery(''); setCatFilter('') }} counts={counts} accounts={ACCOUNTS} />
             </div>
           </div>
 

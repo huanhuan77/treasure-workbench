@@ -1,24 +1,39 @@
 // 账号体系统一来源：消除各页面重复定义
-// 真实账号名（用于归属、发布、出单）
-export const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
+//
+// 两级概念（2026-11-26 新增视频号的两个具体号「奶油」「发財」后引入）：
+//   ACCOUNTS      —— 展示/统计全集，含历史旧代号「视频号」。所有「按账号汇总」的循环都用它，
+//                    否则以前记在「视频号」名下的老记录会在统计里被跳过。
+//   PICK_ACCOUNTS —— 新建/编辑记录时真正可选的账号（三个抖音达人 + 视频号两个具体号）。
+//                    「视频号」这个笼统账号只用于历史数据展示，不再出现在选择器里。
+export const DOUYIN_ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
+// 视频号下的两个具体号（用户 2026-11-26 新增）
+export const VIDEO_ACCOUNTS = ['奶油', '发財']
+// 历史旧代号：不再新建，但老数据里有它，展示与统计要照常
+export const LEGACY_ACCOUNTS = ['视频号']
 
-// 发布计划可排的账号 = 三个达人账号 + 视频号。
-// 视频号在样品里已经是一等账号（SampleDialog 的 FORM_ACCOUNTS 同样拼了它），
-// 但发布计划原来只认 ACCOUNTS，导致排不了视频号的品（用户要求「发布计划加一个视频号」）。
-// 单独列一个列表，避免影响出单页、发布记录页那些只针对达人账号的口径。
-export const PLAN_ACCOUNTS = [...ACCOUNTS, '视频号']
+// 展示/统计全集（顺序 = 账号排序顺序，旧代号固定排最后）
+export const ACCOUNTS = [...DOUYIN_ACCOUNTS, ...VIDEO_ACCOUNTS, ...LEGACY_ACCOUNTS]
 
-// 可「记发布 / 记出单」的账号 = 三个达人 + 视频号（用户要求「视频号发布/提醒也走一样的逻辑」）。
-// 视频号原本在样品里是一等账号，但记发布页只列 ACCOUNTS，导致视频号的品永远记不上发布、
-// 在提醒中心永远显示「从未发布」。用这张表让视频号跟达人走同一套判定。
-export const PUBLISH_ACCOUNTS = [...ACCOUNTS, '视频号']
+// 新建/编辑记录时可选的账号
+export const PICK_ACCOUNTS = [...DOUYIN_ACCOUNTS, ...VIDEO_ACCOUNTS]
+
+// 发布计划可排的账号 = 三个达人 + 视频号两个具体号
+export const PLAN_ACCOUNTS = [...PICK_ACCOUNTS]
+
+// 可「记发布 / 记出单」的账号 = 同上
+export const PUBLISH_ACCOUNTS = [...PICK_ACCOUNTS]
+
+// 是否属于视频号渠道（含历史旧代号）
+export const isVideoAccount = (a) => VIDEO_ACCOUNTS.includes(a) || LEGACY_ACCOUNTS.includes(a)
 
 // 账号主题色（c=文字/边框色，bg=浅底圆角色）
 export const ACCOUNT_COLOR = {
   '广东刘亦菲': { c: '#b45309', bg: 'rgba(245,158,11,0.18)' },      // 琥珀金
   '晚梨不吃梨': { c: '#0d9488', bg: 'rgba(20,184,166,0.16)' },      // 青绿
   '努力成为富婆': { c: '#be185d', bg: 'rgba(244,114,182,0.18)' },   // 玫红
-  '视频号': { c: '#2563eb', bg: 'rgba(37,99,235,0.14)' },           // 渠道蓝（与三个达人账号的金/青/玫红拉开，也不和青绿撞色）
+  '奶油': { c: '#2563eb', bg: 'rgba(37,99,235,0.16)' },            // 视频号·奶油（渠道蓝）
+  '发財': { c: '#0891b2', bg: 'rgba(8,145,178,0.16)' },             // 视频号·发財（青蓝）
+  '视频号': { c: '#94a3b8', bg: 'rgba(148,163,184,0.16)' },         // 历史旧代号，弱化灰
 }
 
 // 旧代号 → 真实账号名（历史数据兼容）

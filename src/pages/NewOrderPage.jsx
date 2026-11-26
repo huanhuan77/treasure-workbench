@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { SamplePickerPage } from '../components/SamplePickerPage'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
+import { ACCOUNTS, PICK_ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
 import { isSelectableForOrder } from '../utils/publish'
 
 function getDateLabel(dateStr) {
@@ -38,7 +38,7 @@ export function NewOrderPage() {
 
   const init = location.state || {}
   const initSample = init.sampleId || ''
-  const initAccount = init.account || ACCOUNTS[0]
+  const initAccount = init.account || PICK_ACCOUNTS[0]
 
   const [activeAccount, setActiveAccount] = useState(initAccount)
   const [date, setDate] = useState(init.date || yesterdayStr())
@@ -227,16 +227,16 @@ export function NewOrderPage() {
 
         {/* 账号 Tab 切换 */}
         <div style={{
-          display: 'flex', gap: '0', background: '#fff', borderRadius: '10px',
+          display: 'flex', gap: '0', background: '#fff', borderRadius: '10px', overflowX: 'auto',
           border: '1.5px solid rgba(0,0,0,0.08)', padding: '4px', marginBottom: '14px', boxSizing: 'border-box',
         }}>
-          {ACCOUNTS.map((a) => {
+          {PICK_ACCOUNTS.map((a) => {
             const active = activeAccount === a
             const col = ACCOUNT_COLOR[a] || { c: '#7c3aed', bg: 'rgba(124,58,237,0.12)' }
             const cnt = (entriesByAccount[a] || []).filter((e) => e.sampleId).length
             return (
               <button key={a} onClick={() => setActiveAccount(a)} style={{
-                flex: 1, padding: '10px 4px', borderRadius: '8px', border: 'none',
+                flex: '0 0 auto', padding: '10px 12px', borderRadius: '8px', border: 'none', whiteSpace: 'nowrap',
                 background: active ? col.bg : 'transparent',
                 color: active ? col.c : 'var(--text-sub)',
                 fontSize: '13px', fontWeight: active ? 700 : 500, cursor: 'pointer',

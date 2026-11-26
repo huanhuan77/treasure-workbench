@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
-import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, maskAccount, isVideoAccount } from '../../utils/accounts'
 import {
   SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter,
   getAccounts, getCounts, getTopStatus,
@@ -86,7 +86,7 @@ export function PcSamples() {
   // 挂在达人账号（抖音矩阵）下的品不显示「标记已发」入口。
   const isWechatOnly = (sample) => {
     const accs = getAccounts(sample)
-    return accs.length > 0 && accs.every((a) => a === '视频号')
+    return accs.length > 0 && accs.every((a) => isVideoAccount(a))
   }
 
   // 把「已拍未发」快捷标记为「已发布」：

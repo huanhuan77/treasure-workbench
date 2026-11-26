@@ -12,12 +12,8 @@ import { SampleForm } from '../components/SampleForm'
 
 // 状态枚举统一从 sampleStatus.js 导入（SAMPLE_STATUS / SAMPLE_STATUS_ORDER / SAMPLE_STATUS_LIST）
 
-const ACCOUNTS = ['广东刘亦菲', '晚梨不吃梨', '努力成为富婆']
-const ACCOUNT_COLOR = {
-  '广东刘亦菲': { c: '#c2410c', bg: 'rgba(251,146,60,0.16)' },
-  '晚梨不吃梨': { c: '#1d4ed8', bg: 'rgba(59,130,246,0.16)' },
-  '努力成为富婆': { c: '#7e22ce', bg: 'rgba(168,85,247,0.16)' },
-}
+import { ACCOUNTS as ALL_ACCOUNTS, ACCOUNT_COLOR } from '../utils/accounts'
+const ACCOUNTS = ALL_ACCOUNTS
 
 // 兼容旧数据：老样品只有 account（字符串），新样品有 accounts（数组）
 function getAccounts(s) {
@@ -460,7 +456,7 @@ export function SamplesPage() {
           {/* 列表 */}
           <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
             {[{ key: 'all', name: '全部账号', color: '#ec4899', initial: '全' },
-              ...ACCOUNTS.map((a) => ({ key: a, name: a, color: ACCOUNT_COLOR[a].c, initial: a.slice(0, 1) }))]
+              ...ACCOUNTS.map((a) => ({ key: a, name: a, color: (ACCOUNT_COLOR[a] || { c: '#8b6f7a' }).c, initial: a.slice(0, 1) }))]
               .map((o, idx, arr) => (
                 <button key={o.key} onClick={() => setAccountDraft(o.key)} style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
