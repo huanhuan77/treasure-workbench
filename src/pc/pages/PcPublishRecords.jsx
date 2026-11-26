@@ -167,7 +167,7 @@ export function PcPublishRecords() {
       if (!B) return -1
       return dir === 'asc' ? A.localeCompare(B) : B.localeCompare(A)
     }
-    // 同一天/同数量时按**账号固定顺序**排（广东刘亦菲 → 晚梨不吃梨 → 努力成为富婆），
+    // 同一天/同数量时按**账号固定顺序**排（刘亦菲 → 晚梨 → 富婆），
     // 不然同一日期下账号会随机交错（用户反馈「这怎么不按账号顺序排」）
     const accRank = (g) => {
       const i = ACCOUNTS.indexOf(g.account || '')

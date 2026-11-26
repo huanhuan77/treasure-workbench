@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { SamplePickerPage } from '../components/SamplePickerPage'
-import { ACCOUNTS, PICK_ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
+import { ACCOUNTS, PICK_ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount, mapAccount } from '../utils/accounts'
 import { isSelectableForOrder } from '../utils/publish'
 
 function getDateLabel(dateStr) {
@@ -38,7 +38,7 @@ export function NewOrderPage() {
 
   const init = location.state || {}
   const initSample = init.sampleId || ''
-  const initAccount = init.account || PICK_ACCOUNTS[0]
+  const _initAcc = mapAccount(init.account); const initAccount = PICK_ACCOUNTS.includes(_initAcc) ? _initAcc : PICK_ACCOUNTS[0]
 
   const [activeAccount, setActiveAccount] = useState(initAccount)
   const [date, setDate] = useState(init.date || yesterdayStr())

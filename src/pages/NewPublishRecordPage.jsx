@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { SamplePickerPage } from '../components/SamplePickerPage'
-import { PUBLISH_ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount } from '../utils/accounts'
+import { PUBLISH_ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount, mapAccount } from '../utils/accounts'
 
 function getDateLabel(dateStr) {
   const weekDays = ['日', '一', '二', '三', '四', '五', '六']
@@ -28,7 +28,7 @@ export function NewPublishRecordPage() {
 
   const init = location.state || {}
   const initSample = init.sampleId || ''
-  const initAccount = init.account || (Array.isArray(init.accounts) && init.accounts.length ? init.accounts[0] : '') || PUBLISH_ACCOUNTS[0]
+  const _initAcc = mapAccount(init.account || (Array.isArray(init.accounts) && init.accounts.length ? init.accounts[0] : '')); const initAccount = PUBLISH_ACCOUNTS.includes(_initAcc) ? _initAcc : PUBLISH_ACCOUNTS[0]
 
   const [publishDate, setPublishDate] = useState(() => init.publishDate || new Date().toISOString().slice(0, 10))
   const [activeAccount, setActiveAccount] = useState(initAccount)

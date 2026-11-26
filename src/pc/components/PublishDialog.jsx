@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { PUBLISH_ACCOUNTS, hasAccount } from '../../utils/accounts'
+import { PUBLISH_ACCOUNTS, hasAccount, mapAccount } from '../../utils/accounts'
 import { CATEGORIES } from '../../utils/categories'
 import { isShotSample, isArchivedSample } from '../../utils/sampleStatus'
 import { todayStr } from '../../utils/helpers'
@@ -22,7 +22,7 @@ export function PublishDialog({ sampleId: initSampleId = '', accounts: initAccou
   const { samples, addPublishRecord } = useStore()
   const { show } = useToast()
 
-  const initAcc = (Array.isArray(initAccounts) && initAccounts[0]) || PUBLISH_ACCOUNTS[0]
+  const _ia = mapAccount(Array.isArray(initAccounts) && initAccounts[0]); const initAcc = PUBLISH_ACCOUNTS.includes(_ia) ? _ia : PUBLISH_ACCOUNTS[0]
   const [publishDate, setPublishDate] = useState(todayStr())
   const [account, setAccount] = useState(initAcc)
   // 每个账号独立的条目：{ [account]: [{ sampleId, qty }] }

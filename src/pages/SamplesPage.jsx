@@ -12,7 +12,7 @@ import { SampleForm } from '../components/SampleForm'
 
 // 状态枚举统一从 sampleStatus.js 导入（SAMPLE_STATUS / SAMPLE_STATUS_ORDER / SAMPLE_STATUS_LIST）
 
-import { ACCOUNTS as ALL_ACCOUNTS, ACCOUNT_COLOR } from '../utils/accounts'
+import { ACCOUNTS as ALL_ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 const ACCOUNTS = ALL_ACCOUNTS
 
 // 兼容旧数据：老样品只有 account（字符串），新样品有 accounts（数组）
@@ -57,8 +57,7 @@ export function SamplesPage() {
   const [accountSearch, setAccountSearch] = useState('')
   const [accountFilter, setAccountFilter] = useState(() => {
     const v = sessionStorage.getItem('samples_account') || ''
-    const map = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
-    return map[v] || v || 'all'
+    return mapAccount(v) || 'all'
   })
   const [searchKeyword, setSearchKeyword] = useState('')
   // 已出单/未出单子筛选（仅在已发布tab下显示）

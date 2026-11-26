@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { PICK_ACCOUNTS as ACCOUNTS, hasAccount } from '../../utils/accounts'
+import { PICK_ACCOUNTS as ACCOUNTS, hasAccount, mapAccount } from '../../utils/accounts'
 import { CATEGORIES } from '../../utils/categories'
 import { isSelectableForOrder } from '../../utils/publish'
 import { AccountTabs } from './AccountTabs'
@@ -19,7 +19,7 @@ export function OrderDialog({ prefill, onClose, editing }) {
   const { show } = useToast()
   const isEditing = !!editing
 
-  const initAcc = editing?.account || prefill?.account || ACCOUNTS[0]
+  const _ia = mapAccount(editing?.account || prefill?.account); const initAcc = ACCOUNTS.includes(_ia) ? _ia : ACCOUNTS[0]
   const [account, setAccount] = useState(initAcc)
   // 出单日期默认「昨天」：出单基本都是事后补记，写当天十有八九要改（用户要求）
   const [date, setDate] = useState(() => {

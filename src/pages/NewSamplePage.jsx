@@ -7,7 +7,7 @@ import { addDays } from '../utils/helpers'
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
 
-import { PICK_ACCOUNTS as ACCOUNTS } from '../utils/accounts'
+import { PICK_ACCOUNTS as ACCOUNTS, mapAccount } from '../utils/accounts'
 
 function PageHeader({ title, onBack }) {
   return (
@@ -25,8 +25,7 @@ export function NewSamplePage() {
   const { show } = useToast()
   const [name, setName] = useState('')
   // 优先从 location.state 拿到当前账号，否则从 sessionStorage 兜底；归属账号支持多选
-  const _mapAcc = (a) => ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[a] || a || '')
-  const _rawAcc = _mapAcc(location.state?.account || sessionStorage.getItem('samples_account'))
+  const _rawAcc = mapAccount(location.state?.account || sessionStorage.getItem('samples_account'))
   const initialAccounts = _rawAcc && ACCOUNTS.includes(_rawAcc) ? [_rawAcc] : []
   const [accounts, setAccounts] = useState(initialAccounts)
   const [arrived, setArrived] = useState(true)   // 物流：false=未到货 / true=已到货

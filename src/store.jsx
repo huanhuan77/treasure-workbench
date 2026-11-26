@@ -3068,13 +3068,37 @@ function normalizeDates(d) {
   }
 }
 
+// 一次性对齐账号名：旧名/旧代号（广东刘亦菲/晚梨不吃梨/努力成为富婆/大号…）→ 新名。
+// localStorage 历史数据与内置 demo 都过一遍；「视频号」是旧渠道代号，原样保留兜底展示。
+function renameAccounts(d) {
+  const fixSample = (s) => {
+    if (!s) return s
+    const out = { ...s, account: mapAccount(s.account) }
+    if (Array.isArray(s.accounts)) out.accounts = s.accounts.map(mapAccount).filter(Boolean)
+    return out
+  }
+  const fixRec = (r) => {
+    if (!r) return r
+    const out = { ...r, account: mapAccount(r.account) }
+    if (Array.isArray(r.accounts)) out.accounts = r.accounts.map(mapAccount).filter(Boolean)
+    return out
+  }
+  return {
+    ...d,
+    samples: (d.samples || []).map(fixSample),
+    orders: (d.orders || []).map(fixRec),
+    publishRecords: (d.publishRecords || []).map(fixRec),
+    publishPlans: (d.publishPlans || []).map(fixRec),
+  }
+}
+
 function dedupedDefaultData() {
-  return normalizeDates({
+  return renameAccounts(normalizeDates({
     ...defaultData,
     products: (defaultData.products || []).map((p) =>
       Array.isArray(p.copies) ? { ...p, copies: dedupeCopies(p.copies) } : p
     ),
-  })
+  }))
 }
 
 function loadData() {
@@ -3339,7 +3363,7 @@ function loadData() {
       seenPlan.add(k)
       plansDedup.push(p)
     }
-    return normalizeDates({
+    return renameAccounts(normalizeDates({
       products: productsFinal,
       samples: categorized,
       orders: migrated.orders,  // 独立出单台账
@@ -3367,7 +3391,7 @@ function loadData() {
         a && a.sampleId && migrated.idMap[a.sampleId] ? { ...a, sampleId: migrated.idMap[a.sampleId] } : a
       )),
       publishPlans: plansDedup,
-    })
+    }))
   } catch (e) {
     console.warn('[loadData] 加载数据异常，使用默认值:', e)
     return dedupedDefaultData()

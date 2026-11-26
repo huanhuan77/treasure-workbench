@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Modal, glassStyle } from '../components/Modal'
 import { useToast } from '../components/Toast'
 import { recordDelete } from '../utils/sync'
+import { mapAccount } from '../utils/accounts'
 
 const STORAGE_KEY = 'daily_plan_v1'
 const PUBLISH_KEY = 'daily_publish_plan_v1'
@@ -27,10 +28,8 @@ function loadPublish() {
   try {
     const raw = localStorage.getItem(PUBLISH_KEY)
     const d = raw ? JSON.parse(raw) : {}
-    // 全局账号映射：旧代号 → 真实账号名
-    const ACCOUNT_MAP = { '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }
     for (const date of Object.keys(d)) {
-      d[date] = (d[date] || []).map((p) => ({ ...p, account: (ACCOUNT_MAP[p.account] || p.account) }))
+      d[date] = (d[date] || []).map((p) => ({ ...p, account: mapAccount(p.account) }))
     }
     return d
   } catch { return {} }
@@ -128,9 +127,9 @@ export function DailyPlanPage() {
 
   // 发布计划（按所选日期读取，支持今天/明天/后天）
 const ACCOUNT_CARD_COLOR = {
-  '广东刘亦菲': '#fb923c',  // 橙
-  '晚梨不吃梨': '#3b82f6',  // 蓝
-  '努力成为富婆': '#a855f7',  // 紫
+  '刘亦菲': '#fb923c',  // 橙
+  '晚梨': '#3b82f6',  // 蓝
+  '富婆': '#a855f7',  // 紫
 }
   const [publishData, setPublishData] = useState(loadPublish)
   // 发布计划视图的日期偏移持久化（sessionStorage），切页面/跳回后保持所选日期

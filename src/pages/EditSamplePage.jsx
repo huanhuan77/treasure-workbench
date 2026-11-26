@@ -8,7 +8,7 @@ import { getAccounts, getLogistics, getCounts, isShotSample, LOGISTICS_STATUS } 
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
 
-import { PICK_ACCOUNTS as ACCOUNTS } from '../utils/accounts'
+import { PICK_ACCOUNTS as ACCOUNTS, mapAccount } from '../utils/accounts'
 const LOGISTICS_LIST = Object.values(LOGISTICS_STATUS)
 
 function PageHeader({ title, onBack }) {
@@ -27,10 +27,9 @@ export function EditSamplePage() {
   const id = window.location.hash.match(/\/samples\/([^/]+)\/edit/)?.[1]
   const sample = id ? samples.find((s) => s.id === id) : null
   const [name, setName] = useState(sample?.name || '')
-  const _mapAcc = (a) => ({ '大号': '广东刘亦菲', '小号': '晚梨不吃梨', '小小号': '努力成为富婆' }[a] || a || '')
   const initialAccounts = Array.isArray(sample?.accounts) && sample.accounts.length
-    ? sample.accounts
-    : (sample?.account ? [_mapAcc(sample.account)] : [])
+    ? sample.accounts.map(mapAccount)
+    : (sample?.account ? [mapAccount(sample.account)] : [])
   const [accounts, setAccounts] = useState(initialAccounts)
   const [logistics, setLogisticsState] = useState(getLogistics(sample))
   const [isShot, setIsShot] = useState(sample?.isShot ?? isShotSample(sample))   // 拍摄（样品级共享）
