@@ -4,7 +4,7 @@
 // 避免同一个口径散落在多处、改一处漏一处导致「卡片数字 ≠ 点进去的条数」。
 import { needPublishReminder, isHotAccount, pendingAccounts } from './publish'
 import { getAccounts, isArchivedSample, isShotSample, getTopStatus } from './sampleStatus'
-import { isVideoAccount } from './accounts'
+import { isVideoAccount, cleanAccountOption } from './accounts'
 
 // 发布不足的阈值：某产品发布数低于它即视为「发布不足」
 export const LOW_PUBLISH_LIMIT = 10
@@ -99,8 +99,11 @@ export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []
     // 整品互斥：已经归「发布提醒」的样品不在「发布不足10」重复出现
     if (inPublishReminder(s, orderedSampleIds)) continue
 
-    // 按账号单独判定：每个账号自己发了 1~9 条
-    const allAccounts = getAccounts(s).map((a) => {
+    // 按账号单独判定：每个账号自己发了 1~9 条；旧代号「视频号」不上提醒标签
+    const allAccounts = getAccounts(s)
+      .map((a) => cleanAccountOption(a))
+      .filter(Boolean)
+      .map((a) => {
       const c = s?.countsByAccount?.[a]
       const n = Number(c?.publishCount) || 0
       return { account: a, publishCount: n, orderCount: Number(c?.orderCount) || 0, lack: limit - n }

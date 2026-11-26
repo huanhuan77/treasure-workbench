@@ -12,6 +12,8 @@
 //   - execByAccount 保留为兼容字段（老数据/自动放弃机制仍写入），但 UI 不再编辑/展示。
 
 // 物流状态（共享）
+import { mapAccount } from './accounts'
+
 export const LOGISTICS_STATUS = {
   un_arrived: { key: 'un_arrived', label: '未到货', icon: '🚚', color: '#94a3b8', bg: 'rgba(148,163,184,0.16)' },
   arrived: { key: 'arrived', label: '未拍', icon: '📷', color: '#f97316', bg: 'rgba(249,115,22,0.16)' },
@@ -50,9 +52,13 @@ export function statusBg(status) {
 }
 
 // ── 兼容旧数据：老样品只有 account（字符串），新样品有 accounts（数组）──
+// 这里先把旧名归一到新名（匹配/展示都拿到新名）；旧代号「视频号」保留，
+// 由 isWechatOnlySample 等纯渠道判断继续识别，展示层再另行剔除。
 export function getAccounts(s) {
-  if (Array.isArray(s?.accounts) && s.accounts.length) return s.accounts
-  return s?.account ? [s.account] : []
+  const list = Array.isArray(s?.accounts) && s.accounts.length
+    ? s.accounts
+    : (s?.account ? [s.account] : [])
+  return list.map(mapAccount).filter(Boolean)
 }
 
 // 物流状态（实体级共享）：未到货 / 已到货未拍摄

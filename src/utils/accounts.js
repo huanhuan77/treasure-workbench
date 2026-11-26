@@ -73,11 +73,17 @@ export function accountColor(a) {
   return ACCOUNT_COLOR[mapAccount(a)] || { c: '#8a8f98', bg: 'rgba(148,163,184,0.16)' }
 }
 
-// 取样品归属账号数组（兼容单 account 旧字段）
+// 取样品归属账号数组（兼容单 account 旧字段）；归一旧名并剔除历史旧代号「视频号」，去重
 export function getAccounts(sample) {
-  if (Array.isArray(sample?.accounts) && sample.accounts.length) return sample.accounts.map(mapAccount)
-  if (sample?.account) return [mapAccount(sample.account)]
-  return []
+  const raw = Array.isArray(sample?.accounts) && sample.accounts.length
+    ? sample.accounts
+    : (sample?.account ? [sample.account] : [])
+  const out = []
+  for (const a of raw) {
+    const n = cleanAccountOption(a)
+    if (n && !out.includes(n)) out.push(n)
+  }
+  return out
 }
 
 // 判断某账号是否属于该样品归属
