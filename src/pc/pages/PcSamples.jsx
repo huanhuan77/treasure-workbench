@@ -401,7 +401,7 @@ export function PcSamples() {
                 </th>
                 <th style={{ width: 68 }}>是否出单</th>
                 {/* 出单数量：该样品在出单记录里的件数合计（用户要求「加上出单数量」） */}
-                <th style={{ width: 100 }} className="pcv-th-sort" onClick={() => toggleSort('orderQty')}>
+                <th style={{ width: 72 }} className="pcv-th-sort" onClick={() => toggleSort('orderQty')}>
                   出单数量{sortDirOf('orderQty') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
                 {/* 发布提醒天数：按账号口径（账号单独设 > 产品设 > 默认 7 天），与提醒中心同一套算 */}
