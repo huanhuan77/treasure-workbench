@@ -2,10 +2,11 @@
 // · 只在电脑上用：窄屏（手机）访问自动回工作台总览（用户明确「手机不要这个功能」）
 // · 一年 12 个月，每月一张 7 列（周一→周日）× 6 行的日历表
 // · 每天条数不设上限；新增/编辑/删除都在**弹窗**里完成（用户要求弹窗，不要格子内小输入框）
-// · 数据独立存 localStorage.year_memo_v1，同时纳入云备份 KEYS
+// · 数据存 localStorage.year_memo_v1；页面内有「☁ 同步」，按天 LWW 与云端 Gist 合并
 //   { '2026-01-04': ['约了闺蜜逛街', '…'] }
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { syncMemoNow, touchDay, getLastSyncAt, saveToken } from '../utils/memoSync'
 
 const KEY = 'year_memo_v1'
 const MAX_PER_DAY = Infinity // 不限条数
@@ -71,6 +72,11 @@ export default function YearMemoPage() {
   const [month, setMonth] = useState(now.getMonth()) // 0-11，一次只看一个月
   const [memo, setMemo] = useState(loadMemo)
   const [dayModal, setDayModal] = useState(null) // 正在弹窗编辑的日期 'YYYY-MM-DD'
+  const [syncBusy, setSyncBusy] = useState(false)
+  const [syncMsg, setSyncMsg] = useState(null) // { ok: bool, text: string }
+  const [lastSync, setLastSync] = useState(() => getLastSyncAt())
+  const [tokenModal, setTokenModal] = useState(false)
+  const [tokenInput, setTokenInput] = useState('')
   const today = todayStr()
 
   // 手机不要这个功能：窄屏打开就直接送回工作台总览
@@ -102,6 +108,7 @@ export default function YearMemoPage() {
 
   // 编辑期允许空槽存在（否则清空输入框重打时条目会消失），关弹窗时再统一清理
   const writeDay = (date, next) => {
+    touchDay(date) // 记这一天的改动时间，同步时用它判断哪边更新
     setMemo((prev) => {
       const copy = { ...prev }
       const list = next.map((it) => ({ t: it.t || '', done: !!it.done }))
@@ -140,6 +147,50 @@ export default function YearMemoPage() {
     setYear(now.getFullYear())
     setMonth(now.getMonth())
   }
+
+  const doSync = async () => {
+    if (syncBusy) return
+    setSyncBusy(true)
+    setSyncMsg(null)
+    try {
+      const res = await syncMemoNow()
+      setMemo(res.memo || {})
+      setLastSync(getLastSyncAt())
+      setSyncMsg({
+        ok: true,
+        text: res.created
+          ? '云端还没有备份，已把本机整份数据（含备忘录）传上去'
+          : '已同步' + (res.fromRemote ? `，从云端更新了 ${res.fromRemote} 天` : '，云端与本机一致'),
+      })
+    } catch (e) {
+      if (e.code === 'NO_TOKEN') {
+        setTokenModal(true)
+      } else {
+        setSyncMsg({ ok: false, text: e.message || '同步失败' })
+      }
+    } finally {
+      setSyncBusy(false)
+    }
+  }
+
+  const saveTokenAndSync = async () => {
+    const tk = tokenInput.trim()
+    if (!tk) return
+    saveToken(tk)
+    setTokenModal(false)
+    setTokenInput('')
+    await doSync()
+  }
+
+  const lastSyncText = (() => {
+    if (!lastSync) return '还没同步过'
+    const d = new Date(lastSync)
+    const min = Math.floor((Date.now() - d.getTime()) / 60000)
+    if (min < 1) return '刚刚同步'
+    if (min < 60) return `${min} 分钟前同步`
+    if (min < 1440) return `${Math.floor(min / 60)} 小时前同步`
+    return `${d.getMonth() + 1} 月 ${d.getDate()} 日同步`
+  })()
 
   const topBtn = {
     background: 'rgba(255,255,255,0.9)', color: G.head, border: 'none', borderRadius: 8,
@@ -205,9 +256,16 @@ export default function YearMemoPage() {
             <span style={{ fontSize: 12, color: G.muted }}>
               本月记了 {Object.keys(memo).filter((k) => k.startsWith(`${year}-${pad2(month + 1)}`)).length} 天
             </span>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11.5, color: G.muted }}>{lastSyncText}</span>
               <button onClick={goPrevMonth} style={{ ...topBtn, background: '#f2f6ec', color: G.head, border: `1px solid ${G.line}` }}>‹ 上一月</button>
               <button onClick={goNextMonth} style={{ ...topBtn, background: '#f2f6ec', color: G.head, border: `1px solid ${G.line}` }}>下一月 ›</button>
+              <button
+                onClick={doSync}
+                disabled={syncBusy}
+                title="与云端 Gist 双向合并（按天取更新的那份）"
+                style={{ background: syncBusy ? '#9db894' : G.accent, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 700, cursor: syncBusy ? 'default' : 'pointer' }}
+              >{syncBusy ? '同步中…' : '☁ 同步'}</button>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: G.weekHead }}>
@@ -272,10 +330,51 @@ export default function YearMemoPage() {
             })}
           </div>
         </div>
+        {syncMsg && (
+          <div
+            style={{
+              marginTop: 12, padding: '9px 14px', borderRadius: 10, fontSize: 12.5, lineHeight: 1.5,
+              background: syncMsg.ok ? '#e8f3dc' : '#fdecea',
+              color: syncMsg.ok ? '#2f5d34' : '#b3261e',
+              border: `1px solid ${syncMsg.ok ? '#cfe3bd' : '#f5c6c0'}`, display: 'flex', gap: 10,
+            }}
+          >
+            <span style={{ flex: 1 }}>{syncMsg.text}</span>
+            <span onClick={() => setSyncMsg(null)} className="ym-del" style={{ color: 'inherit', opacity: 0.6 }}>×</span>
+          </div>
+        )}
         <div style={{ textAlign: 'center', fontSize: 11.5, color: G.muted, paddingTop: 12 }}>
-          电脑专用页面。数据存本机，已纳入「备份与同步」。
+          电脑专用页面。数据存本机，可点「☁ 同步」与云端备份双向合并。
         </div>
       </div>
+
+      {/* 首次同步若没 Token：就地填，避免跑回备份页 */}
+      {tokenModal && (
+        <div
+          onClick={() => setTokenModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(28,42,26,0.45)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: 480, maxWidth: '92vw', background: '#fff', borderRadius: 16, padding: 22, boxShadow: '0 12px 40px rgba(20,32,18,0.28)' }}
+          >
+            <div style={{ fontSize: 17, fontWeight: 800, color: G.head, marginBottom: 8 }}>填一个 GitHub Token 才能同步</div>
+            <div style={{ fontSize: 12.5, color: G.muted, lineHeight: 1.7, marginBottom: 14 }}>
+              和工作台「备份与同步」用的是同一个 Token（classic token，勾 <b>gist</b> 权限）。填过的话这里留空也行，直接在备份页同步即可。
+            </div>
+            <input
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              placeholder="ghp_…"
+              style={{ width: '100%', boxSizing: 'border-box', fontSize: 14, padding: '10px 12px', border: `1.5px solid ${G.line}`, borderRadius: 10, outline: 'none', fontFamily: 'inherit', color: G.text }}
+            />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 16 }}>
+              <button onClick={() => setTokenModal(false)} style={{ background: '#f1f5ec', color: '#5d6b56', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 14, cursor: 'pointer' }}>取消</button>
+              <button onClick={saveTokenAndSync} style={{ background: G.accent, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 24px', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>保存并同步</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 当天编辑弹窗：新增、修改、删除都在这里 */}
       {modalInfo && (
