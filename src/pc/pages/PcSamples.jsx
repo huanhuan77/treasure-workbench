@@ -392,7 +392,7 @@ export function PcSamples() {
                     再窄会被折成两行（用户反馈「不要换行」）。 */}
                 {/* 产品列加宽到 190（长品名尽量显示全），账号列收紧到 185 并把标签字号/间距调小；
                     账号一列只做归属标识，不再占大版面。 */}
-                <th style={{ width: 165 }}>产品</th>
+                <th style={{ width: 180 }}>产品</th>
                 <th style={{ width: 62 }}>分类</th>
                 <th style={{ width: 72 }}>状态</th>
                 <th style={{ width: 250 }}>账号</th>
