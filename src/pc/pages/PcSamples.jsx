@@ -45,7 +45,7 @@ const SORT_DEFAULT_DIR = { receiveDate: 'desc', deadline: 'asc' }
 // 这里只把「卡片 + 一堆彩色标签」重排成「筛选条 + 紧凑表格」。
 export function PcSamples() {
   const navigate = useNavigate()
-  const { samples, orders, hiddenAccounts, addPublishRecord } = useStore()
+  const { samples, orders, hiddenAccounts, addPublishRecord, restoreSample } = useStore()
   const { show } = useToast()
   // 「隐藏账号」= 名字打星号，不筛选（用户明确「是账号显示星号，不是筛选」）
   const visAcc = useCallback((arr) => (arr || []).map(cleanAccountOption).filter(Boolean), [])
@@ -644,6 +644,13 @@ export function PcSamples() {
                     <td>
                       {/* 同上：flex 放内层 div，td 保持 table-cell，列宽才对得上表头 */}
                       <div className="pcv-actions">
+                      {top === 'abandoned' && (
+                        <button
+                          className="pcv-btn pcv-btn-ghost pcv-btn-ghost--pink"
+                          onClick={() => { restoreSample(s.id); show('已恢复到在跟列表', 'success') }}
+                          title="取消归档，移回在跟样品列表"
+                        >恢复</button>
+                      )}
                       {top === 'shot' && isWechatOnly(s) && (
                         <button
                           className="pcv-btn pcv-btn-ghost pcv-btn-ghost--pink"

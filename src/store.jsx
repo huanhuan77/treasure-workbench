@@ -4621,6 +4621,34 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, samples: d.samples.map((s) => (s.id === id ? setLogistics(s, key) : s)) }))
   }, [])
 
+  // 取消归档（从「已放弃」恢复到在跟列表）：清 archived，把被置 abandoned 的账号按发布数还原，
+  // 同时清掉自动放弃 / 建议放弃 / 驳回标记，避免恢复后又被判定归档。
+  const restoreSample = useCallback((id) => {
+    setData((d) => ({ ...d, samples: d.samples.map((s) => {
+      if (s.id !== id) return s
+      const accounts = getAccounts(s)
+      const execByAccount = { ...(s.execByAccount || {}) }
+      const countsByAccount = { ...(s.countsByAccount || {}) }
+      for (const a of accounts) {
+        const c = countsByAccount[a] || {}
+        const pub = Number(c.publishCount) || 0
+        execByAccount[a] = pub > 0 ? 'published' : null
+      }
+      const next = {
+        ...s,
+        status: 'shot',   // 先占位非 abandoned，避免旧顶层 status 被 isArchivedSample 兜底判回归档
+        archived: false,
+        execByAccount,
+        autoAbandoned: false,
+        autoAbandonedByAccount: {},
+        suggestAbandonedByAccount: {},
+        abandonDismissedByAccount: {},
+      }
+      next.status = recomputeTopStatus(next)
+      return next
+    }) }))
+  }, [])
+
   // ── 独立出单台账 ──────────────────────────────────────
   const addOrder = useCallback((order) => {
     const now = Date.now()
@@ -5046,7 +5074,7 @@ export function StoreProvider({ children }) {
     setHiddenAccounts,
     addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
-    addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics,
+    addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics, restoreSample,
     addOrder, updateOrder, deleteOrder,
     addPublishRecord, deletePublishRecord, updatePublishRecord,
     addTransaction, deleteTransaction, updateTransaction,
