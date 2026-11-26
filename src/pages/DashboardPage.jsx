@@ -1491,43 +1491,47 @@ export function DashboardPage() {
       {/* 自动放弃提醒：发布满 10 条仍 0 出单，已自动置为「放弃」 */}
       {autoAbandoned.length > 0 && (
         <div style={{ padding: '6px 8px 0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
-            <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ef4444' }} />
-            未出单已自动放弃
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 7px', borderRadius: '8px' }}>{autoAbandoned.length}</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {autoAbandoned.map((s) => {
-              const abandonedAccs = getAutoAbandonedAccounts(s)
-              const accChips = abandonedAccs.map((a) => {
-                const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+          <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '12px 14px 4px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
+              <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#ef4444' }} />
+              未出单已自动放弃
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 7px', borderRadius: '8px' }}>{autoAbandoned.length}</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '8px 14px 12px' }}>
+              {autoAbandoned.map((s) => {
+                const abandonedAccs = getAutoAbandonedAccounts(s)
+                const accChips = abandonedAccs.map((a) => {
+                  const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+                  return (
+                    <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
+                  )
+                })
                 return (
-                  <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
-                )
-              })
-              return (
-                <div key={s.id} style={{ background: '#fff', border: '1px solid #fecaca', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                      {accChips}
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>{s.name}</span>
+                  <div key={s.id} style={{ width: '100%', boxSizing: 'border-box', background: '#fef2f2', boxShadow: 'inset 3px 0 0 #ef4444', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        {accChips}
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#dc2626', marginTop: '2px', fontWeight: 500 }}>
+                        最后出单后又发了5条未出单 → 已自动放弃
+                      </div>
                     </div>
-                    <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '3px', fontWeight: 600 }}>
-                      最后出单后又发了5条未出单 → 已自动放弃
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                      <button
+                        onClick={() => {
+                          const execByAccount = { ...(s.execByAccount || {}) }
+                          abandonedAccs.forEach((a) => { execByAccount[a] = 'published' })
+                          updateSample(s.id, { execByAccount })
+                          show('已恢复为「已发布」，不再自动放弃', 'success')
+                        }}
+                        style={{ padding: '5px 12px', borderRadius: '8px', border: '1px solid #fecdd3', background: '#fff', color: '#e11d48', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                      >恢复</button>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      const execByAccount = { ...(s.execByAccount || {}) }
-                      abandonedAccs.forEach((a) => { execByAccount[a] = 'published' })
-                      updateSample(s.id, { execByAccount })
-                      show('已恢复为「已发布」，不再自动放弃', 'success')
-                    }}
-                    style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: '1px solid #fecdd3', background: '#fff', color: '#e11d48', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                  >恢复</button>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -1557,52 +1561,56 @@ export function DashboardPage() {
         if (!suggested.length) return null
         return (
           <div style={{ padding: '6px 8px 0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
-              <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#f59e0b' }} />
-              建议放弃
-              <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 7px', borderRadius: '8px' }}>{suggested.length}</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {suggested.map(({ s, accs }) => {
-                return (
-                  <div key={s.id} style={{ background: '#fff', border: '1px solid #fde68a', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        {accs.map((a) => {
-                          const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
-                          return <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600 }}>{a}</span>
-                        })}
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap' }}>{s.name}</span>
+            <div className="pc-card" style={{ background: '#fff', border: '1px solid #ece3e6', borderRadius: '10px', boxShadow: '0 1px 3px rgba(120,90,100,0.06)', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', padding: '12px 14px 4px', fontSize: '13px', fontWeight: 600, color: '#111' }}>
+                <span style={{ width: '3px', height: '14px', borderRadius: '2px', background: '#f59e0b' }} />
+                建议放弃
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 7px', borderRadius: '8px' }}>{suggested.length}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', padding: '8px 14px 12px' }}>
+                {suggested.map(({ s, accs }) => {
+                  return (
+                    <div key={s.id} style={{ width: '100%', boxSizing: 'border-box', background: '#fffbeb', boxShadow: 'inset 3px 0 0 #f59e0b', borderRadius: '10px', padding: '9px 12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          {accs.map((a) => {
+                            const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+                            return <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
+                          })}
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#b45309', marginTop: '2px', fontWeight: 500 }}>
+                          发了5条还没出单，要放弃吗？
+                        </div>
                       </div>
-                      <div style={{ fontSize: '11px', color: '#f59e0b', marginTop: '3px', fontWeight: 600 }}>
-                        发了5条还没出单，要放弃吗？
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        <button
+                          onClick={() => {
+                            const execByAccount = { ...(s.execByAccount || {}) }
+                            accs.forEach((a) => { execByAccount[a] = 'abandoned' })
+                            updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {}, archived: true })
+                            show('已标记为放弃', 'success')
+                          }}
+                          style={{ padding: '5px 12px', borderRadius: '8px', border: 'none', background: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                        >放弃</button>
+                        <button
+                          onClick={() => {
+                            const sdc = { ...(s.suggestDismissCount || {}) }
+                            accs.forEach((a) => {
+                              const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
+                              keepSuggest(s.id, a, pub)
+                              sdc[a] = pub
+                            })
+                            updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
+                            show('已保留，再发5条未出单会再次提醒', 'success')
+                          }}
+                          style={{ padding: '5px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                        >保留</button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        const execByAccount = { ...(s.execByAccount || {}) }
-                        accs.forEach((a) => { execByAccount[a] = 'abandoned' })
-                        updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {}, archived: true })
-                        show('已标记为放弃', 'success')
-                      }}
-                      style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: 'none', background: '#f59e0b', color: '#fff', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                    >放弃</button>
-                    <button
-                      onClick={() => {
-                        const sdc = { ...(s.suggestDismissCount || {}) }
-                        accs.forEach((a) => {
-                          const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
-                          keepSuggest(s.id, a, pub)
-                          sdc[a] = pub
-                        })
-                        updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
-                        show('已保留，再发5条未出单会再次提醒', 'success')
-                      }}
-                      style={{ flexShrink: 0, padding: '5px 10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
-                    >保留</button>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           </div>
         )
