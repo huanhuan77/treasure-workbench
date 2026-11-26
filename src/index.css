@@ -541,8 +541,5 @@ body.memo-mode select:focus {
 /* 年度备忘录顶栏 */
 .ym-head { position: relative; }
 
-/* 年度备忘录：宽屏时同步按钮放在标题左侧留白区（不跟标题挤一起），窄屏回到流内 */
+/* 年度备忘录：同步按钮 + 上次同步时间独占一行，不再绝对定位压在标题上 */
 .ym-sync-slot { display: flex; flex-direction: row; align-items: center; gap: 8px; }
-@media (min-width: 1280px) {
-  .ym-sync-slot { position: absolute; left: 120px; top: 16px; z-index: 2; }
-}
