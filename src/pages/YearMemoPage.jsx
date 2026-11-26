@@ -219,7 +219,18 @@ export default function YearMemoPage() {
       {/* 顶栏 */}
       <div style={{ background: G.head, color: '#fff', padding: '14px 20px' }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <button
+            onClick={doSync}
+            disabled={syncBusy}
+            title="与云端 Gist 双向合并（按天取更新的那份）"
+            style={{
+              background: syncBusy ? 'rgba(255,255,255,0.25)' : '#fff', color: G.head, border: 'none',
+              borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 800,
+              cursor: syncBusy ? 'default' : 'pointer',
+            }}
+          >{syncBusy ? '同步中…' : '☁ 同步'}</button>
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{year} 年 · 年度备忘录</div>
+          <span style={{ fontSize: 12, opacity: 0.78 }}>{lastSyncText}</span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => setYear((y) => y - 1)} style={topBtn}>‹ {year - 1}</button>
             <button onClick={() => setYear((y) => y + 1)} style={topBtn}>{year + 1} ›</button>
@@ -256,16 +267,9 @@ export default function YearMemoPage() {
             <span style={{ fontSize: 12, color: G.muted }}>
               本月记了 {Object.keys(memo).filter((k) => k.startsWith(`${year}-${pad2(month + 1)}`)).length} 天
             </span>
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 11.5, color: G.muted }}>{lastSyncText}</span>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
               <button onClick={goPrevMonth} style={{ ...topBtn, background: '#f2f6ec', color: G.head, border: `1px solid ${G.line}` }}>‹ 上一月</button>
               <button onClick={goNextMonth} style={{ ...topBtn, background: '#f2f6ec', color: G.head, border: `1px solid ${G.line}` }}>下一月 ›</button>
-              <button
-                onClick={doSync}
-                disabled={syncBusy}
-                title="与云端 Gist 双向合并（按天取更新的那份）"
-                style={{ background: syncBusy ? '#9db894' : G.accent, color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 700, cursor: syncBusy ? 'default' : 'pointer' }}
-              >{syncBusy ? '同步中…' : '☁ 同步'}</button>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: G.weekHead }}>
