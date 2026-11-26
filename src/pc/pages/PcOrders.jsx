@@ -6,7 +6,7 @@ import { OrderDialog } from '../components/OrderDialog'
 import { ResetButton } from '../components/ResetButton'
 import QtyDetailModal from '../components/QtyDetailModal'
 import { dateBounds } from '../../components/DateFilterBar'
-import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, maskAccount, cleanAccountOption } from '../../utils/accounts'
 
 const RANGES = [
   { key: '', label: '全部' },
@@ -144,7 +144,7 @@ export function PcOrders() {
           return [...m.entries()].sort((p, q) => q[1] - p[1] || rank(p[0]) - rank(q[0]))
         })(),
         latest: entries.find((e) => e.date)?.date || '',
-        accounts: [...new Set(entries.map((e) => e.account).filter(Boolean))],
+        accounts: [...new Set(entries.map((e) => cleanAccountOption(e.account)).filter(Boolean))],
       })
     }
     const byDate = (a, b) => {
@@ -171,7 +171,7 @@ export function PcOrders() {
   }, [filtered, sortKey])
 
   const accountOptions = useMemo(
-    () => [...new Set((orders || []).map((o) => o.account).filter(Boolean))],
+    () => [...new Set((orders || []).map((o) => cleanAccountOption(o.account)).filter(Boolean))],
     [orders],
   )
 

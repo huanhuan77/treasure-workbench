@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
-import { ACCOUNTS, getAccounts, maskAccount } from '../../utils/accounts'
+import { ACCOUNTS, getAccounts, maskAccount, cleanAccountOption } from '../../utils/accounts'
 import { recordQty } from '../../utils/helpers'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
@@ -196,7 +196,7 @@ export function PcPublishRecords() {
 
   const accountOptions = useMemo(() => {
     const set = new Set()
-    for (const r of records) for (const a of (r.accounts || [])) set.add(a)
+    for (const r of records) for (const a of (r.accounts || [])) { const n = cleanAccountOption(a); if (n) set.add(n) }
     return [...set]
   }, [records])
 

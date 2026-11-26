@@ -5,6 +5,7 @@ import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
 import { formatDate } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
+import { cleanAccountOption } from '../utils/accounts'
 // 分类表与 PC 端共用 utils/financeCategories（新增分类只改一处）
 import { CATEGORIES } from '../utils/financeCategories'
 
@@ -45,7 +46,7 @@ export function FinancePage() {
   // 提取所有账号
   const accounts = useMemo(() => {
     const set = new Set()
-    transactions.forEach((t) => { if (t.account) set.add(t.account) })
+    transactions.forEach((t) => { const n = cleanAccountOption(t.account); if (n) set.add(n) })
     return [...set]
   }, [transactions])
 

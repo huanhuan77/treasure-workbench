@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { OrderFormModal } from '../components/OrderFormModal'
 import { ConfirmModal } from '../components/Modal'
-import { ACCOUNTS, ACCOUNT_COLOR } from '../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, cleanAccountOption } from '../utils/accounts'
 import { ProductOrdersSheet } from '../components/ProductOrdersSheet'
 import { DraggableFab } from '../components/DraggableFab'
 import { DateFilterBar, dateBounds } from '../components/DateFilterBar'
@@ -114,7 +114,7 @@ export function OrdersPage() {
         count: entries.length,
         qty: entries.reduce((s, e) => s + (Number(e.qty) || 0), 0),
         latest: entries.find((e) => e.date)?.date || '',
-        accounts: [...new Set(entries.map((e) => e.account).filter(Boolean))],
+        accounts: [...new Set(entries.map((e) => cleanAccountOption(e.account)).filter(Boolean))],
         // 每个号各出了多少单：按单量降序（用户要求「哪个号出的多一目了然」）
         qtyByAccount: (() => {
           const m = new Map()

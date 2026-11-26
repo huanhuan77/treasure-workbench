@@ -3,6 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
+import { cleanAccountOption } from '../../utils/accounts'
 import { CATEGORIES } from '../../utils/financeCategories'
 import { ResetButton } from '../components/ResetButton'
 
@@ -61,7 +62,7 @@ export function PcFinance() {
 
   const accounts = useMemo(() => {
     const set = new Set()
-    for (const t of transactions || []) if (t.account) set.add(t.account)
+    for (const t of transactions || []) { const n = cleanAccountOption(t.account); if (n) set.add(n) }
     return [...set]
   }, [transactions])
 

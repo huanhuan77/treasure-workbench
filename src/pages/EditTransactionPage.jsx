@@ -4,6 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { CATEGORIES, INCOME_TYPES, EXPENSE_TYPES } from '../utils/financeCategories'
+import { cleanAccountOption } from '../utils/accounts'
 
 // 分类表与 PC 端共用 utils/financeCategories（新增分类只改一处）
 
@@ -31,7 +32,7 @@ export function EditTransactionPage() {
   }
 
   const types = type === 'income' ? INCOME_TYPES : EXPENSE_TYPES
-  const accounts = [...new Set(transactions.filter(t => t.account).map(t => t.account))]
+  const accounts = [...new Set(transactions.filter(t => t.account).map(t => cleanAccountOption(t.account)).filter(Boolean))]
 
   const handleSave = () => {
     if (!amount || Number(amount) <= 0) { show('请输入金额', 'error'); return }

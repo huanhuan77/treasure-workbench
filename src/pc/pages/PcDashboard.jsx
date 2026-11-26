@@ -6,7 +6,7 @@ import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 
 import { daysSincePublishByAccount, reminderAccounts, hotPendingAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
-import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount, mapAccount } from '../../utils/accounts'
+import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount, mapAccount, cleanAccountOption } from '../../utils/accounts'
 import { todayStr } from '../../utils/helpers'
 import { SAMPLE_STATUS, getTopStatus } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
@@ -287,7 +287,7 @@ export function PcDashboard() {
 
   // 「隐藏账号」= 名字打星号（用户明确「是账号显示星号，不是筛选」）：
   // 不再从列表里剔除，数据照旧显示，只是把账号名换成「广****」这个样子。
-  const visAcc = useCallback((arr) => (arr || []), [])
+  const visAcc = useCallback((arr) => (arr || []).map(cleanAccountOption).filter(Boolean), [])
   const maskAcc = useCallback((a) => maskAccount(a, hiddenAccounts), [hiddenAccounts])
 
   const items = useMemo(

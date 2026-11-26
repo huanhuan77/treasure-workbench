@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
-import { ACCOUNTS, ACCOUNT_COLOR, maskAccount, isVideoAccount } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, maskAccount, isVideoAccount, cleanAccountOption } from '../../utils/accounts'
 import {
   SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter,
   getAccounts, getCounts, getTopStatus,
@@ -48,7 +48,7 @@ export function PcSamples() {
   const { samples, orders, hiddenAccounts, addPublishRecord } = useStore()
   const { show } = useToast()
   // 「隐藏账号」= 名字打星号，不筛选（用户明确「是账号显示星号，不是筛选」）
-  const visAcc = useCallback((arr) => (arr || []), [])
+  const visAcc = useCallback((arr) => (arr || []).map(cleanAccountOption).filter(Boolean), [])
   const [keyword, setKeyword] = useState('')
   const [filter, setFilter] = useState('all')
   const [accountFilter, setAccountFilter] = useState('all')

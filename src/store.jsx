@@ -3137,6 +3137,7 @@ function renameAccounts(d) {
     if (s.suggestDismissCount) out.suggestDismissCount = remapFlagMap(s.suggestDismissCount)
     if (s.abandonDismissedByAccount) out.abandonDismissedByAccount = remapFlagMap(s.abandonDismissedByAccount)
     if (s.autoAbandonedByAccount) out.autoAbandonedByAccount = remapFlagMap(s.autoAbandonedByAccount)
+    if (s.accountReminderDays) out.accountReminderDays = remapFlagMap(s.accountReminderDays)
     if (Array.isArray(s.publishHistory)) {
       out.publishHistory = s.publishHistory.map((h) => h && Array.isArray(h.accounts)
         ? { ...h, accounts: cleanAccountList(h.accounts) } : h)
@@ -3156,6 +3157,7 @@ function renameAccounts(d) {
     publishRecords: (d.publishRecords || []).map(fixRec),
     publishPlans: (d.publishPlans || []).map(fixRec),
     transactions: (d.transactions || []).map((t) => (t ? { ...t, account: cleanSingle(t.account) } : t)),
+    adQueue: (d.adQueue || []).map(fixRec),
   }
 }
 

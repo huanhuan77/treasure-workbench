@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount, cleanAccountOption } from '../../utils/accounts'
 import { getCounts, hasPublished, isArchivedSample } from '../../utils/sampleStatus'
 import { recordQty } from '../../utils/helpers'
 
@@ -55,7 +55,7 @@ export function AdQueueCard() {
 
   // 只列卡里真实出现过的账号（按 ACCOUNTS 固定顺序，未在册的排后面）
   const accOptions = useMemo(() => {
-    const set = new Set(visible.map((a) => a.account).filter(Boolean))
+    const set = new Set(visible.map((a) => cleanAccountOption(a.account)).filter(Boolean))
     return [...set].sort((x, y) => {
       const ix = ACCOUNTS.indexOf(x)
       const iy = ACCOUNTS.indexOf(y)
@@ -133,7 +133,7 @@ export function AdQueueCard() {
 
   // 候选里出现过的账号（按 ACCOUNTS 顺序，未在册的排后面）
   const accountOptions = useMemo(() => {
-    const set = new Set(options.map((o) => o.account).filter(Boolean))
+    const set = new Set(options.map((o) => cleanAccountOption(o.account)).filter(Boolean))
     return [...set].sort((x, y) => {
       const ix = ACCOUNTS.indexOf(x)
       const iy = ACCOUNTS.indexOf(y)

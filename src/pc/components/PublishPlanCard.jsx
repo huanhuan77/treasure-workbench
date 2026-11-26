@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { PLAN_ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount } from '../../utils/accounts'
+import { PLAN_ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount, cleanAccountOption } from '../../utils/accounts'
 import { isArchivedSample } from '../../utils/sampleStatus'
 import { AccountTabs } from './AccountTabs'
 
@@ -85,7 +85,7 @@ export function PublishPlanCard() {
   // 否则新建视频号计划前根本点不到这个 tab。
   const accOptions = useMemo(() => {
     const set = new Set(PLAN_ACCOUNTS)
-    for (const p of list) if (p.account) set.add(p.account)
+    for (const p of list) { const a = cleanAccountOption(p.account); if (a) set.add(a) }
     return [...set].sort((x, y) => {
       const ix = PLAN_ACCOUNTS.indexOf(x)
       const iy = PLAN_ACCOUNTS.indexOf(y)
