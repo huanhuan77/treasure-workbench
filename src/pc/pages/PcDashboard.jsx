@@ -712,6 +712,7 @@ export function PcDashboard() {
 
           </div>{/* /pcv-3col */}
 
+          <div className="pcv-3col pcv-abwrap">
           {/* 自动放弃提醒：最后出单后又发满 N 条未出单，已被系统自动置为放弃（可恢复） */}
           {autoAbandoned.length > 0 && (
             <div className="pcv-card">
@@ -804,6 +805,7 @@ export function PcDashboard() {
               </div>
             </div>
           )}
+          </div>
 
           {/* 提醒中心：Tab 与账号筛选合并到卡头同一行（原来分两行，白占一层高度） */}
           <div className="pcv-card" id="reminder-center">
