@@ -658,31 +658,33 @@ export function PcDashboard() {
                 <span>未出单已自动放弃</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 8px', borderRadius: '8px' }}>{autoAbandoned.length}</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="pcv-ablist">
                 {autoAbandoned.map((s) => {
                   const abandonedAccs = getAutoAbandonedAccounts(s)
                   return (
-                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #fecaca', borderRadius: 10, padding: '9px 12px' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <div key={s.id} className="pcv-abrow pcv-abrow--danger">
+                      <div className="pcv-abmain">
+                        <div className="pcv-abtitle">
                           {abandonedAccs.map((a) => {
                             const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
                             return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
                           })}
-                          <span style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{s.name}</span>
+                          <span className="pcv-abname">{s.name}</span>
                         </div>
-                        <div style={{ fontSize: 12, color: '#ef4444', marginTop: 3, fontWeight: 600 }}>最后出单后又发了5条未出单 → 已自动放弃</div>
+                        <div className="pcv-absub pcv-absub--danger">最后出单后又发了5条未出单 → 已自动放弃</div>
                       </div>
-                      <button
-                        className="pcv-btn"
-                        onClick={() => {
-                          const execByAccount = { ...(s.execByAccount || {}) }
-                          abandonedAccs.forEach((a) => { execByAccount[a] = 'published' })
-                          updateSample(s.id, { execByAccount })
-                          show('已恢复为「已发布」，不再自动放弃', 'success')
-                        }}
-                        style={{ flexShrink: 0, border: '1px solid #fecdd3', background: '#fff', color: '#e11d48' }}
-                      >恢复</button>
+                      <div className="pcv-abactions">
+                        <button
+                          className="pcv-btn"
+                          onClick={() => {
+                            const execByAccount = { ...(s.execByAccount || {}) }
+                            abandonedAccs.forEach((a) => { execByAccount[a] = 'published' })
+                            updateSample(s.id, { execByAccount })
+                            show('已恢复为「已发布」，不再自动放弃', 'success')
+                          }}
+                          style={{ border: '1px solid #fecdd3', background: '#fff', color: '#e11d48' }}
+                        >恢复</button>
+                      </div>
                     </div>
                   )
                 })}
@@ -697,43 +699,45 @@ export function PcDashboard() {
                 <span>建议放弃</span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 8px', borderRadius: '8px' }}>{suggested.length}</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="pcv-ablist">
                 {suggested.map(({ s, accs }) => (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #fde68a', borderRadius: 10, padding: '9px 12px' }}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <div key={s.id} className="pcv-abrow pcv-abrow--warn">
+                    <div className="pcv-abmain">
+                      <div className="pcv-abtitle">
                         {accs.map((a) => {
                           const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
                           return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
                         })}
-                        <span style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{s.name}</span>
+                        <span className="pcv-abname">{s.name}</span>
                       </div>
-                      <div style={{ fontSize: 12, color: '#f59e0b', marginTop: 3, fontWeight: 600 }}>发了5条还没出单，要放弃吗？</div>
+                      <div className="pcv-absub pcv-absub--warn">发了5条还没出单，要放弃吗？</div>
                     </div>
-                    <button
-                      className="pcv-btn"
-                      onClick={() => {
-                        const execByAccount = { ...(s.execByAccount || {}) }
-                        accs.forEach((a) => { execByAccount[a] = 'abandoned' })
-                        updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {}, archived: true })
-                        show('已标记为放弃', 'success')
-                      }}
-                      style={{ flexShrink: 0, border: 'none', background: '#f59e0b', color: '#fff' }}
-                    >放弃</button>
-                    <button
-                      className="pcv-btn"
-                      onClick={() => {
-                        const sdc = { ...(s.suggestDismissCount || {}) }
-                        accs.forEach((a) => {
-                          const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
-                          keepSuggest(s.id, a, pub)
-                          sdc[a] = pub
-                        })
-                        updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
-                        show('已保留，再发5条未出单会再次提醒', 'success')
-                      }}
-                      style={{ flexShrink: 0, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b' }}
-                    >保留</button>
+                    <div className="pcv-abactions">
+                      <button
+                        className="pcv-btn"
+                        onClick={() => {
+                          const execByAccount = { ...(s.execByAccount || {}) }
+                          accs.forEach((a) => { execByAccount[a] = 'abandoned' })
+                          updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {}, archived: true })
+                          show('已标记为放弃', 'success')
+                        }}
+                        style={{ border: 'none', background: '#f59e0b', color: '#fff' }}
+                      >放弃</button>
+                      <button
+                        className="pcv-btn"
+                        onClick={() => {
+                          const sdc = { ...(s.suggestDismissCount || {}) }
+                          accs.forEach((a) => {
+                            const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
+                            keepSuggest(s.id, a, pub)
+                            sdc[a] = pub
+                          })
+                          updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
+                          show('已保留，再发5条未出单会再次提醒', 'success')
+                        }}
+                        style={{ border: '1px solid #e2e8f0', background: '#fff', color: '#64748b' }}
+                      >保留</button>
+                    </div>
                   </div>
                 ))}
               </div>
