@@ -3,6 +3,16 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
+// 首屏兜底脚本重试时会临时给 URL 加 ?r=<时间戳> 绕过 CDN/浏览器对 index.html 的缓存。
+// 资源加载起来后立刻把它抹掉，地址栏干净、分享链接也不带脏参数。
+try {
+  const u = new URL(window.location.href)
+  if (u.searchParams.has('r')) {
+    u.searchParams.delete('r')
+    window.history.replaceState(null, '', u.pathname + (u.search ? u.search : '') + (u.hash || ''))
+  }
+} catch (e) { /* 忽略 */ }
+
 // 全局错误边界：页面渲染出错时显示错误信息而不是白屏
 class ErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null } }
