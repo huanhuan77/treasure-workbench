@@ -4,7 +4,6 @@
 // · 数据独立存 localStorage.year_memo_v1，同时纳入云备份 KEYS
 //   { '2026-01-04': ['约了闺蜜逛街', '…'] }
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 const KEY = 'year_memo_v1'
 const MAX_PER_DAY = 5
@@ -51,7 +50,6 @@ function buildCells(year, month) {
 }
 
 export default function YearMemoPage() {
-  const navigate = useNavigate()
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [memo, setMemo] = useState(loadMemo)
@@ -59,6 +57,15 @@ export default function YearMemoPage() {
   const [draft, setDraft] = useState('')
   const inputRef = useRef(null)
   const today = todayStr()
+
+  // 窄屏（手机）上格子只有 50 多像素宽，就地输入没法用 → 点整格弹出「当天」编辑弹窗
+  const [narrow, setNarrow] = useState(() => (typeof window === 'undefined' ? false : window.innerWidth < 768))
+  const [dayModal, setDayModal] = useState(null) // 正在弹窗编辑的日期 'YYYY-MM-DD'
+  useEffect(() => {
+    const onResize = () => setNarrow(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   // 独立页：挂上 memo-mode 去掉工作台的侧边栏留白与粉色底
   useEffect(() => {
@@ -177,10 +184,6 @@ export default function YearMemoPage() {
       {/* 顶栏 */}
       <div style={{ background: G.head, color: '#fff', padding: '14px 20px' }}>
         <div style={{ maxWidth: 1240, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <button
-            onClick={() => navigate('/pc')}
-            style={{ background: 'rgba(255,255,255,0.14)', color: '#fff', border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 13, cursor: 'pointer' }}
-          >← 回工作台</button>
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{year} 年 · 年度备忘录</div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => setYear((y) => y - 1)} style={topBtn}>‹ {year - 1}</button>
@@ -228,9 +231,10 @@ export default function YearMemoPage() {
                   return (
                     <div
                       key={cell.date}
+                      onClick={narrow ? () => setDayModal(cell.date) : undefined}
                       style={{
                         minHeight: 108, padding: '5px 7px 6px', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}`,
-                        background: isToday ? G.todayBg : '#fff',
+                        background: isToday ? G.todayBg : '#fff', cursor: narrow ? 'pointer' : 'default',
                       }}
                     >
                       <div style={{ fontSize: 12, fontWeight: 700, color: isToday ? G.head : '#9aa393', marginBottom: 3 }}>
@@ -242,7 +246,9 @@ export default function YearMemoPage() {
                         return (
                           <div
                             key={idx}
-                            onClick={() => startEdit(cell.date, idx)}
+                            onClick={(e) => {
+                              if (narrow) { e.stopPropagation(); setDayModal(cell.date) } else startEdit(cell.date, idx)
+                            }}
                             title={t}
                             style={{ fontSize: 11.5, lineHeight: 1.35, color: G.text, cursor: 'text', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                           >
@@ -258,7 +264,9 @@ export default function YearMemoPage() {
 
                       {items.length < MAX_PER_DAY && !isEditingDay && (
                         <button
-                          onClick={() => startAdd(cell.date)}
+                          onClick={(e) => {
+                            if (narrow) { e.stopPropagation(); setDayModal(cell.date) } else startAdd(cell.date)
+                          }}
                           style={{ border: 'none', background: 'transparent', color: '#b6c3ac', fontSize: 11.5, cursor: 'pointer', padding: 0, lineHeight: 1.4 }}
                         >＋ 添加</button>
                       )}
@@ -273,6 +281,80 @@ export default function YearMemoPage() {
           建议在电脑上填写；手机上左右滑动查看。数据存本机，已纳入「备份与同步」。
         </div>
       </div>
+
+      {/* 手机端「当天」编辑弹窗：点格子任意位置/open 即可增删改 */}
+      {dayModal && (() => {
+        const items = listOf(dayModal)
+        const d = new Date(`${dayModal}T00:00:00`)
+        const label = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · ${WEEK_LABEL[(d.getDay() + 6) % 7]}`
+        const setItem = (i, v) => {
+          const cur = [...items]
+          cur[i] = v
+          writeDay(dayModal, cur)
+        }
+        const del = (i) => {
+          const cur = [...items]
+          cur.splice(i, 1)
+          writeDay(dayModal, cur)
+        }
+        const add = () => {
+          if (items.length >= MAX_PER_DAY) return
+          writeDay(dayModal, [...items, ''])
+        }
+        const close = () => {
+          writeDay(dayModal, items.map((t) => t.trim()).filter(Boolean))
+          setDayModal(null)
+        }
+        return (
+          <div
+            onClick={close}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(28,42,26,0.45)', zIndex: 50, display: 'flex', alignItems: 'flex-end' }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', background: '#fff', borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: '18px 18px calc(18px + env(safe-area-inset-bottom))', maxHeight: '82vh', overflowY: 'auto' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
+                <div style={{ fontSize: 17, fontWeight: 800, color: G.head }}>{label}</div>
+                <div style={{ fontSize: 12, color: G.muted, marginLeft: 'auto' }}>{items.length} / {MAX_PER_DAY} 条</div>
+              </div>
+
+              {items.map((t, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontSize: 12, color: '#a9b3a0', paddingTop: 9, minWidth: 16 }}>{i + 1}.</span>
+                  <textarea
+                    value={t}
+                    onChange={(e) => setItem(i, e.target.value)}
+                    rows={1}
+                    placeholder="写点什么…"
+                    style={{
+                      flex: 1, minWidth: 0, fontSize: 15, lineHeight: 1.5, padding: '8px 10px',
+                      border: `1.5px solid ${G.line}`, borderRadius: 10, outline: 'none', resize: 'none',
+                      background: '#fbfdf8', color: G.text, fontFamily: 'inherit',
+                    }}
+                  />
+                  <button
+                    onClick={() => del(i)}
+                    style={{ border: 'none', background: '#fdecea', color: '#c0392b', borderRadius: 8, fontSize: 13, padding: '8px 10px', marginTop: 2 }}
+                  >删</button>
+                </div>
+              ))}
+
+              {items.length < MAX_PER_DAY && (
+                <button
+                  onClick={add}
+                  style={{ width: '100%', border: `1.5px dashed ${G.line}`, background: '#fbfdf8', color: G.accent, borderRadius: 10, padding: '10px 0', fontSize: 14, fontWeight: 700, marginBottom: 12 }}
+                >＋ 新增一条</button>
+              )}
+
+              <button
+                onClick={close}
+                style={{ width: '100%', background: G.accent, color: '#fff', border: 'none', borderRadius: 10, padding: '12px 0', fontSize: 15, fontWeight: 800 }}
+              >完成</button>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
