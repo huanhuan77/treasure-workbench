@@ -3398,7 +3398,7 @@ function loadData() {
     )
     // 一次性订正：补录记录(legacy)日期统一到 2026-09-01（须在 restore 之后，覆盖其按截止日还原的未来日期）
     const unified = unifyLegacyPublishDate(legacyFixed)
-    const aggregated = aggregatePublish(migrated.samples, unified)
+    const aggregated = aggregatePublish(backfillOrderLastAt(migrated.samples, migrated.orders), unified)
     // 一次性补齐：「新增发布记录→自动置为已发布」这条规则上线前记的历史发布记录不会回溯，
     // 导致部分已发过视频的样品仍停在「已拍摄」。此处启动时扫一遍补正，仅执行一次。
     const backfilled = backfillPublishedStatus(aggregated)
@@ -3852,6 +3852,40 @@ function buildPublishIndex(samples, records) {
   return { byId, byName }
 }
 
+// 从出单台账回填各账号「最后出单日期」：老数据 countsByAccount 里缺这个字段，
+// 会导致「出单后又发几条」算不准、进而把出过单的老爆款误判自动放弃。只补空值，不覆盖更新的日期。
+function backfillOrderLastAt(samples, orders) {
+  if (!Array.isArray(orders) || !orders.length) return samples || []
+  const latest = {}
+  for (const o of orders) {
+    if (!o || !o.sampleId) continue
+    const acc = mapAccount(o.account) || ''
+    const date = String(o.date || '')
+    if (!date) continue
+    if (!latest[o.sampleId]) latest[o.sampleId] = {}
+    if (acc) {
+      if (!latest[o.sampleId][acc] || date > latest[o.sampleId][acc]) latest[o.sampleId][acc] = date
+    } else if (!latest[o.sampleId].__any || date > latest[o.sampleId].__any) {
+      latest[o.sampleId].__any = date
+    }
+  }
+  return (samples || []).map((s) => {
+    const m = latest[s.id]
+    if (!m) return s
+    const countsByAccount = { ...(s.countsByAccount || {}) }
+    let changed = false
+    for (const a of getAccounts(s)) {
+      const prev = countsByAccount[a] || {}
+      const at = m[a] || m.__any || ''
+      if (at && !prev.lastOrderAt) {
+        countsByAccount[a] = { ...prev, lastOrderAt: at }
+        changed = true
+      }
+    }
+    return changed ? { ...s, countsByAccount } : s
+  })
+}
+
 // 由发布记录重算样品按账号统计（发布条数/最近发布），并同步顶层聚合字段，纯函数
 function aggregatePublish(samples, records) {
   const { byId, byName } = buildPublishIndex(samples, records)
@@ -3881,13 +3915,11 @@ function aggregatePublish(samples, records) {
         const c = perAcct[a]
         const prev = countsByAccount[a] || {}
         const lastOrderAt = prev.lastOrderAt || ''
-        // 统计最后出单日期之后发了多少条
+        // 统计最后出单日期之后发了多少条；缺最后出单日期时保守记 0，不用总发布数兜底
         const sortedDates = c.dates.filter(Boolean).sort()
         let sinceOrder = 0
         if (lastOrderAt) {
           sinceOrder = sortedDates.filter((d) => d > lastOrderAt).length
-        } else {
-          sinceOrder = c.count  // 从未出过单，全部算
         }
         countsByAccount[a] = {
           publishCount: c.count,
@@ -3966,10 +3998,16 @@ export function recomputeSamplePublishPure(samples, records) {
       for (const a of accounts) {
         const pc = perAcct[a]
         const dates = pc ? pc.dates.filter(Boolean).sort() : []
+        const prev = countsByAccount[a] || {}
+        const lastOrderAt = prev.lastOrderAt || ''
+        // 最后出单日期之后发了几条；缺最后出单日期时保守记 0，不能拿总发布数兜底（否则出过单的老爆款会被误判自动放弃）
+        const sinceOrder = lastOrderAt ? dates.filter((d) => d > lastOrderAt).length : 0
         countsByAccount[a] = {
           publishCount: pc ? pc.count : 0,
-          orderCount: Number(countsByAccount[a]?.orderCount) || 0,
+          orderCount: Number(prev.orderCount) || 0,
           lastPublishAt: dates.slice(-1)[0] || '',
+          lastOrderAt,
+          publishesSinceLastOrder: sinceOrder,
         }
         changed = true
       }
@@ -3983,6 +4021,8 @@ export function recomputeSamplePublishPure(samples, records) {
           publishCount: 0,
           orderCount: Number(prev.orderCount) || 0,
           lastPublishAt: '',
+          lastOrderAt: prev.lastOrderAt || '',
+          publishesSinceLastOrder: 0,
         }
         changed = true
       }
@@ -4233,7 +4273,8 @@ export function StoreProvider({ children }) {
         const c = s.countsByAccount?.[a]
         const pub = Number(c?.publishCount) || 0
         const ord = Number(c?.orderCount) || 0
-        const sinceOrder = Number(c?.publishesSinceLastOrder) ?? pub
+        // 出单后发布条数；字段缺失时保守记 0，不用总发布数兜底，避免信息不全误杀出过单的样品
+        const sinceOrder = Number(c?.publishesSinceLastOrder) || 0
         if (ord > 0 && sinceOrder >= AUTO_ABANDON_PUBLISH_COUNT) {
           // 出过单后又发满N条没新单 → 自动放弃
           execByAccount[a] = 'abandoned'
