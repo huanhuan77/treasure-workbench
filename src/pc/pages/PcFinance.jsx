@@ -3,7 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
-import { cleanAccountOption } from '../../utils/accounts'
+import { ACCOUNTS } from '../../utils/accounts'
 import { CATEGORIES } from '../../utils/financeCategories'
 import { ResetButton } from '../components/ResetButton'
 
@@ -60,11 +60,8 @@ export function PcFinance() {
     setAccountsHidden(next)
   }
 
-  const accounts = useMemo(() => {
-    const set = new Set()
-    for (const t of transactions || []) { const n = cleanAccountOption(t.account); if (n) set.add(n) }
-    return [...set]
-  }, [transactions])
+  // 账号选项固定列全集（筛选与记流水表单共用），无流水的账号也能选
+  const accounts = ACCOUNTS
 
   const months = useMemo(() => {
     const set = new Set()
