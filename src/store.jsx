@@ -7,7 +7,7 @@ import { dedupeCopies, dedupeProducts } from './utils/dedupe'
 import { ACCOUNT_MAP, mapAccount, isLegacyAccount } from './utils/accounts'
 import {
   getAccounts, getExecStatus, getAggregateCounts, recomputeTopStatus,
-  normalizeSample, getLogistics, EXEC_STATUS,
+  normalizeSample, getLogistics, isArchivedSample, EXEC_STATUS,
 } from './utils/sampleStatus'
 
 const StoreContext = createContext(null)
@@ -4690,6 +4690,44 @@ export function StoreProvider({ children }) {
     }) }))
   }, [])
 
+  // 批量恢复「已归档但出过单」的样品：历史误把出过单的老爆款自动放弃归档，
+  // 此函数把这类样品移回在跟列表。出过单口径：出单台账有记录，或 countsByAccount 任一账号 orderCount>0。
+  const restoreOrderSamples = useCallback(() => {
+    let restored = 0
+    setData((d) => {
+      const orderIds = new Set((d.orders || []).map((o) => o && o.sampleId).filter(Boolean))
+      const samples = (d.samples || []).map((s) => {
+        const cb = s.countsByAccount || {}
+        const hasOrder = orderIds.has(s.id) || Object.values(cb).some((c) => (Number(c?.orderCount) || 0) > 0)
+        if (!isArchivedSample(s) || !hasOrder) return s
+        restored += 1
+        const accounts = getAccounts(s)
+        const execByAccount = { ...(s.execByAccount || {}) }
+        const countsByAccount = { ...cb }
+        for (const a of accounts) {
+          const c = countsByAccount[a] || {}
+          const pub = Number(c.publishCount) || 0
+          execByAccount[a] = pub > 0 ? 'published' : null
+        }
+        const next = {
+          ...s,
+          status: 'shot',
+          archived: false,
+          execByAccount,
+          countsByAccount,
+          autoAbandoned: false,
+          autoAbandonedByAccount: {},
+          suggestAbandonedByAccount: {},
+          abandonDismissedByAccount: {},
+        }
+        next.status = recomputeTopStatus(next)
+        return next
+      })
+      return { ...d, samples }
+    })
+    return restored
+  }, [])
+
   // ── 独立出单台账 ──────────────────────────────────────
   const addOrder = useCallback((order) => {
     const now = Date.now()
@@ -5115,7 +5153,7 @@ export function StoreProvider({ children }) {
     setHiddenAccounts,
     addProduct, deleteProduct, updateProduct, reorderProducts, reorderSamples,
     addCopy, deleteCopy, updateCopy, addCopies, clearCopies,
-    addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics, restoreSample,
+    addSample, deleteSample, updateSample, setAccountExec, setSampleLogistics, restoreSample, restoreOrderSamples,
     addOrder, updateOrder, deleteOrder,
     addPublishRecord, deletePublishRecord, updatePublishRecord,
     addTransaction, deleteTransaction, updateTransaction,

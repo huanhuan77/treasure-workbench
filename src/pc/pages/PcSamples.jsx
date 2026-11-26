@@ -4,7 +4,7 @@ import { useStore } from '../../store'
 import { ACCOUNTS, ACCOUNT_COLOR, maskAccount, isVideoAccount, cleanAccountOption } from '../../utils/accounts'
 import {
   SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter,
-  getAccounts, getCounts, getTopStatus,
+  getAccounts, getCounts, getTopStatus, isArchivedSample,
 } from '../../utils/sampleStatus'
 import { deadlineDesc, copyText } from '../../utils/helpers'
 import { sampleDays } from '../../utils/publish'
@@ -45,7 +45,7 @@ const SORT_DEFAULT_DIR = { receiveDate: 'desc', deadline: 'asc' }
 // 这里只把「卡片 + 一堆彩色标签」重排成「筛选条 + 紧凑表格」。
 export function PcSamples() {
   const navigate = useNavigate()
-  const { samples, orders, hiddenAccounts, addPublishRecord, restoreSample } = useStore()
+  const { samples, orders, hiddenAccounts, addPublishRecord, restoreSample, restoreOrderSamples } = useStore()
   const { show } = useToast()
   // 「隐藏账号」= 名字打星号，不筛选（用户明确「是账号显示星号，不是筛选」）
   const visAcc = useCallback((arr) => (arr || []).map(cleanAccountOption).filter(Boolean), [])
@@ -110,6 +110,21 @@ export function PcSamples() {
     })
     show('已标记为已发布', 'success')
     setMarkTarget(null)
+  }
+
+  // 归档且出过单的样品（历史被误自动放弃的老爆款），可批量恢复回在跟列表。
+  const orderSampleIds = useMemo(() => new Set((orders || []).map((o) => o.sampleId).filter(Boolean)), [orders])
+  const restorableOrders = useMemo(() => samples.filter((s) => {
+    if (!isArchivedSample(s)) return false
+    if (orderSampleIds.has(s.id)) return true
+    const cb = s.countsByAccount || {}
+    return Object.values(cb).some((c) => (Number(c?.orderCount) || 0) > 0)
+  }), [samples, orderSampleIds])
+  const [batchOpen, setBatchOpen] = useState(false)
+  const confirmRestoreOrders = () => {
+    const n = restoreOrderSamples()
+    show(`已恢复 ${n} 个出过单的样品`, 'success')
+    setBatchOpen(false)
   }
 
   // 新增样品后**定位并高亮**那一行（用户反馈「新增样品没刷新列表」）：
@@ -356,6 +371,16 @@ export function PcSamples() {
             )
           })}
         </div>
+
+        {filter === 'abandoned' && restorableOrders.length > 0 && (
+          <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
+            <span style={{ fontSize: 13, color: '#b45309' }}>
+              有 {restorableOrders.length} 个出过单的样品被归入已放弃，可一键恢复回在跟列表。
+            </span>
+            <span style={{ flex: 1 }} />
+            <button className="pcv-btn" onClick={() => setBatchOpen(true)}>批量恢复出过单的样品</button>
+          </div>
+        )}
 
         {/* 账号筛选 + 是否出单筛选（排序入口已移到表头：点「收货日期」/「截止日期」列名） */}
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
@@ -701,6 +726,15 @@ export function PcSamples() {
         confirmText="标记已发"
         onClose={() => setMarkTarget(null)}
         onConfirm={confirmMarkPublished}
+      />
+
+      <ConfirmModal
+        open={batchOpen}
+        title="批量恢复出过单的样品"
+        message={`将把 ${restorableOrders.length} 个「已放弃但出过单」的样品恢复到在跟列表；仅恢复出过单的样品，未出单的已放弃样品保持不变。`}
+        confirmText="批量恢复"
+        onClose={() => setBatchOpen(false)}
+        onConfirm={confirmRestoreOrders}
       />
 
     </>
