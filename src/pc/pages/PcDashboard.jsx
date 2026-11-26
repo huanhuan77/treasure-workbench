@@ -6,9 +6,9 @@ import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 
 import { daysSincePublishByAccount, reminderAccounts, hotPendingAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
-import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount, mapAccount, cleanAccountOption } from '../../utils/accounts'
+import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount, mapAccount, cleanAccountOption, isLegacyAccount } from '../../utils/accounts'
 import { todayStr } from '../../utils/helpers'
-import { SAMPLE_STATUS, getTopStatus } from '../../utils/sampleStatus'
+import { SAMPLE_STATUS, getTopStatus, getAutoAbandonedAccounts, isArchivedSample, getExecStatus } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
 import { AdQueueCard } from '../components/AdQueueCard'
 import { PublishPlanCard } from '../components/PublishPlanCard'
@@ -92,7 +92,7 @@ export function PcDashboard() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { show } = useToast()
-  const { samples, todos, orders, publishPlans, hiddenAccounts, setHiddenAccounts, updateTodo } = useStore()
+  const { samples, todos, orders, publishPlans, hiddenAccounts, setHiddenAccounts, updateTodo, updateSample } = useStore()
   const [tab, setTab] = useState('hot')   // 默认「高频出单」（与手机端一致）
   const [lowLt5, setLowLt5] = useState(false)  // 发布不足10 tab：只看已发<5条
   const [account, setAccount] = useState('')
@@ -107,6 +107,44 @@ export function PcDashboard() {
   // 「补记发布」入口已按用户要求去掉（总览不再用 PublishDialog，记录发布走「视频发布记录」页）
 
   const all = useMemo(() => selectAllReminders(samples, orders), [samples, orders])
+
+  // ── 建议放弃 / 自动放弃（与手机总览同一口径）──────────────────────
+  // 点过「保留」后不再弹，直到该账号又发满 5 条；记录在 localStorage
+  const [keptSuggest, setKeptSuggest] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('dash_suggest_kept') || '{}') } catch { return {} }
+  })
+  const keepSuggest = (sampleId, account, pubCount) => {
+    setKeptSuggest((prev) => {
+      const next = { ...prev, [`${sampleId}_${account}`]: pubCount }
+      try { localStorage.setItem('dash_suggest_kept', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+
+  // 建议放弃：从没出单发满 5 条，问用户要不要放弃；排除已归档样品与账号级已放弃
+  const suggested = useMemo(() => (samples || [])
+    .map((s) => {
+      if (isArchivedSample(s)) return { s, accs: [] }
+      const accs = Object.keys(s.suggestAbandonedByAccount || {})
+        .map((a) => ({ raw: a, norm: mapAccount(a) }))
+        .filter((x) => x.norm && !isLegacyAccount(x.norm) && s.suggestAbandonedByAccount[x.raw])
+        .filter((x) => getExecStatus(s, x.norm) !== 'abandoned')
+        .filter((x) => {
+          const keptAt = keptSuggest[`${s.id}_${x.norm}`]
+          if (keptAt == null) return true
+          const pub = Number(s.countsByAccount?.[x.norm]?.publishCount) || 0
+          return pub - Number(keptAt) >= 5
+        })
+        .map((x) => x.norm)
+      return { s, accs }
+    })
+    .filter((x) => x.accs.length > 0), [samples, keptSuggest])
+
+  // 自动放弃：发布满 10 条仍 0 出单、已被系统按账号自动置为「放弃」
+  const autoAbandoned = useMemo(
+    () => (samples || []).filter((s) => getAutoAbandonedAccounts(s).length > 0),
+    [samples],
+  )
 
   // 从样品页点「新建计划」跳过来：带参数自动打开计划弹窗
   useEffect(() => {
@@ -612,6 +650,95 @@ export function PcDashboard() {
           </div>
 
           </div>{/* /pcv-3col */}
+
+          {/* 自动放弃提醒：最后出单后又发满 N 条未出单，已被系统自动置为放弃（可恢复） */}
+          {autoAbandoned.length > 0 && (
+            <div className="pcv-card">
+              <div className="pcv-card-h">
+                <span>未出单已自动放弃</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 8px', borderRadius: '8px' }}>{autoAbandoned.length}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {autoAbandoned.map((s) => {
+                  const abandonedAccs = getAutoAbandonedAccounts(s)
+                  return (
+                    <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #fecaca', borderRadius: 10, padding: '9px 12px' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          {abandonedAccs.map((a) => {
+                            const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+                            return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
+                          })}
+                          <span style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{s.name}</span>
+                        </div>
+                        <div style={{ fontSize: 12, color: '#ef4444', marginTop: 3, fontWeight: 600 }}>最后出单后又发了5条未出单 → 已自动放弃</div>
+                      </div>
+                      <button
+                        className="pcv-btn"
+                        onClick={() => {
+                          const execByAccount = { ...(s.execByAccount || {}) }
+                          abandonedAccs.forEach((a) => { execByAccount[a] = 'published' })
+                          updateSample(s.id, { execByAccount })
+                          show('已恢复为「已发布」，不再自动放弃', 'success')
+                        }}
+                        style={{ flexShrink: 0, border: '1px solid #fecdd3', background: '#fff', color: '#e11d48' }}
+                      >恢复</button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 建议放弃：从没出单发满 5 条，问用户要不要放弃（与手机总览同一口径） */}
+          {suggested.length > 0 && (
+            <div className="pcv-card">
+              <div className="pcv-card-h">
+                <span>建议放弃</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 8px', borderRadius: '8px' }}>{suggested.length}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {suggested.map(({ s, accs }) => (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid #fde68a', borderRadius: 10, padding: '9px 12px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        {accs.map((a) => {
+                          const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+                          return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
+                        })}
+                        <span style={{ fontSize: 14, fontWeight: 600, color: '#111' }}>{s.name}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: '#f59e0b', marginTop: 3, fontWeight: 600 }}>发了5条还没出单，要放弃吗？</div>
+                    </div>
+                    <button
+                      className="pcv-btn"
+                      onClick={() => {
+                        const execByAccount = { ...(s.execByAccount || {}) }
+                        accs.forEach((a) => { execByAccount[a] = 'abandoned' })
+                        updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {}, archived: true })
+                        show('已标记为放弃', 'success')
+                      }}
+                      style={{ flexShrink: 0, border: 'none', background: '#f59e0b', color: '#fff' }}
+                    >放弃</button>
+                    <button
+                      className="pcv-btn"
+                      onClick={() => {
+                        const sdc = { ...(s.suggestDismissCount || {}) }
+                        accs.forEach((a) => {
+                          const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
+                          keepSuggest(s.id, a, pub)
+                          sdc[a] = pub
+                        })
+                        updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
+                        show('已保留，再发5条未出单会再次提醒', 'success')
+                      }}
+                      style={{ flexShrink: 0, border: '1px solid #e2e8f0', background: '#fff', color: '#64748b' }}
+                    >保留</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 提醒中心：Tab 与账号筛选合并到卡头同一行（原来分两行，白占一层高度） */}
           <div className="pcv-card">
