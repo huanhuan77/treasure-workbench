@@ -181,13 +181,13 @@ export function AdQueueCard() {
   return (
     <>
       <div className="pcv-card">
-        <div className="pcv-card-h">
-          <span>待投流</span>
+        <div className="pcv-card-h" style={{ flexWrap: 'wrap', rowGap: 8 }}>
+          <span style={{ whiteSpace: 'nowrap' }}>待投流</span>
           {list.length > 0 && (
             <span className="pcv-chip" style={{ background: '#fef3c7', color: '#b45309' }}>{pendingCount} 待投</span>
           )}
           {/* 条数只算列表里看得到的（已投流的不算，否则「共 3 条」但只显示 2 行） */}
-          <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {accFiltered.length} 条</span>
+          <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8', whiteSpace: 'nowrap' }}>共 {accFiltered.length} 条</span>
           {/* 「＋ 添加」紧跟标题（用户要求）：与上面「待办清单」卡头的「新增」同一位置，
               原来用 spacer 顶到最右端，中间空出一大片 */}
           <button
@@ -219,7 +219,7 @@ export function AdQueueCard() {
             const paused = list.filter((a) => a.status === '暂停').length
             const done = list.filter((a) => a.status === '已投流').length
             return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', width: '100%' }}>
                 {chip('', '全部')}
                 {chip('未投流', '未投流', pend)}
                 {chip('暂停', '暂停', paused)}
