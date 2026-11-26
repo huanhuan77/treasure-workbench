@@ -1,9 +1,10 @@
 // 年度备忘录（独立页面，刻意不挂在 PC 工作台侧边栏框架里）
+// · 只在电脑上用：窄屏（手机）访问自动回工作台总览（用户明确「手机不要这个功能」）
 // · 一年 12 个月，每月一张 7 列（周一→周日）× 6 行的日历表
-// · 每天最多 5 条记事：点空位新增、点文字就地改、输入框里可删、清空即删除
+// · 每天最多 5 条记事；新增/编辑/删除都在**弹窗**里完成（用户要求弹窗，不要格子内小输入框）
 // · 数据独立存 localStorage.year_memo_v1，同时纳入云备份 KEYS
 //   { '2026-01-04': ['约了闺蜜逛街', '…'] }
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 const KEY = 'year_memo_v1'
@@ -55,13 +56,10 @@ export default function YearMemoPage() {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [memo, setMemo] = useState(loadMemo)
-  const [editing, setEditing] = useState(null) // { date, idx }
-  const [draft, setDraft] = useState('')
-  const inputRef = useRef(null)
+  const [dayModal, setDayModal] = useState(null) // 正在弹窗编辑的日期 'YYYY-MM-DD'
   const today = todayStr()
 
-  // 年度备忘录只在电脑上用（用户明确「手机不要这个功能」）：
-  // 手机宽度（<768）打开这个地址直接送回工作台总览，不当成可用页面
+  // 手机不要这个功能：窄屏打开就直接送回工作台总览
   useEffect(() => {
     if (window.innerWidth < 768) navigate('/', { replace: true })
   }, [])
@@ -76,9 +74,13 @@ export default function YearMemoPage() {
     try { localStorage.setItem(KEY, JSON.stringify(memo)) } catch (e) { /* 满/隐私模式忽略 */ }
   }, [memo])
 
+  // 弹窗开着时按 Esc 关闭
   useEffect(() => {
-    if (editing && inputRef.current) inputRef.current.focus()
-  }, [editing])
+    if (!dayModal) return
+    const onKey = (e) => { if (e.key === 'Escape') closeModal() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   const months = useMemo(
     () => Array.from({ length: 12 }, (_, m) => ({ m, cells: buildCells(year, m) })),
@@ -96,42 +98,10 @@ export default function YearMemoPage() {
     })
   }
 
-  const startAdd = (date) => {
-    if (listOf(date).length >= MAX_PER_DAY) return
-    setEditing({ date, idx: listOf(date).length })
-    setDraft('')
-  }
-
-  const startEdit = (date, idx) => {
-    setEditing({ date, idx })
-    setDraft(listOf(date)[idx] || '')
-  }
-
-  const closeEditor = () => {
-    setEditing(null)
-    setDraft('')
-  }
-
-  const commit = () => {
-    if (!editing) return
-    const { date, idx } = editing
-    const text = draft.trim()
-    const cur = [...listOf(date)]
-    if (text) {
-      if (idx >= cur.length) cur.push(text)
-      else cur[idx] = text
-    } else if (idx < cur.length) {
-      cur.splice(idx, 1) // 清空 = 删除
-    }
-    writeDay(date, cur)
-    closeEditor()
-  }
-
-  const removeAt = (date, idx) => {
-    const cur = [...listOf(date)]
-    cur.splice(idx, 1)
-    writeDay(date, cur)
-    closeEditor()
+  // 关闭弹窗时把空条目清掉
+  const closeModal = () => {
+    if (dayModal) writeDay(dayModal, listOf(dayModal).map((t) => t.trim()).filter(Boolean))
+    setDayModal(null)
   }
 
   const jumpMonth = (m) => {
@@ -149,34 +119,29 @@ export default function YearMemoPage() {
     padding: '7px 14px', fontSize: 13, cursor: 'pointer', fontWeight: 600,
   }
 
-  // 格子里的编辑器（新增和编辑共用）
-  const renderEditor = (date, idx, withDelete) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 2 }}>
-      <input
-        ref={inputRef}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') commit()
-          if (e.key === 'Escape') closeEditor()
-        }}
-        onBlur={commit}
-        placeholder="写点什么…"
-        style={{
-          flex: 1, minWidth: 0, fontSize: 11.5, padding: '2px 4px',
-          border: `1.5px solid ${G.accent}`, borderRadius: 5, outline: 'none',
-        }}
-      />
-      {withDelete && (
-        <button
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => removeAt(date, idx)}
-          title="删除这条"
-          style={{ border: 'none', background: '#fdecea', color: '#c0392b', borderRadius: 4, cursor: 'pointer', fontSize: 11, padding: '2px 4px' }}
-        >删</button>
-      )}
-    </div>
-  )
+  const modalInfo = (() => {
+    if (!dayModal) return null
+    const items = listOf(dayModal)
+    const d = new Date(`${dayModal}T00:00:00`)
+    return {
+      items,
+      label: `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · ${WEEK_LABEL[(d.getDay() + 6) % 7]}`,
+      setItem: (i, v) => {
+        const cur = [...items]
+        cur[i] = v
+        writeDay(dayModal, cur)
+      },
+      del: (i) => {
+        const cur = [...items]
+        cur.splice(i, 1)
+        writeDay(dayModal, cur)
+      },
+      add: () => {
+        if (items.length >= MAX_PER_DAY) return
+        writeDay(dayModal, [...items, ''])
+      },
+    }
+  })()
 
   return (
     <div style={{ minHeight: '100vh', background: G.bg, color: G.text }}>
@@ -199,7 +164,7 @@ export default function YearMemoPage() {
             >{label}</button>
           ))}
           <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.85 }}>
-            每天最多 {MAX_PER_DAY} 条 · 点空位新增，点文字直接改，清空即删除
+            每天最多 {MAX_PER_DAY} 条 · 点格子里任意位置在弹出的窗口里新增/修改/删除
           </span>
         </div>
       </div>
@@ -226,43 +191,30 @@ export default function YearMemoPage() {
                   }
                   const items = listOf(cell.date)
                   const isToday = cell.date === today
-                  const isEditingDay = editing && editing.date === cell.date
                   return (
                     <div
                       key={cell.date}
+                      onClick={() => setDayModal(cell.date)}
+                      title={`点开编辑 ${cell.day} 日的备忘`}
                       style={{
                         minHeight: 108, padding: '5px 7px 6px', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}`,
-                        background: isToday ? G.todayBg : '#fff',
+                        background: isToday ? G.todayBg : '#fff', cursor: 'pointer',
                       }}
                     >
                       <div style={{ fontSize: 12, fontWeight: 700, color: isToday ? G.head : '#9aa393', marginBottom: 3 }}>
                         {cell.day}{isToday ? ' · 今天' : ''}
                       </div>
-
-                      {items.map((t, idx) => {
-                        if (isEditingDay && editing.idx === idx) return <div key={`ed${idx}`}>{renderEditor(cell.date, idx, true)}</div>
-                        return (
-                          <div
-                            key={idx}
-                            onClick={() => startEdit(cell.date, idx)}
-                            title={t}
-                            style={{ fontSize: 11.5, lineHeight: 1.35, color: G.text, cursor: 'text', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                          >
-                            <span style={{ color: '#a9b3a0', marginRight: 3 }}>{idx + 1}.</span>{t}
-                          </div>
-                        )
-                      })}
-
-                      {/* 新增：还没有条目时输入框也要出现 */}
-                      {isEditingDay && editing.idx >= items.length && (
-                        <div key={`new${editing.idx}`}>{renderEditor(cell.date, items.length, false)}</div>
-                      )}
-
-                      {items.length < MAX_PER_DAY && !isEditingDay && (
-                        <button
-                          onClick={() => startAdd(cell.date)}
-                          style={{ border: 'none', background: 'transparent', color: '#b6c3ac', fontSize: 11.5, cursor: 'pointer', padding: 0, lineHeight: 1.4 }}
-                        >＋ 添加</button>
+                      {items.map((t, idx) => (
+                        <div
+                          key={idx}
+                          title={t}
+                          style={{ fontSize: 11.5, lineHeight: 1.35, color: G.text, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                        >
+                          <span style={{ color: '#a9b3a0', marginRight: 3 }}>{idx + 1}.</span>{t}
+                        </div>
+                      ))}
+                      {items.length < MAX_PER_DAY && (
+                        <div style={{ color: '#b6c3ac', fontSize: 11.5, lineHeight: 1.4 }}>＋ 添加</div>
                       )}
                     </div>
                   )
@@ -276,6 +228,63 @@ export default function YearMemoPage() {
         </div>
       </div>
 
+      {/* 当天编辑弹窗：新增、修改、删除都在这里 */}
+      {modalInfo && (
+        <div
+          onClick={closeModal}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(28,42,26,0.45)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: 520, maxWidth: '92vw', maxHeight: '86vh', overflowY: 'auto', background: '#fff', borderRadius: 16, padding: 22, boxShadow: '0 12px 40px rgba(20,32,18,0.28)' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16 }}>
+              <div style={{ fontSize: 17, fontWeight: 800, color: G.head }}>{modalInfo.label}</div>
+              <div style={{ fontSize: 12, color: G.muted, marginLeft: 'auto' }}>{modalInfo.items.length} / {MAX_PER_DAY} 条</div>
+            </div>
+
+            {modalInfo.items.map((t, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 12, color: '#a9b3a0', paddingTop: 9, minWidth: 16 }}>{i + 1}.</span>
+                <textarea
+                  value={t}
+                  onChange={(e) => modalInfo.setItem(i, e.target.value)}
+                  rows={1}
+                  autoFocus={i === modalInfo.items.length - 1}
+                  placeholder="写点什么…"
+                  style={{
+                    flex: 1, minWidth: 0, fontSize: 15, lineHeight: 1.5, padding: '8px 10px', fontFamily: 'inherit',
+                    border: `1.5px solid ${G.line}`, borderRadius: 10, outline: 'none', resize: 'vertical',
+                    background: '#fbfdf8', color: G.text,
+                  }}
+                />
+                <button
+                  onClick={() => modalInfo.del(i)}
+                  style={{ border: 'none', background: '#fdecea', color: '#c0392b', borderRadius: 8, fontSize: 13, padding: '8px 12px', marginTop: 2, cursor: 'pointer' }}
+                >删</button>
+              </div>
+            ))}
+
+            {modalInfo.items.length === 0 && (
+              <div style={{ fontSize: 13, color: G.muted, margin: '4px 0 14px' }}>这天还没有记事，点下面新增一条。</div>
+            )}
+
+            {modalInfo.items.length < MAX_PER_DAY && (
+              <button
+                onClick={modalInfo.add}
+                style={{ width: '100%', border: `1.5px dashed ${G.line}`, background: '#fbfdf8', color: G.accent, borderRadius: 10, padding: '10px 0', fontSize: 14, fontWeight: 700, marginBottom: 14, cursor: 'pointer' }}
+              >＋ 新增一条</button>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={closeModal}
+                style={{ background: G.accent, color: '#fff', border: 'none', borderRadius: 10, padding: '10px 26px', fontSize: 15, fontWeight: 800, cursor: 'pointer' }}
+              >完成</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

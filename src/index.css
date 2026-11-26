@@ -523,3 +523,11 @@ body.memo-mode {
 @media (max-width: 767px) {
   .ym-card { min-width: 700px; }
 }
+
+/* 年度备忘录（绿色页）：输入框焦点改成绿色，别串回工作台的粉色 */
+body.memo-mode input:focus,
+body.memo-mode textarea:focus,
+body.memo-mode select:focus {
+  border-color: #4b7d43 !important;
+  box-shadow: 0 0 0 3px rgba(75, 125, 67, 0.16);
+}
