@@ -29,6 +29,9 @@ export const PUBLISH_ACCOUNTS = [...PICK_ACCOUNTS]
 // 是否属于视频号渠道（含历史旧代号）
 export const isVideoAccount = (a) => VIDEO_ACCOUNTS.includes(a) || LEGACY_ACCOUNTS.includes(a)
 
+// 历史旧代号「视频号」：不再出现在任何标签/选择器/统计分组里，归一阶段直接剔除
+export const isLegacyAccount = (a) => LEGACY_ACCOUNTS.includes(a)
+
 // 账号主题色（c=文字/边框色，bg=浅底圆角色），以新名为键
 const COLORS = {
   '刘亦菲': { c: '#b45309', bg: 'rgba(245,158,11,0.18)' },      // 琥珀金

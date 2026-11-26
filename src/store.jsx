@@ -4,7 +4,7 @@ import { todayStr, addDays, recordQty } from './utils/helpers'
 import { isHotAccount, sampleDays, accountDue } from './utils/publish'
 import { recordDelete, clearDelete, setWordTime, syncAll } from './utils/sync'
 import { dedupeCopies, dedupeProducts } from './utils/dedupe'
-import { ACCOUNT_MAP, mapAccount } from './utils/accounts'
+import { ACCOUNT_MAP, mapAccount, isLegacyAccount } from './utils/accounts'
 import {
   getAccounts, getExecStatus, getAggregateCounts, recomputeTopStatus,
   normalizeSample, getLogistics, EXEC_STATUS,
@@ -3070,17 +3070,83 @@ function normalizeDates(d) {
 
 // 一次性对齐账号名：旧名/旧代号（广东刘亦菲/晚梨不吃梨/努力成为富婆/大号…）→ 新名。
 // localStorage 历史数据与内置 demo 都过一遍；「视频号」是旧渠道代号，原样保留兜底展示。
+// 归一账号列表：旧名映射到新名，剔除历史旧代号「视频号」
+const cleanAccountList = (arr) =>
+  (Array.isArray(arr) ? arr : [])
+    .map(mapAccount)
+    .filter((x) => x && !isLegacyAccount(x))
+
+// 计数明细按账号归一键（旧名 → 新名）；同账号重复取较大值、日期取较晚；旧代号键直接丢弃
+function remapCountMap(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return v
+  const out = {}
+  for (const [k, c] of Object.entries(v)) {
+    const nk = mapAccount(k)
+    if (!nk || isLegacyAccount(nk)) continue
+    const cur = out[nk]
+    if (!cur) out[nk] = { ...(c || {}) }
+    else out[nk] = {
+      publishCount: Math.max(Number(cur.publishCount) || 0, Number(c?.publishCount) || 0),
+      orderCount: Math.max(Number(cur.orderCount) || 0, Number(c?.orderCount) || 0),
+      lastPublishAt: String(c?.lastPublishAt || '') > String(cur.lastPublishAt || '') ? c.lastPublishAt : cur.lastPublishAt,
+    }
+  }
+  return out
+}
+
+// 执行状态按账号归一键；同账号状态按流程优先级取更靠后的；旧代号键直接丢弃
+function remapStatusMap(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return v
+  const PRIORITY = { abandoned: 4, published: 3, shot: 2, arrived: 1, un_arrived: 0 }
+  const out = {}
+  for (const [k, val] of Object.entries(v)) {
+    const nk = mapAccount(k)
+    if (!nk || isLegacyAccount(nk)) continue
+    const cur = out[nk]
+    if (cur == null) out[nk] = val
+    else if ((PRIORITY[val] ?? -1) > (PRIORITY[cur] ?? -1)) out[nk] = val
+  }
+  return out
+}
+
+// 布尔/计数标记按账号归一键；布尔取「或」，数字取较大值；旧代号键直接丢弃
+function remapFlagMap(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return v
+  const out = {}
+  for (const [k, val] of Object.entries(v)) {
+    const nk = mapAccount(k)
+    if (!nk || isLegacyAccount(nk)) continue
+    if (typeof val === 'number') out[nk] = Math.max(Number(out[nk] || 0), Number(val) || 0)
+    else out[nk] = !!out[nk] || !!val
+  }
+  return out
+}
+
 function renameAccounts(d) {
+  const cleanSingle = (a) => {
+    const n = mapAccount(a)
+    return n && !isLegacyAccount(n) ? n : ''
+  }
   const fixSample = (s) => {
     if (!s) return s
-    const out = { ...s, account: mapAccount(s.account) }
-    if (Array.isArray(s.accounts)) out.accounts = s.accounts.map(mapAccount).filter(Boolean)
+    const out = { ...s, account: cleanSingle(s.account) }
+    out.accounts = cleanAccountList(s.accounts)
+    if (s.countsByAccount) out.countsByAccount = remapCountMap(s.countsByAccount)
+    if (s.execByAccount) out.execByAccount = remapStatusMap(s.execByAccount)
+    if (s.suggestAbandonedByAccount) out.suggestAbandonedByAccount = remapFlagMap(s.suggestAbandonedByAccount)
+    if (s.suggestDismissCount) out.suggestDismissCount = remapFlagMap(s.suggestDismissCount)
+    if (s.abandonDismissedByAccount) out.abandonDismissedByAccount = remapFlagMap(s.abandonDismissedByAccount)
+    if (s.autoAbandonedByAccount) out.autoAbandonedByAccount = remapFlagMap(s.autoAbandonedByAccount)
+    if (Array.isArray(s.publishHistory)) {
+      out.publishHistory = s.publishHistory.map((h) => h && Array.isArray(h.accounts)
+        ? { ...h, accounts: cleanAccountList(h.accounts) } : h)
+    }
     return out
   }
   const fixRec = (r) => {
     if (!r) return r
-    const out = { ...r, account: mapAccount(r.account) }
-    if (Array.isArray(r.accounts)) out.accounts = r.accounts.map(mapAccount).filter(Boolean)
+    const out = { ...r, account: cleanSingle(r.account) }
+    out.accounts = cleanAccountList(r.accounts)
     return out
   }
   return {
@@ -3089,6 +3155,7 @@ function renameAccounts(d) {
     orders: (d.orders || []).map(fixRec),
     publishRecords: (d.publishRecords || []).map(fixRec),
     publishPlans: (d.publishPlans || []).map(fixRec),
+    transactions: (d.transactions || []).map((t) => (t ? { ...t, account: cleanSingle(t.account) } : t)),
   }
 }
 

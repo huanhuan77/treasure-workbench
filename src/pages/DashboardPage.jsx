@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, nonHotPendingAccounts, hotPendingAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
-import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, PUBLISH_ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount } from '../utils/accounts'
+import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, PUBLISH_ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount, isLegacyAccount } from '../utils/accounts'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
@@ -1536,16 +1536,18 @@ export function DashboardPage() {
       {(() => {
         const suggested = (samples || [])
           .map((s) => {
-            // 过滤掉已点「保留」且还没再发5条的账号
+            // 过滤掉已点「保留」且还没再发5条的账号；键名归一到新名、剔除历史旧代号
             const accs = Object.keys(s.suggestAbandonedByAccount || {})
-              .filter((a) => s.suggestAbandonedByAccount[a])
-              .filter((a) => {
-                const key = `${s.id}_${a}`
+              .map((a) => ({ raw: a, norm: mapAccount(a) }))
+              .filter((x) => x.norm && !isLegacyAccount(x.norm) && s.suggestAbandonedByAccount[x.raw])
+              .filter((x) => {
+                const key = `${s.id}_${x.norm}`
                 const keptAt = keptSuggest[key]
                 if (keptAt == null) return true
-                const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
+                const pub = Number(s.countsByAccount?.[x.norm]?.publishCount) || 0
                 return pub - Number(keptAt) >= 5  // 再发满5条才重新提醒
               })
+              .map((x) => x.norm)
             return { s, accs }
           })
           .filter((x) => x.accs.length > 0)
