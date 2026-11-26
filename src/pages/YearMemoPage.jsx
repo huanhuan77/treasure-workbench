@@ -53,7 +53,7 @@ function loadMemo() {
   }
 }
 
-// 一个月铺成 6 行 × 7 列（周一起始）→ [{ day, date } | null]
+// 一个月铺成 6 行 × 7 列（周一起始）→ 按周分组：weeks[周][列] = { day, date } | null
 function buildCells(year, month) {
   const firstDow = (new Date(year, month, 1).getDay() + 6) % 7 // 0 = 周一
   const days = new Date(year, month + 1, 0).getDate()
@@ -62,7 +62,9 @@ function buildCells(year, month) {
     const day = i - firstDow + 1
     cells.push(day >= 1 && day <= days ? { day, date: ymd(year, month, day) } : null)
   }
-  return cells
+  const weeks = []
+  for (let w = 0; w < 6; w++) weeks.push(cells.slice(w * 7, w * 7 + 7))
+  return weeks
 }
 
 export default function YearMemoPage() {
@@ -281,10 +283,11 @@ export default function YearMemoPage() {
               <div key={w} style={{ color: '#fff', fontSize: 13, fontWeight: 700, textAlign: 'center', padding: '9px 0', borderRight: '1px solid rgba(255,255,255,0.18)' }}>{w}</div>
             ))}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-            {cells.map((cell, i) => {
+          {cells.map((week, wi) => (
+          <div key={wi} style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            {week.map((cell, i) => {
               if (!cell) {
-                return <div key={`e${i}`} style={{ minHeight: 150, background: '#fafcf7', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}` }} />
+                return <div key={`e${wi}-${i}`} style={{ height: 150, background: '#fafcf7', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}` }} />
               }
               const items = listOf(cell.date)
               const isToday = cell.date === today
@@ -294,7 +297,7 @@ export default function YearMemoPage() {
                   onClick={() => setDayModal(cell.date)}
                   title={`点开编辑 ${month + 1} 月 ${cell.day} 日的备忘`}
                   style={{
-                    minHeight: 150, padding: '6px 9px 8px', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}`,
+                    height: 150, overflowY: 'auto', padding: '6px 9px 8px', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}`,
                     background: isToday ? G.todayBg : '#fff', cursor: 'pointer',
                   }}
                 >
@@ -337,6 +340,7 @@ export default function YearMemoPage() {
               )
             })}
           </div>
+          ))}
         </div>
         {syncMsg && (
           <div
