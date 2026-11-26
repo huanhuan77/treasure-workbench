@@ -30,10 +30,23 @@ const todayStr = () => {
   return ymd(t.getFullYear(), t.getMonth(), t.getDate())
 }
 
+// 每条记事 = { t: 文本, done: 是否完成 }；兼容早期存的纯字符串数组
+const normItem = (it) => {
+  if (typeof it === 'string') return { t: it, done: false }
+  if (it && typeof it === 'object') return { t: String(it.t || ''), done: !!it.done }
+  return { t: '', done: false }
+}
+
 function loadMemo() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) || '{}')
-    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
+    const out = {}
+    Object.keys(raw).forEach((k) => {
+      const arr = Array.isArray(raw[k]) ? raw[k].map(normItem).filter((x) => x.t) : []
+      if (arr.length) out[k] = arr
+    })
+    return out
   } catch (e) {
     return {}
   }
@@ -85,20 +98,34 @@ export default function YearMemoPage() {
 
   const cells = useMemo(() => buildCells(year, month), [year, month])
 
-  const listOf = (date) => memo[date] || []
+  const listOf = (date) => (memo[date] || []).map(normItem)
 
+  // 编辑期允许空槽存在（否则清空输入框重打时条目会消失），关弹窗时再统一清理
   const writeDay = (date, next) => {
     setMemo((prev) => {
       const copy = { ...prev }
-      if (next.length) copy[date] = next
+      const list = next.map((it) => ({ t: it.t || '', done: !!it.done }))
+      if (list.length) copy[date] = list
       else delete copy[date]
       return copy
     })
   }
 
+  const toggleDone = (date, idx) => {
+    const cur = listOf(date).map((it, i) => (i === idx ? { ...it, done: !it.done } : it))
+    writeDay(date, cur)
+  }
+
+  const removeItem = (date, idx) => {
+    writeDay(date, listOf(date).filter((_, i) => i !== idx))
+  }
+
   // 关闭弹窗时把空条目清掉
   const closeModal = () => {
-    if (dayModal) writeDay(dayModal, listOf(dayModal).map((t) => t.trim()).filter(Boolean))
+    if (dayModal) {
+      const cur = listOf(dayModal)
+      if (cur.some((it) => !it.t.trim())) writeDay(dayModal, cur.filter((it) => it.t.trim()))
+    }
     setDayModal(null)
   }
 
@@ -126,19 +153,12 @@ export default function YearMemoPage() {
     return {
       items,
       label: `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · ${WEEK_LABEL[(d.getDay() + 6) % 7]}`,
-      setItem: (i, v) => {
-        const cur = [...items]
-        cur[i] = v
-        writeDay(dayModal, cur)
-      },
-      del: (i) => {
-        const cur = [...items]
-        cur.splice(i, 1)
-        writeDay(dayModal, cur)
-      },
+      setItem: (i, v) => writeDay(dayModal, items.map((it, k) => (k === i ? { ...it, t: v } : it))),
+      toggle: (i) => writeDay(dayModal, items.map((it, k) => (k === i ? { ...it, done: !it.done } : it))),
+      del: (i) => writeDay(dayModal, items.filter((_, k) => k !== i)),
       add: () => {
         if (items.length >= MAX_PER_DAY) return
-        writeDay(dayModal, [...items, ''])
+        writeDay(dayModal, [...items, { t: '', done: false }])
       },
     }
   })()
@@ -172,7 +192,7 @@ export default function YearMemoPage() {
             )
           })}
           <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.85 }}>
-            每天最多 {MAX_PER_DAY} 条 · 点格子任意位置在弹出的窗口里新增/修改/删除
+            每天最多 {MAX_PER_DAY} 条 · 点格子开弹窗编辑，格子里可直接勾完成、点 × 删除
           </span>
         </div>
       </div>
@@ -198,7 +218,7 @@ export default function YearMemoPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
             {cells.map((cell, i) => {
               if (!cell) {
-                return <div key={`e${i}`} style={{ minHeight: 118, background: '#fafcf7', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}` }} />
+                return <div key={`e${i}`} style={{ minHeight: 150, background: '#fafcf7', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}` }} />
               }
               const items = listOf(cell.date)
               const isToday = cell.date === today
@@ -208,24 +228,46 @@ export default function YearMemoPage() {
                   onClick={() => setDayModal(cell.date)}
                   title={`点开编辑 ${month + 1} 月 ${cell.day} 日的备忘`}
                   style={{
-                    minHeight: 118, padding: '6px 9px 8px', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}`,
+                    minHeight: 150, padding: '6px 9px 8px', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}`,
                     background: isToday ? G.todayBg : '#fff', cursor: 'pointer',
                   }}
                 >
                   <div style={{ fontSize: 12.5, fontWeight: 700, color: isToday ? G.head : '#9aa393', marginBottom: 4 }}>
                     {cell.day}{isToday ? ' · 今天' : ''}
                   </div>
-                  {items.map((t, idx) => (
-                    <div
-                      key={idx}
-                      title={t}
-                      style={{ fontSize: 12.5, lineHeight: 1.4, color: G.text, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                    >
-                      <span style={{ color: '#a9b3a0', marginRight: 3 }}>{idx + 1}.</span>{t}
-                    </div>
-                  ))}
-                  {items.length < MAX_PER_DAY && (
-                    <div style={{ color: '#b6c3ac', fontSize: 12.5, lineHeight: 1.4 }}>＋ 添加</div>
+                  {items.map((it, idx) => {
+                    if (!it.t) return null
+                    return (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 4 }}>
+                        <span
+                          className="ym-check"
+                          title={it.done ? '标记为未完成' : '标记完成'}
+                          onClick={(e) => { e.stopPropagation(); toggleDone(cell.date, idx) }}
+                          style={{
+                            flex: '0 0 auto', width: 15, height: 15, borderRadius: 4, fontSize: 10, lineHeight: 1,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            border: `1.5px solid ${it.done ? G.accent : '#c9d3c1'}`,
+                            background: it.done ? G.accent : '#fff', color: '#fff', cursor: 'pointer',
+                          }}
+                        >{it.done ? '✓' : ''}</span>
+                        <span
+                          title={it.t}
+                          style={{
+                            flex: 1, minWidth: 0, fontSize: 14, lineHeight: '20px', color: '#111',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            textDecoration: it.done ? 'line-through' : 'none', opacity: it.done ? 0.5 : 1,
+                          }}
+                        >{it.t}</span>
+                        <span
+                          className="ym-del"
+                          title="删除这条"
+                          onClick={(e) => { e.stopPropagation(); removeItem(cell.date, idx) }}
+                        >×</span>
+                      </div>
+                    )
+                  })}
+                  {items.filter((it) => it.t).length < MAX_PER_DAY && (
+                    <div style={{ color: '#b6c3ac', fontSize: 13, lineHeight: '20px' }}>＋ 添加</div>
                   )}
                 </div>
               )
@@ -252,11 +294,20 @@ export default function YearMemoPage() {
               <div style={{ fontSize: 12, color: G.muted, marginLeft: 'auto' }}>{modalInfo.items.length} / {MAX_PER_DAY} 条</div>
             </div>
 
-            {modalInfo.items.map((t, i) => (
+            {modalInfo.items.map((it, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
-                <span style={{ fontSize: 12, color: '#a9b3a0', paddingTop: 9, minWidth: 16 }}>{i + 1}.</span>
+                <button
+                  onClick={() => modalInfo.toggle(i)}
+                  title={it.done ? '标记为未完成' : '标记完成'}
+                  style={{
+                    flex: '0 0 auto', width: 20, height: 20, borderRadius: 6, fontSize: 12, marginTop: 9,
+                    border: `1.5px solid ${it.done ? G.accent : '#c9d3c1'}`, background: it.done ? G.accent : '#fff',
+                    color: '#fff', cursor: 'pointer', padding: 0, lineHeight: 1,
+                  }}
+                >{it.done ? '✓' : ''}</button>
+                <span style={{ fontSize: 12, color: '#a9b3a0', paddingTop: 9, minWidth: 12 }}>{i + 1}.</span>
                 <textarea
-                  value={t}
+                  value={it.t}
                   onChange={(e) => modalInfo.setItem(i, e.target.value)}
                   rows={1}
                   autoFocus={i === modalInfo.items.length - 1}
