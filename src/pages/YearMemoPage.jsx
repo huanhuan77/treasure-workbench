@@ -55,6 +55,7 @@ export default function YearMemoPage() {
   const navigate = useNavigate()
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
+  const [month, setMonth] = useState(now.getMonth()) // 0-11，一次只看一个月
   const [memo, setMemo] = useState(loadMemo)
   const [dayModal, setDayModal] = useState(null) // 正在弹窗编辑的日期 'YYYY-MM-DD'
   const today = todayStr()
@@ -82,10 +83,7 @@ export default function YearMemoPage() {
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  const months = useMemo(
-    () => Array.from({ length: 12 }, (_, m) => ({ m, cells: buildCells(year, m) })),
-    [year],
-  )
+  const cells = useMemo(() => buildCells(year, month), [year, month])
 
   const listOf = (date) => memo[date] || []
 
@@ -104,14 +102,16 @@ export default function YearMemoPage() {
     setDayModal(null)
   }
 
-  const jumpMonth = (m) => {
-    const el = document.getElementById(`ym-m-${m}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const goPrevMonth = () => {
+    if (month === 0) { setYear((y) => y - 1); setMonth(11) } else setMonth((m) => m - 1)
+  }
+  const goNextMonth = () => {
+    if (month === 11) { setYear((y) => y + 1); setMonth(0) } else setMonth((m) => m + 1)
   }
 
   const jumpToday = () => {
     setYear(now.getFullYear())
-    setTimeout(() => jumpMonth(now.getMonth()), 80)
+    setMonth(now.getMonth())
   }
 
   const topBtn = {
@@ -156,74 +156,83 @@ export default function YearMemoPage() {
           </div>
         </div>
         <div style={{ maxWidth: 1240, margin: '10px auto 0', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          {MONTH_LABEL.map((label, i) => (
-            <button
-              key={label}
-              onClick={() => jumpMonth(i)}
-              style={{ background: 'rgba(255,255,255,0.16)', color: '#fff', border: 'none', borderRadius: 999, padding: '4px 12px', fontSize: 12.5, cursor: 'pointer', fontWeight: 600 }}
-            >{label}</button>
-          ))}
+          {MONTH_LABEL.map((label, i) => {
+            const on = i === month
+            return (
+              <button
+                key={label}
+                onClick={() => setMonth(i)}
+                style={{
+                  background: on ? '#fff' : 'rgba(255,255,255,0.16)',
+                  color: on ? G.head : '#fff',
+                  border: 'none', borderRadius: 999, padding: '4px 12px', fontSize: 12.5,
+                  cursor: 'pointer', fontWeight: on ? 800 : 600,
+                }}
+              >{label}</button>
+            )
+          })}
           <span style={{ marginLeft: 8, fontSize: 12, opacity: 0.85 }}>
-            每天最多 {MAX_PER_DAY} 条 · 点格子里任意位置在弹出的窗口里新增/修改/删除
+            每天最多 {MAX_PER_DAY} 条 · 点格子任意位置在弹出的窗口里新增/修改/删除
           </span>
         </div>
       </div>
 
-      {/* 12 个月 */}
-      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '18px 20px 60px', display: 'flex', flexDirection: 'column', gap: 22, overflowX: 'auto' }}>
-        {months.map(({ m, cells }) => {
-          const monthCount = Object.keys(memo).filter((k) => k.startsWith(`${year}-${pad2(m + 1)}`)).length
-          return (
-            <div key={m} id={`ym-m-${m}`} className="ym-card" style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 10px rgba(47,93,52,0.07)' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '12px 16px', borderBottom: `1px solid ${G.line}` }}>
-                <span style={{ fontSize: 17, fontWeight: 800, color: G.head }}>{year} 年 {m + 1} 月</span>
-                <span style={{ fontSize: 12, color: G.muted }}>本月记了 {monthCount} 天</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: G.weekHead }}>
-                {WEEK_LABEL.map((w) => (
-                  <div key={w} style={{ color: '#fff', fontSize: 13, fontWeight: 700, textAlign: 'center', padding: '8px 0', borderRight: '1px solid rgba(255,255,255,0.18)' }}>{w}</div>
-                ))}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
-                {cells.map((cell, i) => {
-                  if (!cell) {
-                    return <div key={`e${i}`} style={{ minHeight: 108, background: '#fafcf7', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}` }} />
-                  }
-                  const items = listOf(cell.date)
-                  const isToday = cell.date === today
-                  return (
-                    <div
-                      key={cell.date}
-                      onClick={() => setDayModal(cell.date)}
-                      title={`点开编辑 ${cell.day} 日的备忘`}
-                      style={{
-                        minHeight: 108, padding: '5px 7px 6px', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}`,
-                        background: isToday ? G.todayBg : '#fff', cursor: 'pointer',
-                      }}
-                    >
-                      <div style={{ fontSize: 12, fontWeight: 700, color: isToday ? G.head : '#9aa393', marginBottom: 3 }}>
-                        {cell.day}{isToday ? ' · 今天' : ''}
-                      </div>
-                      {items.map((t, idx) => (
-                        <div
-                          key={idx}
-                          title={t}
-                          style={{ fontSize: 11.5, lineHeight: 1.35, color: G.text, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                        >
-                          <span style={{ color: '#a9b3a0', marginRight: 3 }}>{idx + 1}.</span>{t}
-                        </div>
-                      ))}
-                      {items.length < MAX_PER_DAY && (
-                        <div style={{ color: '#b6c3ac', fontSize: 11.5, lineHeight: 1.4 }}>＋ 添加</div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+      {/* 一次只显示一个月 */}
+      <div style={{ maxWidth: 1240, margin: '0 auto', padding: '18px 20px 50px' }}>
+        <div className="ym-card" style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 10px rgba(47,93,52,0.07)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderBottom: `1px solid ${G.line}` }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: G.head }}>{year} 年 {month + 1} 月</span>
+            <span style={{ fontSize: 12, color: G.muted }}>
+              本月记了 {Object.keys(memo).filter((k) => k.startsWith(`${year}-${pad2(month + 1)}`)).length} 天
+            </span>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+              <button onClick={goPrevMonth} style={{ ...topBtn, background: '#f2f6ec', color: G.head, border: `1px solid ${G.line}` }}>‹ 上一月</button>
+              <button onClick={goNextMonth} style={{ ...topBtn, background: '#f2f6ec', color: G.head, border: `1px solid ${G.line}` }}>下一月 ›</button>
             </div>
-          )
-        })}
-        <div style={{ textAlign: 'center', fontSize: 11.5, color: G.muted, paddingTop: 4 }}>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: G.weekHead }}>
+            {WEEK_LABEL.map((w) => (
+              <div key={w} style={{ color: '#fff', fontSize: 13, fontWeight: 700, textAlign: 'center', padding: '9px 0', borderRight: '1px solid rgba(255,255,255,0.18)' }}>{w}</div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            {cells.map((cell, i) => {
+              if (!cell) {
+                return <div key={`e${i}`} style={{ minHeight: 118, background: '#fafcf7', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}` }} />
+              }
+              const items = listOf(cell.date)
+              const isToday = cell.date === today
+              return (
+                <div
+                  key={cell.date}
+                  onClick={() => setDayModal(cell.date)}
+                  title={`点开编辑 ${month + 1} 月 ${cell.day} 日的备忘`}
+                  style={{
+                    minHeight: 118, padding: '6px 9px 8px', borderRight: `1px solid ${G.line}`, borderBottom: `1px solid ${G.line}`,
+                    background: isToday ? G.todayBg : '#fff', cursor: 'pointer',
+                  }}
+                >
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: isToday ? G.head : '#9aa393', marginBottom: 4 }}>
+                    {cell.day}{isToday ? ' · 今天' : ''}
+                  </div>
+                  {items.map((t, idx) => (
+                    <div
+                      key={idx}
+                      title={t}
+                      style={{ fontSize: 12.5, lineHeight: 1.4, color: G.text, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                    >
+                      <span style={{ color: '#a9b3a0', marginRight: 3 }}>{idx + 1}.</span>{t}
+                    </div>
+                  ))}
+                  {items.length < MAX_PER_DAY && (
+                    <div style={{ color: '#b6c3ac', fontSize: 12.5, lineHeight: 1.4 }}>＋ 添加</div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', fontSize: 11.5, color: G.muted, paddingTop: 12 }}>
           电脑专用页面。数据存本机，已纳入「备份与同步」。
         </div>
       </div>
