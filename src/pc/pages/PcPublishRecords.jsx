@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
-import { ACCOUNTS, getAccounts, maskAccount } from '../../utils/accounts'
+import { ACCOUNTS, getAccounts, maskAccount, mapAccount } from '../../utils/accounts'
 import { recordQty } from '../../utils/helpers'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
@@ -135,7 +135,8 @@ export function PcPublishRecords() {
   const groups = useMemo(() => {
     const kw = keyword.trim().toLowerCase()
     const arr = records.filter((r) => {
-      if (account && !(r.accounts || []).includes(account)) return false
+      const rAccs = (r.accounts || []).map(mapAccount).filter(Boolean)
+      if (account && !rAccs.includes(account)) return false
       if (bounds) {
         const t = parseTs(r.publishDate)
         if (t === null || t < bounds[0] || t >= bounds[1]) return false
@@ -152,9 +153,11 @@ export function PcPublishRecords() {
       const sm = sampleMap[r.sampleId]
       const name = sm ? sm.name : '（样品已删除）'
       const keyBase = r.sampleId || name
-      const accs = (r.accounts && r.accounts.length) ? r.accounts : getAccounts(sm || {})
+      const rawAccs = (r.accounts && r.accounts.length) ? r.accounts : getAccounts(sm || {})
+      const accs = [...new Set(rawAccs.map(mapAccount).filter(Boolean))]
       const list = accs.length ? accs : ['']
       for (const a of list) {
+        if (account && a !== account) continue
         const k = `${keyBase}::${a}`
         if (!map.has(k)) map.set(k, { key: k, name, account: a, records: [] })
         map.get(k).records.push(r)
