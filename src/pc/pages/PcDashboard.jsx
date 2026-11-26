@@ -100,6 +100,8 @@ export function PcDashboard() {
   const [kw, setKw] = useState('')
   // 「为什么没提醒」诊断弹窗
   const [whyOpen, setWhyOpen] = useState(false)
+  // 「建议放弃 / 自动放弃」弹窗：总览不铺大卡，顶部入口带数字，点开再看明细
+  const [abOpen, setAbOpen] = useState(false)
   // 「隐藏账号」是否处于全站打码状态（全部账号都打码了才算开启）
   const allHidden = ACCOUNTS.length > 0 && ACCOUNTS.every((a) => (hiddenAccounts || []).includes(a))
   // 「打开样品」走弹窗（用户要求 PC 端不跳页面）：undefined=关闭、对象=编辑
@@ -145,6 +147,8 @@ export function PcDashboard() {
     () => (samples || []).filter((s) => getAutoAbandonedAccounts(s).length > 0),
     [samples],
   )
+  // 顶部入口角标总数：建议放弃 + 自动放弃
+  const abTotal = suggested.length + autoAbandoned.length
 
   // 从样品页点「新建计划」跳过来：带参数自动打开计划弹窗
   useEffect(() => {
@@ -542,6 +546,17 @@ export function PcDashboard() {
           title={allHidden ? '点击恢复显示全部账号' : '一键把全部账号显示成 * 号（数据不隐藏，照常统计）'}
           style={{ flexShrink: 0, color: allHidden ? '#9aa0a9' : '#7a5ea8', borderColor: allHidden ? 'rgba(148,163,184,0.5)' : 'rgba(122,94,168,0.55)' }}
         >{allHidden ? '账号已打码（点此恢复）' : '隐藏账号'}</button>
+        {/* 建议放弃 / 自动放弃入口：只在有待处理项时出现，按钮上带数量角标，点开弹窗看明细 */}
+        {abTotal > 0 && (
+          <button
+            className="pcv-btn pcv-btn-ghost"
+            onClick={() => setAbOpen(true)}
+            title="发满条数仍未出单、建议放弃或已自动放弃的样品"
+            style={{ flexShrink: 0, color: '#b45309', borderColor: 'rgba(245,158,11,0.55)' }}
+          >建议放弃
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 8px', borderRadius: '8px', marginLeft: 6 }}>{abTotal}</span>
+          </button>
+        )}
       </div>
 
       <div className="pcv-body">
@@ -712,100 +727,7 @@ export function PcDashboard() {
 
           </div>{/* /pcv-3col */}
 
-          <div className="pcv-3col pcv-abwrap">
-          {/* 自动放弃提醒：最后出单后又发满 N 条未出单，已被系统自动置为放弃（可恢复） */}
-          {autoAbandoned.length > 0 && (
-            <div className="pcv-card">
-              <div className="pcv-card-h">
-                <span>未出单已自动放弃</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 8px', borderRadius: '8px' }}>{autoAbandoned.length}</span>
-              </div>
-              <div className="pcv-ablist">
-                {autoAbandoned.map((s) => {
-                  const abandonedAccs = getAutoAbandonedAccounts(s)
-                  return (
-                    <div key={s.id} className="pcv-abrow pcv-abrow--danger">
-                      <div className="pcv-abmain">
-                        <div className="pcv-abtitle">
-                          {abandonedAccs.map((a) => {
-                            const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
-                            return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
-                          })}
-                          <span className="pcv-abname">{s.name}</span>
-                        </div>
-                        <div className="pcv-absub pcv-absub--danger">最后出单后又发了5条未出单 → 已自动放弃</div>
-                      </div>
-                      <div className="pcv-abactions">
-                        <button
-                          className="pcv-btn"
-                          onClick={() => {
-                            const execByAccount = { ...(s.execByAccount || {}) }
-                            abandonedAccs.forEach((a) => { execByAccount[a] = 'published' })
-                            updateSample(s.id, { execByAccount })
-                            show('已恢复为「已发布」，不再自动放弃', 'success')
-                          }}
-                          style={{ border: '1px solid #fecdd3', background: '#fff', color: '#e11d48' }}
-                        >恢复</button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* 建议放弃：从没出单发满 5 条，问用户要不要放弃（与手机总览同一口径） */}
-          {suggested.length > 0 && (
-            <div className="pcv-card">
-              <div className="pcv-card-h">
-                <span>建议放弃</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 8px', borderRadius: '8px' }}>{suggested.length}</span>
-              </div>
-              <div className="pcv-ablist">
-                {suggested.map(({ s, accs }) => (
-                  <div key={s.id} className="pcv-abrow pcv-abrow--warn">
-                    <div className="pcv-abmain">
-                      <div className="pcv-abtitle">
-                        {accs.map((a) => {
-                          const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
-                          return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
-                        })}
-                        <span className="pcv-abname">{s.name}</span>
-                      </div>
-                      <div className="pcv-absub pcv-absub--warn">发了5条还没出单，要放弃吗？</div>
-                    </div>
-                    <div className="pcv-abactions">
-                      <button
-                        className="pcv-btn"
-                        onClick={() => {
-                          const execByAccount = { ...(s.execByAccount || {}) }
-                          accs.forEach((a) => { execByAccount[a] = 'abandoned' })
-                          updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {}, archived: true })
-                          show('已标记为放弃', 'success')
-                        }}
-                        style={{ border: 'none', background: '#f59e0b', color: '#fff' }}
-                      >放弃</button>
-                      <button
-                        className="pcv-btn"
-                        onClick={() => {
-                          const sdc = { ...(s.suggestDismissCount || {}) }
-                          accs.forEach((a) => {
-                            const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
-                            keepSuggest(s.id, a, pub)
-                            sdc[a] = pub
-                          })
-                          updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
-                          show('已保留，再发5条未出单会再次提醒', 'success')
-                        }}
-                        style={{ border: '1px solid #e2e8f0', background: '#fff', color: '#64748b' }}
-                      >保留</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          </div>
+          {/* 建议放弃 / 自动放弃已收到顶部「建议放弃」入口弹窗，不在总览铺大卡 */}
 
           {/* 提醒中心：Tab 与账号筛选合并到卡头同一行（原来分两行，白占一层高度） */}
           <div className="pcv-card" id="reminder-center">
@@ -1105,6 +1027,124 @@ export function PcDashboard() {
               </span>
               <div className="pcv-spacer" />
               <button className="pcv-btn pcv-btn-ghost" onClick={() => setWhyOpen(false)}>关闭</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 建议放弃 / 自动放弃 明细弹窗：顶部入口带数量，点开处理 */}
+      {abOpen && (
+        <div className="pcv-overlay" onClick={() => setAbOpen(false)}>
+          <div className="pcv-dialog pcv-dialog--lg" onClick={(e) => e.stopPropagation()}>
+            <div className="pcv-dialog-h">
+              <span>建议放弃</span>
+              <span style={{ fontSize: 12, fontWeight: 400, color: '#9aa0a9' }}>共 {abTotal} 个样品</span>
+              <div className="pcv-spacer" />
+              <button className="pcv-dialog-x" title="关闭" onClick={() => setAbOpen(false)}>×</button>
+            </div>
+            <div className="pcv-dialog-b" style={{ maxHeight: '62vh', overflowY: 'auto', paddingTop: 0 }}>
+              {abTotal === 0 ? (
+                <div className="pcv-empty">没有需要处理的样品</div>
+              ) : (
+                <>
+                  {autoAbandoned.length > 0 && (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '12px 14px 4px', fontSize: 13, fontWeight: 600, color: '#111' }}>
+                        <span style={{ width: '3px', height: 14, borderRadius: 2, background: '#ef4444' }} />
+                        未出单已自动放弃
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#ef4444', padding: '1px 7px', borderRadius: 8 }}>{autoAbandoned.length}</span>
+                      </div>
+                      <div className="pcv-ablist">
+                        {autoAbandoned.map((s) => {
+                          const abandonedAccs = getAutoAbandonedAccounts(s)
+                          return (
+                            <div key={s.id} className="pcv-abrow pcv-abrow--danger">
+                              <div className="pcv-abmain">
+                                <div className="pcv-abtitle">
+                                  {abandonedAccs.map((a) => {
+                                    const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+                                    return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
+                                  })}
+                                  <span className="pcv-abname">{s.name}</span>
+                                </div>
+                                <div className="pcv-absub pcv-absub--danger">最后出单后又发了5条未出单 → 已自动放弃</div>
+                              </div>
+                              <div className="pcv-abactions">
+                                <button
+                                  className="pcv-btn"
+                                  onClick={() => {
+                                    const execByAccount = { ...(s.execByAccount || {}) }
+                                    abandonedAccs.forEach((a) => { execByAccount[a] = 'published' })
+                                    updateSample(s.id, { execByAccount })
+                                    show('已恢复为「已发布」，不再自动放弃', 'success')
+                                  }}
+                                  style={{ border: '1px solid #fecdd3', background: '#fff', color: '#e11d48' }}
+                                >恢复</button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  )}
+                  {suggested.length > 0 && (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: autoAbandoned.length ? '10px 14px 4px' : '12px 14px 4px', fontSize: 13, fontWeight: 600, color: '#111' }}>
+                        <span style={{ width: '3px', height: 14, borderRadius: 2, background: '#f59e0b' }} />
+                        建议放弃
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#f59e0b', padding: '1px 7px', borderRadius: 8 }}>{suggested.length}</span>
+                      </div>
+                      <div className="pcv-ablist">
+                        {suggested.map(({ s, accs }) => (
+                          <div key={s.id} className="pcv-abrow pcv-abrow--warn">
+                            <div className="pcv-abmain">
+                              <div className="pcv-abtitle">
+                                {accs.map((a) => {
+                                  const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
+                                  return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
+                                })}
+                                <span className="pcv-abname">{s.name}</span>
+                              </div>
+                              <div className="pcv-absub pcv-absub--warn">发了5条还没出单，要放弃吗？</div>
+                            </div>
+                            <div className="pcv-abactions">
+                              <button
+                                className="pcv-btn"
+                                onClick={() => {
+                                  const execByAccount = { ...(s.execByAccount || {}) }
+                                  accs.forEach((a) => { execByAccount[a] = 'abandoned' })
+                                  updateSample(s.id, { execByAccount, suggestAbandonedByAccount: {}, archived: true })
+                                  show('已标记为放弃', 'success')
+                                }}
+                                style={{ border: 'none', background: '#f59e0b', color: '#fff' }}
+                              >放弃</button>
+                              <button
+                                className="pcv-btn"
+                                onClick={() => {
+                                  const sdc = { ...(s.suggestDismissCount || {}) }
+                                  accs.forEach((a) => {
+                                    const pub = Number(s.countsByAccount?.[a]?.publishCount) || 0
+                                    keepSuggest(s.id, a, pub)
+                                    sdc[a] = pub
+                                  })
+                                  updateSample(s.id, { suggestDismissCount: sdc, suggestAbandonedByAccount: {} })
+                                  show('已保留，再发5条未出单会再次提醒', 'success')
+                                }}
+                                style={{ border: '1px solid #e2e8f0', background: '#fff', color: '#64748b' }}
+                              >保留</button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="pcv-dialog-f">
+              <span style={{ fontSize: 12, color: '#9aa0a9' }}>保留后再发满 5 条未出单会再次提醒；放弃后样品归档</span>
+              <div className="pcv-spacer" />
+              <button className="pcv-btn pcv-btn-ghost" onClick={() => setAbOpen(false)}>关闭</button>
             </div>
           </div>
         </div>
