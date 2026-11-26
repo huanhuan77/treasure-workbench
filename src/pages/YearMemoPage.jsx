@@ -218,8 +218,7 @@ export default function YearMemoPage() {
     <div style={{ minHeight: '100vh', background: G.bg, color: G.text }}>
       {/* 顶栏 */}
       <div className="ym-head" style={{ background: G.head, color: '#fff', padding: '14px 20px' }}>
-        {/* 同步按钮贴页面左上角（脱离居中容器）；窄屏下自动回落到标题上方，避免压住标题 */}
-        <div className="ym-sync-slot">
+        <div style={{ maxWidth: 1240, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
           <button
             onClick={doSync}
             disabled={syncBusy}
@@ -227,13 +226,13 @@ export default function YearMemoPage() {
             style={{
               background: syncBusy ? 'rgba(255,255,255,0.25)' : '#fff', color: G.head, border: 'none',
               borderRadius: 8, padding: '7px 14px', fontSize: 13, fontWeight: 800,
-              cursor: syncBusy ? 'default' : 'pointer',
+              cursor: syncBusy ? 'default' : 'pointer', marginBottom: 4,
             }}
           >{syncBusy ? '同步中…' : '☁ 同步'}</button>
-          <span style={{ fontSize: 11.5, opacity: 0.78 }}>{lastSyncText}</span>
-        </div>
-        <div style={{ maxWidth: 1240, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{year} 年 · 年度备忘录</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{year} 年 · 年度备忘录</div>
+            <span style={{ fontSize: 11.5, opacity: 0.78 }}>{lastSyncText}</span>
+          </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <button onClick={() => setYear((y) => y - 1)} style={topBtn}>‹ {year - 1}</button>
             <button onClick={() => setYear((y) => y + 1)} style={topBtn}>{year + 1} ›</button>
