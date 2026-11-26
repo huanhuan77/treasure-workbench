@@ -392,10 +392,10 @@ export function PcSamples() {
                     再窄会被折成两行（用户反馈「不要换行」）。 */}
                 {/* 产品列加宽到 190（长品名尽量显示全），账号列收紧到 185 并把标签字号/间距调小；
                     账号一列只做归属标识，不再占大版面。 */}
-                <th style={{ width: 180 }}>产品</th>
+                <th style={{ width: 170 }}>产品</th>
                 <th style={{ width: 62 }}>分类</th>
                 <th style={{ width: 72 }}>状态</th>
-                <th style={{ width: 250 }}>账号</th>
+                <th style={{ width: 200 }}>账号</th>
                 <th style={{ width: 56 }} className="pcv-th-sort" onClick={() => toggleSort('publishTotal')}>
                   发布{sortDirOf('publishTotal') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
@@ -414,9 +414,9 @@ export function PcSamples() {
                 <th style={{ width: 165 }} className="pcv-th-sort" onClick={() => toggleSort('deadline')}>
                   截止日期{sortDirOf('deadline') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
-                <th style={{ width: 100 }}>链接</th>
+                <th style={{ width: 120 }}>链接</th>
                 {/* 备注：弹窗里能填但列表一直没展示（用户反馈「怎么没显示备注」） */}
-                <th style={{ width: 80 }}>备注</th>
+                <th style={{ width: 100 }}>备注</th>
                 {/* 操作列：用户要求调小（只放「新建计划 / 编辑」两个按钮，约需 128px 内容宽） */}
                 <th style={{ width: 160 }}>操作</th>
               </tr>
