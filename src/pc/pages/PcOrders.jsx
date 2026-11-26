@@ -236,7 +236,7 @@ export function PcOrders() {
           )}
         </div>
         {/* 主操作紧跟产品下拉（与发布记录页一致，不再贴最右） */}
-        <button className="pcv-btn" onClick={() => { setPrefill(null); setOrderOpen(true) }}>记出单</button>
+        <button className="pcv-btn" onClick={() => { setPrefill(accountFilter ? { account: accountFilter } : null); setOrderOpen(true) }}>记出单</button>
       </div>
 
       <div className="pcv-body pcv-body--fill">

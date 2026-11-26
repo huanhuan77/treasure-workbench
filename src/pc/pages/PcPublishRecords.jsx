@@ -231,7 +231,7 @@ export function PcPublishRecords() {
         />
         {/* 主操作紧跟搜索框（用户要求「按钮靠左」）：
             之前用 marginLeft:auto 顶到最右，窗口一窄就被挤出可视区、只剩半截 */}
-        <button className="pcv-btn" onClick={() => setPublishDialog({})}>记录发布</button>
+        <button className="pcv-btn" onClick={() => setPublishDialog({ accounts: account ? [account] : undefined })}>记录发布</button>
       </div>
 
       <div className="pcv-body pcv-body--fill">

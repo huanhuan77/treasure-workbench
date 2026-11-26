@@ -160,7 +160,7 @@ export function OrdersPage() {
 
   const [prefill, setPrefill] = useState(null)   // 从详情面板「继续新增一单」带入的账号/样品/品名
 
-  const openAdd = () => { setEditing(null); setModalOpen(false); navigate('/orders/new') }
+  const openAdd = () => { setEditing(null); setModalOpen(false); navigate('/orders/new', { state: { account: accountFilter || '' } }) }
   const openEdit = (o) => { setEditing(o); setPrefill(null); setFormSeq((s) => s + 1); setModalOpen(true) }
   // 详情面板「继续新增一单」：带上该产品的账号与样品，跳独立页接着记
   const addMoreForActive = () => {
