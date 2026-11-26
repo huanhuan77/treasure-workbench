@@ -479,7 +479,7 @@ export function PcSamples() {
                         /* 一行内排完、不换行（用户要求）：多账号样品原来会折成 2~3 行把行高撑高。
                            nowrap + overflow:hidden，放不下的账号被裁掉，完整名单在 title 里悬停可看。 */
                         <span
-                          style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%', minWidth: 0, fontSize: 12 }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%', minWidth: 0 }}
                           title={accounts.join(' / ')}
                         >
                           {accounts.map((a) => (
