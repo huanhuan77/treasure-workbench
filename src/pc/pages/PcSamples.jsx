@@ -390,10 +390,12 @@ export function PcSamples() {
                     省下的宽度全部让给账号列（用户要求「操作列调小、账号列加宽」）。
                     两个日期列保持 100 / 165：日期本身 78px，截止日期还要跟「剩 N 天」约 42px，
                     再窄会被折成两行（用户反馈「不要换行」）。 */}
-                <th style={{ width: 135 }}>产品</th>
+                {/* 产品列加宽到 190（长品名尽量显示全），账号列收紧到 185 并把标签字号/间距调小；
+                    账号一列只做归属标识，不再占大版面。 */}
+                <th style={{ width: 190 }}>产品</th>
                 <th style={{ width: 62 }}>分类</th>
                 <th style={{ width: 72 }}>状态</th>
-                <th style={{ width: 270 }}>账号</th>
+                <th style={{ width: 185 }}>账号</th>
                 <th style={{ width: 56 }} className="pcv-th-sort" onClick={() => toggleSort('publishTotal')}>
                   发布{sortDirOf('publishTotal') ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}
                 </th>
@@ -477,13 +479,13 @@ export function PcSamples() {
                         /* 一行内排完、不换行（用户要求）：多账号样品原来会折成 2~3 行把行高撑高。
                            nowrap + overflow:hidden，放不下的账号被裁掉，完整名单在 title 里悬停可看。 */
                         <span
-                          style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%', minWidth: 0 }}
+                          style={{ display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100%', minWidth: 0, fontSize: 12 }}
                           title={accounts.join(' / ')}
                         >
                           {accounts.map((a) => (
-                            <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                            <span key={a} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
                               <span style={{
-                                width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+                                width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
                                 background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4',
                               }} />
                               {/* 账号名不加粗（用户要求）：原来 600 字重在一片正文里太跳，靠圆点区分归属即可 */}
