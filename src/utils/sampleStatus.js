@@ -116,10 +116,12 @@ export function getCounts(s, account) {
 
 // ── 两轴核心判定（兼容老数据：无显式字段时从 execByAccount / 顶层 status / 统计推导）──
 
-// 是否归档（放弃）：显式 archived 优先；老数据=全部账号都 abandoned 或老顶层 status 为 abandoned
+// 是否归档（放弃）：显式 archived=true 优先；否则回退看「全部账号都 abandoned」或顶层 status 为 abandoned。
+// 注意 archived===false 不能直接当作未归档——部分老数据/按账号放弃时 archived 可能被写成 false，
+// 但 execByAccount 已全为 abandoned，这种仍应算已放弃。
 export function isArchivedSample(s) {
   if (!s || typeof s !== 'object') return false
-  if (typeof s.archived === 'boolean') return s.archived
+  if (s.archived === true) return true
   const exec = (s.execByAccount && typeof s.execByAccount === 'object') ? s.execByAccount : {}
   const vals = Object.values(exec).filter(Boolean)
   if (vals.length && vals.every((v) => v === 'abandoned')) return true

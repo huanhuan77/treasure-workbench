@@ -76,12 +76,12 @@ function inPublishReminder(s, orderedSampleIds) {
 
 export function selectPublishReminders(samples, orders = []) {
   const orderedSampleIds = new Set((orders || []).map((o) => o.sampleId).filter(Boolean))
-  return (samples || []).filter((s) => inPublishReminder(s, orderedSampleIds))
+  return (samples || []).filter((s) => !isArchivedSample(s) && inPublishReminder(s, orderedSampleIds))
 }
 
 // 高频出单：有账号按 ≤5 天高频口径、当前已到该发的产品
 export function selectHotCadence(samples) {
-  return (samples || []).filter((s) => !s.archived && !isWechatOnlySample(s) && needPublishReminder(s) && isHotCadence(s))
+  return (samples || []).filter((s) => !isArchivedSample(s) && !isWechatOnlySample(s) && needPublishReminder(s) && isHotCadence(s))
 }
 
 // 2) 发布不足10：发布了没有出单，且发布数量 > 0 且 < 10（按账号粒度）。
@@ -127,7 +127,7 @@ export function selectLowPublish(samples, limit = LOW_PUBLISH_LIMIT, orders = []
 //    不再限截止日 7 天窗口，所有已拍未发的都列出；有截止日的按截止日升序在前，无截止日在后。
 export function selectShotUnpublished(samples) {
   return (samples || [])
-    .filter((s) => !isWechatOnlySample(s) && getTopStatus(s) === 'shot')
+    .filter((s) => !isArchivedSample(s) && !isWechatOnlySample(s) && getTopStatus(s) === 'shot')
     .sort((a, b) => {
       const da = daysUntilDeadline(a.deadline) ?? 9999
       const db = daysUntilDeadline(b.deadline) ?? 9999

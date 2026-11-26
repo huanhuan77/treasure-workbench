@@ -7,7 +7,7 @@ import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderA
 import { LOW_PUBLISH_LIMIT, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
 import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, PUBLISH_ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount, isLegacyAccount } from '../utils/accounts'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
-import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getAggregateCounts } from '../utils/sampleStatus'
+import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getExecStatus, getAggregateCounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
 import PlanBadge from '../components/PlanBadge'
 import { SampleForm } from '../components/SampleForm'
@@ -1536,10 +1536,13 @@ export function DashboardPage() {
       {(() => {
         const suggested = (samples || [])
           .map((s) => {
+            // 整体已放弃/归档的样品不再进建议放弃；账号级已 abandoned 的也排除
+            if (isArchivedSample(s)) return { s, accs: [] }
             // 过滤掉已点「保留」且还没再发5条的账号；键名归一到新名、剔除历史旧代号
             const accs = Object.keys(s.suggestAbandonedByAccount || {})
               .map((a) => ({ raw: a, norm: mapAccount(a) }))
               .filter((x) => x.norm && !isLegacyAccount(x.norm) && s.suggestAbandonedByAccount[x.raw])
+              .filter((x) => getExecStatus(s, x.norm) !== 'abandoned')
               .filter((x) => {
                 const key = `${s.id}_${x.norm}`
                 const keptAt = keptSuggest[key]
