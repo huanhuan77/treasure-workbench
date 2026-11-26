@@ -536,3 +536,4 @@ body.memo-mode select:focus {
 .ym-check:hover { border-color: #4b7d43 !important; }
 .ym-del { color: #c3ccc0; cursor: pointer; font-size: 16px; line-height: 1; padding: 0 3px; }
 .ym-del:hover { color: #c0392b; }
+.ym-close:hover { background: #e6eddd !important; color: #2f5d34 !important; }

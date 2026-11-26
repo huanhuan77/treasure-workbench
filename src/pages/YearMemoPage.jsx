@@ -292,6 +292,17 @@ export default function YearMemoPage() {
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16 }}>
               <div style={{ fontSize: 17, fontWeight: 800, color: G.head }}>{modalInfo.label}</div>
               <div style={{ fontSize: 12, color: G.muted, marginLeft: 'auto' }}>{modalInfo.items.length} / {MAX_PER_DAY} 条</div>
+              <button
+                onClick={closeModal}
+                title="关闭"
+                aria-label="关闭"
+                className="ym-close"
+                style={{
+                  marginLeft: 6, width: 28, height: 28, borderRadius: 8, border: 'none', background: '#f1f5ec',
+                  color: '#6f7d68', fontSize: 18, lineHeight: 1, cursor: 'pointer', padding: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >×</button>
             </div>
 
             {modalInfo.items.map((it, i) => (
