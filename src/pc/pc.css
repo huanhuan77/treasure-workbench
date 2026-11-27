@@ -2321,8 +2321,8 @@ tr:hover .pcv-x--soft {
 .pubcal-del { margin-right: 8px; }
 
 /* 产品名作为日历弹窗入口：重置 button 默认外观，hover 品牌粉 */
-.pcv-namelink { background: none; border: none; padding: 0; font: inherit; text-align: left; color: inherit; cursor: pointer; width: 100%; }
-.pcv-namelink:hover { color: #b8517f; }
+.pcv-namelink { background: none; border: none; padding: 0; font: inherit; text-align: left; color: #b8517f; cursor: pointer; width: 100%; }
+.pcv-namelink:hover { color: #93385f; text-decoration: underline; }
 
 /* 日历选中日：按账号 × 产品逐条明细 */
 .pubcal-details { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
