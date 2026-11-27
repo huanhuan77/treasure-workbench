@@ -120,11 +120,11 @@ export function PcReading() {
               <thead>
                 <tr>
                   <th style={{ width: 40 }}>已看</th>
-                  <th style={{ width: 160 }}>节目</th>
-                  <th style={{ width: 190 }}>期数 / 嘉宾</th>
-                  <th style={{ width: 140 }}>观看平台</th>
+                  <th style={{ width: 150 }}>节目</th>
+                  <th style={{ width: 230 }}>期数 / 嘉宾</th>
+                  <th style={{ width: 200 }}>观看平台</th>
                   <th>练习重点</th>
-                  <th style={{ width: 150 }}>感悟 / 三问</th>
+                  <th style={{ width: 140 }}>感悟 / 三问</th>
                   <th style={{ width: 90 }}>操作</th>
                 </tr>
               </thead>
@@ -135,8 +135,8 @@ export function PcReading() {
                       <Check done={it.done} onToggle={() => patchItem('shows', it.id, { done: !it.done })} />
                     </td>
                     <td><span className="pcv-nametext" style={{ textDecoration: it.done ? 'line-through' : 'none', color: it.done ? '#9aa0a9' : undefined }}>{it.program}</span></td>
-                    <td><span style={{ fontSize: 12, color: '#475569' }}>{it.episode}</span></td>
-                    <td><span style={{ fontSize: 11, color: '#6d4bc4', fontWeight: 600 }}>📍 {it.platform}</span></td>
+                    <td><span style={{ fontSize: 12, color: '#475569', whiteSpace: 'nowrap' }}>{it.episode}</span></td>
+                    <td><span style={{ fontSize: 11, color: '#6d4bc4', fontWeight: 600, whiteSpace: 'nowrap' }}>📍 {it.platform}</span></td>
                     <td><span style={{ fontSize: 12, color: '#475569' }} title={it.focus || ''}>{it.focus || '—'}</span></td>
                     <td>{NoteCell(it)}</td>
                     <td>
