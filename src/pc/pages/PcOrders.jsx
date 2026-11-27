@@ -147,10 +147,10 @@ export function PcOrders() {
 
         {/* 顶部统计卡 */}
         <div className="ordcal-stats">
-          <div className="ordcal-stat"><span className="ordcal-stat-label">总出单</span><b>{totalQty}</b><span className="ordcal-stat-sub">{totalCount} 笔</span></div>
-          <div className="ordcal-stat"><span className="ordcal-stat-label">抖音</span><b>{dyQty}</b><span className="ordcal-stat-sub">件</span></div>
-          <div className="ordcal-stat"><span className="ordcal-stat-label">视频号</span><b>{videoQty}</b><span className="ordcal-stat-sub">件</span></div>
-          <div className="ordcal-stat"><span className="ordcal-stat-label">本月</span><b>{monthQty}</b><span className="ordcal-stat-sub">{monthDays} 天有出单</span></div>
+          <div className="ordcal-stat"><span className="ordcal-stat-label">总出单</span><div className="ordcal-stat-main"><b>{totalQty}</b><span className="ordcal-stat-sub">{totalCount} 笔</span></div></div>
+          <div className="ordcal-stat"><span className="ordcal-stat-label">抖音</span><div className="ordcal-stat-main"><b>{dyQty}</b><span className="ordcal-stat-sub">件</span></div></div>
+          <div className="ordcal-stat"><span className="ordcal-stat-label">视频号</span><div className="ordcal-stat-main"><b>{videoQty}</b><span className="ordcal-stat-sub">件</span></div></div>
+          <div className="ordcal-stat"><span className="ordcal-stat-label">本月</span><div className="ordcal-stat-main"><b>{monthQty}</b><span className="ordcal-stat-sub">{monthDays} 天有出单</span></div></div>
         </div>
 
         <div className="ordcal-main">

@@ -2350,6 +2350,7 @@ tr:hover .pcv-x--soft {
   padding: 9px 16px; display: flex; flex-direction: column; gap: 2px;
 }
 .ordcal-stat-label { font-size: 12px; color: #9aa0a9; }
+.ordcal-stat-main { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .ordcal-stat b { font-size: 20px; font-weight: 700; color: #333a45; line-height: 1.2; }
 .ordcal-stat-sub { font-size: 12px; color: #b8517f; }
 
