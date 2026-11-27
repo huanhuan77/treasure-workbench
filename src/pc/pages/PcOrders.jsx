@@ -170,8 +170,10 @@ export function PcOrders() {
               <button className="ordcal-arrow" title="下月" onClick={() => shiftMonth(1)}>›</button>
             </div>
 
-            <div className="ordcal-grid">
+            <div className="ordcal-weekrow">
               {WEEK.map((w) => <div key={w} className="ordcal-week">{w}</div>)}
+            </div>
+            <div className="ordcal-grid">
               {cells.map((d, i) => {
                 if (!d) return <div key={`e${i}`} className="ordcal-cell ordcal-cell--off" />
                 const inMonth = ymOf(d) === viewYM
