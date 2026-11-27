@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { recordQty, todayStr } from '../../utils/helpers'
-import { mapAccount, accountWithPlatform, ACCOUNTS } from '../../utils/accounts'
+import { mapAccount, accountWithPlatform, accountLabel, accountColor, ACCOUNTS } from '../../utils/accounts'
 import { ConfirmModal } from '../../components/Modal'
 
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -194,7 +194,25 @@ export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onCl
                   disabled={!inMonth}
                 >
                   <span className="pubcal-day">{Number(d.slice(8))}</span>
-                  {cur && <span className="pubcal-qty">{cur.qty} 条</span>}
+                  {cur && (Object.keys(cur.acc).length > 0 ? (
+                    <div className="pubcal-accs">
+                      {Object.entries(cur.acc).sort((x, y) => {
+                        const ix = ACCOUNTS.indexOf(x[0]), iy = ACCOUNTS.indexOf(y[0])
+                        return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy)
+                      }).map(([a, q]) => {
+                        const col = accountColor(a)
+                        return (
+                          <div key={a} className="pubcal-acc">
+                            <span className="pubcal-dot" style={{ background: col.c }} />
+                            <span className="pubcal-acc-name">{accountLabel(a, hiddenAccounts)}</span>
+                            <span className="pubcal-acc-qty">×{q}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <span className="pubcal-qty">{cur.qty} 条</span>
+                  ))}
                 </button>
               )
             })}
