@@ -631,13 +631,13 @@
   border-color: rgba(15, 23, 42, 0.24);
 }
 
-/* ghost 的危险变体（删除类操作）：红字 + 淡红描边，hover 略加深 */
+/* ghost 的危险变体（删除类操作）：粉底白字 + 淡红描边，hover 略加深 */
 .pcv-btn-ghost--danger {
-  color: #b96a66;
+  color: #fff;
   border-color: rgba(185, 106, 102, 0.35);
 }
 .pcv-btn-ghost--danger:hover {
-  background: #fdf3f3;
+  background: #e57fa9;
   border-color: rgba(185, 106, 102, 0.6);
 }
 
