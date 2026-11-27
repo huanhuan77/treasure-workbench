@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { recordQty, todayStr } from '../../utils/helpers'
-import { mapAccount, accountWithPlatform, accountLabel, accountColor, ACCOUNTS } from '../../utils/accounts'
+import { mapAccount, accountWithPlatform, accountLabel, accountColor, getAccounts, ACCOUNTS } from '../../utils/accounts'
 import { ConfirmModal } from '../../components/Modal'
 
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -34,20 +34,28 @@ export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onCl
     return clean.filter((r) => (r.accounts || []).map(mapAccount).includes(accFilter))
   }, [clean, accFilter])
 
-  // 按日期聚合：当天总条数 + 分账号条数 + 记录列表（随账号筛选联动）
+  // 按日期聚合：当天总条数 + 分账号条数 + 账号×产品明细 + 记录列表（随账号筛选联动）
   const byDate = useMemo(() => {
     const m = new Map()
     for (const r of filtered) {
-      const cur = m.get(r.publishDate) || { qty: 0, acc: {}, list: [] }
+      const cur = m.get(r.publishDate) || { qty: 0, acc: {}, items: {}, list: [] }
       const q = recordQty(r.qty)
       cur.qty += q
-      const accs = (r.accounts || []).map(mapAccount).filter(Boolean)
-      accs.forEach((a) => { cur.acc[a] = (cur.acc[a] || 0) + q })
+      const sm = sampleMap && sampleMap[r.sampleId]
+      const rawAccs = (r.accounts && r.accounts.length) ? r.accounts : getAccounts(sm || {})
+      const accs = [...new Set(rawAccs.map(mapAccount).filter(Boolean))]
+      const pname = sm ? sm.name : name
+      accs.forEach((a) => {
+        cur.acc[a] = (cur.acc[a] || 0) + q
+        const k = `${a}::${pname}`
+        if (!cur.items[k]) cur.items[k] = { acc: a, pname, qty: 0 }
+        cur.items[k].qty += q
+      })
       cur.list.push(r)
       m.set(r.publishDate, cur)
     }
     return m
-  }, [filtered])
+  }, [filtered, sampleMap, name])
 
   const dates = useMemo(() => [...byDate.keys()].sort(), [byDate])
   const totalQty = filtered.reduce((s, r) => s + recordQty(r.qty), 0)
@@ -194,18 +202,21 @@ export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onCl
                   disabled={!inMonth}
                 >
                   <span className="pubcal-day">{Number(d.slice(8))}</span>
-                  {cur && (Object.keys(cur.acc).length > 0 ? (
+                  {cur && (Object.keys(cur.items).length > 0 ? (
                     <div className="pubcal-accs">
-                      {Object.entries(cur.acc).sort((x, y) => {
-                        const ix = ACCOUNTS.indexOf(x[0]), iy = ACCOUNTS.indexOf(y[0])
-                        return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy)
-                      }).map(([a, q]) => {
-                        const col = accountColor(a)
+                      {Object.values(cur.items).sort((x, y) => {
+                        const ix = ACCOUNTS.indexOf(x.acc), iy = ACCOUNTS.indexOf(y.acc)
+                        return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy) || x.pname.localeCompare(y.pname, 'zh')
+                      }).map((it) => {
+                        const col = accountColor(it.acc)
                         return (
-                          <div key={a} className="pubcal-acc">
-                            <span className="pubcal-dot" style={{ background: col.c }} />
-                            <span className="pubcal-acc-name">{accountLabel(a, hiddenAccounts)}</span>
-                            <span className="pubcal-acc-qty">×{q}</span>
+                          <div key={`${it.acc}::${it.pname}`} className="pubcal-acc">
+                            <div className="pubcal-acc-top">
+                              <span className="pubcal-dot" style={{ background: col.c }} />
+                              <span className="pubcal-acc-name">{accountLabel(it.acc, hiddenAccounts)}</span>
+                              <span className="pubcal-acc-qty">×{it.qty}</span>
+                            </div>
+                            <div className="pubcal-acc-prod">{it.pname}</div>
                           </div>
                         )
                       })}
