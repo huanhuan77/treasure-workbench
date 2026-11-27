@@ -200,10 +200,6 @@ export function PcOrders() {
                           <span className="ordcal-item-acc">{accountLabel(o.account, hiddenAccounts) || '—'}</span>
                           <span className="ordcal-item-name">{o.name || '(未命名)'}</span>
                           <span className="ordcal-item-qty">×{qtyOf(o)}</span>
-                          <span className="ordcal-item-act">
-                            <button className="ordcal-mini" title="编辑" onClick={() => openEdit(o)}>✎</button>
-                            <button className="ordcal-mini ordcal-mini--danger" title="删除这一笔" onClick={() => delEntry(o)}>×</button>
-                          </span>
                         </div>
                       )
                     })}
