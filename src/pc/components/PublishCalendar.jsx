@@ -11,7 +11,7 @@ const ymOf = (ds) => ds ? ds.slice(0, 7) : ''
 // PC 发布记录 · 产品每日发布日历。
 // 口径：整个产品跨账号聚合；只改当天条数，不改日期。
 // records 为该产品在全部账号下的发布记录。
-export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onClose, onDeleteDate }) {
+export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onClose, onDeleteDate, onEditItem }) {
   const clean = useMemo(
     () => (records || []).map((r) => ({ ...r, publishDate: normDate(r.publishDate) })).filter((r) => r.publishDate),
     [records],
@@ -48,8 +48,9 @@ export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onCl
       accs.forEach((a) => {
         cur.acc[a] = (cur.acc[a] || 0) + q
         const k = `${a}::${pname}`
-        if (!cur.items[k]) cur.items[k] = { acc: a, pname, qty: 0 }
+        if (!cur.items[k]) cur.items[k] = { acc: a, pname, qty: 0, recs: [] }
         cur.items[k].qty += q
+        cur.items[k].recs.push(r)
       })
       cur.list.push(r)
       m.set(r.publishDate, cur)
@@ -150,12 +151,13 @@ export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onCl
               const isSel = d === selDate
               const isToday = d === today
               return (
-                <button
+                <div
                   key={d}
-                  type="button"
+                  role="button"
+                  tabIndex={inMonth ? 0 : -1}
                   className={`pubcal-cell ${isSel ? 'pubcal-cell--sel' : ''} ${!inMonth ? 'pubcal-cell--off' : ''} ${isToday ? 'pubcal-cell--today' : ''}`}
                   onClick={() => pickDate(d)}
-                  disabled={!inMonth}
+                  onKeyDown={(e) => { if (e.key === 'Enter') pickDate(d) }}
                 >
                   <span className="pubcal-day">{Number(d.slice(8))}</span>
                   {cur && (Object.keys(cur.items).length > 0 ? (
@@ -170,6 +172,12 @@ export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onCl
                             <div className="pubcal-acc-top">
                               <span className="pubcal-dot" style={{ background: col.c }} />
                               <span className="pubcal-acc-name">{accountLabel(it.acc, hiddenAccounts)}</span>
+                              <button
+                                type="button"
+                                className="pubcal-acc-edit"
+                                title="编辑 / 删除这条"
+                                onClick={(e) => { e.stopPropagation(); onEditItem && onEditItem(d, it.acc, it.pname, it.recs) }}
+                              >✎</button>
                               <span className="pubcal-acc-qty">×{it.qty}</span>
                             </div>
                             <div className="pubcal-acc-prod">{it.pname}</div>
@@ -180,7 +188,7 @@ export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onCl
                   ) : (
                     <span className="pubcal-qty">{cur.qty} 条</span>
                   ))}
-                </button>
+                </div>
               )
             })}
           </div>

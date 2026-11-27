@@ -1212,6 +1212,8 @@ select.pcv-input {
   padding: 24px;
   background: rgba(15, 23, 42, 0.28);
 }
+/* 二级弹窗（从日历条目点开的修改弹窗）：抬到日历弹层之上 */
+.pcv-overlay--top { z-index: 300; }
 
 /* 全局同步 loading 遮罩：层级抬高、底色压暗，确保盖在所有 PC 内容之上 */
 .pcv-sync-mask {
@@ -2320,6 +2322,8 @@ tr:hover .pcv-x--soft {
 .pubcal-acc-name { flex-shrink: 0; font-weight: 600; color: #333a45; }
 .pubcal-acc-prod { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #9aa0a9; font-size: 11px; }
 .pubcal-acc-qty { font-weight: 700; color: #b8517f; flex-shrink: 0; margin-left: auto; }
+.pubcal-acc-edit { flex-shrink: 0; border: none; background: transparent; cursor: pointer; font-size: 11px; line-height: 1; color: #b8517f; padding: 0 2px; opacity: 0.55; }
+.pubcal-acc-edit:hover { opacity: 1; }
 .pubcal-cell--sel { background: #fdf1f6; border-color: #ee8fb6; }
 .pubcal-cell--today .pubcal-day { color: #b8517f; font-weight: 700; }
 .pubcal-edit { margin-top: 16px; }

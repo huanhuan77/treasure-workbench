@@ -229,6 +229,7 @@ export function PcPublishRecords() {
     ids.forEach((id) => deletePublishRecord(id))
     show(ids.length > 1 ? `已删除 ${date} 的 ${ids.length} 条发布记录` : `已删除 ${date} 的发布记录`, 'success')
     setDelTarget(null)
+    setDateEdit(null)
   }
 
   return (
@@ -444,7 +445,7 @@ export function PcPublishRecords() {
 
       {/* 修改发布日期 / 发布数量：点日期胶囊打开 */}
       {dateEdit && (
-        <div className="pcv-overlay" onClick={() => setDateEdit(null)}>
+        <div className="pcv-overlay pcv-overlay--top" onClick={() => setDateEdit(null)}>
           <div className="pcv-dialog" style={{ maxWidth: 380 }} onClick={(e) => e.stopPropagation()}>
             <div className="pcv-dialog-h">
               <span>修改发布记录</span>
@@ -495,6 +496,10 @@ export function PcPublishRecords() {
               </div>
             </div>
             <div className="pcv-dialog-f">
+              <button
+                className="pcv-btn pcv-btn-ghost--danger"
+                onClick={() => setDelTarget({ group: dateEdit.group, date: dateEdit.date })}
+              >删除此记录</button>
               <div className="pcv-spacer" />
               <button className="pcv-btn pcv-btn-ghost" onClick={() => setDateEdit(null)}>取消</button>
               <button className="pcv-btn" onClick={saveDateEdit} disabled={!dateDraft}>保存</button>
@@ -503,7 +508,8 @@ export function PcPublishRecords() {
         </div>
       )}
 
-      {/* 每日发布日历：点产品名打开，整个产品跨账号聚合 */}
+      {/* 每日发布日历：点产品名打开，整个产品跨账号聚合。
+          条目上的 ✎ 进修改弹窗（临时组，只含当天该账号该产品的记录），弹窗里可改日期/数量、可删除 */}
       {calProduct && (
         <PublishCalendar
           name={calProduct.name}
@@ -511,6 +517,10 @@ export function PcPublishRecords() {
           sampleMap={sampleMap}
           hiddenAccounts={hiddenAccounts}
           onClose={() => setCalProduct(null)}
+          onEditItem={(date, acc, pname, recs) => {
+            const g = { name: pname, account: acc, records: recs || [] }
+            openDateEdit(g, date)
+          }}
           onDeleteDate={deleteCalDate}
         />
       )}
