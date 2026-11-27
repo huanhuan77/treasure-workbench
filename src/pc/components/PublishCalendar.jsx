@@ -11,7 +11,7 @@ const ymOf = (ds) => ds ? ds.slice(0, 7) : ''
 // PC 发布记录 · 产品每日发布日历。
 // 口径：整个产品跨账号聚合；只改当天条数，不改日期。
 // records 为该产品在全部账号下的发布记录。
-export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSaveQty, onDeleteDate }) {
+export function PublishCalendar({ name, records, sampleMap, hiddenAccounts, onClose, onSaveQty, onDeleteDate }) {
   const clean = useMemo(
     () => (records || []).map((r) => ({ ...r, publishDate: normDate(r.publishDate) })).filter((r) => r.publishDate),
     [records],
@@ -95,13 +95,35 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
 
   const sel = byDate.get(selDate)
   const selWeek = selDate ? WEEK[new Date(`${selDate}T00:00:00`).getDay()] : ''
-  const accEntries = sel
-    ? Object.entries(sel.acc || {}).sort((a, b) => {
-        const ia = ACCOUNTS.indexOf(a[0]), ib = ACCOUNTS.indexOf(b[0])
-        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
-      })
-    : []
   const today = todayStr()
+
+  // 记录里只存 sampleId，产品名经样品映射兜底；查不到时用弹窗当前产品名
+  const nameOf = (r) => {
+    const sm = sampleMap && sampleMap[r.sampleId]
+    return sm ? sm.name : name
+  }
+
+  // 选中日明细：按「账号 × 产品」逐行聚合（账号 · 产品 · 条数）
+  const selDetails = useMemo(() => {
+    if (!sel) return []
+    const m = new Map()
+    sel.list.forEach((r) => {
+      const q = recordQty(r.qty)
+      const pname = nameOf(r)
+      const accs = (r.accounts || []).map(mapAccount).filter(Boolean)
+      const list = accs.length ? accs : ['']
+      list.forEach((a) => {
+        const k = `${a}::${pname}`
+        if (!m.has(k)) m.set(k, { acc: a, pname, qty: 0 })
+        m.get(k).qty += q
+      })
+    })
+    return [...m.values()].sort((x, y) => {
+      const ix = ACCOUNTS.indexOf(x.acc), iy = ACCOUNTS.indexOf(y.acc)
+      return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy) || x.pname.localeCompare(y.pname, 'zh')
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel, sampleMap, name])
 
   // 账号筛选切换 / 记录变化后，同步当天条数输入框
   useEffect(() => {
@@ -198,12 +220,14 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
                 onChange={(e) => setQtyDraft(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') saveQty() }}
               />
-              {accEntries.length > 0 && (
-                <div className="pubcal-accs">
-                  {accEntries.map(([a, q]) => (
-                    <span key={a} className="pubcal-acc">
-                      <b>{accountWithPlatform(a, hiddenAccounts)}</b><span>{q} 条</span>
-                    </span>
+              {selDetails.length > 0 && (
+                <div className="pubcal-details">
+                  {selDetails.map((it) => (
+                    <div key={`${it.acc}::${it.pname}`} className="pubcal-detail">
+                      <span className="pubcal-detail-acc">{accountWithPlatform(it.acc, hiddenAccounts)}</span>
+                      <span className="pubcal-detail-name">{it.pname}</span>
+                      <span className="pubcal-detail-qty">{it.qty} 条</span>
+                    </div>
                   ))}
                 </div>
               )}
