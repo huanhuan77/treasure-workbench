@@ -2377,7 +2377,7 @@ tr:hover .pcv-x--soft {
 
 .ordcal-weekrow { display: flex; gap: 6px; flex: 0 0 auto; }
 .ordcal-grid {
-  display: flex; flex-wrap: wrap; gap: 6px;
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch;
   flex: 1 1 0%; min-height: 0; align-content: flex-start; overflow-y: auto;
 }
 .ordcal-week { flex: 0 0 calc((100% - 36px) / 7); text-align: center; font-size: 12px; color: #9aa0a9; padding: 4px 0; }
