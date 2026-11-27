@@ -2338,3 +2338,85 @@ tr:hover .pcv-x--soft {
 }
 .pubcal-accfilter button:hover { background: #f6f7f9; }
 .pubcal-accfilter button.on { background: #ee8fb6; border-color: #ee8fb6; color: #fff; font-weight: 600; }
+
+/* ── 出单记录 · 月历视图 ─────────────────────────────────── */
+.ordcal-stats {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;
+  margin: 2px 0 16px;
+}
+.ordcal-stat {
+  background: #fff; border: 0.5px solid rgba(238,143,182,0.18); border-radius: 14px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+}
+.ordcal-stat-label { font-size: 12px; color: #9aa0a9; }
+.ordcal-stat b { font-size: 22px; font-weight: 700; color: #333a45; }
+.ordcal-stat-sub { font-size: 12px; color: #b8517f; }
+
+.ordcal-main {
+  flex: 1 1 0%; min-height: 0; display: flex; gap: 16px;
+}
+.ordcal-cal { flex: 1 1 0%; min-width: 0; display: flex; flex-direction: column; }
+.ordcal-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.ordcal-ym { font-size: 15px; font-weight: 700; color: #333a45; }
+.ordcal-today {
+  border: 0.5px solid rgba(15,23,42,0.12); background: #fff; border-radius: 8px;
+  padding: 4px 10px; font-size: 12px; color: #6b7280; cursor: pointer;
+}
+.ordcal-today:hover { background: #f6f7f9; }
+.ordcal-arrow {
+  width: 28px; height: 28px; border: 0.5px solid rgba(15,23,42,0.12); background: #fff;
+  border-radius: 8px; font-size: 16px; color: #6b7280; cursor: pointer; line-height: 1;
+}
+.ordcal-arrow:hover { background: #f6f7f9; }
+
+.ordcal-grid {
+  display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 6px;
+  flex: 1 1 0%; align-content: start;
+}
+.ordcal-week { text-align: center; font-size: 12px; color: #9aa0a9; padding: 4px 0; }
+.ordcal-cell {
+  position: relative; min-height: 86px; border: 0.5px solid transparent; border-radius: 10px;
+  background: #fbf5ea; display: flex; flex-direction: column; align-items: stretch;
+  gap: 3px; cursor: pointer; padding: 6px 6px; text-align: left;
+}
+.ordcal-cell--off { background: transparent; cursor: default; }
+.ordcal-cell--off .ordcal-day { color: #d3d6db; }
+.ordcal-day { font-size: 13px; color: #333a45; font-weight: 600; }
+.ordcal-item {
+  display: flex; align-items: center; gap: 4px; background: rgba(95,138,116,0.12);
+  border-radius: 6px; padding: 2px 6px; font-size: 11px; line-height: 1.4;
+}
+.ordcal-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #3f6b52; }
+.ordcal-item-qty { font-weight: 700; color: #5f8a74; flex-shrink: 0; }
+.ordcal-more { font-size: 11px; color: #9aa0a9; padding-left: 2px; }
+.ordcal-cell--sel { background: #fdf3d8; border-color: #e8a33d; }
+.ordcal-cell--today .ordcal-day { color: #b8517f; font-weight: 700; }
+.ordcal-foot { margin-top: 10px; font-size: 12px; color: #9aa0a9; }
+
+.ordcal-side {
+  flex: 0 0 340px; background: #fff; border: 0.5px solid rgba(15,23,42,0.08);
+  border-radius: 14px; padding: 16px; display: flex; flex-direction: column; min-height: 0;
+}
+.ordcal-side-head { margin-bottom: 12px; }
+.ordcal-side-date { font-size: 16px; font-weight: 700; color: #333a45; }
+.ordcal-side-meta { font-size: 13px; color: #6b7280; margin-top: 3px; }
+.ordcal-side-empty { color: #9aa0a9; font-size: 13px; text-align: center; padding: 40px 0; }
+.ordcal-sidelist { flex: 1 1 0%; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.ordcal-sideitem {
+  display: flex; align-items: center; gap: 8px; background: #fafbfc; border-radius: 10px; padding: 8px 10px;
+}
+.ordcal-sideacc {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #333a45;
+  flex-shrink: 0;
+}
+.ordcal-side-name { flex: 1 1 0%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #333a45; }
+.ordcal-side-qty { font-weight: 700; color: #5f8a74; flex-shrink: 0; font-size: 13px; }
+.ordcal-side-act { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.ordcal-side-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(15,23,42,0.08); }
+
+@media (max-width: 1100px) {
+  .ordcal-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .ordcal-main { flex-direction: column; }
+  .ordcal-side { flex: 0 0 auto; }
+}
+
