@@ -2305,11 +2305,11 @@ tr:hover .pcv-x--soft {
 }
 .pubcal-week { text-align: center; font-size: 13px; color: #9aa0a9; padding: 4px 0; }
 .pubcal-cell {
-  position: relative; min-height: 84px; border: 0.5px solid transparent; border-radius: 10px;
-  background: rgba(238,143,182,0.08); display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  position: relative; min-height: 84px; border: 1px solid rgba(238,143,182,0.28); border-radius: 10px;
+  background: rgba(238,143,182,0.12); display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
   gap: 3px; cursor: pointer; padding: 6px 8px; text-align: left;
 }
-.pubcal-cell--off { background: transparent; cursor: default; }
+.pubcal-cell--off { background: transparent; border-color: transparent; cursor: default; }
 .pubcal-cell--off .pubcal-day { color: #d3d6db; }
 .pubcal-day { font-size: 14px; color: #333a45; }
 .pubcal-qty { font-size: 12px; font-weight: 600; color: #b8517f; }
