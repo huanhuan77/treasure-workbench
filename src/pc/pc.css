@@ -2347,10 +2347,10 @@ tr:hover .pcv-x--soft {
 }
 .ordcal-stat {
   background: #fff; border: 0.5px solid rgba(238,143,182,0.18); border-radius: 14px;
-  padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+  padding: 9px 16px; display: flex; flex-direction: column; gap: 2px;
 }
 .ordcal-stat-label { font-size: 12px; color: #9aa0a9; }
-.ordcal-stat b { font-size: 22px; font-weight: 700; color: #333a45; }
+.ordcal-stat b { font-size: 20px; font-weight: 700; color: #333a45; line-height: 1.2; }
 .ordcal-stat-sub { font-size: 12px; color: #b8517f; }
 
 .ordcal-main {
