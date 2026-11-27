@@ -96,23 +96,11 @@ export function PcOrders() {
   }
 
   const selEntries = byDay.get(selDate) || []
-  const selQty = selEntries.reduce((s, o) => s + qtyOf(o), 0)
-  const selWeek = selDate ? WEEK[new Date(`${selDate}T00:00:00`).getDay()] : ''
   const today = todayStr()
 
   // 当月统计
   const monthQty = dates.filter((d) => ymOf(d) === viewYM).reduce((s, d) => s + byDay.get(d).reduce((x, o) => x + qtyOf(o), 0), 0)
   const monthDays = dates.filter((d) => ymOf(d) === viewYM).length
-
-  // 格子内产品聚合（同名合并 ×N）
-  const dayProducts = (entries) => {
-    const m = new Map()
-    entries.forEach((o) => {
-      const k = o.name || '(未命名)'
-      m.set(k, (m.get(k) || 0) + qtyOf(o))
-    })
-    return [...m.entries()]
-  }
 
   const openEdit = (o) => { setEditing(o); setModalOpen(true) }
   const delEntry = (o) => {
@@ -172,6 +160,12 @@ export function PcOrders() {
               <span className="ordcal-ym">{vy} 年 {vm} 月</span>
               <div className="pcv-spacer" />
               <button className="ordcal-today" onClick={() => { setViewYM(ymOf(today)); setSelDate(today) }}>今天</button>
+              <button
+                className="ordcal-today ordcal-today--danger"
+                disabled={selEntries.length === 0}
+                title="删除选中当天的全部出单"
+                onClick={() => delDay(selEntries)}
+              >删除当天</button>
               <button className="ordcal-arrow" title="上月" onClick={() => shiftMonth(-1)}>‹</button>
               <button className="ordcal-arrow" title="下月" onClick={() => shiftMonth(1)}>›</button>
             </div>
@@ -182,75 +176,40 @@ export function PcOrders() {
                 if (!d) return <div key={`e${i}`} className="ordcal-cell ordcal-cell--off" />
                 const inMonth = ymOf(d) === viewYM
                 const cur = byDay.get(d)
-                const products = cur ? dayProducts(cur) : []
                 const isSel = d === selDate
                 const isToday = d === today
                 return (
-                  <button
+                  <div
                     key={d}
-                    type="button"
                     className={`ordcal-cell ${isSel ? 'ordcal-cell--sel' : ''} ${!inMonth ? 'ordcal-cell--off' : ''} ${isToday ? 'ordcal-cell--today' : ''}`}
                     onClick={() => setSelDate(d)}
                   >
                     <span className="ordcal-day">{Number(d.slice(8))}</span>
-                    {products.slice(0, 2).map(([name, q]) => (
-                      <span key={name} className="ordcal-item" title={name}>
-                        <span className="ordcal-item-name">{name}</span>
-                        <span className="ordcal-item-qty">×{q}</span>
-                      </span>
-                    ))}
-                    {products.length > 2 && <span className="ordcal-more">还有 {products.length - 2} 笔…</span>}
-                  </button>
+                    {cur && cur.map((o) => {
+                      const col = ACCOUNT_COLOR[o.account] || {}
+                      return (
+                        <div
+                          key={o.id}
+                          className="ordcal-item"
+                          title={`${o.account || '未指定'} · ${o.name || '(未命名)'}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <span className="ordcal-dot" style={{ background: col.c || '#c1c7cf' }} />
+                          <span className="ordcal-item-name">{o.name || '(未命名)'}</span>
+                          <span className="ordcal-item-qty">×{qtyOf(o)}</span>
+                          <span className="ordcal-item-act">
+                            <button className="ordcal-mini" title="编辑" onClick={() => openEdit(o)}>✎</button>
+                            <button className="ordcal-mini ordcal-mini--danger" title="删除这一笔" onClick={() => delEntry(o)}>×</button>
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
                 )
               })}
             </div>
 
             <div className="ordcal-foot">本月：{monthQty} 单 · {monthDays} 天有出单</div>
-          </div>
-
-          {/* 右侧选中日明细 */}
-          <div className="ordcal-side">
-            <div className="ordcal-side-head">
-              <div className="ordcal-side-date">{selDate} {selWeek}</div>
-              <div className="ordcal-side-meta">{selQty} 件 · {selEntries.length} 笔记录</div>
-            </div>
-
-            {selEntries.length === 0 ? (
-              <div className="ordcal-side-empty">这天还没有出单记录，点右上角记一笔</div>
-            ) : (
-              <div className="ordcal-sidelist">
-                {selEntries.map((o) => {
-                  const col = ACCOUNT_COLOR[o.account] || {}
-                  return (
-                    <div key={o.id} className="ordcal-sideitem">
-                      <span className="ordcal-sideacc" title={o.account || '未指定'}>
-                        <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: col.c || '#c1c7cf', flexShrink: 0 }} />
-                        <span>{accountWithPlatform(o.account, hiddenAccounts)}</span>
-                      </span>
-                      <span className="ordcal-side-name" title={o.name}>{o.name || '(未命名)'}</span>
-                      <span className="ordcal-side-qty">×{qtyOf(o)}</span>
-                      <span className="ordcal-side-act">
-                        <button className="pcv-detailact" onClick={() => openEdit(o)}>编辑</button>
-                        <button className="pcv-detailact pcv-detailact--danger" title="删除这一笔" onClick={() => delEntry(o)}>删除</button>
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            <div className="ordcal-side-foot">
-              <button
-                className="pcv-btn pcv-btn-ghost--danger"
-                disabled={selEntries.length === 0}
-                onClick={() => delDay(selEntries)}
-              >删除该天</button>
-              <div className="pcv-spacer" />
-              <button
-                className="pcv-btn"
-                onClick={() => { setPrefill(accountFilter ? { account: accountFilter, date: selDate } : { date: selDate }); setOrderOpen(true) }}
-              >＋ 记一单</button>
-            </div>
           </div>
         </div>
       </div>

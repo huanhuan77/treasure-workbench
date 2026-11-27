@@ -2386,37 +2386,25 @@ tr:hover .pcv-x--soft {
   display: flex; align-items: center; gap: 4px; background: rgba(95,138,116,0.12);
   border-radius: 6px; padding: 2px 6px; font-size: 11px; line-height: 1.4;
 }
+.ordcal-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .ordcal-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #3f6b52; }
 .ordcal-item-qty { font-weight: 700; color: #5f8a74; flex-shrink: 0; }
-.ordcal-more { font-size: 11px; color: #9aa0a9; padding-left: 2px; }
+.ordcal-item-act { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
+.ordcal-cell:hover .ordcal-item-act, .ordcal-item-act:focus-within { opacity: 1; }
+.ordcal-mini {
+  width: 18px; height: 18px; border: none; background: rgba(255,255,255,0.75); border-radius: 5px;
+  font-size: 11px; cursor: pointer; color: #6b7280; line-height: 1; padding: 0;
+}
+.ordcal-mini:hover { background: #fff; }
+.ordcal-mini--danger { color: #b96a66; }
+.ordcal-today--danger { color: #b96a66; }
+.ordcal-today--danger:disabled { opacity: 0.4; cursor: not-allowed; }
 .ordcal-cell--sel { background: #fdf3d8; border-color: #e8a33d; }
 .ordcal-cell--today .ordcal-day { color: #b8517f; font-weight: 700; }
 .ordcal-foot { margin-top: 10px; font-size: 12px; color: #9aa0a9; }
 
-.ordcal-side {
-  flex: 0 0 340px; background: #fff; border: 0.5px solid rgba(15,23,42,0.08);
-  border-radius: 14px; padding: 16px; display: flex; flex-direction: column; min-height: 0;
-}
-.ordcal-side-head { margin-bottom: 12px; }
-.ordcal-side-date { font-size: 16px; font-weight: 700; color: #333a45; }
-.ordcal-side-meta { font-size: 13px; color: #6b7280; margin-top: 3px; }
-.ordcal-side-empty { color: #9aa0a9; font-size: 13px; text-align: center; padding: 40px 0; }
-.ordcal-sidelist { flex: 1 1 0%; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-.ordcal-sideitem {
-  display: flex; align-items: center; gap: 8px; background: #fafbfc; border-radius: 10px; padding: 8px 10px;
-}
-.ordcal-sideacc {
-  display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: #333a45;
-  flex-shrink: 0;
-}
-.ordcal-side-name { flex: 1 1 0%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: #333a45; }
-.ordcal-side-qty { font-weight: 700; color: #5f8a74; flex-shrink: 0; font-size: 13px; }
-.ordcal-side-act { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.ordcal-side-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(15,23,42,0.08); }
-
 @media (max-width: 1100px) {
   .ordcal-stats { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .ordcal-main { flex-direction: column; }
-  .ordcal-side { flex: 0 0 auto; }
 }
 
