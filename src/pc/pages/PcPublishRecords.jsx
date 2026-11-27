@@ -8,6 +8,7 @@ import { recordQty } from '../../utils/helpers'
 import { dateBounds } from '../../components/DateFilterBar'
 import { PublishDialog } from '../components/PublishDialog'
 import { ResetButton } from '../components/ResetButton'
+import { PublishCalendar } from '../components/PublishCalendar'
 
 // 日期区间快捷项（与手机版 DateFilterBar 同一套 key，交给 dateBounds 解析区间）
 const RANGES = [
@@ -89,6 +90,8 @@ export function PcPublishRecords() {
   const [sortKey, setSortKey] = useState('dateDesc')
   // 「发布详情」弹窗：存 group.key，渲染时再从 groups 里取最新对象（删除/改日期后自动同步）
   const [detailKey, setDetailKey] = useState('')
+  // 「每日发布日历」弹窗：点产品名打开，按整个产品跨账号聚合
+  const [calProduct, setCalProduct] = useState(null)
   const [delTarget, setDelTarget] = useState(null)
   // 记录发布弹窗：undefined=关闭、对象=打开（可带预填）
   const [publishDialog, setPublishDialog] = useState(undefined)
@@ -196,6 +199,33 @@ export function PcPublishRecords() {
     () => new Set(groups.flatMap((g) => g.records.map((r) => r.id))).size,
     [groups],
   )
+
+  // 日历弹窗：该产品在全部账号下的发布记录（优先 sampleId，老数据按名称兜底）
+  const calRecords = useMemo(() => {
+    if (!calProduct) return []
+    return records.filter((r) => {
+      const sm = sampleMap[r.sampleId]
+      const rname = sm ? sm.name : ''
+      if (calProduct.sampleId) return r.sampleId === calProduct.sampleId
+      return rname === calProduct.name
+    })
+  }, [calProduct, records, sampleMap])
+
+  // 日历：保存某天条数（只改条数，不改日期）。数量记当天第一条，其余清零。
+  const saveCalQty = (date, nq) => {
+    const list = calRecords.filter((r) => r.publishDate === date)
+    if (list.length === 0) return
+    updatePublishRecord(list[0].id, { qty: String(nq) })
+    list.slice(1).forEach((r) => updatePublishRecord(r.id, { qty: '0' }))
+    show(`已保存 ${date} 的条数为 ${nq}`, 'success')
+  }
+
+  // 日历：删除某天全部记录（跨账号，按 id 去重）
+  const deleteCalDate = (date) => {
+    const ids = [...new Set(calRecords.filter((r) => r.publishDate === date).map((r) => r.id))]
+    ids.forEach((id) => deletePublishRecord(id))
+    show(ids.length > 1 ? `已删除 ${date} 的 ${ids.length} 条发布记录` : `已删除 ${date} 的发布记录`, 'success')
+  }
 
   // 账号筛选固定列全集，没有发布记录的账号也能选
   const accountOptions = ACCOUNTS
@@ -307,7 +337,11 @@ export function PcPublishRecords() {
                       </span>
                     </td>
                     <td>
-                      <span className="pcv-nametext" title={g.name}>{g.name}</span>
+                      <button
+                        className="pcv-nametext pcv-namelink"
+                        title={`查看「${g.name}」发布日历`}
+                        onClick={() => setCalProduct({ sampleId: g.records[0]?.sampleId, name: g.name })}
+                      >{g.name}</button>
                     </td>
                     <td>
                       {g.account ? (
@@ -465,6 +499,17 @@ export function PcPublishRecords() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 每日发布日历：点产品名打开，整个产品跨账号聚合 */}
+      {calProduct && (
+        <PublishCalendar
+          name={calProduct.name}
+          records={calRecords}
+          onClose={() => setCalProduct(null)}
+          onSaveQty={saveCalQty}
+          onDeleteDate={deleteCalDate}
+        />
       )}
 
       {/* 记录发布：弹窗，不跳页面 */}

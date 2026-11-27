@@ -2279,3 +2279,47 @@ tr:hover .pcv-x--soft {
 .pcv-rtab.on::after {
   background: #b8517f;
 }
+
+/* ── 发布记录 · 产品每日发布日历 ── */
+.pubcal { max-width: 640px; }
+.pubcal-title { font-size: 16px; font-weight: 700; color: #333a45; }
+.pubcal-stats {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  font-size: 13px; color: #6b7280; margin: 2px 0 14px;
+}
+.pubcal-stats b { font-size: 16px; font-weight: 700; color: #333a45; margin-right: 3px; }
+.pubcal-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.pubcal-ym { font-size: 15px; font-weight: 700; color: #333a45; }
+.pubcal-today {
+  border: 0.5px solid rgba(15,23,42,0.12); background: #fff; border-radius: 8px;
+  padding: 4px 10px; font-size: 12px; color: #6b7280; cursor: pointer;
+}
+.pubcal-today:hover { background: #f6f7f9; }
+.pubcal-arrow {
+  width: 28px; height: 28px; border: 0.5px solid rgba(15,23,42,0.12); background: #fff;
+  border-radius: 8px; font-size: 16px; color: #6b7280; cursor: pointer; line-height: 1;
+}
+.pubcal-arrow:hover { background: #f6f7f9; }
+.pubcal-grid {
+  display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 6px;
+}
+.pubcal-week { text-align: center; font-size: 12px; color: #9aa0a9; padding: 4px 0; }
+.pubcal-cell {
+  position: relative; min-height: 62px; border: 0.5px solid transparent; border-radius: 10px;
+  background: #fbf5ea; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; cursor: pointer; padding: 4px 2px;
+}
+.pubcal-cell--off { background: transparent; cursor: default; }
+.pubcal-cell--off .pubcal-day { color: #d3d6db; }
+.pubcal-day { font-size: 13px; color: #333a45; }
+.pubcal-qty { font-size: 11px; font-weight: 600; color: #d97706; }
+.pubcal-cell--sel { background: #fdf3d8; border-color: #e8a33d; }
+.pubcal-cell--today .pubcal-day { color: #b8517f; font-weight: 700; }
+.pubcal-edit { margin-top: 16px; }
+.pubcal-edit-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: #333a45; }
+.pubcal-edit-date { font-size: 12px; font-weight: 400; color: #9aa0a9; }
+.pubcal-del { margin-right: 8px; }
+
+/* 产品名作为日历弹窗入口：重置 button 默认外观，hover 品牌粉 */
+.pcv-namelink { background: none; border: none; padding: 0; font: inherit; text-align: left; color: inherit; cursor: pointer; width: 100%; }
+.pcv-namelink:hover { color: #b8517f; }
