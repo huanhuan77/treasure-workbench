@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { recordQty, todayStr } from '../../utils/helpers'
 import { mapAccount, maskAccount, ACCOUNTS } from '../../utils/accounts'
 import { ConfirmModal } from '../../components/Modal'
@@ -17,10 +17,27 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
     [records],
   )
 
-  // 按日期聚合：当天总条数 + 分账号条数 + 记录列表（跨账号）
+  // 该产品出现过的账号（按固定顺序排），供筛选条使用
+  const accountsInUse = useMemo(() => {
+    const set = new Set()
+    clean.forEach((r) => (r.accounts || []).map(mapAccount).filter(Boolean).forEach((a) => set.add(a)))
+    return [...set].sort((a, b) => {
+      const ia = ACCOUNTS.indexOf(a), ib = ACCOUNTS.indexOf(b)
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
+    })
+  }, [clean])
+
+  // 账号筛选：'' = 全部账号
+  const [accFilter, setAccFilter] = useState('')
+  const filtered = useMemo(() => {
+    if (!accFilter) return clean
+    return clean.filter((r) => (r.accounts || []).map(mapAccount).includes(accFilter))
+  }, [clean, accFilter])
+
+  // 按日期聚合：当天总条数 + 分账号条数 + 记录列表（随账号筛选联动）
   const byDate = useMemo(() => {
     const m = new Map()
-    for (const r of clean) {
+    for (const r of filtered) {
       const cur = m.get(r.publishDate) || { qty: 0, acc: {}, list: [] }
       const q = recordQty(r.qty)
       cur.qty += q
@@ -30,10 +47,10 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
       m.set(r.publishDate, cur)
     }
     return m
-  }, [clean])
+  }, [filtered])
 
   const dates = useMemo(() => [...byDate.keys()].sort(), [byDate])
-  const totalQty = clean.reduce((s, r) => s + recordQty(r.qty), 0)
+  const totalQty = filtered.reduce((s, r) => s + recordQty(r.qty), 0)
   const activeDays = dates.length
 
   const latest = dates[dates.length - 1] || todayStr()
@@ -86,11 +103,17 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
     : []
   const today = todayStr()
 
+  // 账号筛选切换 / 记录变化后，同步当天条数输入框
+  useEffect(() => {
+    const c = byDate.get(selDate)
+    setQtyDraft(c ? String(c.qty) : '')
+  }, [byDate, selDate])
+
   const saveQty = () => {
     if (!sel || !selDate) return
     const nq = parseInt(String(qtyDraft).replace(/[^\d]/g, ''), 10)
     if (!Number.isFinite(nq) || nq <= 0) return
-    onSaveQty(selDate, nq)
+    onSaveQty(selDate, nq, accFilter || null)
   }
 
   return (
@@ -118,6 +141,18 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
             <button className="pubcal-arrow" title="上月" onClick={() => shiftMonth(-1)}>‹</button>
             <button className="pubcal-arrow" title="下月" onClick={() => shiftMonth(1)}>›</button>
           </div>
+
+          {/* 账号筛选：全部 / 该产品出现过的账号 */}
+          {accountsInUse.length > 0 && (
+            <div className="pubcal-accfilter">
+              <button className={!accFilter ? 'on' : ''} onClick={() => setAccFilter('')}>全部</button>
+              {accountsInUse.map((a) => (
+                <button key={a} className={accFilter === a ? 'on' : ''} onClick={() => setAccFilter(a)}>
+                  {maskAccount(a, hiddenAccounts)}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* 周表头 */}
           <div className="pubcal-grid">
@@ -189,7 +224,7 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
         <ConfirmModal
           open={confirmDel}
           onClose={() => setConfirmDel(false)}
-          onConfirm={() => { onDeleteDate(selDate); setConfirmDel(false) }}
+          onConfirm={() => { onDeleteDate(selDate, accFilter || null); setConfirmDel(false) }}
           title="删除发布记录"
           message={sel ? `确定删除 ${selDate}「${name}」的 ${sel.list.length} 条发布记录吗？此操作不可撤销。` : ''}
         />
