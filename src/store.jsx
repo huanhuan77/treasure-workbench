@@ -4270,6 +4270,7 @@ export function StoreProvider({ children }) {
       let sampleChanged = false
       for (const a of accounts) {
         if (execByAccount[a] === 'abandoned') continue
+        if (dismiss[a]) continue   // 用户人工保留/恢复过的账号，不再被自动放弃覆盖
         const c = s.countsByAccount?.[a]
         const pub = Number(c?.publishCount) || 0
         const ord = Number(c?.orderCount) || 0
@@ -4670,10 +4671,14 @@ export function StoreProvider({ children }) {
       const accounts = getAccounts(s)
       const execByAccount = { ...(s.execByAccount || {}) }
       const countsByAccount = { ...(s.countsByAccount || {}) }
+      const dismiss = {}
       for (const a of accounts) {
         const c = countsByAccount[a] || {}
         const pub = Number(c.publishCount) || 0
         execByAccount[a] = pub > 0 ? 'published' : null
+        // 清掉残留的「出单后发布条数」，避免被旧阈值重新判定自动放弃；并标记人工保留，后续不再自动放弃
+        countsByAccount[a] = { ...c, publishesSinceLastOrder: 0 }
+        dismiss[a] = true
       }
       const next = {
         ...s,
@@ -4684,7 +4689,7 @@ export function StoreProvider({ children }) {
         autoAbandoned: false,
         autoAbandonedByAccount: {},
         suggestAbandonedByAccount: {},
-        abandonDismissedByAccount: {},
+        abandonDismissedByAccount: dismiss,
         updatedAt: Date.now(),
       }
       next.status = recomputeTopStatus(next)
@@ -4706,10 +4711,13 @@ export function StoreProvider({ children }) {
         const accounts = getAccounts(s)
         const execByAccount = { ...(s.execByAccount || {}) }
         const countsByAccount = { ...cb }
+        const dismiss = {}
         for (const a of accounts) {
           const c = countsByAccount[a] || {}
           const pub = Number(c.publishCount) || 0
           execByAccount[a] = pub > 0 ? 'published' : null
+          countsByAccount[a] = { ...c, publishesSinceLastOrder: 0 }
+          dismiss[a] = true
         }
         const next = {
           ...s,
@@ -4720,7 +4728,7 @@ export function StoreProvider({ children }) {
           autoAbandoned: false,
           autoAbandonedByAccount: {},
           suggestAbandonedByAccount: {},
-          abandonDismissedByAccount: {},
+          abandonDismissedByAccount: dismiss,
           updatedAt: Date.now(),
         }
         next.status = recomputeTopStatus(next)
