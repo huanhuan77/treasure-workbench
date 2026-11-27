@@ -5,7 +5,7 @@ import { useToast } from '../../components/Toast'
 import { OrderDialog } from '../components/OrderDialog'
 import { todayStr } from '../../utils/helpers'
 import {
-  ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform,
+  ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform, accountLabel,
   mapAccount, isVideoAccount,
 } from '../../utils/accounts'
 
@@ -195,6 +195,7 @@ export function PcOrders() {
                           onClick={(e) => e.stopPropagation()}
                         >
                           <span className="ordcal-dot" style={{ background: col.c || '#c1c7cf' }} />
+                          <span className="ordcal-item-acc">{accountLabel(o.account, hiddenAccounts) || '—'}</span>
                           <span className="ordcal-item-name">{o.name || '(未命名)'}</span>
                           <span className="ordcal-item-qty">×{qtyOf(o)}</span>
                           <span className="ordcal-item-act">
