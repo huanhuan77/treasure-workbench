@@ -211,15 +211,6 @@ export function PcPublishRecords() {
     })
   }, [calProduct, records, sampleMap])
 
-  // 日历：保存某天条数（只改条数，不改日期）。数量记当天第一条，其余清零。account 为空=全部账号。
-  const saveCalQty = (date, nq, account) => {
-    const list = calRecords.filter((r) => r.publishDate === date && (!account || (r.accounts || []).map(mapAccount).includes(account)))
-    if (list.length === 0) return
-    updatePublishRecord(list[0].id, { qty: String(nq) })
-    list.slice(1).forEach((r) => updatePublishRecord(r.id, { qty: '0' }))
-    show(`已保存 ${date} 的条数为 ${nq}`, 'success')
-  }
-
   // 日历：删除某天全部记录（按账号筛选时只删该账号，按 id 去重）
   const deleteCalDate = (date, account) => {
     const ids = [...new Set(calRecords.filter((r) => r.publishDate === date && (!account || (r.accounts || []).map(mapAccount).includes(account))).map((r) => r.id))]
@@ -520,7 +511,6 @@ export function PcPublishRecords() {
           sampleMap={sampleMap}
           hiddenAccounts={hiddenAccounts}
           onClose={() => setCalProduct(null)}
-          onSaveQty={saveCalQty}
           onDeleteDate={deleteCalDate}
         />
       )}
