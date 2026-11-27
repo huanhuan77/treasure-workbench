@@ -391,12 +391,11 @@ export function PcPublishRecords() {
               </div>
 
               <div className="pcv-dialog-b">
-                {/* 三块概览：产品 / 账号 / 发布数量 */}
+                {/* 三块概览：产品 / 账号 / 发布数量（数量可点进修改） */}
                 <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
                   {[
                     { label: '产品', value: g.name, color: '#333a45' },
                     { label: '账号', value: accountWithPlatform(g.account, hiddenAccounts) || '—', color: '#333a45' },
-                    { label: '发布数量', value: g.qty, color: '#b8517f' },
                   ].map((m) => (
                     <div key={m.label} style={{ flex: 1, minWidth: 0, background: '#fafbfc', borderRadius: 10, padding: '9px 12px' }}>
                       <div style={{ fontSize: 11, color: '#8a8f98', marginBottom: 3 }}>{m.label}</div>
@@ -406,6 +405,18 @@ export function PcPublishRecords() {
                       }} title={String(m.value)}>{m.value}</div>
                     </div>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (g.dates.length === 1) { setDetailKey(''); openDateEdit(g, g.dates[0]) }
+                      else show('该产品有多个日期，请点下方具体日期修改数量')
+                    }}
+                    title={g.dates.length === 1 ? '点击修改发布数量' : '多日期：请点下方日期修改数量'}
+                    style={{ flex: 1, minWidth: 0, background: '#fafbfc', borderRadius: 10, padding: '9px 12px', textAlign: 'left', border: 'none', cursor: 'pointer' }}
+                  >
+                    <div style={{ fontSize: 11, color: '#8a8f98', marginBottom: 3 }}>发布数量 ✎</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: '#b8517f' }}>{g.qty}</div>
+                  </button>
                 </div>
 
                 <div className="pcv-field-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -431,7 +442,7 @@ export function PcPublishRecords() {
               </div>
 
               <div className="pcv-dialog-f">
-                <span style={{ fontSize: 11, color: '#9aa0a9' }}>点日期可改，点 × 可删当天记录</span>
+                <span style={{ fontSize: 11, color: '#9aa0a9' }}>点数量或日期可改，点 × 可删当天记录</span>
                 <div className="pcv-spacer" />
                 <button className="pcv-btn" onClick={() => setDetailKey('')}>关闭</button>
               </div>
