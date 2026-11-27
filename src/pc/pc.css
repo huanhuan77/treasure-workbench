@@ -2281,7 +2281,7 @@ tr:hover .pcv-x--soft {
 }
 
 /* ── 发布记录 · 产品每日发布日历 ── */
-.pubcal { max-width: 820px; }
+.pubcal { width: 80%; max-width: 80%; }
 .pubcal-title { font-size: 16px; font-weight: 700; color: #333a45; }
 .pubcal-stats {
   display: flex; gap: 18px; flex-wrap: wrap;
