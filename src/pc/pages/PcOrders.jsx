@@ -16,7 +16,7 @@ const ymOf = (ds) => (ds ? ds.slice(0, 7) : '')
 const qtyOf = (o) => (Number(o.qty) > 0 ? Number(o.qty) : 1)
 
 // PC 版出单记录 · 月历视图。
-// 按日期聚合：格子列当天产品与条数，右侧选中日看明细，可编辑/删除/继续记一单。
+// 按日期聚合：格子列当天产品与条数，鼠标悬停格子弹出当天明细浮层，可编辑/删除/删除当天。
 // 本地台账只存佣金百分比，不展示佣金金额（用户确认）。
 export function PcOrders() {
   const { show } = useToast()
@@ -204,6 +204,37 @@ export function PcOrders() {
                         </div>
                       )
                     })}
+                    {cur && cur.length > 0 && (
+                      <div
+                        className={`ordcal-pop ${i % 7 === 6 ? 'ordcal-pop--right' : ''} ${Math.floor(i / 7) >= 4 ? 'ordcal-pop--up' : ''}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="ordcal-pop-head">
+                          <span className="ordcal-pop-date">{Number(d.slice(5, 7))}月{Number(d.slice(8))}日 {WEEK[new Date(`${d}T00:00:00`).getDay()]}</span>
+                          <span className="ordcal-pop-meta">{cur.reduce((s, o) => s + qtyOf(o), 0)} 件 · {cur.length} 笔</span>
+                        </div>
+                        <div className="ordcal-pop-list">
+                          {cur.map((o) => {
+                            const col = ACCOUNT_COLOR[o.account] || {}
+                            return (
+                              <div key={o.id} className="ordcal-pop-item">
+                                <span className="ordcal-dot" style={{ background: col.c || '#c1c7cf' }} />
+                                <span className="ordcal-pop-acc">{accountWithPlatform(o.account, hiddenAccounts)}</span>
+                                <span className="ordcal-pop-name">{o.name || '(未命名)'}</span>
+                                <span className="ordcal-pop-qty">×{qtyOf(o)}</span>
+                                <span className="ordcal-pop-act">
+                                  <button className="ordcal-mini" title="编辑" onClick={() => openEdit(o)}>✎</button>
+                                  <button className="ordcal-mini ordcal-mini--danger" title="删除这一笔" onClick={() => delEntry(o)}>×</button>
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div className="ordcal-pop-foot">
+                          <button className="ordcal-pop-del" onClick={() => delDay(cur)}>删除当天</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}

@@ -2405,6 +2405,35 @@ tr:hover .pcv-x--soft {
 .ordcal-today--danger:disabled { opacity: 0.4; cursor: not-allowed; }
 .ordcal-cell--sel { background: #fdf1f6; border-color: #ee8fb6; }
 .ordcal-cell--today .ordcal-day { color: #b8517f; font-weight: 700; }
+
+.ordcal-pop {
+  position: absolute; top: calc(100% + 6px); left: 0; width: 280px; z-index: 30;
+  background: #fff; border: 0.5px solid rgba(238,143,182,0.25); border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.14); padding: 10px;
+  opacity: 0; visibility: hidden; transform: translateY(4px);
+  transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+.ordcal-cell:hover .ordcal-pop, .ordcal-cell:focus-within .ordcal-pop {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.ordcal-pop--right { left: auto; right: 0; }
+.ordcal-pop--up { top: auto; bottom: calc(100% + 6px); }
+.ordcal-pop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.ordcal-pop-date { font-size: 13px; font-weight: 700; color: #333a45; }
+.ordcal-pop-meta { font-size: 11px; color: #b8517f; flex-shrink: 0; }
+.ordcal-pop-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.ordcal-pop-item { display: flex; align-items: center; gap: 6px; background: #fcfcfd; border-radius: 8px; padding: 6px 8px; }
+.ordcal-pop-acc { font-size: 11px; color: #6b7280; flex-shrink: 0; }
+.ordcal-pop-name { flex: 1 1 0%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #333a45; }
+.ordcal-pop-qty { font-weight: 700; color: #b8517f; font-size: 12px; flex-shrink: 0; }
+.ordcal-pop-act { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.ordcal-pop-foot { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(15,23,42,0.08); display: flex; justify-content: flex-end; }
+.ordcal-pop-del {
+  border: 0.5px solid rgba(185,106,102,0.3); background: #fdf1f1; color: #b96a66;
+  border-radius: 8px; padding: 5px 12px; font-size: 12px; cursor: pointer;
+}
+.ordcal-pop-del:hover { background: #fbe4e4; }
+
 .ordcal-foot { margin-top: 10px; font-size: 12px; color: #9aa0a9; }
 
 @media (max-width: 1100px) {
