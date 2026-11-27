@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { ACCOUNT_COLOR } from '../utils/accounts'
+import { ACCOUNT_COLOR, accountWithPlatform } from '../utils/accounts'
 import { LOW_PUBLISH_LIMIT, selectLowPublish } from '../utils/reminders'
 import { ReminderListPage, ReminderCard, CardTitleRow, CardActions } from '../components/ReminderListPage'
 
@@ -93,7 +93,7 @@ export function LowPublishSamplesPage() {
                   <span key={a} style={{
                     fontSize: '10px', padding: '2px 8px', borderRadius: '6px', fontWeight: 600, whiteSpace: 'nowrap',
                     background: col.bg, color: col.c, border: `1px solid ${col.c}`,
-                  }}>{a}({n}条)</span>
+                  }}>{accountWithPlatform(a)}({n}条)</span>
                 )
               })}
             </div>

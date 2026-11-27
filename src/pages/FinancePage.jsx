@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost, ConfirmModal, glassStyle } from '../components/Modal'
 import { formatDate } from '../utils/helpers'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
-import { ACCOUNTS } from '../utils/accounts'
+import { ACCOUNTS, accountWithPlatform } from '../utils/accounts'
 // 分类表与 PC 端共用 utils/financeCategories（新增分类只改一处）
 import { CATEGORIES } from '../utils/financeCategories'
 
@@ -183,7 +183,7 @@ export function FinancePage() {
             <select value={filterAccount} onChange={(e) => setFilterAccount(e.target.value)}
               style={{ ...inputStyle, flex:'1 1 0', minWidth: '80px', padding:'8px 8px', fontSize:'13px', background:'rgba(255,255,255,0.6)' }}>
               <option value="all">全部账号</option>
-              {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
+              {accounts.map((a) => <option key={a} value={a}>{accountWithPlatform(a)}</option>)}
             </select>
           )}
           <SortButton label="日期" field="date" sortBy={sortBy} onClick={toggleSort} />
@@ -231,7 +231,7 @@ export function FinancePage() {
                         fontWeight: 600,
                       }}>{cat.label}</span>
                       {t.account && (
-                        <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>@{hideAccount ? '***' : t.account}</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-sub)' }}>@{hideAccount ? '***' : accountWithPlatform(t.account)}</span>
                       )}
                     </div>
                     <div style={{ fontSize: '12px', color: 'var(--text-sub)', marginTop: '5px' }}>
@@ -493,7 +493,7 @@ function TransactionForm({ accounts = [], onClose, onSave }) {
           <select value={form.account} onChange={(e) => setForm({ ...form, account: e.target.value })}
             style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: '36px', color: form.account ? 'var(--text-main)' : 'var(--text-sub)' }}>
             <option value="">请选择账号</option>
-            {accounts.map((a) => (<option key={a} value={a}>{a}</option>))}
+            {accounts.map((a) => (<option key={a} value={a}>{accountWithPlatform(a)}</option>))}
           </select>
           <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
         </div>

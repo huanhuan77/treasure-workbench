@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, mapAccount } from '../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, mapAccount, accountWithPlatform } from '../utils/accounts'
 import { recordQty } from '../utils/helpers'
 import { DraggableFab } from '../components/DraggableFab'
 import { ConfirmModal } from '../components/Modal'
@@ -182,7 +182,7 @@ export function PublishRecordsPage() {
               borderColor: sel ? col.c : 'rgba(0,0,0,0.06)',
               background: sel ? col.bg : '#fff',
               color: sel ? col.c : 'var(--text-main)',
-            }}>{a}</button>
+            }}>{accountWithPlatform(a)}</button>
           )
         })}
       </div>
@@ -246,7 +246,7 @@ export function PublishRecordsPage() {
                   {/* 账号 + 最近发布日期（带删除） + 共几次 */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
                     {g.account && (
-                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: accColor.bg, color: accColor.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{g.account}</span>
+                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: accColor.bg, color: accColor.c, fontWeight: 600, whiteSpace: 'nowrap' }}>{accountWithPlatform(g.account)}</span>
                     )}
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: 'auto', flexShrink: 0 }}>
                       <span style={{ fontSize: '12px', color: '#9ca3af', whiteSpace: 'nowrap' }}>📅 {g.dates[0] || '—'}</span>

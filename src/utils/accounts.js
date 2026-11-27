@@ -91,6 +91,21 @@ export function hasAccount(sample, account) {
   return getAccounts(sample).includes(account)
 }
 
+// 平台归属：归一后返回「抖音」/「视频号」；无法归属返回空串
+export function platformOf(a) {
+  const n = mapAccount(a)
+  if (isVideoAccount(n)) return '视频号'
+  if (DOUYIN_ACCOUNTS.includes(n)) return '抖音'
+  return ''
+}
+
+// 展示名 + 平台文字后缀：「刘亦菲 · 抖音」；无平台归属则只返回打码后的账号名
+export function accountWithPlatform(name, hidden) {
+  const label = maskAccount(name, hidden)
+  const pf = platformOf(name)
+  return pf ? `${label} · ${pf}` : label
+}
+
 // ── 隐藏账号 = **打星号**（不是筛选掉，用户明确「是账号显示星号，不是筛选」）──
 // 规则：保留首字 + 其余用 * 代替，既能区分不同账号，又不会把名字露出来。传入 hidden 列表，命中即打码。
 export function maskAccount(name, hidden) {

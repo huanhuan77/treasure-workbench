@@ -5,7 +5,7 @@ import { Modal, Field, inputStyle, btnPrimary, btnGhost } from './Modal'
 import { todayStr, addDays, toDateInput } from '../utils/helpers'
 import { isShotSample } from '../utils/sampleStatus'
 import { CATEGORIES } from '../utils/categories'
-import { PICK_ACCOUNTS } from '../utils/accounts'
+import { PICK_ACCOUNTS, accountWithPlatform } from '../utils/accounts'
 
 export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, statusMode = false }) {
   const { products } = useStore()
@@ -100,7 +100,7 @@ export function SampleForm({ sample, onClose, onSave, onDelete, inline = true, s
                 textAlign: 'center', minHeight: '34px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '3px',
               }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: selected ? '#fff' : 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{a}</span>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: selected ? '#fff' : 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{accountWithPlatform(a)}</span>
                 {selected && <span style={{ color: '#fff', fontSize: '10px', fontWeight: 700, flexShrink: 0 }}>✓</span>}
               </button>
             )

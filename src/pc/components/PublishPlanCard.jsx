@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { PLAN_ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount, cleanAccountOption } from '../../utils/accounts'
+import { PLAN_ACCOUNTS, ACCOUNT_COLOR, getAccounts, accountWithPlatform, cleanAccountOption } from '../../utils/accounts'
 import { isArchivedSample } from '../../utils/sampleStatus'
 import { AccountTabs } from './AccountTabs'
 
@@ -370,7 +370,7 @@ export function PublishPlanCard() {
                     background: on ? col : '#fff',
                     color: on ? '#fff' : col,
                   }}
-                >{maskAccount(a, hiddenAccounts)}</button>
+                >{accountWithPlatform(a, hiddenAccounts)}</button>
               )
             })}
           </div>
@@ -429,7 +429,7 @@ export function PublishPlanCard() {
                       flexShrink: 0, maxWidth: 76, fontSize: 11, fontWeight: 600, color: col.c,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}
-                  >{maskAccount(p.account, hiddenAccounts) || '—'}</span>
+                  >{accountWithPlatform(p.account, hiddenAccounts) || '—'}</span>
                   <span style={{
                     flexShrink: 0, fontSize: 11, fontVariantNumeric: 'tabular-nums',
                     color: overdue ? '#b96a66' : (isToday ? '#4f5fbb' : '#b0b6bf'),

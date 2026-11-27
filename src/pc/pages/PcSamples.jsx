@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../../store'
-import { ACCOUNTS, ACCOUNT_COLOR, maskAccount, isVideoAccount, cleanAccountOption } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform, isVideoAccount, cleanAccountOption } from '../../utils/accounts'
 import {
   SAMPLE_STATUS_LIST, computeStatusStats, sampleMatchesFilter,
   getAccounts, getCounts, getTopStatus, isArchivedSample,
@@ -386,7 +386,7 @@ export function PcSamples() {
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none' }}>
           <button className={accountFilter === 'all' ? 'on' : ''} onClick={() => setAccountFilter('all')}>全部账号</button>
           {ACCOUNTS.map((a) => (
-            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{maskAccount(a, hiddenAccounts)}</button>
+            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{accountWithPlatform(a, hiddenAccounts)}</button>
           ))}
           <button className={publishGt5 ? 'on' : ''} onClick={() => setPublishGt5((v) => !v)}>发布超过5条</button>
           {/* 竖线把两组筛选分开，避免读成一长串同类按钮 */}
@@ -519,7 +519,7 @@ export function PcSamples() {
                                 background: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4',
                               }} />
                               {/* 账号名不加粗（用户要求）：原来 600 字重在一片正文里太跳，靠圆点区分归属即可 */}
-                              <span style={{ color: '#333a45' }}>{maskAccount(a, hiddenAccounts)}</span>
+                              <span style={{ color: '#333a45' }}>{accountWithPlatform(a, hiddenAccounts)}</span>
                             </span>
                           ))}
                         </span>
@@ -575,7 +575,7 @@ export function PcSamples() {
                           total={orderQtyBySample.get(qtyOpen.id) || 0}
                           count={orderCountBySample.get(qtyOpen.id) || 0}
                           accounts={(orderQtyBySampleAccount.get(qtyOpen.id) || []).map(([a, v]) => ({
-                            name: maskAccount(a, hiddenAccounts),
+                            name: accountWithPlatform(a, hiddenAccounts),
                             color: (ACCOUNT_COLOR[a] || {}).c || '#c9cdd4',
                             qty: v,
                           }))}

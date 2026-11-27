@@ -1,5 +1,11 @@
 // ECharts option 构造器（PC 与手机端共用，避免两套配置漂移）
-import { ACCOUNT_COLOR } from './accounts'
+import { ACCOUNT_COLOR, platformOf } from './accounts'
+// 图表账号标签：先打码，再拼平台后缀（无归属则只返回打码名）
+const accLabel = (raw, maskFn) => {
+  const base = maskFn(raw)
+  const pf = platformOf(raw)
+  return pf ? `${base}·${pf}` : base
+}
 const AXIS = '#94a3b8'
 const PUB = '#3f6fa8'
 const ORD = '#4f8a6d'
@@ -63,7 +69,7 @@ export function makeMonthlyOption(monthly = []) {
 
 // 分账号对比：分组柱（发布条数 / 出单件数 / 新增产品数），柱顶标数值
 export function makeAccountOption(accounts = [], maskFn = (x) => x, { rotate = 0 } = {}) {
-  const labels = accounts.map((r) => maskFn(r.account))
+  const labels = accounts.map((r) => accLabel(r.account, maskFn))
   return {
     grid: { left: 8, right: 12, top: 34, bottom: 4, containLabel: true },
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
@@ -118,7 +124,7 @@ export function makeAccountOrderOption(accounts = [], maskFn = (x) => x, metric 
     },
     xAxis: {
       type: 'category',
-      data: rows.map((r) => maskFn(r.account)),
+      data: rows.map((r) => accLabel(r.account, maskFn)),
       axisLine: { lineStyle: { color: 'rgba(15,23,42,0.12)' } },
       axisTick: { show: false },
       axisLabel: { color: '#4b5563', fontSize: 11, interval: 0 },
@@ -202,7 +208,7 @@ export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0,
         },
       },
       series: accList.map((a) => ({
-        name: maskFn(a),
+        name: accLabel(a, maskFn),
         type: 'bar',
         stack: 'qty',
         barMaxWidth: 16,
@@ -264,7 +270,7 @@ export function makeTopProductOption(rows = [], { maskFn = (x) => x, rotate = 0,
     },
     // 分组柱（每个产品下，各账号并排一根柱，柱顶标数值）——用户要求「改成这种」
     series: accList.map((a) => ({
-      name: maskFn(a),
+      name: accLabel(a, maskFn),
       type: 'bar',
       barMaxWidth: 24,
       barGap: '18%',

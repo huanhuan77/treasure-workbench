@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { SamplePickerPage } from '../components/SamplePickerPage'
-import { ACCOUNTS, PICK_ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount, mapAccount } from '../utils/accounts'
+import { ACCOUNTS, PICK_ACCOUNTS, ACCOUNT_COLOR, getAccounts, hasAccount, mapAccount, accountWithPlatform } from '../utils/accounts'
 import { isSelectableForOrder } from '../utils/publish'
 
 function getDateLabel(dateStr) {
@@ -189,7 +189,7 @@ export function NewOrderPage() {
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   }}>{sel ? '✓' : ''}</span>
                   <span style={{ flex: 1, fontSize: '15px', fontWeight: sel ? 600 : 500 }}>{s.name}</span>
-                  {getAccounts(s).map((a) => <span key={a} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600 }}>{a}</span>)}
+                  {getAccounts(s).map((a) => <span key={a} style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600 }}>{accountWithPlatform(a)}</span>)}
                 </button>
               )
             })
@@ -243,7 +243,7 @@ export function NewOrderPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
                 transition: 'all 0.15s',
               }}>
-                {a}
+                {accountWithPlatform(a)}
                 {cnt > 0 && <span style={{
                   fontSize: '10px', fontWeight: 700,
                   background: active ? col.c : '#e5e7eb',

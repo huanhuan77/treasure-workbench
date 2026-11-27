@@ -6,7 +6,7 @@ import { DueTag } from '../../components/DueTag'
 import { selectAllReminders, REMINDER_TABS, daysUntilDeadline } from '../../utils/reminders'
 
 import { daysSincePublishByAccount, reminderAccounts, hotPendingAccounts, isOverdue, hotReminderDays, accountDue, sampleDays } from '../../utils/publish'
-import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, maskAccount, mapAccount, cleanAccountOption, isLegacyAccount } from '../../utils/accounts'
+import { getAccounts, ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform, mapAccount, cleanAccountOption, isLegacyAccount } from '../../utils/accounts'
 import { todayStr } from '../../utils/helpers'
 import { SAMPLE_STATUS, getTopStatus, getAutoAbandonedAccounts, isArchivedSample, getExecStatus } from '../../utils/sampleStatus'
 import { SampleDialog } from '../components/SampleDialog'
@@ -58,7 +58,7 @@ function AccountDays({ sample, list, hidden }) {
         // 超过阈值（该提醒了）的天数用红色，其余用灰 —— 用户要求「过期天数改为红色」
         const due = days === Infinity || days >= th
         const col = ACCOUNT_COLOR[x] || { c: '#8a8f98', bg: 'rgba(148,163,184,0.16)' }
-        const label = maskAccount(x, hidden)
+        const label = accountWithPlatform(x, hidden)
         return (
           <span
             key={x}
@@ -330,7 +330,7 @@ export function PcDashboard() {
   // 「隐藏账号」= 名字打星号（用户明确「是账号显示星号，不是筛选」）：
   // 不再从列表里剔除，数据照旧显示，只是把账号名换成「广****」这个样子。
   const visAcc = useCallback((arr) => (arr || []).map(cleanAccountOption).filter(Boolean), [])
-  const maskAcc = useCallback((a) => maskAccount(a, hiddenAccounts), [hiddenAccounts])
+  const maskAcc = useCallback((a) => accountWithPlatform(a, hiddenAccounts), [hiddenAccounts])
 
   const items = useMemo(
     () => {
@@ -1002,7 +1002,7 @@ export function PcDashboard() {
                                 <div className="pcv-abtitle">
                                   {abandonedAccs.map((a) => {
                                     const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
-                                    return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
+                                    return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{accountWithPlatform(a, hiddenAccounts)}</span>
                                   })}
                                   <span className="pcv-abname">{s.name}</span>
                                 </div>
@@ -1040,7 +1040,7 @@ export function PcDashboard() {
                               <div className="pcv-abtitle">
                                 {accs.map((a) => {
                                   const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
-                                  return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
+                                  return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{accountWithPlatform(a, hiddenAccounts)}</span>
                                 })}
                                 <span className="pcv-abname">{s.name}</span>
                               </div>

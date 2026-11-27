@@ -1,4 +1,4 @@
-import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform } from '../../utils/accounts'
 import { useStore } from '../../store'
 
 // PC 版账号 Tab（「记出单」与「记录发布」两个弹窗共用）。
@@ -21,7 +21,7 @@ export function AccountTabs({ value, onChange, counts = {}, accounts }) {
             style={on ? { background: col.bg, color: col.c } : undefined}
             onClick={() => onChange(a)}
           >
-            <span>{maskAccount(a, hiddenAccounts)}</span>
+            <span>{accountWithPlatform(a, hiddenAccounts)}</span>
             {cnt > 0 && (
               <span className="pcv-acctabs-cnt" style={on ? { background: col.c, color: '#fff' } : undefined}>{cnt}</span>
             )}

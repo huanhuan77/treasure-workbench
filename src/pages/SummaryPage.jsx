@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useStore } from '../store'
-import { ACCOUNTS, ACCOUNT_COLOR, maskAccount } from '../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform } from '../utils/accounts'
 import { PERIODS, periodRange, buildSummary, buildMonthlyTrend, buildCategoryShare, buildTopProductRows, daysBetween } from '../utils/summary'
 import { makeMonthlyOption, makePieOption, makeAccountOption, makeAccountOrderOption } from '../utils/chartOptions'
 import { EChart } from '../components/EChart'
@@ -31,7 +31,7 @@ export default function SummaryPage() {
     () => buildSummary({ samples, publishRecords, orders, transactions, todos }, range),
     [samples, publishRecords, orders, transactions, todos, range],
   )
-  const mask = (a) => maskAccount(a, hiddenAccounts)
+  const mask = (a) => accountWithPlatform(a, hiddenAccounts)
 
   // 近 6 个月（发布 / 出单 / 转化率）
   const monthly = useMemo(

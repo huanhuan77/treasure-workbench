@@ -5,7 +5,7 @@ import { useToast } from '../../components/Toast'
 import { OrderDialog } from '../components/OrderDialog'
 import { todayStr } from '../../utils/helpers'
 import {
-  ACCOUNTS, ACCOUNT_COLOR, maskAccount,
+  ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform,
   mapAccount, isVideoAccount,
 } from '../../utils/accounts'
 
@@ -153,7 +153,7 @@ export function PcOrders() {
         <div className="pcv-accountbar" style={{ padding: '0 0 10px', borderBottom: 'none', flexWrap: 'wrap' }}>
           <button className={accountFilter === '' ? 'on' : ''} onClick={() => setAccountFilter('')}>全部账号</button>
           {accountOptions.map((a) => (
-            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{maskAccount(a, hiddenAccounts)}</button>
+            <button key={a} className={accountFilter === a ? 'on' : ''} onClick={() => setAccountFilter(a)}>{accountWithPlatform(a, hiddenAccounts)}</button>
           ))}
         </div>
 
@@ -225,7 +225,7 @@ export function PcOrders() {
                     <div key={o.id} className="ordcal-sideitem">
                       <span className="ordcal-sideacc" title={o.account || '未指定'}>
                         <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: col.c || '#c1c7cf', flexShrink: 0 }} />
-                        <span>{maskAccount(o.account, hiddenAccounts)}</span>
+                        <span>{accountWithPlatform(o.account, hiddenAccounts)}</span>
                       </span>
                       <span className="ordcal-side-name" title={o.name}>{o.name || '(未命名)'}</span>
                       <span className="ordcal-side-qty">×{qtyOf(o)}</span>

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { SwipeRow } from './SwipeRow'
+import { accountWithPlatform } from '../utils/accounts'
 
 function dispDate(v) {
   if (!v) return '未填日期'
@@ -83,7 +84,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
                   const c = accMeta(a)
                   return (
                     <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap' }}>
-                      {a}
+                      {accountWithPlatform(a)}
                     </span>
                   )
                 })}
@@ -138,7 +139,7 @@ export function ProductOrdersSheet({ open, group, onClose, onEdit, onDelete, onD
                             }}
                           >
                             <span style={{ flexShrink: 0, width: '9px', height: '9px', borderRadius: '50%', background: meta.c }} />
-                            <span style={{ fontSize: '12px', color: o.account ? meta.c : '#94a3b8', flexShrink: 0 }}>{o.account || '未选账号'}</span>
+                            <span style={{ fontSize: '12px', color: o.account ? meta.c : '#94a3b8', flexShrink: 0 }}>{o.account ? accountWithPlatform(o.account) : '未选账号'}</span>
                             <span style={{ flex: 1, fontSize: '12px', color: 'var(--text-sub)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.remark || ''}</span>
                             
                           </span>

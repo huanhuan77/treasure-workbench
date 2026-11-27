@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ACCOUNTS, getAccounts } from '../utils/accounts'
+import { ACCOUNTS, getAccounts, accountWithPlatform } from '../utils/accounts'
 
 // 提醒中心三个列表页共用的骨架
 //
@@ -109,7 +109,7 @@ export function ReminderListPage({
       <div style={{ padding: '10px 8px 6px', display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0 }}>
         {!hideAccountFilter && (
           <div className="hide-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-            {[{ k: 'all', label: '全部账号' }, ...ACCOUNTS.map((a) => ({ k: a, label: a }))].map((o) => (
+            {[{ k: 'all', label: '全部账号' }, ...ACCOUNTS.map((a) => ({ k: a, label: accountWithPlatform(a) }))].map((o) => (
               <Pill key={o.k} active={accountFilter === o.k} accent={accent} onClick={() => setAccountFilter(o.k)}>{o.label}</Pill>
             ))}
           </div>

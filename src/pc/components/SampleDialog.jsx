@@ -3,7 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { CATEGORIES } from '../../utils/categories'
-import { PICK_ACCOUNTS as FORM_ACCOUNTS, ACCOUNT_COLOR } from '../../utils/accounts'
+import { PICK_ACCOUNTS as FORM_ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform } from '../../utils/accounts'
 import { isShotSample } from '../../utils/sampleStatus'
 import { todayStr, addDays, toDateInput } from '../../utils/helpers'
 import { LinksEditor } from '../../components/LinksEditor'
@@ -179,7 +179,7 @@ export function SampleDialog({ sample, onClose, onSaved }) {
                       ? { background: col, borderColor: col, color: '#fff', fontWeight: 700 }
                       : { background: '#fff', borderColor: 'rgba(15,23,42,0.16)', color: '#6b7280' }}
                   >
-                    {a}{on ? ' ✓' : ''}
+                    {accountWithPlatform(a)}{on ? ' ✓' : ''}
                   </button>
                 )
               })}
@@ -198,7 +198,7 @@ export function SampleDialog({ sample, onClose, onSaved }) {
             <div className="pcv-field-label" style={{ marginTop: 18 }}>几天没发提醒（按账号，留空=7天）</div>
             {form.accounts.map((a) => (
               <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                <span style={{ flex: 1, fontSize: 13, color: '#555' }}>{a}</span>
+                <span style={{ flex: 1, fontSize: 13, color: '#555' }}>{accountWithPlatform(a)}</span>
                 <input
                   className="pcv-input"
                   type="number" min={1} style={{ width: 120 }} placeholder="天数"

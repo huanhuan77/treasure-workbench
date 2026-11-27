@@ -8,7 +8,7 @@ import { getAccounts, getLogistics, getCounts, isShotSample, LOGISTICS_STATUS } 
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
 
-import { PICK_ACCOUNTS as ACCOUNTS, mapAccount } from '../utils/accounts'
+import { PICK_ACCOUNTS as ACCOUNTS, mapAccount, accountWithPlatform } from '../utils/accounts'
 const LOGISTICS_LIST = Object.values(LOGISTICS_STATUS)
 
 function PageHeader({ title, onBack }) {
@@ -148,7 +148,7 @@ export function EditSamplePage() {
                     color: selected ? '#fff' : 'var(--text-main)',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{a}</span>
+                  }}>{accountWithPlatform(a)}</span>
                   {selected && (
                     <span style={{ color: '#fff', fontSize: '11px', fontWeight: 700, flexShrink: 0 }}>✓</span>
                   )}
@@ -196,7 +196,7 @@ export function EditSamplePage() {
           <div style={{ fontSize: 12, color: '#8a6a7a', marginBottom: 8 }}>几天没发提醒（按账号，留空=7天）</div>
           {accounts.map((a) => (
             <div key={a} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ flex: 1, fontSize: 13, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a}</span>
+              <span style={{ flex: 1, fontSize: 13, color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{accountWithPlatform(a)}</span>
               <input
                 type="number" min={1} placeholder="天数"
                 style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid #e2d5dd', fontSize: 14 }}

@@ -3,7 +3,7 @@
 // 用 fixed + portal 渲染，避免被表格或卡片的 overflow 裁掉。
 import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ACCOUNTS, ACCOUNT_COLOR } from '../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform } from '../utils/accounts'
 
 const accRank = (a) => { const i = ACCOUNTS.indexOf(a); return i === -1 ? 999 : i }
 
@@ -59,7 +59,7 @@ export default function PlanBadge({ plans, style }) {
               }}
             >
               <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[p.account] || {}).c || '#c9cdd4' }} />
-              <span style={{ fontWeight: 600 }}>{p.account || '未指定'}</span>
+              <span style={{ fontWeight: 600 }}>{p.account ? accountWithPlatform(p.account) : '未指定'}</span>
               <span style={{ color: '#9aa1ab' }}>{p.planDate || '未填日期'}</span>
               <span style={{ marginLeft: 'auto', paddingLeft: 14, fontWeight: 700, color: '#6b7280' }}>×{p.qty}</span>
             </div>

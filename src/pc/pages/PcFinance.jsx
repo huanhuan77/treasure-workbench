@@ -3,7 +3,7 @@ import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
 import { ConfirmModal } from '../../components/Modal'
 import { isAccountsHidden, setAccountsHidden } from '../../utils/accountVis'
-import { ACCOUNTS } from '../../utils/accounts'
+import { ACCOUNTS, accountWithPlatform } from '../../utils/accounts'
 import { CATEGORIES } from '../../utils/financeCategories'
 import { ResetButton } from '../components/ResetButton'
 
@@ -248,7 +248,7 @@ export function PcFinance() {
               onChange={(e) => setFilterAccount(e.target.value)}
             >
               <option value="all">全部账号</option>
-              {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
+              {accounts.map((a) => <option key={a} value={a}>{accountWithPlatform(a)}</option>)}
             </select>
           )}
 
@@ -293,7 +293,7 @@ export function PcFinance() {
                       <span className="pcv-chip" style={{ background: cat.bg, color: cat.color }}>{cat.label}</span>
                     </td>
                     <td style={{ color: t.account ? '#475569' : '#c9cdd4' }}>
-                      {t.account ? (hideAccount ? '***' : t.account) : '—'}
+                      {t.account ? (hideAccount ? '***' : accountWithPlatform(t.account)) : '—'}
                     </td>
                     <td style={{
                       fontWeight: 700, fontVariantNumeric: 'tabular-nums',
@@ -406,7 +406,7 @@ export function PcFinance() {
                     onChange={(e) => setForm((f) => ({ ...f, account: e.target.value }))}
                   >
                     <option value="">不指定账号</option>
-                    {accounts.map((a) => <option key={a} value={a}>{a}</option>)}
+                    {accounts.map((a) => <option key={a} value={a}>{accountWithPlatform(a)}</option>)}
                   </select>
                 </div>
               </div>

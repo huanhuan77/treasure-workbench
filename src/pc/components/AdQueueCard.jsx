@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '../../store'
 import { useToast } from '../../components/Toast'
-import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, maskAccount, cleanAccountOption } from '../../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, getAccounts, accountWithPlatform, cleanAccountOption } from '../../utils/accounts'
 import { getCounts, hasPublished, isArchivedSample } from '../../utils/sampleStatus'
 import { recordQty } from '../../utils/helpers'
 
@@ -259,7 +259,7 @@ export function AdQueueCard() {
                     background: on ? col : '#fff',
                     color: on ? '#fff' : col,
                   }}
-                >{maskAccount(a, hiddenAccounts)}</button>
+                >{accountWithPlatform(a, hiddenAccounts)}</button>
               )
             })}
           </div>
@@ -313,7 +313,7 @@ export function AdQueueCard() {
                       flexShrink: 0, maxWidth: 76, fontSize: 11, fontWeight: 600, color: col.c,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}
-                  >{maskAccount(a.account, hiddenAccounts)}</span>
+                  >{accountWithPlatform(a.account, hiddenAccounts)}</span>
                   <span style={{ flexShrink: 0, fontSize: 11, color: '#b0b6bf', fontVariantNumeric: 'tabular-nums' }}>
                     {(a.publishDate || '').slice(5) || '—'}
                   </span>
@@ -405,7 +405,7 @@ export function AdQueueCard() {
                         background: on ? col : '#fff',
                         color: on ? '#fff' : col,
                       }}
-                    >{maskAccount(a, hiddenAccounts)}</button>
+                    >{accountWithPlatform(a, hiddenAccounts)}</button>
                   )
                 })}
                 <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9aa0a9' }}>
@@ -432,7 +432,7 @@ export function AdQueueCard() {
                       <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: '#333a45', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {o.name}
                       </span>
-                      <span className="pcv-chip" style={{ background: col.bg, color: col.c, flexShrink: 0 }}>{o.account}</span>
+                      <span className="pcv-chip" style={{ background: col.bg, color: col.c, flexShrink: 0 }}>{accountWithPlatform(o.account)}</span>
                       <span style={{ fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>
                         {o.publishDate || '未填日期'} · 共 {o.publishCount} 条
                       </span>

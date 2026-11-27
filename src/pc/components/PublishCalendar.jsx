@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { recordQty, todayStr } from '../../utils/helpers'
-import { mapAccount, maskAccount, ACCOUNTS } from '../../utils/accounts'
+import { mapAccount, accountWithPlatform, ACCOUNTS } from '../../utils/accounts'
 import { ConfirmModal } from '../../components/Modal'
 
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -148,7 +148,7 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
               <button className={!accFilter ? 'on' : ''} onClick={() => setAccFilter('')}>全部</button>
               {accountsInUse.map((a) => (
                 <button key={a} className={accFilter === a ? 'on' : ''} onClick={() => setAccFilter(a)}>
-                  {maskAccount(a, hiddenAccounts)}
+                  {accountWithPlatform(a, hiddenAccounts)}
                 </button>
               ))}
             </div>
@@ -202,7 +202,7 @@ export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSave
                 <div className="pubcal-accs">
                   {accEntries.map(([a, q]) => (
                     <span key={a} className="pubcal-acc">
-                      <b>{maskAccount(a, hiddenAccounts)}</b><span>{q} 条</span>
+                      <b>{accountWithPlatform(a, hiddenAccounts)}</b><span>{q} 条</span>
                     </span>
                   ))}
                 </div>
