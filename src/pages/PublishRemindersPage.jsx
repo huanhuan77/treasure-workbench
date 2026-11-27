@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { daysSincePublish, daysSincePublishByAccount, reminderAccounts, isOverdue, compareUrgent } from '../utils/publish'
-import { ACCOUNT_COLOR, accountWithPlatform } from '../utils/accounts'
+import { ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 import { selectPublishReminders } from '../utils/reminders'
 import { ReminderListPage, ReminderCard, CardTitleRow, CardActions } from '../components/ReminderListPage'
@@ -70,7 +70,7 @@ export function PublishRemindersPage() {
                 </span>
               )}
               {showAccounts.map((a) => (
-                <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{accountWithPlatform(a)}</span>
+                <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
               ))}
             </div>
             {/* 筛了账号就把该账号带进发布页；未筛则交给 CardActions 默认带全部账号 */}

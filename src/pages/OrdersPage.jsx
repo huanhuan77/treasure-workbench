@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { OrderFormModal } from '../components/OrderFormModal'
 import { ConfirmModal } from '../components/Modal'
-import { ACCOUNTS, ACCOUNT_COLOR, cleanAccountOption, accountWithPlatform } from '../utils/accounts'
+import { ACCOUNTS, ACCOUNT_COLOR, cleanAccountOption } from '../utils/accounts'
 import { ProductOrdersSheet } from '../components/ProductOrdersSheet'
 import { DraggableFab } from '../components/DraggableFab'
 import { DateFilterBar, dateBounds } from '../components/DateFilterBar'
@@ -254,7 +254,7 @@ export function OrdersPage() {
               borderColor: sel ? col.c : 'rgba(0,0,0,0.06)',
               background: sel ? col.bg : '#fff',
               color: sel ? col.c : 'var(--text-main)',
-            }}>{accountWithPlatform(a)}</button>
+            }}>{a}</button>
           )
         })}
       </div>
@@ -323,7 +323,7 @@ export function OrdersPage() {
                                 }}
                               >
                                 <span aria-hidden="true" style={{ width: 5, height: 5, borderRadius: '50%', background: col.c, flexShrink: 0 }} />
-                                <span>{accountWithPlatform(a)}</span>
+                                <span>{a}</span>
                                 <span style={{ fontWeight: 800, color: top ? col.c : '#6b7280' }}>{v}</span>
                               </span>
                             )

@@ -820,6 +820,7 @@ export function PcDashboard() {
                               return out
                             })()}
                             style={{ marginLeft: 6, verticalAlign: '1px' }}
+                            platformTag
                           />
                         </td>
                         <td>{cur.actions(it, acc, accs)}</td>

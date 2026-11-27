@@ -5,7 +5,7 @@ import { useToast } from '../components/Toast'
 import { checkForUpdate } from '../main'
 import { daysSincePublish, daysSincePublishByAccount, pendingAccounts, reminderAccounts, nonHotPendingAccounts, hotPendingAccounts, isOverdue, OVERDUE_STATES, setPublishDays, hotReminderDays, sampleDays } from '../utils/publish'
 import { LOW_PUBLISH_LIMIT, REMINDER_TABS, selectPublishReminders, selectHotCadence, selectLowPublish, selectExpiringSoon } from '../utils/reminders'
-import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, PUBLISH_ACCOUNTS, ACCOUNT_COLOR, mapAccount, platformOf, accountWithPlatform, isLegacyAccount } from '../utils/accounts'
+import { getAccounts, ACCOUNTS, PLAN_ACCOUNTS, PUBLISH_ACCOUNTS, ACCOUNT_COLOR, mapAccount, maskAccount, isLegacyAccount } from '../utils/accounts'
 import { isAccountsHidden, setAccountsHidden } from '../utils/accountVis'
 import { SAMPLE_STATUS, getAutoAbandonedAccounts, hasPublished, getCounts, isArchivedSample, getExecStatus, getAggregateCounts } from '../utils/sampleStatus'
 import { DueTag } from '../components/DueTag'
@@ -30,7 +30,7 @@ function AccountDaysChip({ sample, account, masked }) {
       title={`${account}：${days === Infinity ? '从未发布' : `${days} 天没发`}（阈值 ${th} 天）`}
       style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 6, overflow: 'hidden', lineHeight: '16px', whiteSpace: 'nowrap', fontSize: 11 }}
     >
-      <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{(() => { const base = masked ? account[0] + '*'.repeat(Math.max(2, account.length - 2)) + account[account.length - 1] : account; const pf = platformOf(account); return pf ? `${base} · ${pf}` : base })()}</span>
+      <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{masked ? (account[0] + '*'.repeat(Math.max(2, account.length - 2)) + account[account.length - 1]) : account}</span>
       <span style={{
         padding: '0 5px', fontWeight: 700,
         background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
@@ -168,7 +168,7 @@ function ReminderTable({ items, accountsOf, midHeader, renderMid, renderActions,
       {groups.map(([account, list]) => (
         <div key={account} className="pc-tgroup">
           <div className="pc-tgroup-head">
-            <span className="pc-tgroup-name" style={{ color: (ACCOUNT_COLOR[account] || {}).c || '#334155' }}>{accountWithPlatform(account)}</span>
+            <span className="pc-tgroup-name" style={{ color: (ACCOUNT_COLOR[account] || {}).c || '#334155' }}>{account}</span>
             <span className="pc-tgroup-count">{list.length} 个待处理</span>
           </div>
           <div className="pc-tcard">
@@ -221,14 +221,10 @@ export function DashboardPage() {
     setAccountsHidden(next)
   }
   const maskA = (a) => {
-    let base
-    if (!hideAccount || !a) base = a
-    else {
-      const s = String(a)
-      base = s.length <= 2 ? s[0] + '*' : s[0] + '*'.repeat(Math.max(2, s.length - 2)) + s[s.length - 1]
-    }
-    const pf = platformOf(a)
-    return pf ? `${base} · ${pf}` : base
+    if (!hideAccount || !a) return a
+    const s = String(a)
+    if (s.length <= 2) return s[0] + '*'
+    return s[0] + '*'.repeat(Math.max(2, s.length - 2)) + s[s.length - 1]
   }
   // 把用户设置的「多少天没发才提醒」同步到提醒计算口径
   useEffect(() => { setPublishDays(settings?.publishReminderDays || 7) }, [settings?.publishReminderDays])
@@ -1212,7 +1208,7 @@ export function DashboardPage() {
                       background: on ? col : '#fff',
                       color: on ? '#fff' : col,
                     }}
-                  >{accountWithPlatform(a)}{cnt > 0 ? ` ${cnt}` : ''}</button>
+                  >{a}{cnt > 0 ? ` ${cnt}` : ''}</button>
                 )
               })}
             </div>
@@ -1479,7 +1475,7 @@ export function DashboardPage() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: '#111', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
-                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600 }}>{accountWithPlatform(o.account)}</span>
+                        <span style={{ fontSize: '10px', padding: '1px 7px', borderRadius: '6px', background: col.bg, color: col.c, fontWeight: 600 }}>{o.account}</span>
                         <span style={{ fontSize: '10px', color: '#94a3b8' }}>{o.publishDate || '未填日期'} · 共{o.publishCount}条</span>
                       </div>
                     </div>
@@ -1507,7 +1503,7 @@ export function DashboardPage() {
                 const accChips = abandonedAccs.map((a) => {
                   const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
                   return (
-                    <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{accountWithPlatform(a)}</span>
+                    <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                   )
                 })
                 return (
@@ -1579,7 +1575,7 @@ export function DashboardPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           {accs.map((a) => {
                             const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
-                            return <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{accountWithPlatform(a)}</span>
+                            return <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: c.bg, color: c.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                           })}
                           <span style={{ fontSize: '13px', fontWeight: 600, color: '#111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.name}</span>
                         </div>
@@ -2113,7 +2109,7 @@ export function DashboardPage() {
                                 const due = d === Infinity || d >= th
                                 return (
                                   <span key={a} style={{ display: 'inline-flex', alignItems: 'center', borderRadius: 6, overflow: 'hidden', lineHeight: '16px', whiteSpace: 'nowrap', fontSize: 11 }}>
-                                    <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{accountWithPlatform(a)}({n}条)</span>
+                                    <span style={{ background: col.bg, color: col.c, fontWeight: 600, padding: '0 5px' }}>{a}({n}条)</span>
                                     <span style={{
                                       padding: '0 5px', fontWeight: 700,
                                       background: due ? 'rgba(225,29,72,0.10)' : 'rgba(148,163,184,0.16)',
@@ -2221,7 +2217,7 @@ export function DashboardPage() {
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                             {getAccounts(s).map((a) => (
-                              <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{accountWithPlatform(a)}</span>
+                              <span key={a} style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{a}</span>
                             ))}
                           </div>
                           <div style={{ fontSize: '11px', color, marginTop: '2px', fontWeight: 600 }}>

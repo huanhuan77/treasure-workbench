@@ -7,7 +7,7 @@ import { addDays } from '../utils/helpers'
 import { LinksEditor } from '../components/LinksEditor'
 import { CATEGORIES } from '../utils/categories'
 
-import { PICK_ACCOUNTS as ACCOUNTS, mapAccount, accountWithPlatform } from '../utils/accounts'
+import { PICK_ACCOUNTS as ACCOUNTS, mapAccount } from '../utils/accounts'
 
 function PageHeader({ title, onBack }) {
   return (
@@ -117,7 +117,7 @@ export function NewSamplePage() {
                     fontSize: '12px', fontWeight: 600,
                     color: selected ? '#fff' : 'var(--text-main)',
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{accountWithPlatform(a)}</span>
+                  }}>{a}</span>
                   {selected && (
                     <span style={{
                       color: '#fff', fontSize: '12px', fontWeight: 700, flexShrink: 0,

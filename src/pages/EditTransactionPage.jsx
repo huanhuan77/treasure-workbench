@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { CATEGORIES, INCOME_TYPES, EXPENSE_TYPES } from '../utils/financeCategories'
-import { ACCOUNTS, accountWithPlatform } from '../utils/accounts'
+import { ACCOUNTS } from '../utils/accounts'
 
 // 分类表与 PC 端共用 utils/financeCategories（新增分类只改一处）
 
@@ -80,7 +80,7 @@ export function EditTransactionPage() {
             <select value={account} onChange={e => setAccount(e.target.value)}
               style={{ ...inputStyle, appearance: 'none', WebkitAppearance: 'none', paddingRight: '36px', color: account ? 'var(--text-main)' : 'var(--text-sub)' }}>
               <option value="">请选择账号</option>
-              {accounts.map(a => <option key={a} value={a}>{accountWithPlatform(a)}</option>)}
+              {accounts.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
             <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-sub)', fontSize: '12px' }}>▾</span>
           </div>

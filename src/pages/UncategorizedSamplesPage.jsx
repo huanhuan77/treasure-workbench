@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { CATEGORIES } from '../utils/categories'
-import { getAccounts, ACCOUNT_COLOR, accountWithPlatform } from '../utils/accounts'
+import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS, getTopStatus } from '../utils/sampleStatus'
 import { copyText } from '../utils/helpers'
 
@@ -135,7 +135,7 @@ export function UncategorizedSamplesPage() {
                         {accs.length > 0 && (
                           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '3px' }}>
                             {accs.map((a) => (
-                              <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{accountWithPlatform(a)}</span>
+                              <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
                             ))}
                           </div>
                         )}

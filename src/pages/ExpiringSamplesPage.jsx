@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store'
-import { getAccounts, ACCOUNT_COLOR, accountWithPlatform } from '../utils/accounts'
+import { getAccounts, ACCOUNT_COLOR } from '../utils/accounts'
 import { SAMPLE_STATUS } from '../utils/sampleStatus'
 import { daysUntilDeadline, selectExpiringSoon } from '../utils/reminders'
 import { ReminderListPage, ReminderCard, CardTitleRow, CardActions } from '../components/ReminderListPage'
@@ -58,7 +58,7 @@ export function ExpiringSamplesPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap', marginTop: '3px' }}>
               <span style={{ fontSize: '11px', color, fontWeight: 600, lineHeight: 1.4 }}>⏰ {text}</span>
               {showAccounts.map((a) => (
-                <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{accountWithPlatform(a)}</span>
+                <span key={a} style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '5px', background: (ACCOUNT_COLOR[a] || { bg: 'rgba(0,0,0,0.06)' }).bg, color: (ACCOUNT_COLOR[a] || { c: '#64748b' }).c, fontWeight: 600, whiteSpace: 'nowrap' }}>{a}</span>
               ))}
             </div>
             <CardActions

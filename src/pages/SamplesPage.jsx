@@ -12,7 +12,7 @@ import { SampleForm } from '../components/SampleForm'
 
 // 状态枚举统一从 sampleStatus.js 导入（SAMPLE_STATUS / SAMPLE_STATUS_ORDER / SAMPLE_STATUS_LIST）
 
-import { ACCOUNTS as ALL_ACCOUNTS, ACCOUNT_COLOR, mapAccount, accountWithPlatform } from '../utils/accounts'
+import { ACCOUNTS as ALL_ACCOUNTS, ACCOUNT_COLOR, mapAccount } from '../utils/accounts'
 const ACCOUNTS = ALL_ACCOUNTS
 
 // 兼容旧数据：老样品只有 account（字符串），新样品有 accounts（数组）
@@ -385,7 +385,7 @@ export function SamplesPage() {
                                   dlDays === 0 ? '#ef4444' :
                                   dlDays !== null && dlDays <= 3 ? '#ef4444' :
                                   dlDays !== null && dlDays <= 7 ? '#ea580c' : 'var(--text-sub)'
-                  const acList = getAccounts(s).map(a => ({ name: a, display: accountWithPlatform(a), ...(ACCOUNT_COLOR[a] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }) }))
+                  const acList = getAccounts(s).map(a => ({ name: a, ...(ACCOUNT_COLOR[a] || { c: '#8b6f7a', bg: 'rgba(255,255,255,0.5)' }) }))
 
                   return                   <SampleCard key={s.id} s={s} st={st} dl={dl} dlColor={dlColor} acList={acList}
                     orderQty={orderQtyBySample.get(s.id) || 0}
@@ -455,7 +455,7 @@ export function SamplesPage() {
           {/* 列表 */}
           <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
             {[{ key: 'all', name: '全部账号', color: '#ec4899', initial: '全' },
-              ...ACCOUNTS.map((a) => ({ key: a, name: accountWithPlatform(a), color: (ACCOUNT_COLOR[a] || { c: '#8b6f7a' }).c, initial: a.slice(0, 1) }))]
+              ...ACCOUNTS.map((a) => ({ key: a, name: a, color: (ACCOUNT_COLOR[a] || { c: '#8b6f7a' }).c, initial: a.slice(0, 1) }))]
               .map((o, idx, arr) => (
                 <button key={o.key} onClick={() => setAccountDraft(o.key)} style={{
                   width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
@@ -581,7 +581,7 @@ function SampleCard({ s, st, dl, dlColor, acList, swipedId, setSwipedId, hideAcc
                     const statBg = c.publishCount > 0 ? 'rgba(22,163,74,0.14)' : 'rgba(148,163,184,0.16)'
                     return (
                       <span key={a.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', padding: '1px 6px', borderRadius: '5px', background: a.bg, color: a.c, fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {a.display}
+                        {a.name}
                         {stat && <span style={{ fontSize: '9px', padding: '0 4px', borderRadius: '4px', background: statBg, color: statColor, fontWeight: 700 }}>{stat}</span>}
                       </span>
                     )

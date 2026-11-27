@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Modal, Field, inputStyle, btnPrimary, btnGhost } from '../components/Modal'
-import { ACCOUNTS, PICK_ACCOUNTS, ACCOUNT_COLOR, hasAccount, accountWithPlatform } from '../utils/accounts'
+import { ACCOUNTS, PICK_ACCOUNTS, ACCOUNT_COLOR, hasAccount } from '../utils/accounts'
 import { isSelectableForOrder } from '../utils/publish'
 
 function todayStr() {
@@ -95,7 +95,7 @@ export function OrderFormModal({ open, onClose, editing, onSave, prefill }) {
                   border: sel ? 'none' : '1px solid rgba(0,0,0,0.08)',
                   background: sel ? 'linear-gradient(135deg,#f472b6,#ec4899)' : '#fff',
                   color: sel ? '#fff' : 'var(--text-main)', cursor: 'pointer',
-                }}>{accountWithPlatform(a)}</button>
+                }}>{a}</button>
               )
             })}
           </div>

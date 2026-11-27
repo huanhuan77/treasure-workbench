@@ -7,7 +7,7 @@ import { ACCOUNTS, ACCOUNT_COLOR, accountWithPlatform } from '../utils/accounts'
 
 const accRank = (a) => { const i = ACCOUNTS.indexOf(a); return i === -1 ? 999 : i }
 
-export default function PlanBadge({ plans, style }) {
+export default function PlanBadge({ plans, style, platformTag = false }) {
   const list = plans || []
   const ref = useRef(null)
   const [pos, setPos] = useState(null)
@@ -59,7 +59,7 @@ export default function PlanBadge({ plans, style }) {
               }}
             >
               <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: (ACCOUNT_COLOR[p.account] || {}).c || '#c9cdd4' }} />
-              <span style={{ fontWeight: 600 }}>{p.account ? accountWithPlatform(p.account) : '未指定'}</span>
+              <span style={{ fontWeight: 600 }}>{p.account ? (platformTag ? accountWithPlatform(p.account) : p.account) : '未指定'}</span>
               <span style={{ color: '#9aa1ab' }}>{p.planDate || '未填日期'}</span>
               <span style={{ marginLeft: 'auto', paddingLeft: 14, fontWeight: 700, color: '#6b7280' }}>×{p.qty}</span>
             </div>

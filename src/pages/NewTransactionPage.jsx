@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { useToast } from '../components/Toast'
 import { Field, inputStyle, btnPrimary, btnGhost, glassStyle } from '../components/Modal'
 import { CATEGORIES, INCOME_TYPES, EXPENSE_TYPES } from '../utils/financeCategories'
-import { PICK_ACCOUNTS, accountWithPlatform } from '../utils/accounts'
+import { PICK_ACCOUNTS } from '../utils/accounts'
 
 // 分类表与 PC 端共用 utils/financeCategories（新增分类只改一处）
 
@@ -84,7 +84,7 @@ export function NewTransactionPage() {
                     : '#fff',
                   color: selected ? '#fff' : 'var(--text-main)',
                   boxShadow: selected ? '0 4px 14px rgba(244,114,182,0.3)' : 'none',
-                }}>{accountWithPlatform(a)}</button>
+                }}>{a}</button>
               )
             })}
           </div>
