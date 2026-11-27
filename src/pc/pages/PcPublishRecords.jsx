@@ -506,6 +506,7 @@ export function PcPublishRecords() {
         <PublishCalendar
           name={calProduct.name}
           records={calRecords}
+          hiddenAccounts={hiddenAccounts}
           onClose={() => setCalProduct(null)}
           onSaveQty={saveCalQty}
           onDeleteDate={deleteCalDate}

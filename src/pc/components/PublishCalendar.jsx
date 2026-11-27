@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { recordQty, todayStr } from '../../utils/helpers'
+import { mapAccount, maskAccount, ACCOUNTS } from '../../utils/accounts'
 import { ConfirmModal } from '../../components/Modal'
 
 const WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
@@ -10,18 +11,21 @@ const ymOf = (ds) => ds ? ds.slice(0, 7) : ''
 // PC 发布记录 · 产品每日发布日历。
 // 口径：整个产品跨账号聚合；只改当天条数，不改日期。
 // records 为该产品在全部账号下的发布记录。
-export function PublishCalendar({ name, records, onClose, onSaveQty, onDeleteDate }) {
+export function PublishCalendar({ name, records, hiddenAccounts, onClose, onSaveQty, onDeleteDate }) {
   const clean = useMemo(
     () => (records || []).map((r) => ({ ...r, publishDate: normDate(r.publishDate) })).filter((r) => r.publishDate),
     [records],
   )
 
-  // 按日期聚合：当天条数 + 记录列表（跨账号）
+  // 按日期聚合：当天总条数 + 分账号条数 + 记录列表（跨账号）
   const byDate = useMemo(() => {
     const m = new Map()
     for (const r of clean) {
-      const cur = m.get(r.publishDate) || { qty: 0, list: [] }
-      cur.qty += recordQty(r.qty)
+      const cur = m.get(r.publishDate) || { qty: 0, acc: {}, list: [] }
+      const q = recordQty(r.qty)
+      cur.qty += q
+      const accs = (r.accounts || []).map(mapAccount).filter(Boolean)
+      accs.forEach((a) => { cur.acc[a] = (cur.acc[a] || 0) + q })
       cur.list.push(r)
       m.set(r.publishDate, cur)
     }
@@ -74,6 +78,12 @@ export function PublishCalendar({ name, records, onClose, onSaveQty, onDeleteDat
 
   const sel = byDate.get(selDate)
   const selWeek = selDate ? WEEK[new Date(`${selDate}T00:00:00`).getDay()] : ''
+  const accEntries = sel
+    ? Object.entries(sel.acc || {}).sort((a, b) => {
+        const ia = ACCOUNTS.indexOf(a[0]), ib = ACCOUNTS.indexOf(b[0])
+        return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib)
+      })
+    : []
   const today = todayStr()
 
   const saveQty = () => {
@@ -153,6 +163,15 @@ export function PublishCalendar({ name, records, onClose, onSaveQty, onDeleteDat
                 onChange={(e) => setQtyDraft(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') saveQty() }}
               />
+              {accEntries.length > 0 && (
+                <div className="pubcal-accs">
+                  {accEntries.map(([a, q]) => (
+                    <span key={a} className="pubcal-acc">
+                      <b>{maskAccount(a, hiddenAccounts)}</b><span>{q} 条</span>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

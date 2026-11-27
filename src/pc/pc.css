@@ -2323,3 +2323,9 @@ tr:hover .pcv-x--soft {
 /* 产品名作为日历弹窗入口：重置 button 默认外观，hover 品牌粉 */
 .pcv-namelink { background: none; border: none; padding: 0; font: inherit; text-align: left; color: inherit; cursor: pointer; width: 100%; }
 .pcv-namelink:hover { color: #b8517f; }
+
+/* 日历选中日：分账号条数明细 */
+.pubcal-accs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.pubcal-acc { display: inline-flex; align-items: center; gap: 5px; background: #f6f7f9; border-radius: 8px; padding: 5px 10px; font-size: 12px; color: #6b7280; }
+.pubcal-acc b { color: #333a45; font-weight: 600; }
+.pubcal-acc span { color: #b8517f; font-weight: 600; }
