@@ -664,67 +664,6 @@ export function PcDashboard() {
             )}
           </div>
 
-          {/* 发布提醒：提醒中心「发布提醒」tab 的概览预览，点「去管理」切到对应 tab 并滚动过去 */}
-          <div className="pcv-card">
-            <div className="pcv-card-h">
-              <span>发布提醒</span>
-              {all.reminders.length > 0 && (
-                <span className="pcv-chip" style={{ background: '#fce7f3', color: '#be185d' }}>{all.reminders.length} 待发</span>
-              )}
-              <span style={{ fontSize: 12, fontWeight: 400, color: '#94a3b8' }}>共 {all.reminders.length} 条</span>
-              <div className="pcv-spacer" />
-              <button
-                className="pcv-btn-text"
-                onClick={() => {
-                  setTab('reminders')
-                  document.getElementById('reminder-center')?.scrollIntoView({ behavior: 'smooth' })
-                }}
-              >去管理</button>
-            </div>
-            {all.reminders.length === 0 ? (
-              <div className="pcv-inline-empty"><span>没有待发布提醒</span></div>
-            ) : (
-              <>
-                <div className="pcv-todogrid">
-                  {all.reminders.slice(0, 5).map((s) => {
-                    const accs = reminderAccounts(s)
-                    const per = accs.length ? Math.min(...accs.map((a) => sampleDays(s, a))) : sampleDays(s, '')
-                    return (
-                      <div key={s.id} className="pcv-copyitem" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span
-                          style={{
-                            flex: '0 1 auto', minWidth: 0, maxWidth: '52%', fontSize: 14, color: '#334155',
-                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          }}>{s.name}</span>
-                        <span style={{ display: 'flex', gap: 4, flexShrink: 0, overflow: 'hidden' }}>
-                          {accs.slice(0, 2).map((a) => {
-                            const c = ACCOUNT_COLOR[a] || { c: '#64748b', bg: 'rgba(100,116,139,0.12)' }
-                            return <span key={a} className="pcv-chip" style={{ background: c.bg, color: c.c }}>{maskAccount(a, hiddenAccounts)}</span>
-                          })}
-                        </span>
-                        <div style={{ flex: 1 }} />
-                        <span style={{ fontSize: 12, color: '#b96a66', fontWeight: 600, flexShrink: 0 }}>{per} 天</span>
-                      </div>
-                    )
-                  })}
-                </div>
-                {all.reminders.length > 5 && (
-                  <button
-                    className="pcv-btn-text"
-                    onClick={() => {
-                      setTab('reminders')
-                      document.getElementById('reminder-center')?.scrollIntoView({ behavior: 'smooth' })
-                    }}
-                    style={{
-                      display: 'block', width: '100%', padding: '10px 14px', textAlign: 'center',
-                      borderTop: '0.5px solid rgba(15,23,42,0.05)', color: '#b8517f', fontWeight: 600,
-                    }}
-                  >查看全部 {all.reminders.length} 条</button>
-                )}
-              </>
-            )}
-          </div>
-
           </div>{/* /pcv-3col */}
 
           {/* 建议放弃 / 自动放弃已收到顶部「建议放弃」入口弹窗，不在总览铺大卡 */}
