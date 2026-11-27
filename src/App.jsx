@@ -21,7 +21,6 @@ import { BackupPage } from './pages/BackupPage'
 import { BatchImportPage } from './pages/BatchImportPage'
 import { EditCopyPage } from './pages/EditCopyPage'
 import { ReadingPage } from './pages/ReadingPage'
-import { NotePage } from './pages/NotePage'
 import { BrandContactsPage } from './pages/BrandContactsPage'
 import { InvestmentPage } from './pages/InvestmentPage'
 import { NewTransactionPage } from './pages/NewTransactionPage'
@@ -104,7 +103,6 @@ const routes = [
   { path: '/backup', element: <BackupPage /> },
   { path: '/investment', element: <InvestmentPage /> },
   { path: '/reading', element: <ReadingPage /> },
-  { path: '/reading/:id/notes', element: <NotePage /> },
   { path: '/words', element: <WordsPage /> },
   { path: '/brands', element: <BrandContactsPage /> },
   { path: '/daily', element: <DailyPlanPage /> },

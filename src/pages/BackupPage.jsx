@@ -118,7 +118,7 @@ export function BackupPage() {
         } else if (key === 'brand_contacts_v1') {
           stats['品牌方'] = Array.isArray(d) ? d.length : 0
         } else if (key === 'reading_growth_v1') {
-          stats['读书成长'] = d?.items?.length || 0
+          stats['读书成长'] = (d?.books?.length || 0) + (d?.shows?.length || 0)
         }
       }
     } catch (e) {}

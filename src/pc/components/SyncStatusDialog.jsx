@@ -25,7 +25,7 @@ const COUNT_KEYS = [
 function countOf(key, val) {
   if (!val) return 0
   if (Array.isArray(val)) return val.length
-  if (key === 'reading_growth_v1') return Array.isArray(val.items) ? val.items.length : 0
+  if (key === 'reading_growth_v1') return (Array.isArray(val.books) ? val.books.length : 0) + (Array.isArray(val.shows) ? val.shows.length : 0)
   if (typeof val === 'object') return Object.keys(val).length
   return 0
 }

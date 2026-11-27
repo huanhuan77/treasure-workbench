@@ -53,7 +53,7 @@ export function PcBackup() {
     { label: '待办', value: countArr(todos), color: '#b8517f' },
     { label: '日记', value: countObj(readLocal('blogger_calendar_v1')), color: '#4f7f8f' },
     { label: '追剧', value: countArr(dramas), color: '#b96a66' },
-    { label: '读书成长', value: countArr(readLocal('reading_growth_v1')?.items), color: '#8a6d3b' },
+    { label: '读书成长', value: (readLocal('reading_growth_v1')?.books?.length || 0) + (readLocal('reading_growth_v1')?.shows?.length || 0), color: '#8a6d3b' },
     { label: '品牌方', value: countArr(readLocal('brand_contacts_v1')), color: '#7a8a4f' },
   ]), [products, samples, orders, transactions, todos, publishRecords, dramas])
 

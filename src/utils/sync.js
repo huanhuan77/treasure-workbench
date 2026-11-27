@@ -353,7 +353,10 @@ function mergeModule(key, localVal, remoteVal, tombstones, wordTimes, lastSync) 
     case 'brand_contacts_v1':
       return mergeArrayById(localVal, remoteVal, t)
     case 'reading_growth_v1':
-      return { ...localVal, items: mergeArrayById(localVal.items, remoteVal.items, t) }
+      return {
+        books: mergeArrayById(localVal.books, remoteVal.books, t),
+        shows: mergeArrayById(localVal.shows, remoteVal.shows, t),
+      }
     default:
       return remoteVal
   }
